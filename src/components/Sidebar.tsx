@@ -1,0 +1,142 @@
+
+import React, { useState } from "react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import {
+  LayoutDashboard,
+  CheckSquare,
+  Calendar,
+  BarChart3,
+  Target,
+  Heart,
+  PieChart,
+  Mail,
+  Mic,
+  ChevronLeft,
+  ChevronRight,
+  Settings,
+  HelpCircle,
+  LogOut,
+} from "lucide-react";
+
+type SidebarItem = {
+  icon: React.ElementType;
+  label: string;
+  href: string;
+  badge?: number;
+};
+
+const sidebarItems: SidebarItem[] = [
+  { icon: LayoutDashboard, label: "Dashboard", href: "#dashboard" },
+  { icon: CheckSquare, label: "Tasks", href: "#tasks", badge: 5 },
+  { icon: Calendar, label: "Calendar", href: "#calendar" },
+  { icon: Mail, label: "Mail", href: "#mail", badge: 3 },
+  { icon: BarChart3, label: "Finances", href: "#finances" },
+  { icon: Target, label: "Goals", href: "#goals" },
+  { icon: Heart, label: "Health", href: "#health" },
+  { icon: PieChart, label: "Portfolio", href: "#portfolio" },
+];
+
+interface SidebarProps {
+  className?: string;
+}
+
+export function Sidebar({ className }: SidebarProps) {
+  const [expanded, setExpanded] = useState(true);
+  const [activeItem, setActiveItem] = useState("#dashboard");
+
+  return (
+    <div
+      className={cn(
+        "flex flex-col h-screen bg-sidebar text-sidebar-foreground transition-all duration-300 border-r border-sidebar-border relative",
+        expanded ? "w-64" : "w-20",
+        className
+      )}
+    >
+      <div className="flex items-center justify-between px-4 py-5">
+        {expanded ? (
+          <h1 className="text-xl font-bold bg-gradient-to-r from-taskfinity-blue-light to-taskfinity-purple-light bg-clip-text text-transparent">
+            TaskFinity
+          </h1>
+        ) : (
+          <div className="w-10 h-10 mx-auto bg-gradient-to-r from-taskfinity-blue-light to-taskfinity-purple-light rounded-md flex items-center justify-center">
+            <span className="text-white font-bold text-lg">TF</span>
+          </div>
+        )}
+      </div>
+
+      <div className="flex-1 px-3 py-4 overflow-y-auto">
+        <nav className="space-y-1">
+          {sidebarItems.map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              onClick={(e) => {
+                e.preventDefault();
+                setActiveItem(item.href);
+              }}
+              className={cn(
+                "flex items-center px-3 py-3 rounded-md transition-colors",
+                activeItem === item.href
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                  : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+              )}
+            >
+              <item.icon className="w-5 h-5 mr-3 flex-shrink-0" />
+              {expanded && (
+                <span className="flex-1 whitespace-nowrap">{item.label}</span>
+              )}
+              {expanded && item.badge && (
+                <span className="inline-flex items-center justify-center px-2 py-0.5 ml-3 text-xs font-medium rounded-full bg-taskfinity-teal text-white">
+                  {item.badge}
+                </span>
+              )}
+            </a>
+          ))}
+        </nav>
+      </div>
+
+      <div className="p-3 border-t border-sidebar-border">
+        <div className="mt-2 space-y-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+          >
+            <Settings className="w-5 h-5 mr-3" />
+            {expanded && <span>Settings</span>}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+          >
+            <HelpCircle className="w-5 h-5 mr-3" />
+            {expanded && <span>Help</span>}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+          >
+            <LogOut className="w-5 h-5 mr-3" />
+            {expanded && <span>Logout</span>}
+          </Button>
+        </div>
+      </div>
+
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setExpanded(!expanded)}
+        className="absolute -right-4 top-10 bg-white dark:bg-card shadow-md h-8 w-8 rounded-full border border-border"
+      >
+        {expanded ? (
+          <ChevronLeft className="h-4 w-4" />
+        ) : (
+          <ChevronRight className="h-4 w-4" />
+        )}
+      </Button>
+    </div>
+  );
+}
