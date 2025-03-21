@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { Dashboard } from "@/components/Dashboard";
 import { TaskSection } from "@/components/TaskSection";
@@ -13,6 +13,14 @@ import { StatsSidebar } from "@/components/StatsSidebar";
 const Index = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [showStats, setShowStats] = useState(false);
+
+  // Simple error boundary component to catch errors in child components
+  const ErrorFallback = () => (
+    <div className="p-6 border border-red-300 rounded-md bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200">
+      <h3 className="text-lg font-medium mb-2">Something went wrong</h3>
+      <p>There was an error loading this component. We're working on fixing it.</p>
+    </div>
+  );
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -59,7 +67,11 @@ const Index = () => {
               </TabsList>
               
               <TabsContent value="dashboard" className="mt-6">
-                <Dashboard />
+                <Suspense fallback={<div>Loading dashboard...</div>}>
+                  <ErrorBoundary fallback={<ErrorFallback />}>
+                    <Dashboard />
+                  </ErrorBoundary>
+                </Suspense>
               </TabsContent>
               
               <TabsContent value="tasks" className="mt-6">
@@ -94,5 +106,28 @@ const Index = () => {
     </div>
   );
 };
+
+// Simple error boundary class component
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("Error caught by ErrorBoundary:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback;
+    }
+    return this.props.children;
+  }
+}
 
 export default Index;
