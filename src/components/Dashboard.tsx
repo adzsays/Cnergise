@@ -7,7 +7,6 @@ import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import {
   BarChart,
-  Bell,
   Calendar,
   CheckCircle2,
   Clock,
@@ -29,38 +28,6 @@ import {
 } from "@/components/ui/table";
 
 export function Dashboard() {
-  // Mock statistics data (now with smaller display)
-  const statsData = [
-    {
-      title: "Total Tasks",
-      value: "24",
-      icon: CheckCircle2,
-      change: "+5",
-      color: "bg-blue-500",
-    },
-    {
-      title: "Upcoming Meetings",
-      value: "7",
-      icon: Calendar,
-      change: "+2",
-      color: "bg-purple-500",
-    },
-    {
-      title: "Unread Emails",
-      value: "12",
-      icon: Mail,
-      change: "-3",
-      color: "bg-orange-500",
-    },
-    {
-      title: "Team Members",
-      value: "8",
-      icon: Users,
-      change: "0",
-      color: "bg-green-500",
-    },
-  ];
-
   // Mock project data with tasks, costs, and potential
   const projectsData = [
     {
@@ -220,54 +187,6 @@ export function Dashboard() {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      {/* Stats Cards - Now Smaller */}
-      <div className="md:col-span-3 grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {statsData.map((stat, index) => (
-          <CustomCard key={index} className="p-0 overflow-hidden">
-            <div className="p-4">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground">
-                    {stat.title}
-                  </p>
-                  <h3 className="text-lg font-bold mt-0.5">{stat.value}</h3>
-                </div>
-                <div
-                  className={cn(
-                    "h-8 w-8 rounded-full flex items-center justify-center text-white",
-                    stat.color
-                  )}
-                >
-                  <stat.icon className="h-4 w-4" />
-                </div>
-              </div>
-              <div className="flex items-center mt-1">
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    "text-xs font-medium",
-                    stat.change.startsWith("+")
-                      ? "text-green-600 dark:text-green-400"
-                      : stat.change.startsWith("-")
-                      ? "text-red-600 dark:text-red-400"
-                      : "text-muted-foreground"
-                  )}
-                >
-                  {stat.change !== "0" ? stat.change : "No change"}
-                </Badge>
-                <p className="text-xs text-muted-foreground ml-2">vs last week</p>
-              </div>
-            </div>
-            <div className="h-1 w-full bg-muted overflow-hidden">
-              <div
-                className={cn("h-full", stat.color)}
-                style={{ width: `${Math.random() * 50 + 50}%` }}
-              ></div>
-            </div>
-          </CustomCard>
-        ))}
-      </div>
-
       {/* Projects Section */}
       <div className="md:col-span-3">
         <CustomCard title="Active Projects" className="overflow-hidden">
@@ -509,42 +428,7 @@ export function Dashboard() {
           </div>
         </CustomCard>
 
-        {/* App Overview */}
-        <CustomCard title="App Overview" className="hidden sm:block">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">Projects</span>
-              </div>
-              <span className="font-medium text-sm">3</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">Email Accounts</span>
-              </div>
-              <span className="font-medium text-sm">3</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">Calendars Synced</span>
-              </div>
-              <span className="font-medium text-sm">2</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <BarChart className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">Financial Accounts</span>
-              </div>
-              <span className="font-medium text-sm">3</span>
-            </div>
-          </div>
-          <Button variant="outline" size="sm" className="w-full mt-4">
-            Manage Connections
-          </Button>
-        </CustomCard>
+        {/* App Overview - Removed since similar info is in the stats sidebar */}
       </div>
     </div>
   );
