@@ -1,4 +1,3 @@
-
 import React from "react";
 import { CustomCard } from "@/components/ui/CustomCard";
 import { Button } from "@/components/ui/button";
@@ -16,6 +15,7 @@ import {
   DollarSign,
   TrendingUp,
   Paperclip,
+  Bell,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 

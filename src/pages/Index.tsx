@@ -10,11 +10,45 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatsSidebar } from "@/components/StatsSidebar";
 
+// Properly type the ErrorBoundary props
+type ErrorBoundaryProps = {
+  children: React.ReactNode;
+  fallback: React.ReactNode;
+};
+
+// Properly type the ErrorBoundary state
+type ErrorBoundaryState = {
+  hasError: boolean;
+};
+
+// Error boundary class component with proper TypeScript typing
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
+    console.error("Error caught by ErrorBoundary:", error, errorInfo);
+  }
+
+  render(): React.ReactNode {
+    if (this.state.hasError) {
+      return this.props.fallback;
+    }
+    return this.props.children;
+  }
+}
+
 const Index = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [showStats, setShowStats] = useState(false);
 
-  // Simple error boundary component to catch errors in child components
+  // Simple error fallback component to catch errors in child components
   const ErrorFallback = () => (
     <div className="p-6 border border-red-300 rounded-md bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200">
       <h3 className="text-lg font-medium mb-2">Something went wrong</h3>
@@ -106,28 +140,5 @@ const Index = () => {
     </div>
   );
 };
-
-// Simple error boundary class component
-class ErrorBoundary extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError(error) {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error, errorInfo) {
-    console.error("Error caught by ErrorBoundary:", error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return this.props.fallback;
-    }
-    return this.props.children;
-  }
-}
 
 export default Index;
