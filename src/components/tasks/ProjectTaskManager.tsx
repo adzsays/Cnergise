@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { CustomCard } from "@/components/ui/CustomCard";
 import { Button } from "@/components/ui/button";
@@ -45,7 +44,15 @@ export interface Subtask {
   completed: boolean;
 }
 
-export function ProjectTaskManager() {
+interface ProjectTaskManagerProps {
+  showNewProjectDialog?: boolean;
+  onOpenProjectDialog?: (open: boolean) => void;
+}
+
+export function ProjectTaskManager({ 
+  showNewProjectDialog: externalShowNewProjectDialog, 
+  onOpenProjectDialog
+}: ProjectTaskManagerProps) {
   const [projects, setProjects] = useState<Project[]>([
     {
       id: "website",
@@ -120,9 +127,20 @@ export function ProjectTaskManager() {
   const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
+  const isShowingNewProjectDialog = externalShowNewProjectDialog !== undefined ? 
+    externalShowNewProjectDialog : showNewProjectDialog;
+
+  const handleOpenProjectDialog = (open: boolean) => {
+    if (onOpenProjectDialog) {
+      onOpenProjectDialog(open);
+    } else {
+      setShowNewProjectDialog(open);
+    }
+  };
+
   const handleCreateProject = (newProject: Project) => {
     setProjects([...projects, newProject]);
-    setShowNewProjectDialog(false);
+    handleOpenProjectDialog(false);
   };
 
   const handleCreateTask = (newTask: Task) => {
@@ -156,7 +174,6 @@ export function ProjectTaskManager() {
     ));
   };
 
-  // Filter tasks based on selected project, status, priority, and search query
   const filteredTasks = tasks.filter(task => {
     const matchesProject = selectedProject ? task.projectId === selectedProject : true;
     const matchesStatus = statusFilter ? task.status === statusFilter : true;
@@ -171,7 +188,6 @@ export function ProjectTaskManager() {
 
   return (
     <div className="grid grid-cols-4 gap-6">
-      {/* Projects Sidebar */}
       <div className="col-span-1">
         <CustomCard 
           title="Projects" 
@@ -180,7 +196,7 @@ export function ProjectTaskManager() {
         >
           <div className="mb-4 flex items-center gap-2">
             <Button 
-              onClick={() => setShowNewProjectDialog(true)}
+              onClick={() => handleOpenProjectDialog(true)}
               className="w-full"
             >
               <FolderPlus className="h-4 w-4 mr-2" />
@@ -196,7 +212,6 @@ export function ProjectTaskManager() {
         </CustomCard>
       </div>
       
-      {/* Tasks Area */}
       <div className="col-span-3">
         <CustomCard 
           title={
@@ -207,7 +222,6 @@ export function ProjectTaskManager() {
           description="Manage and organize your tasks"
           className="h-full"
         >
-          {/* Task Controls */}
           <div className="flex flex-wrap gap-3 mb-6">
             <div className="flex-1 min-w-[250px]">
               <div className="relative">
@@ -269,12 +283,13 @@ export function ProjectTaskManager() {
         </CustomCard>
       </div>
       
-      {/* Dialogs */}
-      <NewProjectDialog 
-        open={showNewProjectDialog}
-        onOpenChange={setShowNewProjectDialog}
-        onCreateProject={handleCreateProject}
-      />
+      {!onOpenProjectDialog && (
+        <NewProjectDialog 
+          open={showNewProjectDialog}
+          onOpenChange={setShowNewProjectDialog}
+          onCreateProject={handleCreateProject}
+        />
+      )}
       
       <NewTaskDialog 
         open={showNewTaskDialog}
