@@ -9,6 +9,8 @@ import { VoiceAssistant } from "@/components/VoiceAssistant";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatsSidebar } from "@/components/StatsSidebar";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import { CustomizableDashboard } from "@/components/CustomizableDashboard";
 
 // Properly type the ErrorBoundary props
 type ErrorBoundaryProps = {
@@ -103,7 +105,7 @@ const Index = () => {
               <TabsContent value="dashboard" className="mt-6">
                 <Suspense fallback={<div>Loading dashboard...</div>}>
                   <ErrorBoundary fallback={<ErrorFallback />}>
-                    <Dashboard />
+                    <CustomizableDashboard />
                   </ErrorBoundary>
                 </Suspense>
               </TabsContent>
