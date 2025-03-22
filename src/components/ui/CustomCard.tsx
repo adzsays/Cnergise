@@ -3,7 +3,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 
-interface CustomCardProps extends React.HTMLAttributes<HTMLDivElement> {
+interface CustomCardProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'title'> {
   title?: string | React.ReactNode;
   description?: string;
   contentClassName?: string;

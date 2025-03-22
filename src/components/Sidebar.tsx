@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   CheckSquare,
@@ -11,7 +12,6 @@ import {
   Heart,
   PieChart,
   Mail,
-  Mic,
   ChevronLeft,
   ChevronRight,
   Settings,
@@ -27,8 +27,8 @@ type SidebarItem = {
 };
 
 const sidebarItems: SidebarItem[] = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "#dashboard" },
-  { icon: CheckSquare, label: "Tasks", href: "#tasks", badge: 5 },
+  { icon: LayoutDashboard, label: "Dashboard", href: "/" },
+  { icon: CheckSquare, label: "Tasks", href: "/tasks", badge: 5 },
   { icon: Calendar, label: "Calendar", href: "#calendar" },
   { icon: Mail, label: "Mail", href: "#mail", badge: 3 },
   { icon: BarChart3, label: "Finances", href: "#finances" },
@@ -43,7 +43,8 @@ interface SidebarProps {
 
 export function Sidebar({ className }: SidebarProps) {
   const [expanded, setExpanded] = useState(true);
-  const [activeItem, setActiveItem] = useState("#dashboard");
+  const location = useLocation();
+  const activeItem = location.pathname === "/" ? "/" : location.pathname;
 
   return (
     <div
@@ -55,44 +56,74 @@ export function Sidebar({ className }: SidebarProps) {
     >
       <div className="flex items-center justify-between px-4 py-5">
         {expanded ? (
-          <h1 className="text-xl font-bold bg-gradient-to-r from-taskfinity-blue-light to-taskfinity-purple-light bg-clip-text text-transparent">
+          <Link to="/" className="text-xl font-bold bg-gradient-to-r from-taskfinity-blue-light to-taskfinity-purple-light bg-clip-text text-transparent">
             TaskFinity
-          </h1>
+          </Link>
         ) : (
-          <div className="w-10 h-10 mx-auto bg-gradient-to-r from-taskfinity-blue-light to-taskfinity-purple-light rounded-md flex items-center justify-center">
+          <Link to="/" className="w-10 h-10 mx-auto bg-gradient-to-r from-taskfinity-blue-light to-taskfinity-purple-light rounded-md flex items-center justify-center">
             <span className="text-white font-bold text-lg">TF</span>
-          </div>
+          </Link>
         )}
       </div>
 
       <div className="flex-1 px-3 py-4 overflow-y-auto">
         <nav className="space-y-1">
-          {sidebarItems.map((item) => (
-            <a
-              key={item.href}
-              href={item.href}
-              onClick={(e) => {
-                e.preventDefault();
-                setActiveItem(item.href);
-              }}
-              className={cn(
-                "flex items-center px-3 py-3 rounded-md transition-colors",
-                activeItem === item.href
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-              )}
-            >
-              <item.icon className="w-5 h-5 mr-3 flex-shrink-0" />
-              {expanded && (
-                <span className="flex-1 whitespace-nowrap">{item.label}</span>
-              )}
-              {expanded && item.badge && (
-                <span className="inline-flex items-center justify-center px-2 py-0.5 ml-3 text-xs font-medium rounded-full bg-taskfinity-teal text-white">
-                  {item.badge}
-                </span>
-              )}
-            </a>
-          ))}
+          {sidebarItems.map((item) => {
+            // For full URLs, check if the href matches the current pathname
+            const isActive = item.href.startsWith('/') 
+              ? activeItem === item.href
+              : false;
+            
+            // For hash paths, use normal links
+            if (item.href.startsWith('#')) {
+              return (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center px-3 py-3 rounded-md transition-colors",
+                    false
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                      : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                  )}
+                >
+                  <item.icon className="w-5 h-5 mr-3 flex-shrink-0" />
+                  {expanded && (
+                    <span className="flex-1 whitespace-nowrap">{item.label}</span>
+                  )}
+                  {expanded && item.badge && (
+                    <span className="inline-flex items-center justify-center px-2 py-0.5 ml-3 text-xs font-medium rounded-full bg-taskfinity-teal text-white">
+                      {item.badge}
+                    </span>
+                  )}
+                </a>
+              );
+            }
+            
+            // For route paths, use Link component
+            return (
+              <Link
+                key={item.href}
+                to={item.href}
+                className={cn(
+                  "flex items-center px-3 py-3 rounded-md transition-colors",
+                  isActive
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                    : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                )}
+              >
+                <item.icon className="w-5 h-5 mr-3 flex-shrink-0" />
+                {expanded && (
+                  <span className="flex-1 whitespace-nowrap">{item.label}</span>
+                )}
+                {expanded && item.badge && (
+                  <span className="inline-flex items-center justify-center px-2 py-0.5 ml-3 text-xs font-medium rounded-full bg-taskfinity-teal text-white">
+                    {item.badge}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
         </nav>
       </div>
 
