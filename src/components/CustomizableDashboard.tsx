@@ -11,11 +11,6 @@ import { EventsSection } from "@/components/dashboard/EventsSection";
 import { GoalsSection } from "@/components/dashboard/GoalsSection";
 import { Maximize2, Minimize2, Move } from "lucide-react";
 import { 
-  ResizablePanelGroup, 
-  ResizablePanel, 
-  ResizableHandle 
-} from "@/components/ui/resizable";
-import { 
   Select, 
   SelectContent, 
   SelectItem, 

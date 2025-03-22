@@ -4,12 +4,13 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 
 interface CustomCardProps extends React.HTMLAttributes<HTMLDivElement> {
-  title?: string;
+  title?: string | React.ReactNode;
   description?: string;
   contentClassName?: string;
   headerClassName?: string;
   footerClassName?: string;
   withGradientBorder?: boolean;
+  titleExtra?: React.ReactNode;
   children?: React.ReactNode;
   footer?: React.ReactNode;
 }
@@ -22,6 +23,7 @@ export function CustomCard({
   headerClassName,
   footerClassName,
   withGradientBorder = false,
+  titleExtra,
   children,
   footer,
   ...props
@@ -37,7 +39,16 @@ export function CustomCard({
     >
       {(title || description) && (
         <CardHeader className={cn("px-5 py-4", headerClassName)}>
-          {title && <CardTitle className="text-lg font-semibold">{title}</CardTitle>}
+          <div className="flex items-center justify-between w-full">
+            {typeof title === 'string' ? (
+              <CardTitle className="text-lg font-semibold">{title}</CardTitle>
+            ) : (
+              title
+            )}
+            {titleExtra && (
+              <div>{titleExtra}</div>
+            )}
+          </div>
           {description && <CardDescription>{description}</CardDescription>}
         </CardHeader>
       )}
