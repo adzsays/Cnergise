@@ -117,24 +117,22 @@ export function CustomizableDashboard() {
           >
             <CustomCard
               className="h-full"
-              title={
-                <div className="flex items-center justify-between w-full">
-                  <span>{title}</span>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-8 w-8"
-                      onClick={() => toggleWidgetSize(id)}
-                    >
-                      {size === "large" ? 
-                        <Minimize2 className="h-4 w-4" /> : 
-                        <Maximize2 className="h-4 w-4" />
-                      }
-                    </Button>
-                    <div {...provided.dragHandleProps} className="cursor-move">
-                      <Move className="h-4 w-4 text-muted-foreground" />
-                    </div>
+              title={title}
+              titleExtra={
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8"
+                    onClick={() => toggleWidgetSize(id)}
+                  >
+                    {size === "large" ? 
+                      <Minimize2 className="h-4 w-4" /> : 
+                      <Maximize2 className="h-4 w-4" />
+                    }
+                  </Button>
+                  <div {...provided.dragHandleProps} className="cursor-move">
+                    <Move className="h-4 w-4 text-muted-foreground" />
                   </div>
                 </div>
               }
