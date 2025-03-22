@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { type Task, type Project } from "./ProjectTaskManager";
 import { Button } from "@/components/ui/button";
@@ -47,7 +46,6 @@ export function NewTaskDialog({
   const [subtasks, setSubtasks] = useState<{ id: string; title: string; completed: boolean }[]>([]);
   const [newSubtask, setNewSubtask] = useState("");
   
-  // Initialize projectId from selectedProject when dialog opens
   useEffect(() => {
     if (open) {
       if (selectedProject) {
@@ -56,7 +54,6 @@ export function NewTaskDialog({
         setProjectId(projects[0].id);
       }
       
-      // Set default due date to tomorrow
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
       setDueDate(tomorrow.toISOString().split('T')[0]);
@@ -82,7 +79,6 @@ export function NewTaskDialog({
     
     onCreateTask(newTask);
     
-    // Reset form
     setTitle("");
     setDescription("");
     setStatus("todo");
