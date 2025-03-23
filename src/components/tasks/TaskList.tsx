@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { type Task, type Project, type Feature, type Team, type CurrencyType } from "./ProjectTaskManager";
 import { Badge } from "@/components/ui/badge";
@@ -39,7 +38,7 @@ import {
   DollarSign,
   Euro,
   PoundSterling,
-  Yen,
+  JapaneseYen,
   IndianRupee
 } from "lucide-react";
 
@@ -178,15 +177,14 @@ export function TaskList({
       case 'USD': return <DollarSign className="h-4 w-4" />;
       case 'EUR': return <Euro className="h-4 w-4" />;
       case 'GBP': return <PoundSterling className="h-4 w-4" />;
-      case 'JPY': return <Yen className="h-4 w-4" />;
+      case 'JPY': return <JapaneseYen className="h-4 w-4" />;
       case 'INR': return <IndianRupee className="h-4 w-4" />;
-      case 'CNY': return <Yen className="h-4 w-4" />;
+      case 'CNY': return <JapaneseYen className="h-4 w-4" />;
       default: return <DollarSign className="h-4 w-4" />;
     }
   };
   
   const convertCurrency = (amount: number, fromCurrency: CurrencyType, toCurrency: CurrencyType) => {
-    // Mock exchange rates (in a real app, these would come from an API)
     const exchangeRates: Record<CurrencyType, number> = {
       'USD': 1,
       'EUR': 0.93,
