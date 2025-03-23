@@ -247,6 +247,7 @@ export function ProjectTaskManager({
   const [teamFilter, setTeamFilter] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [baseCurrency, setBaseCurrency] = useState<CurrencyType>("USD");
+  const [editingCompletion, setEditingCompletion] = useState<{ taskId: string, value: string } | null>(null);
 
   const isShowingNewProjectDialog = externalShowNewProjectDialog !== undefined ? 
     externalShowNewProjectDialog : showNewProjectDialog;
@@ -328,7 +329,7 @@ export function ProjectTaskManager({
             ? new Date().toISOString().split('T')[0] 
             : (percentage < 100 && task.completionPercentage === 100 ? undefined : task.completedDate);
           
-          const status = percentage === 100 ? 'completed' as const : task.status;
+          const status: Task['status'] = percentage === 100 ? 'completed' : task.status;
           
           return { 
             ...task, 
@@ -340,6 +341,15 @@ export function ProjectTaskManager({
         return task;
       })
     );
+  };
+
+  const handleCompletionBlur = () => {
+    if (editingCompletion) {
+      const { taskId, value } = editingCompletion;
+      const percentage = Math.min(100, Math.max(0, parseInt(value) || 0));
+      onUpdateTaskCompletion(taskId, percentage);
+      setEditingCompletion(null);
+    }
   };
 
   const filteredTasks = tasks.filter(task => {

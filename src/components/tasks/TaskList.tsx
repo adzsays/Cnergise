@@ -42,6 +42,7 @@ import {
   JapaneseYen,
   IndianRupee
 } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface TaskListProps {
   tasks: Task[];
@@ -229,299 +230,243 @@ export function TaskList({
         </div>
       ) : (
         <div>
-          <div className="grid grid-cols-12 gap-1 mb-2 bg-muted px-2 py-1.5 rounded-md text-xs font-medium sticky top-0 z-10">
-            <div className="col-span-1">Task #</div>
-            <div className="col-span-2">Task Name</div>
-            <div className="col-span-1">Feature</div>
-            <div className="col-span-1">Function</div>
-            <div className="col-span-1">Stage</div>
-            <div className="col-span-1">Project</div>
-            <div className="col-span-1">Team</div>
-            <div className="col-span-1">Person</div>
-            <div className="col-span-1">Priority</div>
-            <div className="col-span-1">Impact</div>
-            <div className="col-span-1">Completion</div>
-          </div>
-          
-          <ScrollArea className="h-[calc(100vh-220px)]">
-            <div className="pr-4 space-y-1">
-              {tasks.map((task) => (
-                <Collapsible
-                  key={task.id}
-                  open={expandedTasks[task.id]}
-                  onOpenChange={() => toggleTaskExpand(task.id)}
-                  className="border rounded-md overflow-hidden mb-1"
-                >
-                  <div className="px-2 py-1.5 bg-card">
-                    <div className="grid grid-cols-12 gap-1 items-center">
-                      <div className="col-span-1 flex items-center gap-0.5">
-                        <CollapsibleTrigger asChild>
-                          <Button variant="ghost" className="p-0 h-5 w-5 -ml-1">
+          <ScrollArea className="h-[calc(100vh-280px)]">
+            <div className="min-w-[900px] pr-4">
+              <Table>
+                <TableHeader className="sticky top-0 z-10 bg-background">
+                  <TableRow>
+                    <TableHead className="w-[80px]">Task #</TableHead>
+                    <TableHead className="w-[200px]">Task Name</TableHead>
+                    <TableHead className="w-[120px]">Feature</TableHead>
+                    <TableHead className="w-[100px]">Function</TableHead>
+                    <TableHead className="w-[100px]">Stage</TableHead>
+                    <TableHead className="w-[120px]">Project</TableHead>
+                    <TableHead className="w-[100px]">Team</TableHead>
+                    <TableHead className="w-[100px]">Person</TableHead>
+                    <TableHead className="w-[80px]">Completion</TableHead>
+                    <TableHead className="w-[60px]"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {tasks.map((task) => (
+                    <React.Fragment key={task.id}>
+                      <TableRow 
+                        className={expandedTasks[task.id] ? "border-b-0" : ""}
+                        onClick={() => toggleTaskExpand(task.id)}
+                      >
+                        <TableCell className="py-2">
+                          <div className="flex items-center gap-1">
                             {expandedTasks[task.id] ? (
                               <ChevronDown className="h-3 w-3 text-muted-foreground" />
                             ) : (
                               <ChevronRight className="h-3 w-3 text-muted-foreground" />
                             )}
-                          </Button>
-                        </CollapsibleTrigger>
-                        <span className="text-xs font-mono truncate">{task.taskNo}</span>
-                      </div>
-                      
-                      <div className="col-span-2 font-medium text-xs truncate">{task.title}</div>
-                      
-                      <div className="col-span-1 text-xs">
-                        <div className="flex items-center gap-0.5">
-                          <Tag className="h-2.5 w-2.5 text-muted-foreground" />
-                          <span className="truncate">{getFeatureName(task.featureId)}</span>
-                        </div>
-                      </div>
-                      
-                      <div className="col-span-1 text-xs">
-                        <div className="flex items-center gap-0.5">
-                          <Code className="h-2.5 w-2.5 text-muted-foreground" />
-                          <span className="truncate">{getFunctionLabel(task.functionType)}</span>
-                        </div>
-                      </div>
-                      
-                      <div className="col-span-1 text-xs">
-                        <div className="flex items-center gap-0.5">
-                          <GitPullRequest className="h-2.5 w-2.5 text-muted-foreground" />
-                          <span className="truncate">{getStageLabel(task.stage)}</span>
-                        </div>
-                      </div>
-                      
-                      <div className="col-span-1 text-xs">
-                        <div className="flex items-center gap-0.5">
-                          <div 
-                            className="h-2 w-2 rounded-full" 
-                            style={{ backgroundColor: getProjectColor(task.projectId) }}
-                          />
-                          <span className="truncate">{getProjectName(task.projectId)}</span>
-                        </div>
-                      </div>
-                      
-                      <div className="col-span-1 text-xs">
-                        <div className="flex items-center gap-0.5">
-                          <Users className="h-2.5 w-2.5 text-muted-foreground" />
-                          <span className="truncate">{getTeamName(task.teamId)}</span>
-                        </div>
-                      </div>
-                      
-                      <div className="col-span-1 text-xs">
-                        <div className="flex items-center gap-0.5">
-                          <User className="h-2.5 w-2.5 text-muted-foreground" />
-                          <span className="truncate">{task.assignee || 'Unassigned'}</span>
-                        </div>
-                      </div>
-                      
-                      <div className="col-span-1">
-                        <Badge 
-                          variant="outline"
-                          className={cn("text-xs px-1 py-0", getPriorityColor(task.priority))}
-                        >
-                          {task.priority}
-                        </Badge>
-                      </div>
-                      
-                      <div className="col-span-1 text-xs">
-                        {task.monetaryImpact ? (
-                          <div className="flex items-center gap-0.5">
-                            {getCurrencyIcon(task.monetaryImpact.currency)}
-                            <span className="truncate">
-                              {formatCurrency(
-                                convertCurrency(task.monetaryImpact.amount, task.monetaryImpact.currency, baseCurrency),
-                                baseCurrency
-                              )}
-                            </span>
+                            <span className="text-xs font-mono">{task.taskNo}</span>
                           </div>
-                        ) : (
-                          <span className="text-muted-foreground">N/A</span>
-                        )}
-                      </div>
-                      
-                      <div className="col-span-1">
-                        {editingCompletion?.taskId === task.id ? (
+                        </TableCell>
+                        <TableCell className="py-2 font-medium text-xs">{task.title}</TableCell>
+                        <TableCell className="py-2 text-xs">
                           <div className="flex items-center gap-1">
-                            <Input
-                              className="h-5 w-10 text-xs px-1"
-                              value={editingCompletion.value}
-                              onChange={(e) => handleCompletionChange(task.id, e.target.value)}
-                              onBlur={handleCompletionBlur}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') handleCompletionBlur();
-                              }}
-                              autoFocus
+                            <Tag className="h-2.5 w-2.5 text-muted-foreground" />
+                            <span className="truncate">{getFeatureName(task.featureId)}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-2 text-xs">
+                          {task.functionType ? getFunctionLabel(task.functionType) : "N/A"}
+                        </TableCell>
+                        <TableCell className="py-2 text-xs">{getStageLabel(task.stage)}</TableCell>
+                        <TableCell className="py-2 text-xs">
+                          <div className="flex items-center gap-1">
+                            <div 
+                              className="h-2 w-2 rounded-full" 
+                              style={{ backgroundColor: getProjectColor(task.projectId) }}
                             />
-                            <span className="text-xs">%</span>
+                            <span className="truncate">{getProjectName(task.projectId)}</span>
                           </div>
-                        ) : (
-                          <div 
-                            className="flex items-center gap-1 cursor-pointer"
-                            onClick={() => setEditingCompletion({ 
-                              taskId: task.id, 
-                              value: task.completionPercentage.toString() 
-                            })}
-                          >
-                            <Progress value={task.completionPercentage} className="h-1.5 w-8" />
-                            <span className="text-xs">{task.completionPercentage}%</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <CollapsibleContent>
-                    <div className="p-3 pt-1 border-t bg-card/50">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          {task.description && (
-                            <div className="mb-3">
-                              <h4 className="text-xs font-medium mb-1">Description</h4>
-                              <p className="text-xs text-muted-foreground">{task.description}</p>
+                        </TableCell>
+                        <TableCell className="py-2 text-xs">
+                          {task.teamId ? getTeamName(task.teamId) : "N/A"}
+                        </TableCell>
+                        <TableCell className="py-2 text-xs">
+                          {task.assignee || "Unassigned"}
+                        </TableCell>
+                        <TableCell className="py-2">
+                          {editingCompletion?.taskId === task.id ? (
+                            <div className="flex items-center gap-1">
+                              <Input
+                                className="h-5 w-12 text-xs px-1"
+                                value={editingCompletion.value}
+                                onChange={(e) => handleCompletionChange(task.id, e.target.value)}
+                                onBlur={handleCompletionBlur}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') handleCompletionBlur();
+                                }}
+                                autoFocus
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                              <span className="text-xs">%</span>
+                            </div>
+                          ) : (
+                            <div 
+                              className="flex items-center gap-1"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingCompletion({ 
+                                  taskId: task.id, 
+                                  value: task.completionPercentage.toString() 
+                                });
+                              }}
+                            >
+                              <Progress value={task.completionPercentage} className="h-1.5 w-10" />
+                              <span className="text-xs">{task.completionPercentage}%</span>
                             </div>
                           )}
-                          
-                          {task.latestComments && (
-                            <div className="mb-3">
-                              <h4 className="text-xs font-medium mb-1 flex items-center gap-1">
-                                <MessageCircle className="h-3 w-3" />
-                                Latest Comments
-                              </h4>
-                              <p className="text-xs text-muted-foreground">{task.latestComments}</p>
-                            </div>
-                          )}
-                          
-                          <div className="grid grid-cols-2 gap-3 mb-3">
-                            <div>
-                              <h4 className="text-xs font-medium mb-1 flex items-center gap-1">
-                                <Calendar className="h-3 w-3" />
-                                Start Date
-                              </h4>
-                              <p className="text-xs">
-                                {task.startDate ? new Date(task.startDate).toLocaleDateString() : 'Not set'}
-                              </p>
-                            </div>
-                            
-                            <div>
-                              <h4 className="text-xs font-medium mb-1 flex items-center gap-1">
-                                <Calendar className="h-3 w-3" />
-                                Due Date
-                              </h4>
-                              <p className="text-xs">
-                                {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'Not set'}
-                              </p>
-                            </div>
-                          </div>
-                          
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <h4 className="text-xs font-medium mb-1 flex items-center gap-1">
-                                <CalendarCheck className="h-3 w-3" />
-                                Completed Date
-                              </h4>
-                              <p className="text-xs">
-                                {task.completedDate ? new Date(task.completedDate).toLocaleDateString() : 'Not completed'}
-                              </p>
-                            </div>
-                            
-                            <div>
-                              <h4 className="text-xs font-medium mb-1 flex items-center gap-1">
-                                <div className="flex items-center">
-                                  {getStatusIcon(task.status)}
-                                  <span className="ml-1">Status</span>
-                                </div>
-                              </h4>
+                        </TableCell>
+                        <TableCell className="py-2">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                              <Button variant="ghost" size="icon" className="h-7 w-7">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onSelect={() => onUpdateTaskStatus(task.id, 'todo')}>
+                                Mark as To Do
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => onUpdateTaskStatus(task.id, 'in-progress')}>
+                                Mark as In Progress
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => onUpdateTaskStatus(task.id, 'completed')}>
+                                Mark as Completed
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => onUpdateTaskStatus(task.id, 'blocked')}>
+                                Mark as Blocked
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem>Edit Task</DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                      
+                      {expandedTasks[task.id] && (
+                        <TableRow>
+                          <TableCell colSpan={10} className="py-2 px-4 bg-muted/30">
+                            <div className="grid grid-cols-2 gap-4 pt-1 pb-2">
                               <div>
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" size="sm" className="h-6 text-xs">
-                                      {getStatusLabel(task.status)}
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="start">
-                                    <DropdownMenuItem onSelect={() => onUpdateTaskStatus(task.id, 'todo')}>
-                                      Mark as To Do
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onSelect={() => onUpdateTaskStatus(task.id, 'in-progress')}>
-                                      Mark as In Progress
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onSelect={() => onUpdateTaskStatus(task.id, 'completed')}>
-                                      Mark as Completed
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onSelect={() => onUpdateTaskStatus(task.id, 'blocked')}>
-                                      Mark as Blocked
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div>
-                          {task.dependencyIds && task.dependencyIds.length > 0 && (
-                            <div className="mb-3">
-                              <h4 className="text-xs font-medium mb-1 flex items-center gap-1">
-                                <Paperclip className="h-3 w-3" />
-                                Dependencies
-                              </h4>
-                              <div className="space-y-1">
-                                {task.dependencyIds.map(depId => {
-                                  const depTask = tasks.find(t => t.id === depId);
-                                  return depTask ? (
-                                    <div key={depId} className="text-xs flex items-center gap-1">
-                                      <span className="font-mono text-xs">{depTask.taskNo}</span>
-                                      <span className="truncate">{depTask.title}</span>
-                                    </div>
-                                  ) : null;
-                                })}
-                              </div>
-                            </div>
-                          )}
-                          
-                          {task.subtasks.length > 0 && (
-                            <div className="mb-3">
-                              <div className="flex items-center justify-between mb-1">
-                                <h4 className="text-xs font-medium">Subtasks</h4>
-                                <span className="text-xs text-muted-foreground">
-                                  {task.subtasks.filter(st => st.completed).length}/{task.subtasks.length}
-                                </span>
-                              </div>
-                              <div className="space-y-1.5">
-                                {task.subtasks.map((subtask) => (
-                                  <div key={subtask.id} className="flex items-center gap-1.5">
-                                    <Checkbox 
-                                      checked={subtask.completed}
-                                      onCheckedChange={() => onToggleSubtask(task.id, subtask.id)}
-                                      id={`subtask-${subtask.id}`}
-                                      className="h-3 w-3"
-                                    />
-                                    <label 
-                                      htmlFor={`subtask-${subtask.id}`}
-                                      className={cn(
-                                        "text-xs",
-                                        subtask.completed && "line-through text-muted-foreground"
-                                      )}
-                                    >
-                                      {subtask.title}
-                                    </label>
+                                {task.description && (
+                                  <div className="mb-3">
+                                    <h4 className="text-xs font-medium mb-1">Description</h4>
+                                    <p className="text-xs text-muted-foreground">{task.description}</p>
                                   </div>
-                                ))}
+                                )}
+                                
+                                {task.latestComments && (
+                                  <div className="mb-3">
+                                    <h4 className="text-xs font-medium mb-1 flex items-center gap-1">
+                                      <MessageCircle className="h-3 w-3" />
+                                      Latest Comments
+                                    </h4>
+                                    <p className="text-xs text-muted-foreground">{task.latestComments}</p>
+                                  </div>
+                                )}
+                                
+                                <div className="grid grid-cols-2 gap-3 mb-3">
+                                  <div>
+                                    <h4 className="text-xs font-medium mb-1 flex items-center gap-1">
+                                      <Calendar className="h-3 w-3" />
+                                      Start Date
+                                    </h4>
+                                    <p className="text-xs">
+                                      {task.startDate ? new Date(task.startDate).toLocaleDateString() : 'Not set'}
+                                    </p>
+                                  </div>
+                                  
+                                  <div>
+                                    <h4 className="text-xs font-medium mb-1 flex items-center gap-1">
+                                      <Calendar className="h-3 w-3" />
+                                      Due Date
+                                    </h4>
+                                    <p className="text-xs">
+                                      {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'Not set'}
+                                    </p>
+                                  </div>
+                                </div>
+                                
+                                <div className="grid grid-cols-2 gap-3">
+                                  <div>
+                                    <h4 className="text-xs font-medium mb-1 flex items-center gap-1">
+                                      <CalendarCheck className="h-3 w-3" />
+                                      Completed Date
+                                    </h4>
+                                    <p className="text-xs">
+                                      {task.completedDate ? new Date(task.completedDate).toLocaleDateString() : 'Not completed'}
+                                    </p>
+                                  </div>
+                                  
+                                  <div>
+                                    <h4 className="text-xs font-medium mb-1 flex items-center gap-1">
+                                      <div className="flex items-center">
+                                        {getStatusIcon(task.status)}
+                                        <span className="ml-1">Status</span>
+                                      </div>
+                                    </h4>
+                                    <div>
+                                      <Button variant="outline" size="sm" className="h-6 text-xs">
+                                        {getStatusLabel(task.status)}
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              <div>
+                                {task.subtasks.length > 0 && (
+                                  <div className="mb-3">
+                                    <div className="flex items-center justify-between mb-1">
+                                      <h4 className="text-xs font-medium">Subtasks</h4>
+                                      <span className="text-xs text-muted-foreground">
+                                        {task.subtasks.filter(st => st.completed).length}/{task.subtasks.length}
+                                      </span>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                      {task.subtasks.map((subtask) => (
+                                        <div key={subtask.id} className="flex items-center gap-1.5">
+                                          <Checkbox 
+                                            checked={subtask.completed}
+                                            onCheckedChange={() => onToggleSubtask(task.id, subtask.id)}
+                                            id={`subtask-${subtask.id}`}
+                                            className="h-3 w-3"
+                                          />
+                                          <label 
+                                            htmlFor={`subtask-${subtask.id}`}
+                                            className={cn(
+                                              "text-xs",
+                                              subtask.completed && "line-through text-muted-foreground"
+                                            )}
+                                          >
+                                            {subtask.title}
+                                          </label>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                
+                                <div>
+                                  <Button variant="outline" size="sm" className="w-full text-xs h-7">
+                                    Edit Task
+                                  </Button>
+                                </div>
                               </div>
                             </div>
-                          )}
-                          
-                          <div>
-                            <Button variant="outline" size="sm" className="w-full text-xs h-7">
-                              Edit Task
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              ))}
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </React.Fragment>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           </ScrollArea>
         </div>
