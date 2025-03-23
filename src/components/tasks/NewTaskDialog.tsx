@@ -3,17 +3,12 @@ import React, { useState, useEffect } from "react";
 import { 
   type Task, 
   type Project, 
-  type Feature, 
-  type Team, 
-  type Person,
-  type FunctionType, 
-  type StageType 
+  type Feature,
 } from "./ProjectTaskManager";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -32,14 +27,27 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+// Define missing types
+export type FunctionType = "frontend" | "backend" | "design" | "qa" | "devops" | "business" | "other";
+export type StageType = "requirements" | "development" | "testing" | "release" | "go-live";
+export type Team = {
+  id: string;
+  name: string;
+};
+export type Person = {
+  id: string;
+  name: string;
+  teamId: string;
+};
+
 interface NewTaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCreateTask: (task: Task) => void;
   projects: Project[];
   features: Feature[];
-  teams: Team[];
-  people: Person[];
+  teams?: Team[];
+  people?: Person[];
   selectedProject?: string | null;
   selectedFeature?: string | null;
 }
@@ -48,10 +56,10 @@ export function NewTaskDialog({
   open, 
   onOpenChange, 
   onCreateTask, 
-  projects,
-  features,
-  teams,
-  people,
+  projects = [],
+  features = [],
+  teams = [],
+  people = [],
   selectedProject,
   selectedFeature
 }: NewTaskDialogProps) {
@@ -68,15 +76,15 @@ export function NewTaskDialog({
   const [dueDate, setDueDate] = useState("");
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   
-  // Filter features based on selected project
-  const projectFeatures = features.filter(feature => feature.projectId === projectId);
+  // Filter features based on selected project (safely)
+  const projectFeatures = features ? features.filter(feature => feature.projectId === projectId) : [];
   
-  // Filter team members based on selected team
-  const teamMembers = people.filter(person => person.teamId === teamId);
+  // Filter team members based on selected team (safely)
+  const teamMembers = people ? people.filter(person => person.teamId === teamId) : [];
   
   // Reset or set feature when project changes
   useEffect(() => {
-    if (projectId) {
+    if (projectId && features && features.length > 0) {
       // If current feature doesn't belong to selected project, reset it
       const featureBelongsToProject = features.some(
         f => f.id === featureId && f.projectId === projectId
@@ -94,7 +102,7 @@ export function NewTaskDialog({
   
   // When team changes, reset assignee if they're not on the team
   useEffect(() => {
-    if (teamId && assigneeId) {
+    if (teamId && assigneeId && people && people.length > 0) {
       const assigneeBelongsToTeam = people.some(
         p => p.id === assigneeId && p.teamId === teamId
       );
@@ -111,21 +119,20 @@ export function NewTaskDialog({
     if (!title.trim() || !projectId) return;
     
     // Get name of assignee if ID is set
-    const assigneePerson = people.find(p => p.id === assigneeId);
+    const assigneePerson = people && people.length > 0 ? people.find(p => p.id === assigneeId) : undefined;
     const assigneeName = assigneePerson ? assigneePerson.name : undefined;
     
     const newTask: Task = {
       id: `task-${Date.now()}`,
-      taskNo: `T${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
       title: title.trim(),
       description: description.trim() || undefined,
       featureId: featureId || undefined,
-      functionType: functionType || undefined,
+      functionType: functionType,
       stage: stage,
       projectId: projectId,
       teamId: teamId || undefined,
       assigneeId: assigneeId || undefined,
-      assignee: assigneeName,
+      assignee: assigneeName || "",
       status: status,
       priority: priority,
       startDate: startDate || undefined,

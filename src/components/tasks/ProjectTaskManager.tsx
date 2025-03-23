@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { CustomCard } from "@/components/ui/CustomCard";
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { PlusIcon, Filter, ChevronDown, Pencil, Trash } from "lucide-react";
-import { NewTaskDialog } from "./NewTaskDialog";
+import { NewTaskDialog, FunctionType, StageType } from "./NewTaskDialog";
 import { NewFeatureDialog } from "./NewFeatureDialog";
 import { NewProjectDialog } from "./NewProjectDialog";
 import { TaskList } from "./TaskList";
@@ -35,13 +34,19 @@ export interface Subtask {
 export interface Task {
   id: string;
   title: string;
-  description: string;
+  description?: string;
   assignee: string;
-  dueDate: string;
+  assigneeId?: string;
+  teamId?: string;
+  dueDate?: string;
+  startDate?: string;
   priority: "low" | "medium" | "high" | "urgent";
   status: TaskStatus;
   projectId: string;
-  featureId: string;
+  featureId?: string;
+  functionType?: FunctionType;
+  stage: StageType;
+  createdAt: string;
   subtasks: Subtask[];
   completionPercentage: number;
   completedDate?: string;
@@ -66,6 +71,19 @@ export interface Project {
   id: string;
   name: string;
   description: string;
+  color?: string;
+  createdAt?: string;
+}
+
+export interface Team {
+  id: string;
+  name: string;
+}
+
+export interface Person {
+  id: string;
+  name: string;
+  teamId: string;
 }
 
 // Sample data
@@ -73,17 +91,20 @@ const initialProjects: Project[] = [
   { 
     id: "p1", 
     name: "Website Redesign", 
-    description: "Redesign the company website to improve user experience and conversion rates." 
+    description: "Redesign the company website to improve user experience and conversion rates.",
+    color: "#4f46e5",
   },
   { 
     id: "p2", 
     name: "Mobile App", 
-    description: "Develop a mobile app for iOS and Android platforms." 
+    description: "Develop a mobile app for iOS and Android platforms.",
+    color: "#10b981",
   },
   { 
     id: "p3", 
     name: "Marketing Campaign", 
-    description: "Plan and execute a multi-channel marketing campaign for Q2." 
+    description: "Plan and execute a multi-channel marketing campaign for Q2.",
+    color: "#f97316",
   }
 ];
 
@@ -118,6 +139,22 @@ const initialFeatures: Feature[] = [
     description: "Plan and schedule content for social media platforms.", 
     projectId: "p3" 
   }
+];
+
+const initialTeams: Team[] = [
+  { id: "team1", name: "Engineering" },
+  { id: "team2", name: "Design" },
+  { id: "team3", name: "Product" },
+  { id: "team4", name: "Marketing" },
+];
+
+const initialPeople: Person[] = [
+  { id: "p1", name: "Alex", teamId: "team1" },
+  { id: "p2", name: "Taylor", teamId: "team1" },
+  { id: "p3", name: "Morgan", teamId: "team2" },
+  { id: "p4", name: "Riley", teamId: "team2" },
+  { id: "p5", name: "Jordan", teamId: "team3" },
+  { id: "p6", name: "Casey", teamId: "team4" },
 ];
 
 const initialTasks: Task[] = [
@@ -198,6 +235,8 @@ const initialTasks: Task[] = [
 const ProjectTaskManager: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>(initialProjects);
   const [features, setFeatures] = useState<Feature[]>(initialFeatures);
+  const [teams] = useState<Team[]>(initialTeams);
+  const [people] = useState<Person[]>(initialPeople);
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [newTaskDialogOpen, setNewTaskDialogOpen] = useState(false);
   const [newFeatureDialogOpen, setNewFeatureDialogOpen] = useState(false);
@@ -301,7 +340,8 @@ const ProjectTaskManager: React.FC = () => {
           ? Math.round((completedSubtasks / totalSubtasks) * 100) 
           : task.completionPercentage;
         
-        const newStatus = newCompletionPercentage === 100 ? 'completed' : task.status;
+        // Check if newCompletionPercentage is 100 to set status to completed
+        const newStatus = newCompletionPercentage === 100 ? 'completed' as TaskStatus : task.status;
         
         return {
           ...task,
@@ -426,6 +466,8 @@ const ProjectTaskManager: React.FC = () => {
             tasks={filteredTasks} 
             projects={projects}
             features={features}
+            teams={teams}
+            people={people}
             onStatusChange={handleTaskStatusChange}
             onDelete={handleDeleteTask}
             onEdit={handleEditTask}
@@ -441,22 +483,24 @@ const ProjectTaskManager: React.FC = () => {
         onOpenChange={setNewTaskDialogOpen} 
         projects={projects}
         features={features}
-        onAddTask={handleAddTask}
-        editTask={currentTask}
-        isEditing={isEditingTask}
+        teams={teams}
+        people={people}
+        onCreateTask={handleAddTask}
+        selectedProject={null}
+        selectedFeature={null}
       />
       
       <NewFeatureDialog 
         open={newFeatureDialogOpen} 
         onOpenChange={setNewFeatureDialogOpen} 
         projects={projects}
-        onAddFeature={handleAddFeature}
+        onCreateFeature={handleAddFeature}
       />
       
       <NewProjectDialog 
         open={newProjectDialogOpen} 
         onOpenChange={setNewProjectDialogOpen} 
-        onAddProject={handleAddProject}
+        onCreateProject={handleAddProject}
       />
     </CustomCard>
   );
