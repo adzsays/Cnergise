@@ -1,10 +1,8 @@
-
 import React, { useState } from "react";
 import { CustomCard } from "@/components/ui/CustomCard";
 import { Button } from "@/components/ui/button";
 import { Plus, FolderPlus, Search, Tag } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { ProjectList } from "@/components/tasks/ProjectList";
 import { TaskList } from "@/components/tasks/TaskList";
 import { NewProjectDialog } from "@/components/tasks/NewProjectDialog";
 import { NewTaskDialog } from "@/components/tasks/NewTaskDialog";
@@ -322,7 +320,6 @@ export function ProjectTaskManager({
       featureId: newTask.featureId || getDefaultFeatureId(newTask.projectId)
     };
     
-    // If a team was selected but no assignee, we could add logic here
     if (updatedTask.teamId && !updatedTask.assigneeId) {
       const teamMembers = teams.find(t => t.id === updatedTask.teamId)?.members || [];
       if (teamMembers.length > 0) {
@@ -477,107 +474,67 @@ export function ProjectTaskManager({
     return projectFeatures.length > 0 ? projectFeatures[0].id : "";
   };
 
+  const projectFeatures = selectedProject
+    ? features.filter(feature => feature.projectId === selectedProject)
+    : features;
+
   return (
-    <div className="grid grid-cols-4 gap-6">
-      <div className="col-span-1">
-        <CustomCard 
-          title="Projects" 
-          description="Manage your projects" 
-          className="h-full"
-        >
-          <div className="mb-4 flex items-center gap-2">
+    <div className="w-full">
+      <CustomCard 
+        title="Tasks" 
+        description="Manage and organize your tasks"
+        className="h-full"
+        titleExtra={
+          <div className="flex items-center gap-2">
             <Button 
               onClick={() => handleOpenProjectDialog(true)}
-              className="w-full"
+              size="sm"
             >
               <FolderPlus className="h-4 w-4 mr-2" />
               New Project
             </Button>
+            <Button onClick={() => setShowNewFeatureDialog(true)} size="sm">
+              <Tag className="h-4 w-4 mr-2" />
+              New Feature
+            </Button>
+            <Button onClick={() => setShowNewTaskDialog(true)} size="sm">
+              <Plus className="h-4 w-4 mr-2" />
+              New Task
+            </Button>
+            <Select
+              value={baseCurrency}
+              onValueChange={(val) => setBaseCurrency(val as CurrencyType)}
+            >
+              <SelectTrigger className="w-[100px]">
+                <SelectValue placeholder="Currency" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="USD">USD ($)</SelectItem>
+                <SelectItem value="EUR">EUR (€)</SelectItem>
+                <SelectItem value="GBP">GBP (£)</SelectItem>
+                <SelectItem value="JPY">JPY (¥)</SelectItem>
+                <SelectItem value="INR">INR (₹)</SelectItem>
+                <SelectItem value="CNY">CNY (¥)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        }
+      >
+        <div className="flex flex-wrap gap-3 mb-6">
+          <div className="flex-1 min-w-[250px]">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search tasks..."
+                className="pl-8"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
           </div>
           
-          <ProjectList 
-            projects={projects} 
-            selectedProject={selectedProject}
-            onSelectProject={handleSelectProject}
-          />
-          
-          {selectedProject && (
-            <div className="mt-4">
-              <h3 className="font-medium text-sm mb-2">Features</h3>
-              <div className="space-y-2">
-                {features
-                  .filter(feature => feature.projectId === selectedProject)
-                  .map(feature => (
-                    <div 
-                      key={feature.id}
-                      onClick={() => setSelectedFeature(feature.id === selectedFeature ? null : feature.id)}
-                      className={`px-3 py-2 rounded-md cursor-pointer text-sm ${
-                        feature.id === selectedFeature 
-                          ? "bg-primary text-primary-foreground" 
-                          : "hover:bg-muted"
-                      }`}
-                    >
-                      {feature.name}
-                    </div>
-                  ))}
-              </div>
-            </div>
-          )}
-        </CustomCard>
-      </div>
-      
-      <div className="col-span-3">
-        <CustomCard 
-          title={
-            selectedProject 
-              ? `Tasks: ${projects.find(p => p.id === selectedProject)?.name}` 
-              : "All Tasks"
-          }
-          description="Manage and organize your tasks"
-          className="h-full"
-          titleExtra={
-            <div className="flex items-center gap-2">
-              <Button onClick={() => setShowNewFeatureDialog(true)} size="sm">
-                <Tag className="h-4 w-4 mr-2" />
-                New Feature
-              </Button>
-              <Button onClick={() => setShowNewTaskDialog(true)} size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                New Task
-              </Button>
-              <Select
-                value={baseCurrency}
-                onValueChange={(val) => setBaseCurrency(val as CurrencyType)}
-              >
-                <SelectTrigger className="w-[100px]">
-                  <SelectValue placeholder="Currency" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="USD">USD ($)</SelectItem>
-                  <SelectItem value="EUR">EUR (€)</SelectItem>
-                  <SelectItem value="GBP">GBP (£)</SelectItem>
-                  <SelectItem value="JPY">JPY (¥)</SelectItem>
-                  <SelectItem value="INR">INR (₹)</SelectItem>
-                  <SelectItem value="CNY">CNY (¥)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          }
-        >
-          <div className="flex flex-wrap gap-3 mb-6">
-            <div className="flex-1 min-w-[250px]">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Search tasks..."
-                  className="pl-8"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </div>
-            
+          <div className="flex flex-wrap gap-2">
             <Select
               value={statusFilter || "all"}
               onValueChange={val => setStatusFilter(val !== "all" ? val : null)}
@@ -642,22 +599,55 @@ export function ProjectTaskManager({
               </SelectContent>
             </Select>
           </div>
+        </div>
+        
+        <div className="mb-4 flex flex-wrap gap-2">
+          <Select 
+            value={selectedProject || "all"} 
+            onValueChange={(value) => setSelectedProject(value === "all" ? null : value)}
+          >
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Select Project" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Projects</SelectItem>
+              {projects.map(project => (
+                <SelectItem key={project.id} value={project.id}>{project.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           
-          <TaskList 
-            tasks={filteredTasks} 
-            projects={projects}
-            features={features}
-            teams={teams}
-            people={people}
-            baseCurrency={baseCurrency}
-            onToggleSubtask={handleToggleSubtask}
-            onUpdateTaskStatus={handleUpdateTaskStatus}
-            onUpdateTaskCompletion={handleUpdateTaskCompletion}
-            onUpdateTask={handleUpdateTask}
-            onAssignPerson={handleAssignPerson}
-          />
-        </CustomCard>
-      </div>
+          <Select
+            value={selectedFeature || "all"}
+            onValueChange={(value) => setSelectedFeature(value === "all" ? null : value)}
+            disabled={!selectedProject}
+          >
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Select Feature" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Features</SelectItem>
+              {projectFeatures.map(feature => (
+                <SelectItem key={feature.id} value={feature.id}>{feature.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <TaskList 
+          tasks={filteredTasks} 
+          projects={projects}
+          features={features}
+          teams={teams}
+          people={people}
+          baseCurrency={baseCurrency}
+          onToggleSubtask={handleToggleSubtask}
+          onUpdateTaskStatus={handleUpdateTaskStatus}
+          onUpdateTaskCompletion={handleUpdateTaskCompletion}
+          onUpdateTask={handleUpdateTask}
+          onAssignPerson={handleAssignPerson}
+        />
+      </CustomCard>
       
       {!onOpenProjectDialog && (
         <NewProjectDialog 

@@ -35,24 +35,6 @@ const TaskManagement = () => {
               Task Management
             </h1>
             <div className="flex items-center gap-2">
-              <Button 
-                onClick={() => setShowNewFeatureDialog(true)}
-                variant="outline"
-                className="gap-1"
-                size="sm"
-              >
-                <Tag className="h-3.5 w-3.5" />
-                New Feature
-              </Button>
-              <Button 
-                onClick={() => setShowNewProjectDialog(true)}
-                variant="outline"
-                className="gap-1"
-                size="sm"
-              >
-                <FolderPlus className="h-3.5 w-3.5" />
-                New Project
-              </Button>
               <div className="h-8 w-8 rounded-full bg-gradient-to-r from-taskfinity-blue to-taskfinity-purple"></div>
             </div>
           </div>
