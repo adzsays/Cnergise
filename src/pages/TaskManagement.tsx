@@ -57,7 +57,7 @@ const TaskManagement = () => {
         open={showNewFeatureDialog}
         onOpenChange={setShowNewFeatureDialog}
         onCreateFeature={handleCreateFeature}
-        projects={projects.length > 0 ? projects : projects}
+        projects={projects}
       />
     </div>
   );

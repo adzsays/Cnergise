@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { CustomCard } from "@/components/ui/CustomCard";
 import { Button } from "@/components/ui/button";
@@ -87,7 +86,6 @@ export interface Person {
   teamId: string;
 }
 
-// Sample data
 const initialProjects: Project[] = [
   { 
     id: "p1", 
@@ -271,7 +269,6 @@ const ProjectTaskManager: React.FC = () => {
   const [isEditingTask, setIsEditingTask] = useState(false);
   const [currentTask, setCurrentTask] = useState<Task | null>(null);
 
-  // Handlers for adding new projects, features, and tasks
   const handleAddProject = (project: Project) => {
     setProjects([...projects, project]);
     toast({
@@ -289,7 +286,7 @@ const ProjectTaskManager: React.FC = () => {
   };
 
   const handleAddTask = (task: Task) => {
-    if (isEditingTask) {
+    if (isEditingTask && currentTask) {
       setTasks(tasks.map(t => t.id === task.id ? task : t));
       setIsEditingTask(false);
       setCurrentTask(null);
@@ -304,26 +301,22 @@ const ProjectTaskManager: React.FC = () => {
         description: `${task.title} has been created successfully.`,
       });
     }
+    setNewTaskDialogOpen(false);
   };
 
-  // Filter tasks based on selected project and feature
   const filteredTasks = tasks.filter(task => {
     const matchesProject = selectedProject === "all" || task.projectId === selectedProject;
     const matchesFeature = selectedFeature === "all" || task.featureId === selectedFeature;
     return matchesProject && matchesFeature;
   });
 
-  // Get available features for the selected project
   const availableFeatures = selectedProject === "all"
     ? features
     : features.filter(feature => feature.projectId === selectedProject);
 
-  // Handler for task status updates
   const handleTaskStatusChange = (taskId: string, status: TaskStatus) => {
     setTasks(tasks.map(task => {
       if (task.id === taskId) {
-        // If status is being set to completed, set completion percentage to 100 and add completed date
-        // If status is changing from completed to another status, adjust completion percentage if needed
         const completionPercentage = status === "completed" ? 100 : task.completionPercentage;
         const completedDate = status === "completed" 
           ? new Date().toISOString().split('T')[0] 
@@ -340,7 +333,6 @@ const ProjectTaskManager: React.FC = () => {
     }));
   };
 
-  // Handler for deleting tasks
   const handleDeleteTask = (taskId: string) => {
     setTasks(tasks.filter(task => task.id !== taskId));
     toast({
@@ -349,7 +341,6 @@ const ProjectTaskManager: React.FC = () => {
     });
   };
 
-  // Handler for updating subtask completion status
   const handleSubtaskToggle = (taskId: string, subtaskId: string, completed: boolean) => {
     setTasks(tasks.map(task => {
       if (task.id === taskId) {
@@ -360,13 +351,13 @@ const ProjectTaskManager: React.FC = () => {
         const totalSubtasks = updatedSubtasks.length;
         const completedSubtasks = updatedSubtasks.filter(st => st.completed).length;
         
-        // Calculate new completion percentage based on subtasks
         const newCompletionPercentage = totalSubtasks > 0 
           ? Math.round((completedSubtasks / totalSubtasks) * 100) 
           : task.completionPercentage;
         
-        // Check if newCompletionPercentage is 100 to set status to completed
-        const newStatus = newCompletionPercentage === 100 ? 'completed' as TaskStatus : task.status;
+        const newStatus = newCompletionPercentage === 100 && task.status !== "completed" 
+          ? 'completed' as TaskStatus 
+          : task.status;
         
         return {
           ...task,
@@ -380,18 +371,15 @@ const ProjectTaskManager: React.FC = () => {
     }));
   };
 
-  // Handler for editing tasks
   const handleEditTask = (task: Task) => {
     setCurrentTask(task);
     setIsEditingTask(true);
     setNewTaskDialogOpen(true);
   };
 
-  // Handler for updating task completion percentage
   const handleUpdateTaskCompletion = (taskId: string, percentage: number) => {
     setTasks(tasks.map(task => {
       if (task.id === taskId) {
-        // Update completion date if task is now complete (or clear it if going from complete to incomplete)
         const completedDate = percentage === 100 
             ? new Date().toISOString().split('T')[0] 
             : (percentage < 100 && task.completionPercentage === 100 ? undefined : task.completedDate);
@@ -417,7 +405,6 @@ const ProjectTaskManager: React.FC = () => {
   return (
     <CustomCard className="min-h-[85vh]">
       <div className="flex flex-col h-full">
-        {/* Header with project filter and action buttons */}
         <div className="flex flex-wrap items-center justify-between gap-4 p-4 border-b">
           <div className="flex flex-wrap items-center gap-3">
             <h2 className="text-xl font-semibold">Task Management</h2>
@@ -485,7 +472,6 @@ const ProjectTaskManager: React.FC = () => {
           </div>
         </div>
         
-        {/* Main content area with task list */}
         <div className="flex-1 p-4 overflow-auto">
           <TaskList 
             tasks={filteredTasks} 
@@ -502,7 +488,6 @@ const ProjectTaskManager: React.FC = () => {
         </div>
       </div>
       
-      {/* Dialogs for creating new items */}
       <NewTaskDialog 
         open={newTaskDialogOpen} 
         onOpenChange={setNewTaskDialogOpen} 
@@ -511,8 +496,8 @@ const ProjectTaskManager: React.FC = () => {
         features={features}
         teams={teams}
         people={people}
-        selectedProject={selectedProject !== "all" ? selectedProject : null}
-        selectedFeature={selectedFeature !== "all" ? selectedFeature : null}
+        selectedProject={selectedProject !== "all" ? selectedProject : undefined}
+        selectedFeature={selectedFeature !== "all" ? selectedFeature : undefined}
       />
       
       <NewFeatureDialog 

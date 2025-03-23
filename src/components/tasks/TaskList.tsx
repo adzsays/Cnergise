@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { 
   type Task, 
@@ -195,7 +196,11 @@ export function TaskList({
     }
   };
   
-  const handleEditTask = (taskId: string) => {
+  const handleEditTask = (task: Task) => {
+    onEdit(task);
+  };
+  
+  const handleInlineEdit = (taskId: string) => {
     setEditingTask(taskId);
     setExpandedTasks(prev => ({
       ...prev,
@@ -206,10 +211,11 @@ export function TaskList({
   const handleTaskTitleChange = (taskId: string, newTitle: string) => {
     const task = tasks.find(t => t.id === taskId);
     if (task) {
-      onEdit({
+      const updatedTask = {
         ...task,
         title: newTitle
-      });
+      };
+      onEdit(updatedTask);
     }
   };
   
@@ -217,11 +223,12 @@ export function TaskList({
     const task = tasks.find(t => t.id === taskId);
     if (task) {
       const person = people.find(p => p.id === personId);
-      onEdit({
+      const updatedTask = {
         ...task,
         assigneeId: personId,
         assignee: person ? person.name : ""
-      });
+      };
+      onEdit(updatedTask);
     }
   };
 
@@ -357,7 +364,7 @@ export function TaskList({
                                 Mark as Blocked
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem onSelect={() => onEdit(task)}>
+                              <DropdownMenuItem onSelect={() => handleEditTask(task)}>
                                 <Pencil className="h-3.5 w-3.5 mr-2" /> Edit Task
                               </DropdownMenuItem>
                               <DropdownMenuItem onSelect={() => onDelete(task.id)}>
@@ -525,7 +532,9 @@ export function TaskList({
                                         <div key={subtask.id} className="flex items-center gap-1.5">
                                           <Checkbox 
                                             checked={subtask.completed}
-                                            onCheckedChange={() => onSubtaskToggle(task.id, subtask.id, !subtask.completed)}
+                                            onCheckedChange={(checked) => {
+                                              onSubtaskToggle(task.id, subtask.id, checked === true);
+                                            }}
                                             id={`subtask-${subtask.id}`}
                                             className="h-3 w-3"
                                           />
@@ -561,7 +570,7 @@ export function TaskList({
                                       className="w-full text-xs h-7"
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        handleEditTask(task.id);
+                                        handleInlineEdit(task.id);
                                       }}
                                     >
                                       <Pencil className="h-3 w-3 mr-1" />
@@ -584,4 +593,92 @@ export function TaskList({
       )}
     </div>
   );
+  
+  // Helper functions
+  function getStatusIcon(status: Task['status']) {
+    switch(status) {
+      case 'todo':
+        return <Clock className="h-3 w-3 text-muted-foreground" />;
+      case 'in-progress':
+        return <ArrowRight className="h-3 w-3 text-blue-500" />;
+      case 'completed':
+        return <CheckCircle2 className="h-3 w-3 text-green-500" />;
+      case 'blocked':
+        return <AlertCircle className="h-3 w-3 text-red-500" />;
+      default:
+        return <Clock className="h-3 w-3 text-muted-foreground" />;
+    }
+  }
+  
+  function getStatusLabel(status: Task['status']) {
+    switch(status) {
+      case 'todo': return 'To Do';
+      case 'in-progress': return 'In Progress';
+      case 'completed': return 'Completed';
+      case 'blocked': return 'Blocked';
+      default: return status;
+    }
+  }
+  
+  function getStageLabel(stage: Task['stage']) {
+    switch(stage) {
+      case 'requirements': return 'Requirements';
+      case 'development': return 'Development';
+      case 'testing': return 'Testing';
+      case 'release': return 'Release';
+      case 'go-live': return 'Go-Live';
+      default: return stage;
+    }
+  }
+  
+  function getFunctionLabel(func?: string) {
+    if (!func) return 'N/A';
+    switch(func) {
+      case 'backend': return 'Backend';
+      case 'frontend': return 'Frontend';
+      case 'design': return 'Design';
+      case 'qa': return 'QA';
+      case 'devops': return 'DevOps';
+      case 'business': return 'Business';
+      default: return 'Other';
+    }
+  }
+  
+  function getPriorityColor(priority: Task['priority']) {
+    switch(priority) {
+      case 'low': return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100";
+      case 'medium': return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100";
+      case 'high': return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100";
+      case 'urgent': return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100";
+      default: return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100";
+    }
+  }
+  
+  function getProjectColor(projectId: string) {
+    const project = projects.find(p => p.id === projectId);
+    return project ? project.color : "#6b7280";
+  }
+  
+  function getProjectName(projectId: string) {
+    const project = projects.find(p => p.id === projectId);
+    return project ? project.name : "Unknown Project";
+  }
+  
+  function getFeatureName(featureId?: string) {
+    if (!featureId) return "N/A";
+    const feature = features.find(f => f.id === featureId);
+    return feature ? feature.name : "Unknown Feature";
+  }
+  
+  function getTeamName(teamId?: string) {
+    if (!teamId) return "N/A";
+    const team = teams.find(t => t.id === teamId);
+    return team ? team.name : "Unknown Team";
+  }
+  
+  function getPersonName(personId?: string) {
+    if (!personId) return "Unassigned";
+    const person = people.find(p => p.id === personId);
+    return person ? person.name : "Unknown Person";
+  }
 }

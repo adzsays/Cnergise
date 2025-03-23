@@ -48,8 +48,9 @@ interface NewTaskDialogProps {
   features: Feature[];
   teams?: Team[];
   people?: Person[];
-  selectedProject?: string | null;
-  selectedFeature?: string | null;
+  selectedProject?: string;
+  selectedFeature?: string;
+  task?: Task;
 }
 
 export function NewTaskDialog({ 
@@ -61,7 +62,8 @@ export function NewTaskDialog({
   teams = [],
   people = [],
   selectedProject,
-  selectedFeature
+  selectedFeature,
+  task
 }: NewTaskDialogProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -75,16 +77,70 @@ export function NewTaskDialog({
   const [priority, setPriority] = useState<Task["priority"]>("medium");
   const [dueDate, setDueDate] = useState("");
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [isEditing, setIsEditing] = useState(false);
+  const [taskId, setTaskId] = useState("");
+  const [completionPercentage, setCompletionPercentage] = useState(0);
+  const [subtasks, setSubtasks] = useState<Subtask[]>([]);
+  const [createdAt, setCreatedAt] = useState("");
+  const [completedDate, setCompletedDate] = useState<string | undefined>(undefined);
+  
+  // Set form values when editing an existing task
+  useEffect(() => {
+    if (task) {
+      setTitle(task.title);
+      setDescription(task.description || "");
+      setProjectId(task.projectId);
+      setFeatureId(task.featureId || "");
+      setFunctionType(task.functionType || "frontend");
+      setStage(task.stage);
+      setTeamId(task.teamId || "");
+      setAssigneeId(task.assigneeId || "");
+      setStatus(task.status);
+      setPriority(task.priority);
+      setDueDate(task.dueDate || "");
+      setStartDate(task.startDate || new Date().toISOString().split('T')[0]);
+      setIsEditing(true);
+      setTaskId(task.id);
+      setCompletionPercentage(task.completionPercentage);
+      setSubtasks(task.subtasks);
+      setCreatedAt(task.createdAt);
+      setCompletedDate(task.completedDate);
+    } else {
+      // Reset form for new task
+      setTitle("");
+      setDescription("");
+      setProjectId(selectedProject || "");
+      setFeatureId(selectedFeature || "");
+      setFunctionType("frontend");
+      setStage("requirements");
+      setTeamId("");
+      setAssigneeId("");
+      setStatus("todo");
+      setPriority("medium");
+      setDueDate("");
+      setStartDate(new Date().toISOString().split('T')[0]);
+      setIsEditing(false);
+      setTaskId("");
+      setCompletionPercentage(0);
+      setSubtasks([]);
+      setCreatedAt("");
+      setCompletedDate(undefined);
+    }
+  }, [task, open, selectedProject, selectedFeature]);
   
   // Filter features based on selected project (safely)
-  const projectFeatures = features ? features.filter(feature => feature.projectId === projectId) : [];
+  const projectFeatures = projectId 
+    ? features.filter(feature => feature.projectId === projectId) 
+    : [];
   
   // Filter team members based on selected team (safely)
-  const teamMembers = people ? people.filter(person => person.teamId === teamId) : [];
+  const teamMembers = teamId 
+    ? people.filter(person => person.teamId === teamId) 
+    : [];
   
   // Reset or set feature when project changes
   useEffect(() => {
-    if (projectId && features && features.length > 0) {
+    if (projectId && features.length > 0) {
       // If current feature doesn't belong to selected project, reset it
       const featureBelongsToProject = features.some(
         f => f.id === featureId && f.projectId === projectId
@@ -102,7 +158,7 @@ export function NewTaskDialog({
   
   // When team changes, reset assignee if they're not on the team
   useEffect(() => {
-    if (teamId && assigneeId && people && people.length > 0) {
+    if (teamId && assigneeId && people.length > 0) {
       const assigneeBelongsToTeam = people.some(
         p => p.id === assigneeId && p.teamId === teamId
       );
@@ -119,11 +175,11 @@ export function NewTaskDialog({
     if (!title.trim() || !projectId) return;
     
     // Get name of assignee if ID is set
-    const assigneePerson = people && people.length > 0 ? people.find(p => p.id === assigneeId) : undefined;
-    const assigneeName = assigneePerson ? assigneePerson.name : undefined;
+    const assigneePerson = people.find(p => p.id === assigneeId);
+    const assigneeName = assigneePerson ? assigneePerson.name : "";
     
-    const newTask: Task = {
-      id: `task-${Date.now()}`,
+    const taskToSave: Task = {
+      id: isEditing ? taskId : `task-${Date.now()}`,
       title: title.trim(),
       description: description.trim() || undefined,
       featureId: featureId || undefined,
@@ -132,35 +188,18 @@ export function NewTaskDialog({
       projectId: projectId,
       teamId: teamId || undefined,
       assigneeId: assigneeId || undefined,
-      assignee: assigneeName || "",
+      assignee: assigneeName,
       status: status,
       priority: priority,
       startDate: startDate || undefined,
       dueDate: dueDate || undefined,
-      completionPercentage: 0,
-      createdAt: new Date().toISOString(),
-      subtasks: [],
+      completionPercentage: isEditing ? completionPercentage : 0,
+      createdAt: isEditing ? createdAt : new Date().toISOString(),
+      subtasks: isEditing ? subtasks : [],
+      completedDate: completedDate,
     };
     
-    onCreateTask(newTask);
-    
-    // Reset form
-    setTitle("");
-    setDescription("");
-    if (!selectedProject) {
-      setProjectId("");
-    }
-    if (!selectedFeature) {
-      setFeatureId("");
-    }
-    setFunctionType("frontend");
-    setStage("requirements");
-    setTeamId("");
-    setAssigneeId("");
-    setStatus("todo");
-    setPriority("medium");
-    setDueDate("");
-    setStartDate(new Date().toISOString().split('T')[0]);
+    onCreateTask(taskToSave);
   };
 
   return (
@@ -168,9 +207,11 @@ export function NewTaskDialog({
       <DialogContent className="max-w-xl">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Create a New Task</DialogTitle>
+            <DialogTitle>{isEditing ? "Edit Task" : "Create a New Task"}</DialogTitle>
             <DialogDescription>
-              Add a new task to your project.
+              {isEditing 
+                ? "Update the task information." 
+                : "Add a new task to your project."}
             </DialogDescription>
           </DialogHeader>
           
@@ -203,7 +244,7 @@ export function NewTaskDialog({
                 <Select
                   value={projectId}
                   onValueChange={setProjectId}
-                  disabled={!!selectedProject}
+                  disabled={!!selectedProject || isEditing}
                 >
                   <SelectTrigger id="project-select">
                     <SelectValue placeholder="Select a project" />
@@ -387,7 +428,9 @@ export function NewTaskDialog({
             <Button variant="outline" type="button" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={!title.trim() || !projectId}>Create Task</Button>
+            <Button type="submit" disabled={!title.trim() || !projectId}>
+              {isEditing ? "Update Task" : "Create Task"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
