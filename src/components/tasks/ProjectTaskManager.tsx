@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { CustomCard } from "@/components/ui/CustomCard";
 import { Button } from "@/components/ui/button";
@@ -322,23 +321,25 @@ export function ProjectTaskManager({
   };
 
   const handleUpdateTaskCompletion = (taskId: string, percentage: number) => {
-    setTasks(tasks.map(task => {
-      if (task.id === taskId) {
-        const completedDate = percentage === 100 
-          ? new Date().toISOString().split('T')[0] 
-          : (percentage < 100 && task.completionPercentage === 100 ? undefined : task.completedDate);
-        
-        const status = percentage === 100 ? 'completed' as const : task.status;
-        
-        return { 
-          ...task, 
-          completionPercentage: percentage,
-          completedDate,
-          status
-        };
-      }
-      return task;
-    }));
+    setTasks(prevTasks => 
+      prevTasks.map(task => {
+        if (task.id === taskId) {
+          const completedDate = percentage === 100 
+            ? new Date().toISOString().split('T')[0] 
+            : (percentage < 100 && task.completionPercentage === 100 ? undefined : task.completedDate);
+          
+          const status = percentage === 100 ? 'completed' as const : task.status;
+          
+          return { 
+            ...task, 
+            completionPercentage: percentage,
+            completedDate,
+            status
+          };
+        }
+        return task;
+      })
+    );
   };
 
   const filteredTasks = tasks.filter(task => {
