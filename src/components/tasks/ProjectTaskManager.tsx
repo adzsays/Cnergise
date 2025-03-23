@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { CustomCard } from "@/components/ui/CustomCard";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,14 @@ export type FunctionType = "backend" | "frontend" | "design" | "qa" | "devops" |
 export type StageType = "requirements" | "development" | "testing" | "release" | "go-live";
 export type CurrencyType = "USD" | "EUR" | "GBP" | "JPY" | "INR" | "CNY";
 
+export interface Person {
+  id: string;
+  name: string;
+  teamId: string;
+  role?: string;
+  email?: string;
+}
+
 export interface Subtask {
   id: string;
   title: string;
@@ -58,6 +67,7 @@ export interface Task {
   stage: StageType;
   projectId: string;
   teamId?: string;
+  assigneeId?: string;
   assignee?: string;
   status: "todo" | "in-progress" | "completed" | "blocked";
   priority: "low" | "medium" | "high" | "urgent";
@@ -78,7 +88,7 @@ export interface Task {
 export interface Team {
   id: string;
   name: string;
-  members: string[];
+  members: Person[];
 }
 
 interface ProjectTaskManagerProps {
@@ -161,21 +171,30 @@ export function ProjectTaskManager({
     }
   ]);
 
+  const [people, setPeople] = useState<Person[]>([
+    { id: "person1", name: "John Doe", teamId: "team1", role: "Frontend Developer", email: "john@example.com" },
+    { id: "person2", name: "Jane Smith", teamId: "team1", role: "UI Designer", email: "jane@example.com" },
+    { id: "person3", name: "Alice Johnson", teamId: "team2", role: "Backend Developer", email: "alice@example.com" },
+    { id: "person4", name: "Bob Brown", teamId: "team2", role: "DevOps Engineer", email: "bob@example.com" },
+    { id: "person5", name: "Charlie Davis", teamId: "team3", role: "UX Designer", email: "charlie@example.com" },
+    { id: "person6", name: "Diana Evans", teamId: "team3", role: "Graphic Designer", email: "diana@example.com" },
+  ]);
+
   const [teams, setTeams] = useState<Team[]>([
     {
       id: "team1",
       name: "Frontend Team",
-      members: ["John Doe", "Jane Smith"]
+      members: people.filter(p => p.teamId === "team1")
     },
     {
       id: "team2",
       name: "Backend Team",
-      members: ["Alice Johnson", "Bob Brown"]
+      members: people.filter(p => p.teamId === "team2")
     },
     {
       id: "team3",
       name: "Design Team",
-      members: ["Charlie Davis", "Diana Evans"]
+      members: people.filter(p => p.teamId === "team3")
     }
   ]);
 
@@ -190,7 +209,8 @@ export function ProjectTaskManager({
       stage: "development",
       projectId: "website",
       teamId: "team3",
-      assignee: "John Doe",
+      assigneeId: "person5",
+      assignee: "Charlie Davis",
       status: "in-progress",
       priority: "high",
       monetaryImpact: {
@@ -219,6 +239,7 @@ export function ProjectTaskManager({
       stage: "development",
       projectId: "mobile",
       teamId: "team2",
+      assigneeId: "person3",
       assignee: "Alice Johnson",
       status: "todo",
       priority: "medium",
@@ -243,6 +264,8 @@ export function ProjectTaskManager({
       stage: "requirements",
       projectId: "marketing",
       teamId: "team1",
+      assigneeId: "person2",
+      assignee: "Jane Smith",
       status: "todo",
       priority: "medium",
       monetaryImpact: {
@@ -272,6 +295,7 @@ export function ProjectTaskManager({
   const [stageFilter, setStageFilter] = useState<string | null>(null);
   const [functionFilter, setFunctionFilter] = useState<string | null>(null);
   const [teamFilter, setTeamFilter] = useState<string | null>(null);
+  const [personFilter, setPersonFilter] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [baseCurrency, setBaseCurrency] = useState<CurrencyType>("USD");
   const [editingCompletion, setEditingCompletion] = useState<{ taskId: string, value: string } | null>(null);
@@ -297,6 +321,16 @@ export function ProjectTaskManager({
       ...newTask,
       featureId: newTask.featureId || getDefaultFeatureId(newTask.projectId)
     };
+    
+    // If a team was selected but no assignee, we could add logic here
+    if (updatedTask.teamId && !updatedTask.assigneeId) {
+      const teamMembers = teams.find(t => t.id === updatedTask.teamId)?.members || [];
+      if (teamMembers.length > 0) {
+        const firstMember = teamMembers[0];
+        updatedTask.assigneeId = firstMember.id;
+        updatedTask.assignee = firstMember.name;
+      }
+    }
     
     setTasks([...tasks, updatedTask]);
     setShowNewTaskDialog(false);
@@ -331,7 +365,8 @@ export function ProjectTaskManager({
           ...task,
           subtasks: updatedSubtasks,
           completionPercentage: newCompletionPercentage,
-          completedDate: newCompletionPercentage === 100 ? new Date().toISOString().split('T')[0] : task.completedDate
+          completedDate: newCompletionPercentage === 100 ? new Date().toISOString().split('T')[0] : task.completedDate,
+          status: newCompletionPercentage === 100 ? 'completed' : task.status
         };
       }
       return task;
@@ -390,6 +425,25 @@ export function ProjectTaskManager({
     );
   };
 
+  const handleAssignPerson = (taskId: string, personId: string) => {
+    const person = people.find(p => p.id === personId);
+    if (!person) return;
+    
+    setTasks(prevTasks => 
+      prevTasks.map(task => {
+        if (task.id === taskId) {
+          return {
+            ...task,
+            assigneeId: personId,
+            assignee: person.name,
+            teamId: person.teamId
+          };
+        }
+        return task;
+      })
+    );
+  };
+
   const handleCompletionBlur = () => {
     if (editingCompletion) {
       const { taskId, value } = editingCompletion;
@@ -407,6 +461,7 @@ export function ProjectTaskManager({
     const matchesStage = stageFilter && stageFilter !== "all" ? task.stage === stageFilter : true;
     const matchesFunction = functionFilter && functionFilter !== "all" ? task.functionType === functionFilter : true;
     const matchesTeam = teamFilter && teamFilter !== "all" ? task.teamId === teamFilter : true;
+    const matchesPerson = personFilter && personFilter !== "all" ? task.assigneeId === personFilter : true;
     const matchesSearch = searchQuery 
       ? task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         task.taskNo.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -414,7 +469,7 @@ export function ProjectTaskManager({
       : true;
     
     return matchesProject && matchesFeature && matchesStatus && matchesPriority && 
-           matchesStage && matchesFunction && matchesTeam && matchesSearch;
+           matchesStage && matchesFunction && matchesTeam && matchesPerson && matchesSearch;
   });
 
   const getDefaultFeatureId = (projectId: string): string => {
@@ -571,6 +626,21 @@ export function ProjectTaskManager({
                 ))}
               </SelectContent>
             </Select>
+            
+            <Select
+              value={personFilter || "all"}
+              onValueChange={val => setPersonFilter(val !== "all" ? val : null)}
+            >
+              <SelectTrigger className="w-[130px]">
+                <SelectValue placeholder="Person" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All People</SelectItem>
+                {people.map(person => (
+                  <SelectItem key={person.id} value={person.id}>{person.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           
           <TaskList 
@@ -578,11 +648,13 @@ export function ProjectTaskManager({
             projects={projects}
             features={features}
             teams={teams}
+            people={people}
             baseCurrency={baseCurrency}
             onToggleSubtask={handleToggleSubtask}
             onUpdateTaskStatus={handleUpdateTaskStatus}
             onUpdateTaskCompletion={handleUpdateTaskCompletion}
             onUpdateTask={handleUpdateTask}
+            onAssignPerson={handleAssignPerson}
           />
         </CustomCard>
       </div>
@@ -601,6 +673,7 @@ export function ProjectTaskManager({
         projects={projects}
         features={features}
         teams={teams}
+        people={people}
         selectedProject={selectedProject}
         selectedFeature={selectedFeature}
         onCreateTask={handleCreateTask}

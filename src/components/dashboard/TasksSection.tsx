@@ -3,7 +3,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, Clock, Paperclip, User, Users, Tag, DollarSign } from "lucide-react";
+import { CheckCircle2, Clock, Paperclip, UserRound, Users, Tag, DollarSign } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
 interface TasksSectionProps {
@@ -157,7 +157,7 @@ export function TasksSection({ projectFilter }: TasksSectionProps) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium">{task.title}</p>
-                <div className="flex items-center text-xs text-muted-foreground mt-1 gap-2">
+                <div className="flex items-center text-xs text-muted-foreground mt-1 gap-2 flex-wrap">
                   <div className="flex items-center">
                     <Paperclip className="h-3 w-3 mr-1" />
                     {task.project}
@@ -174,13 +174,13 @@ export function TasksSection({ projectFilter }: TasksSectionProps) {
                   )}
                 </div>
                 <div className="flex items-center justify-between mt-2">
-                  <div className="flex items-center text-xs text-muted-foreground gap-2">
+                  <div className="flex items-center text-xs text-muted-foreground gap-2 flex-wrap">
                     <div className="flex items-center">
                       <Clock className="h-3 w-3 mr-1" />
                       {task.dueDate}
                     </div>
                     <div className="flex items-center">
-                      <User className="h-3 w-3 mr-1" />
+                      <UserRound className="h-3 w-3 mr-1" />
                       {task.assignee}
                     </div>
                     <div className="flex items-center">

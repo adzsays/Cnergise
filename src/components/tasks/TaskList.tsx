@@ -1,6 +1,13 @@
 
 import React, { useState } from "react";
-import { type Task, type Project, type Feature, type Team, type CurrencyType } from "./ProjectTaskManager";
+import { 
+  type Task, 
+  type Project, 
+  type Feature, 
+  type Team, 
+  type CurrencyType,
+  type Person
+} from "./ProjectTaskManager";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -28,22 +35,37 @@ import {
   CalendarCheck,
   Pencil,
   Users,
-  User
+  UserRound
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { 
+  Form, 
+  FormControl, 
+  FormField, 
+  FormItem, 
+  FormLabel 
+} from "@/components/ui/form";
 import { useForm } from "react-hook-form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 
 interface TaskListProps {
   tasks: Task[];
   projects: Project[];
   features: Feature[];
   teams: Team[];
+  people: Person[];
   baseCurrency: CurrencyType;
   onToggleSubtask: (taskId: string, subtaskId: string) => void;
   onUpdateTaskStatus: (taskId: string, status: Task['status']) => void;
   onUpdateTaskCompletion: (taskId: string, percentage: number) => void;
   onUpdateTask: (task: Task) => void;
+  onAssignPerson: (taskId: string, personId: string) => void;
 }
 
 export function TaskList({ 
@@ -51,11 +73,13 @@ export function TaskList({
   projects, 
   features,
   teams,
+  people,
   baseCurrency,
   onToggleSubtask, 
   onUpdateTaskStatus,
   onUpdateTaskCompletion,
-  onUpdateTask
+  onUpdateTask,
+  onAssignPerson
 }: TaskListProps) {
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
   const [editingCompletion, setEditingCompletion] = useState<{taskId: string, value: string} | null>(null);
@@ -149,6 +173,18 @@ export function TaskList({
     return team ? team.name : "Unknown Team";
   };
   
+  const getPersonName = (personId?: string) => {
+    if (!personId) return "Unassigned";
+    const person = people.find(p => p.id === personId);
+    return person ? person.name : "Unknown Person";
+  };
+  
+  const getTeamMembers = (teamId?: string) => {
+    if (!teamId) return [];
+    const team = teams.find(t => t.id === teamId);
+    return team ? team.members : [];
+  };
+  
   const handleCompletionChange = (taskId: string, value: string) => {
     setEditingCompletion({ taskId, value });
   };
@@ -177,14 +213,8 @@ export function TaskList({
     }
   };
   
-  const handleTaskAssigneeChange = (taskId: string, assignee: string) => {
-    const task = tasks.find(t => t.id === taskId);
-    if (task) {
-      onUpdateTask({
-        ...task,
-        assignee
-      });
-    }
+  const handleTaskAssigneeChange = (taskId: string, personId: string) => {
+    onAssignPerson(taskId, personId);
   };
 
   return (
@@ -257,8 +287,8 @@ export function TaskList({
                         </TableCell>
                         <TableCell className="py-2 text-xs">
                           <div className="flex items-center gap-1">
-                            <User className="h-3 w-3 text-muted-foreground" />
-                            <span>{task.assignee || "Unassigned"}</span>
+                            <UserRound className="h-3 w-3 text-muted-foreground" />
+                            <span>{task.assigneeId ? getPersonName(task.assigneeId) : "Unassigned"}</span>
                           </div>
                         </TableCell>
                         <TableCell className="py-2">
@@ -343,12 +373,21 @@ export function TaskList({
                                     </div>
                                     <div className="mb-2">
                                       <FormLabel className="text-xs font-medium">Assignee</FormLabel>
-                                      <Input 
-                                        value={task.assignee || ""}
-                                        className="h-8 text-sm"
-                                        onChange={(e) => handleTaskAssigneeChange(task.id, e.target.value)}
-                                        placeholder="Enter assignee name"
-                                      />
+                                      <Select
+                                        value={task.assigneeId || ""}
+                                        onValueChange={(value) => handleTaskAssigneeChange(task.id, value)}
+                                      >
+                                        <SelectTrigger className="h-8 text-sm">
+                                          <SelectValue placeholder="Assign to..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {people.map(person => (
+                                            <SelectItem key={person.id} value={person.id}>
+                                              {person.name} ({getTeamName(person.teamId)})
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
                                     </div>
                                   </div>
                                 ) : (
@@ -418,6 +457,24 @@ export function TaskList({
                                   <div className="flex items-center gap-2 mb-1">
                                     <Progress value={task.completionPercentage} className="h-2 flex-1" />
                                     <span className="text-xs font-semibold">{task.completionPercentage}%</span>
+                                  </div>
+                                </div>
+                                
+                                <div className="mb-3">
+                                  <h4 className="text-xs font-medium mb-1 flex items-center gap-1">
+                                    <Users className="h-3 w-3" />
+                                    Team
+                                  </h4>
+                                  <div className="text-xs mb-1">
+                                    {task.teamId ? getTeamName(task.teamId) : "No team assigned"}
+                                  </div>
+                                  
+                                  <h4 className="text-xs font-medium mb-1 flex items-center gap-1 mt-2">
+                                    <UserRound className="h-3 w-3" />
+                                    Assigned To
+                                  </h4>
+                                  <div className="text-xs">
+                                    {task.assigneeId ? getPersonName(task.assigneeId) : "Unassigned"}
                                   </div>
                                 </div>
                                 
