@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { CustomCard } from "@/components/ui/CustomCard";
 import { Button } from "@/components/ui/button";
@@ -359,12 +358,14 @@ export function ProjectTaskManager({
           ? Math.round((completedSubtasks / totalSubtasks) * 100) 
           : task.completionPercentage;
         
+        const newStatus = newCompletionPercentage === 100 ? 'completed' : task.status;
+        
         return {
           ...task,
           subtasks: updatedSubtasks,
           completionPercentage: newCompletionPercentage,
           completedDate: newCompletionPercentage === 100 ? new Date().toISOString().split('T')[0] : task.completedDate,
-          status: newCompletionPercentage === 100 ? 'completed' : task.status
+          status: newStatus
         };
       }
       return task;
@@ -399,9 +400,12 @@ export function ProjectTaskManager({
             ? new Date().toISOString().split('T')[0] 
             : (percentage < 100 && task.completionPercentage === 100 ? undefined : task.completedDate);
           
-          const status = percentage === 100 
-            ? 'completed' as const 
-            : task.status === 'completed' ? 'in-progress' as const : task.status;
+          let status = task.status;
+          if (percentage === 100) {
+            status = 'completed';
+          } else if (task.status === 'completed' && percentage < 100) {
+            status = 'in-progress';
+          }
           
           return { 
             ...task, 
