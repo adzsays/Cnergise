@@ -49,7 +49,7 @@ const TaskManagement = () => {
       <NewProjectDialog 
         open={showNewProjectDialog}
         onOpenChange={setShowNewProjectDialog}
-        onAddProject={handleCreateProject}
+        onCreateProject={handleCreateProject}
       />
       
       {/* Create Feature Dialog */}

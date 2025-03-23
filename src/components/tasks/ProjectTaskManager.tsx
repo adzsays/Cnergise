@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { CustomCard } from "@/components/ui/CustomCard";
 import { Button } from "@/components/ui/button";
@@ -163,11 +164,17 @@ const initialTasks: Task[] = [
     title: "Design Homepage Mockup", 
     description: "Create high-fidelity mockups for the homepage redesign.", 
     assignee: "Alex", 
+    assigneeId: "p1",
+    teamId: "team2",
     dueDate: "2023-07-15", 
+    startDate: "2023-07-01",
     priority: "high", 
     status: "completed", 
     projectId: "p1", 
     featureId: "f1",
+    functionType: "design",
+    stage: "development",
+    createdAt: "2023-07-01",
     subtasks: [
       { id: "st1", title: "Research competitor websites", completed: true },
       { id: "st2", title: "Create wireframes", completed: true },
@@ -181,11 +188,17 @@ const initialTasks: Task[] = [
     title: "Implement Homepage HTML/CSS", 
     description: "Convert the approved homepage design into responsive HTML and CSS.", 
     assignee: "Taylor", 
+    assigneeId: "p2",
+    teamId: "team1",
     dueDate: "2023-07-20", 
+    startDate: "2023-07-10",
     priority: "medium", 
     status: "in-progress", 
     projectId: "p1", 
     featureId: "f1",
+    functionType: "frontend",
+    stage: "development",
+    createdAt: "2023-07-10",
     subtasks: [
       { id: "st4", title: "Set up project structure", completed: true },
       { id: "st5", title: "Implement header and navigation", completed: true },
@@ -200,11 +213,17 @@ const initialTasks: Task[] = [
     title: "Blog Layout Design", 
     description: "Design the layout for the blog pages including list and detail views.", 
     assignee: "Morgan", 
+    assigneeId: "p3",
+    teamId: "team2",
     dueDate: "2023-07-25", 
+    startDate: "2023-07-15",
     priority: "low", 
     status: "todo", 
     projectId: "p1", 
     featureId: "f2",
+    functionType: "design",
+    stage: "requirements",
+    createdAt: "2023-07-15",
     subtasks: [
       { id: "st9", title: "Research blog layout best practices", completed: false },
       { id: "st10", title: "Create wireframes", completed: false },
@@ -217,11 +236,17 @@ const initialTasks: Task[] = [
     title: "Login Screen Development", 
     description: "Develop the login and registration screens for the mobile app.", 
     assignee: "Riley", 
+    assigneeId: "p4",
+    teamId: "team1",
     dueDate: "2023-07-18", 
+    startDate: "2023-07-08",
     priority: "high", 
     status: "blocked", 
     projectId: "p2", 
     featureId: "f3",
+    functionType: "frontend",
+    stage: "development",
+    createdAt: "2023-07-08",
     subtasks: [
       { id: "st12", title: "Design login screen", completed: true },
       { id: "st13", title: "Implement login functionality", completed: false },
@@ -302,7 +327,7 @@ const ProjectTaskManager: React.FC = () => {
         const completionPercentage = status === "completed" ? 100 : task.completionPercentage;
         const completedDate = status === "completed" 
           ? new Date().toISOString().split('T')[0] 
-          : (task.status === "completed" && status !== "completed" ? undefined : task.completedDate);
+          : (status !== "completed" && task.status === "completed" ? undefined : task.completedDate);
         
         return {
           ...task, 
@@ -481,20 +506,20 @@ const ProjectTaskManager: React.FC = () => {
       <NewTaskDialog 
         open={newTaskDialogOpen} 
         onOpenChange={setNewTaskDialogOpen} 
+        onCreateTask={handleAddTask}
         projects={projects}
         features={features}
         teams={teams}
         people={people}
-        onCreateTask={handleAddTask}
-        selectedProject={null}
-        selectedFeature={null}
+        selectedProject={selectedProject !== "all" ? selectedProject : null}
+        selectedFeature={selectedFeature !== "all" ? selectedFeature : null}
       />
       
       <NewFeatureDialog 
         open={newFeatureDialogOpen} 
         onOpenChange={setNewFeatureDialogOpen} 
-        projects={projects}
         onCreateFeature={handleAddFeature}
+        projects={projects}
       />
       
       <NewProjectDialog 

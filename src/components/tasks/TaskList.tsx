@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { 
   type Task, 
@@ -6,7 +5,8 @@ import {
   type Feature, 
   type Team, 
   type CurrencyType,
-  type Person
+  type Person,
+  type TaskStatus
 } from "./ProjectTaskManager";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -60,12 +60,11 @@ interface TaskListProps {
   features: Feature[];
   teams: Team[];
   people: Person[];
-  baseCurrency: CurrencyType;
-  onToggleSubtask: (taskId: string, subtaskId: string) => void;
-  onUpdateTaskStatus: (taskId: string, status: Task['status']) => void;
-  onUpdateTaskCompletion: (taskId: string, percentage: number) => void;
-  onUpdateTask: (task: Task) => void;
-  onAssignPerson: (taskId: string, personId: string) => void;
+  onStatusChange: (taskId: string, status: TaskStatus) => void;
+  onDelete: (taskId: string) => void;
+  onEdit: (task: Task) => void;
+  onSubtaskToggle: (taskId: string, subtaskId: string, completed: boolean) => void;
+  onUpdateCompletion: (taskId: string, percentage: number) => void;
 }
 
 export function TaskList({ 
@@ -74,12 +73,11 @@ export function TaskList({
   features,
   teams,
   people,
-  baseCurrency,
-  onToggleSubtask, 
-  onUpdateTaskStatus,
-  onUpdateTaskCompletion,
-  onUpdateTask,
-  onAssignPerson
+  onStatusChange, 
+  onDelete,
+  onEdit,
+  onSubtaskToggle,
+  onUpdateCompletion
 }: TaskListProps) {
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
   const [editingCompletion, setEditingCompletion] = useState<{taskId: string, value: string} | null>(null);
@@ -181,8 +179,7 @@ export function TaskList({
   
   const getTeamMembers = (teamId?: string) => {
     if (!teamId) return [];
-    const team = teams.find(t => t.id === teamId);
-    return team ? team.members : [];
+    return people.filter(p => p.teamId === teamId);
   };
   
   const handleCompletionChange = (taskId: string, value: string) => {
@@ -193,7 +190,7 @@ export function TaskList({
     if (editingCompletion) {
       const { taskId, value } = editingCompletion;
       const percentage = Math.min(100, Math.max(0, parseInt(value) || 0));
-      onUpdateTaskCompletion(taskId, percentage);
+      onUpdateCompletion(taskId, percentage);
       setEditingCompletion(null);
     }
   };
@@ -209,7 +206,7 @@ export function TaskList({
   const handleTaskTitleChange = (taskId: string, newTitle: string) => {
     const task = tasks.find(t => t.id === taskId);
     if (task) {
-      onUpdateTask({
+      onEdit({
         ...task,
         title: newTitle
       });
@@ -217,7 +214,15 @@ export function TaskList({
   };
   
   const handleTaskAssigneeChange = (taskId: string, personId: string) => {
-    onAssignPerson(taskId, personId);
+    const task = tasks.find(t => t.id === taskId);
+    if (task) {
+      const person = people.find(p => p.id === personId);
+      onEdit({
+        ...task,
+        assigneeId: personId,
+        assignee: person ? person.name : ""
+      });
+    }
   };
 
   return (
@@ -233,7 +238,7 @@ export function TaskList({
               <Table>
                 <TableHeader className="sticky top-0 z-10 bg-background">
                   <TableRow>
-                    <TableHead className="w-[60px]">Task #</TableHead>
+                    <TableHead className="w-[60px]">Task ID</TableHead>
                     <TableHead className="w-[180px]">Task Name</TableHead>
                     <TableHead className="w-[100px]">Feature</TableHead>
                     <TableHead className="w-[90px]">Function</TableHead>
@@ -259,7 +264,7 @@ export function TaskList({
                             ) : (
                               <ChevronRight className="h-3 w-3 text-muted-foreground" />
                             )}
-                            <span className="text-xs font-mono">{task.taskNo}</span>
+                            <span className="text-xs font-mono">{task.id.slice(0, 6)}</span>
                           </div>
                         </TableCell>
                         <TableCell className="py-2 font-medium text-xs">{task.title}</TableCell>
@@ -339,21 +344,24 @@ export function TaskList({
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onSelect={() => onUpdateTaskStatus(task.id, 'todo')}>
+                              <DropdownMenuItem onSelect={() => onStatusChange(task.id, 'todo')}>
                                 Mark as To Do
                               </DropdownMenuItem>
-                              <DropdownMenuItem onSelect={() => onUpdateTaskStatus(task.id, 'in-progress')}>
+                              <DropdownMenuItem onSelect={() => onStatusChange(task.id, 'in-progress')}>
                                 Mark as In Progress
                               </DropdownMenuItem>
-                              <DropdownMenuItem onSelect={() => onUpdateTaskStatus(task.id, 'completed')}>
+                              <DropdownMenuItem onSelect={() => onStatusChange(task.id, 'completed')}>
                                 Mark as Completed
                               </DropdownMenuItem>
-                              <DropdownMenuItem onSelect={() => onUpdateTaskStatus(task.id, 'blocked')}>
+                              <DropdownMenuItem onSelect={() => onStatusChange(task.id, 'blocked')}>
                                 Mark as Blocked
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem onSelect={() => handleEditTask(task.id)}>
+                              <DropdownMenuItem onSelect={() => onEdit(task)}>
                                 <Pencil className="h-3.5 w-3.5 mr-2" /> Edit Task
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => onDelete(task.id)}>
+                                Delete Task
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -405,7 +413,7 @@ export function TaskList({
                                           className="h-8 text-sm w-20"
                                           onChange={(e) => {
                                             const value = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
-                                            onUpdateTaskCompletion(task.id, value);
+                                            onUpdateCompletion(task.id, value);
                                           }}
                                         />
                                         <span className="text-xs">%</span>
@@ -517,7 +525,7 @@ export function TaskList({
                                         <div key={subtask.id} className="flex items-center gap-1.5">
                                           <Checkbox 
                                             checked={subtask.completed}
-                                            onCheckedChange={() => onToggleSubtask(task.id, subtask.id)}
+                                            onCheckedChange={() => onSubtaskToggle(task.id, subtask.id, !subtask.completed)}
                                             id={`subtask-${subtask.id}`}
                                             className="h-3 w-3"
                                           />
