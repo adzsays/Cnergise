@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { CustomCard } from "@/components/ui/CustomCard";
 import { Button } from "@/components/ui/button";
@@ -325,9 +326,9 @@ export function ProjectTaskManager({
       if (task.id === taskId) {
         const completedDate = percentage === 100 
           ? new Date().toISOString().split('T')[0] 
-          : (percentage !== 100 && task.completionPercentage === 100 ? undefined : task.completedDate);
+          : (percentage < 100 && task.completionPercentage === 100 ? undefined : task.completedDate);
         
-        const status = percentage === 100 ? 'completed' : task.status;
+        const status = percentage === 100 ? 'completed' as const : task.status;
         
         return { 
           ...task, 
