@@ -4,7 +4,6 @@ import { type Task, type Project, type Feature, type Team, type CurrencyType } f
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -25,26 +24,15 @@ import {
   AlertCircle,
   ArrowRight,
   Tag,
-  Code,
-  GitPullRequest,
-  Folder,
-  FileText,
-  Users,
-  User,
-  Banknote,
-  MessageCircle,
   Calendar,
   CalendarCheck,
-  Percent,
-  Paperclip,
-  DollarSign,
-  Euro,
-  PoundSterling,
-  JapaneseYen,
-  IndianRupee,
-  BarChart2
+  Pencil,
+  Users,
+  User
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
 
 interface TaskListProps {
   tasks: Task[];
@@ -55,6 +43,7 @@ interface TaskListProps {
   onToggleSubtask: (taskId: string, subtaskId: string) => void;
   onUpdateTaskStatus: (taskId: string, status: Task['status']) => void;
   onUpdateTaskCompletion: (taskId: string, percentage: number) => void;
+  onUpdateTask: (task: Task) => void;
 }
 
 export function TaskList({ 
@@ -65,10 +54,12 @@ export function TaskList({
   baseCurrency,
   onToggleSubtask, 
   onUpdateTaskStatus,
-  onUpdateTaskCompletion
+  onUpdateTaskCompletion,
+  onUpdateTask
 }: TaskListProps) {
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
   const [editingCompletion, setEditingCompletion] = useState<{taskId: string, value: string} | null>(null);
+  const [editingTask, setEditingTask] = useState<string | null>(null);
   
   const toggleTaskExpand = (taskId: string) => {
     setExpandedTasks(prev => ({
@@ -136,12 +127,6 @@ export function TaskList({
     }
   };
   
-  const calculateSubtaskProgress = (subtasks: Task['subtasks']) => {
-    if (subtasks.length === 0) return 0;
-    const completedCount = subtasks.filter(st => st.completed).length;
-    return Math.round((completedCount / subtasks.length) * 100);
-  };
-  
   const getProjectColor = (projectId: string) => {
     const project = projects.find(p => p.id === projectId);
     return project ? project.color : "#6b7280";
@@ -164,53 +149,6 @@ export function TaskList({
     return team ? team.name : "Unknown Team";
   };
   
-  const getCurrencySymbol = (currency: CurrencyType) => {
-    switch(currency) {
-      case 'USD': return '$';
-      case 'EUR': return '€';
-      case 'GBP': return '£';
-      case 'JPY': return '¥';
-      case 'INR': return '₹';
-      case 'CNY': return '¥';
-      default: return '$';
-    }
-  };
-  
-  const getCurrencyIcon = (currency: CurrencyType) => {
-    switch(currency) {
-      case 'USD': return <DollarSign className="h-3 w-3" />;
-      case 'EUR': return <Euro className="h-3 w-3" />;
-      case 'GBP': return <PoundSterling className="h-3 w-3" />;
-      case 'JPY': return <JapaneseYen className="h-3 w-3" />;
-      case 'INR': return <IndianRupee className="h-3 w-3" />;
-      case 'CNY': return <JapaneseYen className="h-3 w-3" />;
-      default: return <DollarSign className="h-3 w-3" />;
-    }
-  };
-  
-  const convertCurrency = (amount: number, fromCurrency: CurrencyType, toCurrency: CurrencyType) => {
-    const exchangeRates: Record<CurrencyType, number> = {
-      'USD': 1,
-      'EUR': 0.93,
-      'GBP': 0.79,
-      'JPY': 149.8,
-      'INR': 83.5,
-      'CNY': 7.21
-    };
-    
-    if (fromCurrency === toCurrency) return amount;
-    
-    const inUSD = amount / exchangeRates[fromCurrency];
-    return inUSD * exchangeRates[toCurrency];
-  };
-  
-  const formatCurrency = (amount: number, currency: CurrencyType) => {
-    return `${getCurrencySymbol(currency)}${amount.toLocaleString(undefined, {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    })}`;
-  };
-  
   const handleCompletionChange = (taskId: string, value: string) => {
     setEditingCompletion({ taskId, value });
   };
@@ -223,6 +161,31 @@ export function TaskList({
       setEditingCompletion(null);
     }
   };
+  
+  const handleEditTask = (taskId: string) => {
+    setEditingTask(taskId);
+    toggleTaskExpand(taskId);
+  };
+  
+  const handleTaskTitleChange = (taskId: string, newTitle: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (task) {
+      onUpdateTask({
+        ...task,
+        title: newTitle
+      });
+    }
+  };
+  
+  const handleTaskAssigneeChange = (taskId: string, assignee: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (task) {
+      onUpdateTask({
+        ...task,
+        assignee
+      });
+    }
+  };
 
   return (
     <div className="space-y-2">
@@ -233,7 +196,7 @@ export function TaskList({
       ) : (
         <div>
           <ScrollArea className="h-[calc(100vh-280px)]">
-            <div className="min-w-[900px] pr-4">
+            <div className="min-w-[900px]">
               <Table>
                 <TableHeader className="sticky top-0 z-10 bg-background">
                   <TableRow>
@@ -246,7 +209,7 @@ export function TaskList({
                     <TableHead className="w-[90px]">Team</TableHead>
                     <TableHead className="w-[90px]">Person</TableHead>
                     <TableHead className="w-[80px]">% Complete</TableHead>
-                    <TableHead className="w-[50px]"></TableHead>
+                    <TableHead className="w-[60px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -287,10 +250,16 @@ export function TaskList({
                           </div>
                         </TableCell>
                         <TableCell className="py-2 text-xs">
-                          {task.teamId ? getTeamName(task.teamId) : "N/A"}
+                          <div className="flex items-center gap-1">
+                            <Users className="h-3 w-3 text-muted-foreground" />
+                            <span>{task.teamId ? getTeamName(task.teamId) : "N/A"}</span>
+                          </div>
                         </TableCell>
                         <TableCell className="py-2 text-xs">
-                          {task.assignee || "Unassigned"}
+                          <div className="flex items-center gap-1">
+                            <User className="h-3 w-3 text-muted-foreground" />
+                            <span>{task.assignee || "Unassigned"}</span>
+                          </div>
                         </TableCell>
                         <TableCell className="py-2">
                           {editingCompletion?.taskId === task.id ? (
@@ -348,7 +317,9 @@ export function TaskList({
                                 Mark as Blocked
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem>Edit Task</DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => handleEditTask(task.id)}>
+                                <Pencil className="h-3.5 w-3.5 mr-2" /> Edit Task
+                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
@@ -360,21 +331,35 @@ export function TaskList({
                             <div className="grid grid-cols-2 gap-4 pt-1 pb-2">
                               <div>
                                 {/* Left column of expanded details */}
-                                {task.description && (
+                                {editingTask === task.id ? (
                                   <div className="mb-3">
-                                    <h4 className="text-xs font-medium mb-1">Description</h4>
-                                    <p className="text-xs text-muted-foreground">{task.description}</p>
+                                    <div className="mb-2">
+                                      <FormLabel className="text-xs font-medium">Task Title</FormLabel>
+                                      <Input 
+                                        value={task.title}
+                                        className="h-8 text-sm"
+                                        onChange={(e) => handleTaskTitleChange(task.id, e.target.value)}
+                                      />
+                                    </div>
+                                    <div className="mb-2">
+                                      <FormLabel className="text-xs font-medium">Assignee</FormLabel>
+                                      <Input 
+                                        value={task.assignee || ""}
+                                        className="h-8 text-sm"
+                                        onChange={(e) => handleTaskAssigneeChange(task.id, e.target.value)}
+                                        placeholder="Enter assignee name"
+                                      />
+                                    </div>
                                   </div>
-                                )}
-                                
-                                {task.latestComments && (
-                                  <div className="mb-3">
-                                    <h4 className="text-xs font-medium mb-1 flex items-center gap-1">
-                                      <MessageCircle className="h-3 w-3" />
-                                      Latest Comments
-                                    </h4>
-                                    <p className="text-xs text-muted-foreground">{task.latestComments}</p>
-                                  </div>
+                                ) : (
+                                  <>
+                                    {task.description && (
+                                      <div className="mb-3">
+                                        <h4 className="text-xs font-medium mb-1">Description</h4>
+                                        <p className="text-xs text-muted-foreground">{task.description}</p>
+                                      </div>
+                                    )}
+                                  </>
                                 )}
                                 
                                 <div className="grid grid-cols-2 gap-3 mb-3">
@@ -429,10 +414,7 @@ export function TaskList({
                               <div>
                                 {/* Right column of expanded details */}
                                 <div className="mb-3">
-                                  <h4 className="text-xs font-medium mb-1 flex items-center gap-1">
-                                    <BarChart2 className="h-3 w-3" />
-                                    Completion Progress
-                                  </h4>
+                                  <h4 className="text-xs font-medium mb-1">Completion Progress</h4>
                                   <div className="flex items-center gap-2 mb-1">
                                     <Progress value={task.completionPercentage} className="h-2 flex-1" />
                                     <span className="text-xs font-semibold">{task.completionPercentage}%</span>
@@ -472,9 +454,29 @@ export function TaskList({
                                 )}
                                 
                                 <div>
-                                  <Button variant="outline" size="sm" className="w-full text-xs h-7">
-                                    Edit Task
-                                  </Button>
+                                  {editingTask === task.id ? (
+                                    <Button 
+                                      variant="default" 
+                                      size="sm" 
+                                      className="w-full text-xs h-7"
+                                      onClick={() => setEditingTask(null)}
+                                    >
+                                      Save Changes
+                                    </Button>
+                                  ) : (
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm" 
+                                      className="w-full text-xs h-7"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleEditTask(task.id);
+                                      }}
+                                    >
+                                      <Pencil className="h-3 w-3 mr-1" />
+                                      Edit Task
+                                    </Button>
+                                  )}
                                 </div>
                               </div>
                             </div>

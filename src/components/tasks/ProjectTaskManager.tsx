@@ -1,13 +1,13 @@
-
 import React, { useState } from "react";
 import { CustomCard } from "@/components/ui/CustomCard";
 import { Button } from "@/components/ui/button";
-import { Plus, FolderPlus, Search } from "lucide-react";
+import { Plus, FolderPlus, Search, Tag } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ProjectList } from "@/components/tasks/ProjectList";
 import { TaskList } from "@/components/tasks/TaskList";
 import { NewProjectDialog } from "@/components/tasks/NewProjectDialog";
 import { NewTaskDialog } from "@/components/tasks/NewTaskDialog";
+import { NewFeatureDialog } from "@/components/tasks/NewFeatureDialog";
 import { 
   Select, 
   SelectContent, 
@@ -241,6 +241,7 @@ export function ProjectTaskManager({
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
   const [showNewTaskDialog, setShowNewTaskDialog] = useState(false);
+  const [showNewFeatureDialog, setShowNewFeatureDialog] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
   const [stageFilter, setStageFilter] = useState<string | null>(null);
@@ -269,6 +270,11 @@ export function ProjectTaskManager({
   const handleCreateTask = (newTask: Task) => {
     setTasks([...tasks, newTask]);
     setShowNewTaskDialog(false);
+  };
+
+  const handleCreateFeature = (newFeature: Feature) => {
+    setFeatures([...features, newFeature]);
+    setShowNewFeatureDialog(false);
   };
 
   const handleSelectProject = (projectId: string) => {
@@ -330,7 +336,9 @@ export function ProjectTaskManager({
             ? new Date().toISOString().split('T')[0] 
             : (percentage < 100 && task.completionPercentage === 100 ? undefined : task.completedDate);
           
-          const status = percentage === 100 ? 'completed' as const : task.status;
+          const status = percentage === 100 
+            ? 'completed' as const 
+            : task.status;
           
           return { 
             ...task, 
@@ -341,6 +349,14 @@ export function ProjectTaskManager({
         }
         return task;
       })
+    );
+  };
+
+  const handleUpdateTask = (updatedTask: Task) => {
+    setTasks(prevTasks => 
+      prevTasks.map(task => 
+        task.id === updatedTask.id ? updatedTask : task
+      )
     );
   };
 
@@ -431,6 +447,14 @@ export function ProjectTaskManager({
           className="h-full"
           titleExtra={
             <div className="flex items-center gap-2">
+              <Button onClick={() => setShowNewFeatureDialog(true)} size="sm">
+                <Tag className="h-4 w-4 mr-2" />
+                New Feature
+              </Button>
+              <Button onClick={() => setShowNewTaskDialog(true)} size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                New Task
+              </Button>
               <Select
                 value={baseCurrency}
                 onValueChange={(val) => setBaseCurrency(val as CurrencyType)}
@@ -481,42 +505,37 @@ export function ProjectTaskManager({
             </Select>
             
             <Select
-              value={priorityFilter || "all"}
-              onValueChange={val => setPriorityFilter(val !== "all" ? val : null)}
+              value={functionFilter || "all"}
+              onValueChange={val => setFunctionFilter(val !== "all" ? val : null)}
             >
               <SelectTrigger className="w-[130px]">
-                <SelectValue placeholder="Priority" />
+                <SelectValue placeholder="Function" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Priorities</SelectItem>
-                <SelectItem value="low">Low</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-                <SelectItem value="urgent">Urgent</SelectItem>
+                <SelectItem value="all">All Functions</SelectItem>
+                <SelectItem value="frontend">Frontend</SelectItem>
+                <SelectItem value="backend">Backend</SelectItem>
+                <SelectItem value="design">Design</SelectItem>
+                <SelectItem value="qa">QA</SelectItem>
+                <SelectItem value="devops">DevOps</SelectItem>
+                <SelectItem value="business">Business</SelectItem>
               </SelectContent>
             </Select>
             
             <Select
-              value={stageFilter || "all"}
-              onValueChange={val => setStageFilter(val !== "all" ? val : null)}
+              value={teamFilter || "all"}
+              onValueChange={val => setTeamFilter(val !== "all" ? val : null)}
             >
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Stage" />
+              <SelectTrigger className="w-[130px]">
+                <SelectValue placeholder="Team" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Stages</SelectItem>
-                <SelectItem value="requirements">Requirements</SelectItem>
-                <SelectItem value="development">Development</SelectItem>
-                <SelectItem value="testing">Testing</SelectItem>
-                <SelectItem value="release">Release</SelectItem>
-                <SelectItem value="go-live">Go-Live</SelectItem>
+                <SelectItem value="all">All Teams</SelectItem>
+                {teams.map(team => (
+                  <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
-            
-            <Button onClick={() => setShowNewTaskDialog(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              New Task
-            </Button>
           </div>
           
           <TaskList 
@@ -528,6 +547,7 @@ export function ProjectTaskManager({
             onToggleSubtask={handleToggleSubtask}
             onUpdateTaskStatus={handleUpdateTaskStatus}
             onUpdateTaskCompletion={handleUpdateTaskCompletion}
+            onUpdateTask={handleUpdateTask}
           />
         </CustomCard>
       </div>
@@ -549,6 +569,16 @@ export function ProjectTaskManager({
         selectedProject={selectedProject}
         selectedFeature={selectedFeature}
         onCreateTask={handleCreateTask}
+      />
+      
+      <NewFeatureDialog 
+        open={showNewFeatureDialog}
+        onOpenChange={setShowNewFeatureDialog}
+        onCreateFeature={(newFeature) => {
+          setFeatures([...features, newFeature]);
+          setShowNewFeatureDialog(false);
+        }}
+        projects={projects}
       />
     </div>
   );

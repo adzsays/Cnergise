@@ -3,7 +3,8 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, Clock, Paperclip } from "lucide-react";
+import { CheckCircle2, Clock, Paperclip, User, Users } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 
 interface TasksSectionProps {
   projectFilter: string;
@@ -26,6 +27,9 @@ export function TasksSection({ projectFilter }: TasksSectionProps) {
       project: "Website Redesign",
       dueDate: "Today",
       priority: "high",
+      assignee: "John Smith",
+      team: "Design Team",
+      completionPercentage: 65
     },
     {
       id: 2,
@@ -34,6 +38,9 @@ export function TasksSection({ projectFilter }: TasksSectionProps) {
       project: "Mobile App Development",
       dueDate: "Tomorrow",
       priority: "medium",
+      assignee: "Alice Johnson",
+      team: "Backend Team",
+      completionPercentage: 30
     },
     {
       id: 3,
@@ -42,6 +49,9 @@ export function TasksSection({ projectFilter }: TasksSectionProps) {
       project: "Marketing Campaign",
       dueDate: "Aug 25",
       priority: "medium",
+      assignee: "Diana Evans",
+      team: "Marketing Team",
+      completionPercentage: 20
     },
     {
       id: 4,
@@ -50,6 +60,9 @@ export function TasksSection({ projectFilter }: TasksSectionProps) {
       project: "Website Redesign",
       dueDate: "Aug 23",
       priority: "high",
+      assignee: "Bob Brown",
+      team: "Project Management",
+      completionPercentage: 80
     },
   ];
 
@@ -83,9 +96,19 @@ export function TasksSection({ projectFilter }: TasksSectionProps) {
                   {task.project}
                 </div>
                 <div className="flex items-center justify-between mt-2">
-                  <div className="flex items-center text-xs text-muted-foreground">
-                    <Clock className="h-3 w-3 mr-1" />
-                    {task.dueDate}
+                  <div className="flex items-center text-xs text-muted-foreground gap-2">
+                    <div className="flex items-center">
+                      <Clock className="h-3 w-3 mr-1" />
+                      {task.dueDate}
+                    </div>
+                    <div className="flex items-center">
+                      <User className="h-3 w-3 mr-1" />
+                      {task.assignee}
+                    </div>
+                    <div className="flex items-center">
+                      <Users className="h-3 w-3 mr-1" />
+                      {task.team}
+                    </div>
                   </div>
                   <Badge
                     variant="outline"
@@ -96,6 +119,13 @@ export function TasksSection({ projectFilter }: TasksSectionProps) {
                   >
                     {task.priority}
                   </Badge>
+                </div>
+                <div className="flex items-center gap-2 mt-2">
+                  <Progress 
+                    value={task.completionPercentage} 
+                    className="h-1.5 flex-1" 
+                  />
+                  <span className="text-xs font-medium">{task.completionPercentage}%</span>
                 </div>
               </div>
             </div>
