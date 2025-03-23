@@ -200,7 +200,10 @@ export function TaskList({
   
   const handleEditTask = (taskId: string) => {
     setEditingTask(taskId);
-    toggleTaskExpand(taskId);
+    setExpandedTasks(prev => ({
+      ...prev,
+      [taskId]: true
+    }));
   };
   
   const handleTaskTitleChange = (taskId: string, newTitle: string) => {
@@ -292,39 +295,41 @@ export function TaskList({
                           </div>
                         </TableCell>
                         <TableCell className="py-2">
-                          {editingCompletion?.taskId === task.id ? (
-                            <div className="flex items-center gap-1">
-                              <Input
-                                className="h-5 w-12 text-xs px-1"
-                                value={editingCompletion.value}
-                                onChange={(e) => handleCompletionChange(task.id, e.target.value)}
-                                onBlur={handleCompletionBlur}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') handleCompletionBlur();
-                                }}
-                                autoFocus
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                              <span className="text-xs">%</span>
-                            </div>
-                          ) : (
-                            <div 
-                              className="flex items-center gap-1"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setEditingCompletion({ 
-                                  taskId: task.id, 
-                                  value: task.completionPercentage.toString() 
-                                });
-                              }}
-                            >
-                              <Progress 
-                                value={task.completionPercentage} 
-                                className="h-1.5 w-10" 
-                              />
-                              <span className="text-xs">{task.completionPercentage}%</span>
-                            </div>
-                          )}
+                          <div 
+                            className="flex items-center gap-1 cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingCompletion({ 
+                                taskId: task.id, 
+                                value: task.completionPercentage.toString() 
+                              });
+                            }}
+                          >
+                            {editingCompletion?.taskId === task.id ? (
+                              <div className="flex items-center gap-1">
+                                <Input
+                                  className="h-5 w-12 text-xs px-1"
+                                  value={editingCompletion.value}
+                                  onChange={(e) => handleCompletionChange(task.id, e.target.value)}
+                                  onBlur={handleCompletionBlur}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleCompletionBlur();
+                                  }}
+                                  autoFocus
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                                <span className="text-xs">%</span>
+                              </div>
+                            ) : (
+                              <>
+                                <Progress 
+                                  value={task.completionPercentage} 
+                                  className="h-1.5 w-10" 
+                                />
+                                <span className="text-xs">{task.completionPercentage}%</span>
+                              </>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell className="py-2">
                           <DropdownMenu>
@@ -388,6 +393,27 @@ export function TaskList({
                                           ))}
                                         </SelectContent>
                                       </Select>
+                                    </div>
+                                    <div className="mb-2">
+                                      <FormLabel className="text-xs font-medium">Completion Percentage</FormLabel>
+                                      <div className="flex items-center gap-2">
+                                        <Input 
+                                          type="number"
+                                          min="0"
+                                          max="100"
+                                          value={task.completionPercentage}
+                                          className="h-8 text-sm w-20"
+                                          onChange={(e) => {
+                                            const value = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
+                                            onUpdateTaskCompletion(task.id, value);
+                                          }}
+                                        />
+                                        <span className="text-xs">%</span>
+                                        <Progress 
+                                          value={task.completionPercentage} 
+                                          className="h-2 flex-1" 
+                                        />
+                                      </div>
                                     </div>
                                   </div>
                                 ) : (

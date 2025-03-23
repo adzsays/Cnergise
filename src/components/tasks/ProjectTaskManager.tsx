@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { CustomCard } from "@/components/ui/CustomCard";
 import { Button } from "@/components/ui/button";
@@ -400,7 +401,7 @@ export function ProjectTaskManager({
           
           const status = percentage === 100 
             ? 'completed' as const 
-            : task.status;
+            : task.status === 'completed' ? 'in-progress' as const : task.status;
           
           return { 
             ...task, 
