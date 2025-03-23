@@ -82,25 +82,38 @@ export function NavigationTabs({
             const isActive = tab.value === activeTab || 
               (tab.href && location.pathname === tab.href);
             
-            const TabComponent = tab.href ? Link : "button";
-            const tabProps = tab.href ? { to: tab.href } : { 
-              onClick: () => onTabChange?.(tab.value)
-            };
-            
-            return (
-              <TabComponent
-                key={tab.value}
-                {...tabProps}
-                className={cn(
-                  "inline-flex h-10 items-center justify-center border-b-2 px-4 text-sm font-medium transition-colors hover:text-foreground",
-                  isActive
-                    ? "border-primary text-foreground"
-                    : "border-transparent text-muted-foreground hover:border-muted"
-                )}
-              >
-                {tab.label}
-              </TabComponent>
-            );
+            // Fix TypeScript error by properly handling Link vs button
+            if (tab.href) {
+              return (
+                <Link
+                  key={tab.value}
+                  to={tab.href}
+                  className={cn(
+                    "inline-flex h-10 items-center justify-center border-b-2 px-4 text-sm font-medium transition-colors hover:text-foreground",
+                    isActive
+                      ? "border-primary text-foreground"
+                      : "border-transparent text-muted-foreground hover:border-muted"
+                  )}
+                >
+                  {tab.label}
+                </Link>
+              );
+            } else {
+              return (
+                <button
+                  key={tab.value}
+                  onClick={() => onTabChange?.(tab.value)}
+                  className={cn(
+                    "inline-flex h-10 items-center justify-center border-b-2 px-4 text-sm font-medium transition-colors hover:text-foreground",
+                    isActive
+                      ? "border-primary text-foreground"
+                      : "border-transparent text-muted-foreground hover:border-muted"
+                  )}
+                >
+                  {tab.label}
+                </button>
+              );
+            }
           })}
         </nav>
         

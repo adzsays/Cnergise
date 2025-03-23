@@ -41,7 +41,12 @@ const TaskManagement = () => {
         </header>
 
         <main className="p-6">
-          <ProjectTaskManager />
+          <ProjectTaskManager 
+            initialProjects={projects}
+            initialFeatures={features}
+            onCreateProject={handleCreateProject}
+            onCreateFeature={handleCreateFeature}
+          />
         </main>
       </div>
 

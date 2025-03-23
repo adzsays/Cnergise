@@ -39,6 +39,12 @@ export type Person = {
   name: string;
   teamId: string;
 };
+// Add missing Subtask type
+export type Subtask = {
+  id: string;
+  title: string;
+  completed: boolean;
+};
 
 interface NewTaskDialogProps {
   open: boolean;
