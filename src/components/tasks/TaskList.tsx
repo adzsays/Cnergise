@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { type Task, type Project, type Feature, type Team, type CurrencyType } from "./ProjectTaskManager";
 import { Badge } from "@/components/ui/badge";
@@ -40,7 +41,8 @@ import {
   Euro,
   PoundSterling,
   JapaneseYen,
-  IndianRupee
+  IndianRupee,
+  BarChart2
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
@@ -235,16 +237,16 @@ export function TaskList({
               <Table>
                 <TableHeader className="sticky top-0 z-10 bg-background">
                   <TableRow>
-                    <TableHead className="w-[80px]">Task #</TableHead>
-                    <TableHead className="w-[200px]">Task Name</TableHead>
-                    <TableHead className="w-[120px]">Feature</TableHead>
-                    <TableHead className="w-[100px]">Function</TableHead>
-                    <TableHead className="w-[100px]">Stage</TableHead>
-                    <TableHead className="w-[120px]">Project</TableHead>
-                    <TableHead className="w-[100px]">Team</TableHead>
-                    <TableHead className="w-[100px]">Person</TableHead>
-                    <TableHead className="w-[80px]">Completion</TableHead>
-                    <TableHead className="w-[60px]"></TableHead>
+                    <TableHead className="w-[60px]">Task #</TableHead>
+                    <TableHead className="w-[180px]">Task Name</TableHead>
+                    <TableHead className="w-[100px]">Feature</TableHead>
+                    <TableHead className="w-[90px]">Function</TableHead>
+                    <TableHead className="w-[90px]">Stage</TableHead>
+                    <TableHead className="w-[100px]">Project</TableHead>
+                    <TableHead className="w-[90px]">Team</TableHead>
+                    <TableHead className="w-[90px]">Person</TableHead>
+                    <TableHead className="w-[80px]">% Complete</TableHead>
+                    <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -317,7 +319,10 @@ export function TaskList({
                                 });
                               }}
                             >
-                              <Progress value={task.completionPercentage} className="h-1.5 w-10" />
+                              <Progress 
+                                value={task.completionPercentage} 
+                                className="h-1.5 w-10" 
+                              />
                               <span className="text-xs">{task.completionPercentage}%</span>
                             </div>
                           )}
@@ -354,6 +359,7 @@ export function TaskList({
                           <TableCell colSpan={10} className="py-2 px-4 bg-muted/30">
                             <div className="grid grid-cols-2 gap-4 pt-1 pb-2">
                               <div>
+                                {/* Left column of expanded details */}
                                 {task.description && (
                                   <div className="mb-3">
                                     <h4 className="text-xs font-medium mb-1">Description</h4>
@@ -421,6 +427,18 @@ export function TaskList({
                               </div>
                               
                               <div>
+                                {/* Right column of expanded details */}
+                                <div className="mb-3">
+                                  <h4 className="text-xs font-medium mb-1 flex items-center gap-1">
+                                    <BarChart2 className="h-3 w-3" />
+                                    Completion Progress
+                                  </h4>
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <Progress value={task.completionPercentage} className="h-2 flex-1" />
+                                    <span className="text-xs font-semibold">{task.completionPercentage}%</span>
+                                  </div>
+                                </div>
+                                
                                 {task.subtasks.length > 0 && (
                                   <div className="mb-3">
                                     <div className="flex items-center justify-between mb-1">
