@@ -1,12 +1,10 @@
-
 import React, { useState } from "react";
-import ProjectTaskManager from "@/components/tasks/ProjectTaskManager";
+import ProjectTaskManager, { Project, Feature } from "@/components/tasks/ProjectTaskManager";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import { FolderPlus, PlusCircle, Tag } from "lucide-react";
 import { NewProjectDialog } from "@/components/tasks/NewProjectDialog";
 import { NewFeatureDialog } from "@/components/tasks/NewFeatureDialog";
-import { type Project, type Feature } from "@/components/tasks/ProjectTaskManager";
 
 const TaskManagement = () => {
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
