@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { ProjectTaskManager } from "@/components/tasks/ProjectTaskManager";
+import ProjectTaskManager from "@/components/tasks/ProjectTaskManager";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import { FolderPlus, PlusCircle, Tag } from "lucide-react";
@@ -41,10 +41,7 @@ const TaskManagement = () => {
         </header>
 
         <main className="p-6">
-          <ProjectTaskManager 
-            showNewProjectDialog={showNewProjectDialog}
-            onOpenProjectDialog={setShowNewProjectDialog}
-          />
+          <ProjectTaskManager />
         </main>
       </div>
 
@@ -52,7 +49,7 @@ const TaskManagement = () => {
       <NewProjectDialog 
         open={showNewProjectDialog}
         onOpenChange={setShowNewProjectDialog}
-        onCreateProject={handleCreateProject}
+        onAddProject={handleCreateProject}
       />
       
       {/* Create Feature Dialog */}
@@ -60,29 +57,7 @@ const TaskManagement = () => {
         open={showNewFeatureDialog}
         onOpenChange={setShowNewFeatureDialog}
         onCreateFeature={handleCreateFeature}
-        projects={projects.length > 0 ? projects : [
-          {
-            id: "website",
-            name: "Website Redesign",
-            description: "Complete overhaul of company website",
-            color: "#4f46e5",
-            createdAt: "2023-05-15T10:00:00Z",
-          },
-          {
-            id: "mobile",
-            name: "Mobile App Development",
-            description: "iOS and Android app for client",
-            color: "#0ea5e9",
-            createdAt: "2023-06-01T14:30:00Z", 
-          },
-          {
-            id: "marketing",
-            name: "Marketing Campaign",
-            description: "Q3 digital marketing initiative",
-            color: "#f97316",
-            createdAt: "2023-07-10T09:15:00Z",
-          }
-        ]}
+        projects={projects.length > 0 ? projects : projects}
       />
     </div>
   );

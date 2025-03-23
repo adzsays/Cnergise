@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { type Feature, type Project, type CurrencyType } from "./ProjectTaskManager";
+import { type Feature, type Project } from "./ProjectTaskManager";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,10 +21,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+// Define CurrencyType since it's not exported from ProjectTaskManager
+export type CurrencyType = "USD" | "EUR" | "GBP" | "JPY" | "INR" | "CNY";
+
 interface NewFeatureDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreateFeature: (feature: Feature) => void;
+  onCreateFeature?: (feature: Feature) => void;
   projects: Project[];
   selectedProject?: string | null;
 }
@@ -39,7 +42,6 @@ export function NewFeatureDialog({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [projectId, setProjectId] = useState(selectedProject || "");
-  const [priority, setPriority] = useState<Feature["priority"]>("medium");
   const [amount, setAmount] = useState<string>("0");
   const [currency, setCurrency] = useState<CurrencyType>("USD");
   
@@ -52,20 +54,14 @@ export function NewFeatureDialog({
       id: `feature-${Date.now()}`,
       name: name.trim(),
       description: description.trim(),
-      projectId,
-      priority,
-      monetaryImpact: {
-        amount: parseFloat(amount) || 0,
-        currency: currency
-      }
+      projectId
     };
     
-    onCreateFeature(newFeature);
+    onCreateFeature?.(newFeature);
     
     // Reset form
     setName("");
     setDescription("");
-    setPriority("medium");
     setAmount("0");
     setCurrency("USD");
     if (!selectedProject) {
@@ -123,24 +119,6 @@ export function NewFeatureDialog({
                       {project.name}
                     </SelectItem>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="priority-select">Priority</Label>
-              <Select
-                value={priority || "medium"}
-                onValueChange={(value) => setPriority(value as Feature["priority"])}
-              >
-                <SelectTrigger id="priority-select">
-                  <SelectValue placeholder="Select priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="urgent">Urgent</SelectItem>
                 </SelectContent>
               </Select>
             </div>

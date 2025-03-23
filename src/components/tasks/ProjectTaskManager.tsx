@@ -11,10 +11,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { PlusIcon, Filter, ChevronDown, Pencil, Trash } from "lucide-react";
-import NewTaskDialog from "./NewTaskDialog";
-import NewFeatureDialog from "./NewFeatureDialog";
-import NewProjectDialog from "./NewProjectDialog";
-import TaskList from "./TaskList";
+import { NewTaskDialog } from "./NewTaskDialog";
+import { NewFeatureDialog } from "./NewFeatureDialog";
+import { NewProjectDialog } from "./NewProjectDialog";
+import { TaskList } from "./TaskList";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +24,7 @@ import { toast } from "@/components/ui/use-toast";
 
 // Type definitions
 export type TaskStatus = "todo" | "in-progress" | "blocked" | "completed";
+export type CurrencyType = "USD" | "EUR" | "GBP" | "JPY" | "INR" | "CNY";
 
 export interface Subtask {
   id: string;
@@ -37,13 +38,17 @@ export interface Task {
   description: string;
   assignee: string;
   dueDate: string;
-  priority: "low" | "medium" | "high";
+  priority: "low" | "medium" | "high" | "urgent";
   status: TaskStatus;
   projectId: string;
   featureId: string;
   subtasks: Subtask[];
   completionPercentage: number;
   completedDate?: string;
+  monetaryImpact?: {
+    amount: number;
+    currency: CurrencyType;
+  };
 }
 
 export interface Feature {
@@ -51,6 +56,10 @@ export interface Feature {
   name: string;
   description: string;
   projectId: string;
+  monetaryImpact?: {
+    amount: number;
+    currency: CurrencyType;
+  };
 }
 
 export interface Project {
@@ -254,7 +263,7 @@ const ProjectTaskManager: React.FC = () => {
         const completionPercentage = status === "completed" ? 100 : task.completionPercentage;
         const completedDate = status === "completed" 
           ? new Date().toISOString().split('T')[0] 
-          : (status !== "completed" && task.status === "completed" ? undefined : task.completedDate);
+          : (task.status === "completed" && status !== "completed" ? undefined : task.completedDate);
         
         return {
           ...task, 
