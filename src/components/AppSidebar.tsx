@@ -23,7 +23,7 @@ import {
   CheckSquare,
   PanelLeft,
   ClipboardList,
-  Pulse,
+  Activity,
   Clock,
   PlusCircle,
   User,
@@ -41,7 +41,7 @@ const sidebarItems = [
   { icon: CheckSquare, label: "Tasks", href: "/tasks", badge: 5 },
   { icon: PanelLeft, label: "Whiteboards", href: "/whiteboards" },
   { icon: ClipboardList, label: "Forms", href: "/forms" },
-  { icon: Pulse, label: "Pulse", href: "/pulse" },
+  { icon: Activity, label: "Activity", href: "/activity" },
   { icon: Clock, label: "Timesheets", href: "/timesheets" },
 ];
 
