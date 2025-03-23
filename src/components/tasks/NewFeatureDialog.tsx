@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { type Feature, type Project } from "./ProjectTaskManager";
+import { type Feature, type Project, type CurrencyType } from "./ProjectTaskManager";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -39,6 +39,9 @@ export function NewFeatureDialog({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [projectId, setProjectId] = useState(selectedProject || "");
+  const [priority, setPriority] = useState<Feature["priority"]>("medium");
+  const [amount, setAmount] = useState<string>("0");
+  const [currency, setCurrency] = useState<CurrencyType>("USD");
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,7 +52,12 @@ export function NewFeatureDialog({
       id: `feature-${Date.now()}`,
       name: name.trim(),
       description: description.trim(),
-      projectId
+      projectId,
+      priority,
+      monetaryImpact: {
+        amount: parseFloat(amount) || 0,
+        currency: currency
+      }
     };
     
     onCreateFeature(newFeature);
@@ -57,6 +65,9 @@ export function NewFeatureDialog({
     // Reset form
     setName("");
     setDescription("");
+    setPriority("medium");
+    setAmount("0");
+    setCurrency("USD");
     if (!selectedProject) {
       setProjectId("");
     }
@@ -114,6 +125,59 @@ export function NewFeatureDialog({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="priority-select">Priority</Label>
+              <Select
+                value={priority || "medium"}
+                onValueChange={(value) => setPriority(value as Feature["priority"])}
+              >
+                <SelectTrigger id="priority-select">
+                  <SelectValue placeholder="Select priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="urgent">Urgent</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="amount-input">Impact Amount</Label>
+                <Input
+                  id="amount-input"
+                  type="number"
+                  min="0"
+                  step="100"
+                  placeholder="Enter amount"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="currency-select">Currency</Label>
+                <Select
+                  value={currency}
+                  onValueChange={(value) => setCurrency(value as CurrencyType)}
+                >
+                  <SelectTrigger id="currency-select">
+                    <SelectValue placeholder="Select currency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="USD">USD ($)</SelectItem>
+                    <SelectItem value="EUR">EUR (€)</SelectItem>
+                    <SelectItem value="GBP">GBP (£)</SelectItem>
+                    <SelectItem value="JPY">JPY (¥)</SelectItem>
+                    <SelectItem value="INR">INR (₹)</SelectItem>
+                    <SelectItem value="CNY">CNY (¥)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
           

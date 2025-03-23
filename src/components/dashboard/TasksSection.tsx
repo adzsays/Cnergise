@@ -3,7 +3,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, Clock, Paperclip, User, Users } from "lucide-react";
+import { CheckCircle2, Clock, Paperclip, User, Users, Tag, DollarSign } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
 interface TasksSectionProps {
@@ -18,6 +18,50 @@ export function TasksSection({ projectFilter }: TasksSectionProps) {
     "marketing": "Marketing Campaign"
   };
 
+  // Mock features data
+  const featuresData = [
+    {
+      id: "feature1",
+      name: "User Authentication",
+      projectId: "website",
+      priority: "high",
+      monetaryImpact: {
+        amount: 3000,
+        currency: "USD"
+      }
+    },
+    {
+      id: "feature2",
+      name: "Responsive Design",
+      projectId: "website",
+      priority: "medium",
+      monetaryImpact: {
+        amount: 2000,
+        currency: "USD"
+      }
+    },
+    {
+      id: "feature3",
+      name: "API Integration",
+      projectId: "mobile",
+      priority: "high",
+      monetaryImpact: {
+        amount: 5000,
+        currency: "USD"
+      }
+    },
+    {
+      id: "feature4",
+      name: "Social Media Campaign",
+      projectId: "marketing",
+      priority: "medium",
+      monetaryImpact: {
+        amount: 3500,
+        currency: "USD"
+      }
+    }
+  ];
+
   // Mock tasks data
   const allTasksData = [
     {
@@ -25,6 +69,8 @@ export function TasksSection({ projectFilter }: TasksSectionProps) {
       title: "Finalize homepage wireframes",
       projectId: "website",
       project: "Website Redesign",
+      featureId: "feature2",
+      feature: "Responsive Design",
       dueDate: "Today",
       priority: "high",
       assignee: "John Smith",
@@ -36,6 +82,8 @@ export function TasksSection({ projectFilter }: TasksSectionProps) {
       title: "Review API documentation",
       projectId: "mobile",
       project: "Mobile App Development",
+      featureId: "feature3",
+      feature: "API Integration",
       dueDate: "Tomorrow",
       priority: "medium",
       assignee: "Alice Johnson",
@@ -47,6 +95,8 @@ export function TasksSection({ projectFilter }: TasksSectionProps) {
       title: "Create social media assets",
       projectId: "marketing",
       project: "Marketing Campaign",
+      featureId: "feature4",
+      feature: "Social Media Campaign",
       dueDate: "Aug 25",
       priority: "medium",
       assignee: "Diana Evans",
@@ -58,6 +108,8 @@ export function TasksSection({ projectFilter }: TasksSectionProps) {
       title: "Update project timeline",
       projectId: "website",
       project: "Website Redesign",
+      featureId: "feature1",
+      feature: "User Authentication",
       dueDate: "Aug 23",
       priority: "high",
       assignee: "Bob Brown",
@@ -75,6 +127,20 @@ export function TasksSection({ projectFilter }: TasksSectionProps) {
     low: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100",
     medium: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100",
     high: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100",
+    urgent: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100",
+  };
+
+  // Helper function to get feature info
+  const getFeatureImpact = (featureId: string) => {
+    const feature = featuresData.find(f => f.id === featureId);
+    if (!feature || !feature.monetaryImpact) return null;
+    
+    return `${feature.monetaryImpact.currency === 'USD' ? '$' : 
+           feature.monetaryImpact.currency === 'EUR' ? '€' : 
+           feature.monetaryImpact.currency === 'GBP' ? '£' : 
+           feature.monetaryImpact.currency === 'JPY' ? '¥' : 
+           feature.monetaryImpact.currency === 'INR' ? '₹' : 
+           feature.monetaryImpact.currency === 'CNY' ? '¥' : ''}${feature.monetaryImpact.amount.toLocaleString()}`;
   };
 
   return (
@@ -91,9 +157,21 @@ export function TasksSection({ projectFilter }: TasksSectionProps) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium">{task.title}</p>
-                <div className="flex items-center text-xs text-muted-foreground mt-1">
-                  <Paperclip className="h-3 w-3 mr-1" />
-                  {task.project}
+                <div className="flex items-center text-xs text-muted-foreground mt-1 gap-2">
+                  <div className="flex items-center">
+                    <Paperclip className="h-3 w-3 mr-1" />
+                    {task.project}
+                  </div>
+                  <div className="flex items-center">
+                    <Tag className="h-3 w-3 mr-1" />
+                    {task.feature}
+                  </div>
+                  {getFeatureImpact(task.featureId) && (
+                    <div className="flex items-center">
+                      <DollarSign className="h-3 w-3 mr-1" />
+                      {getFeatureImpact(task.featureId)}
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center justify-between mt-2">
                   <div className="flex items-center text-xs text-muted-foreground gap-2">

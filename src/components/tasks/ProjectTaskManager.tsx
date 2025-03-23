@@ -31,6 +31,11 @@ export interface Feature {
   name: string;
   description?: string;
   projectId: string;
+  priority?: "low" | "medium" | "high" | "urgent";
+  monetaryImpact?: {
+    amount: number;
+    currency: CurrencyType;
+  };
 }
 
 export type FunctionType = "backend" | "frontend" | "design" | "qa" | "devops" | "business" | "other";
@@ -114,25 +119,45 @@ export function ProjectTaskManager({
       id: "feature1",
       name: "User Authentication",
       projectId: "website",
-      description: "Login and registration functionality"
+      description: "Login and registration functionality",
+      priority: "high",
+      monetaryImpact: {
+        amount: 3000,
+        currency: "USD"
+      }
     },
     {
       id: "feature2",
       name: "Responsive Design",
       projectId: "website",
-      description: "Mobile-friendly layout"
+      description: "Mobile-friendly layout",
+      priority: "medium",
+      monetaryImpact: {
+        amount: 2000,
+        currency: "USD"
+      }
     },
     {
       id: "feature3",
       name: "API Integration",
       projectId: "mobile",
-      description: "Connect to backend services"
+      description: "Connect to backend services",
+      priority: "high",
+      monetaryImpact: {
+        amount: 5000,
+        currency: "USD"
+      }
     },
     {
       id: "feature4",
       name: "Social Media Campaign",
       projectId: "marketing",
-      description: "Instagram and Facebook ads"
+      description: "Instagram and Facebook ads",
+      priority: "medium",
+      monetaryImpact: {
+        amount: 3500,
+        currency: "USD"
+      }
     }
   ]);
 
@@ -268,7 +293,12 @@ export function ProjectTaskManager({
   };
 
   const handleCreateTask = (newTask: Task) => {
-    setTasks([...tasks, newTask]);
+    const updatedTask = {
+      ...newTask,
+      featureId: newTask.featureId || getDefaultFeatureId(newTask.projectId)
+    };
+    
+    setTasks([...tasks, updatedTask]);
     setShowNewTaskDialog(false);
   };
 
@@ -386,6 +416,11 @@ export function ProjectTaskManager({
     return matchesProject && matchesFeature && matchesStatus && matchesPriority && 
            matchesStage && matchesFunction && matchesTeam && matchesSearch;
   });
+
+  const getDefaultFeatureId = (projectId: string): string => {
+    const projectFeatures = features.filter(f => f.projectId === projectId);
+    return projectFeatures.length > 0 ? projectFeatures[0].id : "";
+  };
 
   return (
     <div className="grid grid-cols-4 gap-6">
