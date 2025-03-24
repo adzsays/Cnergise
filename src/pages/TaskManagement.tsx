@@ -1,16 +1,20 @@
+
 import React, { useState } from "react";
-import ProjectTaskManager, { Project, Feature } from "@/components/tasks/ProjectTaskManager";
+import ProjectTaskManager, { Project, Feature, Task } from "@/components/tasks/ProjectTaskManager";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
-import { FolderPlus, PlusCircle, Tag } from "lucide-react";
+import { FolderPlus, PlusCircle, Tag, FileUp } from "lucide-react";
 import { NewProjectDialog } from "@/components/tasks/NewProjectDialog";
 import { NewFeatureDialog } from "@/components/tasks/NewFeatureDialog";
+import { TaskUploadDialog } from "@/components/tasks/TaskUploadDialog";
 
 const TaskManagement = () => {
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
   const [showNewFeatureDialog, setShowNewFeatureDialog] = useState(false);
+  const [showTaskUploadDialog, setShowTaskUploadDialog] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
   const [features, setFeatures] = useState<Feature[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
 
   const handleCreateProject = (newProject: Project) => {
     setProjects([...projects, newProject]);
@@ -20,6 +24,10 @@ const TaskManagement = () => {
   const handleCreateFeature = (newFeature: Feature) => {
     setFeatures([...features, newFeature]);
     setShowNewFeatureDialog(false);
+  };
+
+  const handleTasksImported = (importedTasks: Task[]) => {
+    setTasks(prevTasks => [...prevTasks, ...importedTasks]);
   };
 
   return (
@@ -33,6 +41,15 @@ const TaskManagement = () => {
               Task Management
             </h1>
             <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowTaskUploadDialog(true)}
+                className="flex items-center gap-1"
+              >
+                <FileUp className="h-4 w-4" />
+                Import Tasks
+              </Button>
               <div className="h-8 w-8 rounded-full bg-gradient-to-r from-taskfinity-blue to-taskfinity-purple"></div>
             </div>
           </div>
@@ -42,8 +59,10 @@ const TaskManagement = () => {
           <ProjectTaskManager 
             initialProjects={projects}
             initialFeatures={features}
+            initialTasks={tasks}
             onCreateProject={handleCreateProject}
             onCreateFeature={handleCreateFeature}
+            onTasksImported={handleTasksImported}
           />
         </main>
       </div>
@@ -61,6 +80,15 @@ const TaskManagement = () => {
         onOpenChange={setShowNewFeatureDialog}
         onCreateFeature={handleCreateFeature}
         projects={projects}
+      />
+      
+      {/* Task Upload Dialog */}
+      <TaskUploadDialog
+        open={showTaskUploadDialog}
+        onOpenChange={setShowTaskUploadDialog}
+        projects={projects}
+        features={features}
+        onTasksImported={handleTasksImported}
       />
     </div>
   );

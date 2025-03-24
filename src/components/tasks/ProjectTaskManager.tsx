@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { ProjectList } from "./ProjectList";
 import { TaskList } from "./TaskList";
@@ -69,22 +68,26 @@ export type Task = {
 interface ProjectTaskManagerProps {
   initialProjects?: Project[];
   initialFeatures?: Feature[];
+  initialTasks?: Task[];
   onCreateProject?: (project: Project) => void;
   onCreateFeature?: (feature: Feature) => void;
+  onTasksImported?: (tasks: Task[]) => void;
 }
 
 const ProjectTaskManager: React.FC<ProjectTaskManagerProps> = ({
   initialProjects = [],
   initialFeatures = [],
+  initialTasks = [],
   onCreateProject,
-  onCreateFeature
+  onCreateFeature,
+  onTasksImported
 }) => {
   // State for projects and features
   const [projects, setProjects] = useState<Project[]>(initialProjects);
   const [features, setFeatures] = useState<Feature[]>(initialFeatures);
   
   // State for tasks
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<Task[]>(initialTasks);
   
   // State for teams and people
   const [teams, setTeams] = useState<Team[]>([
