@@ -23,7 +23,19 @@ export const parseTasksFromCSV = (
   features: Feature[]
 ): { tasks: Task[], errors: string[] } => {
   const lines = csvContent.split('\n');
+  
+  // Handle empty file
+  if (lines.length === 0) {
+    return { tasks: [], errors: ["File is empty"] };
+  }
+
   const headers = lines[0].split(',').map(header => header.trim().toLowerCase());
+  
+  // Check if title column exists
+  const titleIndex = headers.findIndex(h => h === 'title');
+  if (titleIndex === -1) {
+    return { tasks: [], errors: ["Missing required 'title' column"] };
+  }
   
   const tasks: Task[] = [];
   const errors: string[] = [];
@@ -37,7 +49,9 @@ export const parseTasksFromCSV = (
     
     // Map CSV values to object properties
     headers.forEach((header, index) => {
-      row[header] = values[index] || '';
+      if (index < values.length) {
+        row[header] = values[index] || '';
+      }
     });
     
     // Only title is mandatory
@@ -52,16 +66,19 @@ export const parseTasksFromCSV = (
       ? row.projectid 
       : defaultProjectId;
     
-    // If project doesn't exist and we can't set a default, skip the row
+    // If project doesn't exist and we can't set a default, log warning but still create task
     if (!projectId) {
-      errors.push(`Row ${i}: No valid project ID provided or found as default`);
-      continue;
+      errors.push(`Row ${i}: No valid project ID provided and no default project available. Task will be created without a project.`);
     }
     
     // Validate feature if provided
-    if (row.featureid && !features.some(f => f.id === row.featureid)) {
-      errors.push(`Row ${i}: Feature ID "${row.featureid}" does not exist`);
-      continue;
+    let featureId = undefined;
+    if (row.featureid) {
+      if (features.some(f => f.id === row.featureid)) {
+        featureId = row.featureid;
+      } else {
+        errors.push(`Row ${i}: Feature ID "${row.featureid}" does not exist. Task will be created without a feature.`);
+      }
     }
     
     // Set default values or validate provided ones
@@ -88,9 +105,9 @@ export const parseTasksFromCSV = (
     const task: Task = {
       id: `task-${Date.now()}-${i}`,
       title: row.title,
-      description: row.description,
-      projectId: projectId,
-      featureId: row.featureid || undefined,
+      description: row.description || '',
+      projectId: projectId || undefined,
+      featureId: featureId,
       stage: stage as StageType,
       status: status as TaskStatus,
       priority: priority as TaskPriority,
