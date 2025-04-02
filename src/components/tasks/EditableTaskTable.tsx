@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { 
   Table, 
@@ -386,21 +385,24 @@ export function EditableTaskTable({
                       />
                     ) : (
                       <div className="truncate max-w-[120px]">
-                        {task.description || "N/A"}
+                        {task.description || ""}
                       </div>
                     )}
                   </TableCell>
                   
                   <TableCell>
                     <Select
-                      value={task.featureId || ""}
-                      onValueChange={(value) => handleSelectChange(value, task.id, 'featureId')}
+                      value={task.featureId || "no-feature"} 
+                      onValueChange={(value) => {
+                        const finalValue = value === "no-feature" ? undefined : value;
+                        handleSelectChange(finalValue, task.id, 'featureId');
+                      }}
                     >
                       <SelectTrigger className="h-8 text-xs w-full">
                         <SelectValue placeholder={getFeatureName(task.featureId)} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value="no-feature">No Feature</SelectItem>
                         {features.filter(f => f.projectId === task.projectId).map(feature => (
                           <SelectItem key={feature.id} value={feature.id}>
                             {feature.name}
@@ -412,34 +414,41 @@ export function EditableTaskTable({
                   
                   <TableCell>
                     <Select
-                      value={task.functionType || ""}
-                      onValueChange={(value) => handleSelectChange(value as FunctionType, task.id, 'functionType')}
+                      value={task.functionType || "no-function"}
+                      onValueChange={(value) => {
+                        const finalValue = value === "no-function" ? undefined : value;
+                        handleSelectChange(finalValue, task.id, 'functionType');
+                      }}
                     >
                       <SelectTrigger className="h-8 text-xs w-full">
-                        <SelectValue placeholder={task.functionType || "N/A"} />
+                        <SelectValue placeholder={task.functionType || "None"} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value="no-function">None</SelectItem>
                         <SelectItem value="frontend">Frontend</SelectItem>
                         <SelectItem value="backend">Backend</SelectItem>
                         <SelectItem value="design">Design</SelectItem>
                         <SelectItem value="qa">QA</SelectItem>
                         <SelectItem value="devops">DevOps</SelectItem>
                         <SelectItem value="business">Business</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
                       </SelectContent>
                     </Select>
                   </TableCell>
                   
                   <TableCell>
                     <Select
-                      value={task.teamId || ""}
-                      onValueChange={(value) => handleSelectChange(value, task.id, 'teamId')}
+                      value={task.teamId || "no-team"}
+                      onValueChange={(value) => {
+                        const finalValue = value === "no-team" ? undefined : value;
+                        handleSelectChange(finalValue, task.id, 'teamId');
+                      }}
                     >
                       <SelectTrigger className="h-8 text-xs w-full">
                         <SelectValue placeholder={getTeamName(task.teamId)} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value="no-team">No Team</SelectItem>
                         {teams.map(team => (
                           <SelectItem key={team.id} value={team.id}>
                             {team.name}
@@ -451,15 +460,18 @@ export function EditableTaskTable({
                   
                   <TableCell>
                     <Select
-                      value={task.assigneeId || ""}
-                      onValueChange={(value) => handleSelectChange(value, task.id, 'assigneeId')}
+                      value={task.assigneeId || "no-person"}
+                      onValueChange={(value) => {
+                        const finalValue = value === "no-person" ? undefined : value;
+                        handleSelectChange(finalValue, task.id, 'assigneeId');
+                      }}
                     >
                       <SelectTrigger className="h-8 text-xs w-full">
                         <SelectValue placeholder={getPersonName(task.assigneeId)} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Unassigned</SelectItem>
-                        {people.map(person => (
+                        <SelectItem value="no-person">Unassigned</SelectItem>
+                        {people.filter(p => !task.teamId || p.teamId === task.teamId).map(person => (
                           <SelectItem key={person.id} value={person.id}>
                             {person.name}
                           </SelectItem>
@@ -468,8 +480,8 @@ export function EditableTaskTable({
                     </Select>
                   </TableCell>
                   
-                  <TableCell className="text-xs text-muted-foreground">
-                    No comments
+                  <TableCell>
+                    <div className="text-xs text-muted-foreground">None</div>
                   </TableCell>
                   
                   <TableCell 
@@ -480,11 +492,11 @@ export function EditableTaskTable({
                       <Input
                         ref={inputRef}
                         type="date"
-                        value={editValue ? new Date(editValue).toISOString().split('T')[0] : ""}
+                        value={editValue}
                         onChange={handleInputChange}
                         onBlur={handleBlur}
                         onKeyDown={handleKeyDown}
-                        className="h-8 text-xs"
+                        className="h-8 text-sm"
                       />
                     ) : (
                       formatDate(task.startDate)
@@ -499,11 +511,11 @@ export function EditableTaskTable({
                       <Input
                         ref={inputRef}
                         type="date"
-                        value={editValue ? new Date(editValue).toISOString().split('T')[0] : ""}
+                        value={editValue}
                         onChange={handleInputChange}
                         onBlur={handleBlur}
                         onKeyDown={handleKeyDown}
-                        className="h-8 text-xs"
+                        className="h-8 text-sm"
                       />
                     ) : (
                       formatDate(task.dueDate)
@@ -519,22 +531,19 @@ export function EditableTaskTable({
                     className="cursor-pointer hover:bg-muted/50"
                   >
                     {editableCell?.id === task.id && editableCell?.field === 'completionPercentage' ? (
-                      <div className="flex items-center gap-1">
-                        <Input
-                          ref={inputRef}
-                          type="number"
-                          min="0"
-                          max="100"
-                          value={editValue}
-                          onChange={handleInputChange}
-                          onBlur={handleBlur}
-                          onKeyDown={handleKeyDown}
-                          className="h-8 text-xs w-16"
-                        />
-                        <span className="text-xs">%</span>
-                      </div>
+                      <Input
+                        ref={inputRef}
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={editValue}
+                        onChange={handleInputChange}
+                        onBlur={handleBlur}
+                        onKeyDown={handleKeyDown}
+                        className="h-8 text-sm w-20"
+                      />
                     ) : (
-                      `${task.completionPercentage}%`
+                      `${task.completionPercentage || 0}%`
                     )}
                   </TableCell>
                   
@@ -546,6 +555,19 @@ export function EditableTaskTable({
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        <DropdownMenuItem onSelect={() => handleSelectChange('todo', task.id, 'status')}>
+                          Mark as To Do
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => handleSelectChange('in-progress', task.id, 'status')}>
+                          Mark as In Progress
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => handleSelectChange('completed', task.id, 'status')}>
+                          Mark as Completed
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => handleSelectChange('blocked', task.id, 'status')}>
+                          Mark as Blocked
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem onSelect={() => onDeleteTask(task.id)}>
                           Delete Task
                         </DropdownMenuItem>
