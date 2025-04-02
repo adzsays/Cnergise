@@ -84,15 +84,19 @@ export const TaskUploadDialog: React.FC<TaskUploadDialogProps> = ({
         const jsonData = utils.sheet_to_json(worksheet, { header: 1 });
         
         // Check if there's data
-        if (jsonData.length <= 1 || jsonData[0].length === 0) {
+        if (!Array.isArray(jsonData) || jsonData.length <= 1) {
           setErrors(["File is empty or has no data"]);
           setIsUploading(false);
           return;
         }
         
         // Check for title column
-        const headers = jsonData[0] as string[];
-        if (!headers.some(h => typeof h === 'string' && h.toLowerCase() === 'title')) {
+        const headers = (jsonData[0] || []) as string[];
+        const titleIndex = headers.findIndex(h => 
+          typeof h === 'string' && h.toLowerCase() === 'title'
+        );
+        
+        if (titleIndex === -1) {
           setErrors(["Missing required 'title' column"]);
           setIsUploading(false);
           return;
@@ -132,7 +136,7 @@ export const TaskUploadDialog: React.FC<TaskUploadDialogProps> = ({
         }
         
       } else if (fileExt === 'csv') {
-        // Handle CSV files (existing logic)
+        // Handle CSV files
         const text = await file.text();
         const { tasks, errors: parseErrors } = parseTasksFromCSV(text, projects, features);
         

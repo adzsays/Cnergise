@@ -14,19 +14,23 @@ export interface TaskCSVRow {
   subtasks?: string;
 }
 
-/**
- * Parse CSV content into task objects
- */
 export const parseTasksFromCSV = (
   csvContent: string,
   projects: Project[],
   features: Feature[]
 ): { tasks: Task[], errors: string[] } => {
-  const lines = csvContent.split('\n');
+  // Trim whitespace and handle empty or null input
+  const sanitizedContent = (csvContent || '').trim();
   
-  // Handle empty file
-  if (lines.length === 0) {
+  if (!sanitizedContent) {
     return { tasks: [], errors: ["File is empty"] };
+  }
+
+  const lines = sanitizedContent.split('\n').filter(line => line.trim() !== '');
+  
+  // Handle empty file after filtering
+  if (lines.length === 0) {
+    return { tasks: [], errors: ["No valid data found in the file"] };
   }
 
   const headers = lines[0].split(',').map(header => header.trim().toLowerCase());
@@ -42,9 +46,18 @@ export const parseTasksFromCSV = (
   
   // Process each row (skip header)
   for (let i = 1; i < lines.length; i++) {
-    if (!lines[i].trim()) continue; // Skip empty lines
+    const line = lines[i].trim();
+    if (!line) continue; // Skip empty lines
     
-    const values = lines[i].split(',').map(value => value.trim());
+    const values = line.split(',').map(value => value.trim());
+    
+    // Check if title is not empty
+    const taskTitle = values[titleIndex];
+    if (!taskTitle) {
+      errors.push(`Row ${i}: No task title found`);
+      continue;
+    }
+    
     const row: Record<string, string> = {};
     
     // Map CSV values to object properties
@@ -53,12 +66,6 @@ export const parseTasksFromCSV = (
         row[header] = values[index] || '';
       }
     });
-    
-    // Only title is mandatory
-    if (!row.title) {
-      errors.push(`Row ${i}: Missing required field (title)`);
-      continue;
-    }
     
     // Default values for optional fields
     const defaultProjectId = projects.length > 0 ? projects[0].id : '';
@@ -104,7 +111,7 @@ export const parseTasksFromCSV = (
     // Create task object
     const task: Task = {
       id: `task-${Date.now()}-${i}`,
-      title: row.title,
+      title: taskTitle,
       description: row.description || '',
       projectId: projectId || undefined,
       featureId: featureId,
