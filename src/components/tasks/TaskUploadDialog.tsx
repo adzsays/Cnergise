@@ -172,16 +172,14 @@ export const TaskUploadDialog: React.FC<TaskUploadDialogProps> = ({
           )}
           
           <div className="text-xs space-y-1">
-            <p className="font-medium">Required columns:</p>
+            <p className="font-medium">Only task title is required!</p>
+            <p className="font-medium mt-2">All columns are optional except for title:</p>
             <ul className="list-disc pl-4">
-              <li>title - Task title</li>
-              <li>projectId - Project ID</li>
-              <li>stage - Stage (requirements, development, testing, release, go-live)</li>
-              <li>status - Status (todo, in-progress, blocked, completed)</li>
-              <li>priority - Priority (low, medium, high, urgent)</li>
-            </ul>
-            <p className="font-medium mt-2">Optional columns:</p>
-            <ul className="list-disc pl-4">
+              <li>title - <span className="font-bold">Task title (required)</span></li>
+              <li>projectId - Project ID (defaults to first project if missing)</li>
+              <li>stage - Stage (defaults to "requirements")</li>
+              <li>status - Status (defaults to "todo")</li>
+              <li>priority - Priority (defaults to "medium")</li>
               <li>description - Task description</li>
               <li>featureId - Feature ID</li>
               <li>startDate - Start date (YYYY-MM-DD)</li>

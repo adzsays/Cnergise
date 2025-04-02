@@ -4,11 +4,11 @@ import { Task, Project, Feature, TaskStatus, TaskPriority, StageType, Subtask } 
 export interface TaskCSVRow {
   title: string;
   description?: string;
-  projectId: string;
+  projectId?: string;
   featureId?: string;
-  stage: string;
-  status: string;
-  priority: string;
+  stage?: string;
+  status?: string;
+  priority?: string;
   startDate?: string;
   dueDate?: string;
   subtasks?: string;
@@ -40,15 +40,21 @@ export const parseTasksFromCSV = (
       row[header] = values[index] || '';
     });
     
-    // Validate required fields
-    if (!row.title || !row.projectid || !row.stage || !row.status || !row.priority) {
-      errors.push(`Row ${i}: Missing required fields (title, projectId, stage, status, priority)`);
+    // Only title is mandatory
+    if (!row.title) {
+      errors.push(`Row ${i}: Missing required field (title)`);
       continue;
     }
     
-    // Validate project exists
-    if (!projects.some(p => p.id === row.projectid)) {
-      errors.push(`Row ${i}: Project ID "${row.projectid}" does not exist`);
+    // Default values for optional fields
+    const defaultProjectId = projects.length > 0 ? projects[0].id : '';
+    const projectId = row.projectid && projects.some(p => p.id === row.projectid) 
+      ? row.projectid 
+      : defaultProjectId;
+    
+    // If project doesn't exist and we can't set a default, skip the row
+    if (!projectId) {
+      errors.push(`Row ${i}: No valid project ID provided or found as default`);
       continue;
     }
     
@@ -58,26 +64,10 @@ export const parseTasksFromCSV = (
       continue;
     }
     
-    // Validate status
-    const status = row.status.toLowerCase() as TaskStatus;
-    if (!['todo', 'in-progress', 'blocked', 'completed'].includes(status)) {
-      errors.push(`Row ${i}: Invalid status "${row.status}"`);
-      continue;
-    }
-    
-    // Validate priority
-    const priority = row.priority.toLowerCase() as TaskPriority;
-    if (!['low', 'medium', 'high', 'urgent'].includes(priority)) {
-      errors.push(`Row ${i}: Invalid priority "${row.priority}"`);
-      continue;
-    }
-    
-    // Validate stage
-    const stage = row.stage.toLowerCase() as StageType;
-    if (!['requirements', 'development', 'testing', 'release', 'go-live'].includes(stage)) {
-      errors.push(`Row ${i}: Invalid stage "${row.stage}"`);
-      continue;
-    }
+    // Set default values or validate provided ones
+    const status = validateStatus(row.status) || 'todo';
+    const priority = validatePriority(row.priority) || 'medium';
+    const stage = validateStage(row.stage) || 'requirements';
     
     // Parse subtasks if provided
     let subtasks: Subtask[] = [];
@@ -99,11 +89,11 @@ export const parseTasksFromCSV = (
       id: `task-${Date.now()}-${i}`,
       title: row.title,
       description: row.description,
-      projectId: row.projectid,
+      projectId: projectId,
       featureId: row.featureid || undefined,
-      stage: stage,
-      status: status,
-      priority: priority,
+      stage: stage as StageType,
+      status: status as TaskStatus,
+      priority: priority as TaskPriority,
       startDate: row.startdate || undefined,
       dueDate: row.duedate || undefined,
       completionPercentage: 0,
@@ -116,3 +106,31 @@ export const parseTasksFromCSV = (
   
   return { tasks, errors };
 };
+
+// Helper functions for validation
+function validateStatus(status?: string): TaskStatus | null {
+  if (!status) return null;
+  const normalizedStatus = status.toLowerCase();
+  if (['todo', 'in-progress', 'blocked', 'completed'].includes(normalizedStatus)) {
+    return normalizedStatus as TaskStatus;
+  }
+  return null;
+}
+
+function validatePriority(priority?: string): TaskPriority | null {
+  if (!priority) return null;
+  const normalizedPriority = priority.toLowerCase();
+  if (['low', 'medium', 'high', 'urgent'].includes(normalizedPriority)) {
+    return normalizedPriority as TaskPriority;
+  }
+  return null;
+}
+
+function validateStage(stage?: string): StageType | null {
+  if (!stage) return null;
+  const normalizedStage = stage.toLowerCase();
+  if (['requirements', 'development', 'testing', 'release', 'go-live'].includes(normalizedStage)) {
+    return normalizedStage as StageType;
+  }
+  return null;
+}
