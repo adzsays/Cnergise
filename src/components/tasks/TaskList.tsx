@@ -35,7 +35,8 @@ import {
   CalendarCheck,
   Pencil,
   Users,
-  UserRound
+  UserRound,
+  MessageSquare
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
@@ -231,6 +232,11 @@ export function TaskList({
     }
   };
 
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString();
+  };
+
   return (
     <div className="space-y-2">
       {tasks.length === 0 ? (
@@ -240,19 +246,26 @@ export function TaskList({
       ) : (
         <div>
           <ScrollArea className="h-[calc(100vh-280px)]">
-            <div className="min-w-[900px]">
+            <div className="min-w-[1200px]">
               <Table>
                 <TableHeader className="sticky top-0 z-10 bg-background">
                   <TableRow>
-                    <TableHead className="w-[60px]">Task ID</TableHead>
+                    <TableHead className="w-[60px]"></TableHead>
                     <TableHead className="w-[180px]">Task Name</TableHead>
-                    <TableHead className="w-[100px]">Feature</TableHead>
-                    <TableHead className="w-[90px]">Function</TableHead>
-                    <TableHead className="w-[90px]">Stage</TableHead>
                     <TableHead className="w-[100px]">Project</TableHead>
+                    <TableHead className="w-[90px]">Stage</TableHead>
+                    <TableHead className="w-[90px]">Status</TableHead>
+                    <TableHead className="w-[90px]">Priority</TableHead>
+                    <TableHead className="w-[120px]">Description</TableHead>
+                    <TableHead className="w-[100px]">Feature</TableHead>
+                    <TableHead className="w-[90px]">Track</TableHead>
                     <TableHead className="w-[90px]">Team</TableHead>
                     <TableHead className="w-[90px]">Person</TableHead>
-                    <TableHead className="w-[80px]">% Complete</TableHead>
+                    <TableHead className="w-[120px]">Latest Comments</TableHead>
+                    <TableHead className="w-[90px]">Start Date</TableHead>
+                    <TableHead className="w-[90px]">End Date</TableHead>
+                    <TableHead className="w-[90px]">Completed on</TableHead>
+                    <TableHead className="w-[80px]">Complete</TableHead>
                     <TableHead className="w-[60px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -270,20 +283,9 @@ export function TaskList({
                             ) : (
                               <ChevronRight className="h-3 w-3 text-muted-foreground" />
                             )}
-                            <span className="text-xs font-mono">{task.id.slice(0, 6)}</span>
                           </div>
                         </TableCell>
                         <TableCell className="py-2 font-medium text-xs">{task.title}</TableCell>
-                        <TableCell className="py-2 text-xs">
-                          <div className="flex items-center gap-1">
-                            <Tag className="h-2.5 w-2.5 text-muted-foreground" />
-                            <span className="truncate">{getFeatureName(task.featureId)}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="py-2 text-xs">
-                          {task.functionType ? getFunctionLabel(task.functionType) : "N/A"}
-                        </TableCell>
-                        <TableCell className="py-2 text-xs">{getStageLabel(task.stage)}</TableCell>
                         <TableCell className="py-2 text-xs">
                           <div className="flex items-center gap-1">
                             <div 
@@ -292,6 +294,38 @@ export function TaskList({
                             />
                             <span className="truncate">{getProjectName(task.projectId)}</span>
                           </div>
+                        </TableCell>
+                        <TableCell className="py-2 text-xs">{getStageLabel(task.stage)}</TableCell>
+                        <TableCell className="py-2 text-xs">
+                          <div className="flex items-center gap-1">
+                            {getStatusIcon(task.status)}
+                            <span>{getStatusLabel(task.status)}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-2 text-xs">
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              "text-xs whitespace-nowrap",
+                              getPriorityColor(task.priority)
+                            )}
+                          >
+                            {task.priority}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="py-2 text-xs">
+                          <div className="truncate max-w-[120px]">
+                            {task.description || "N/A"}
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-2 text-xs">
+                          <div className="flex items-center gap-1">
+                            <Tag className="h-2.5 w-2.5 text-muted-foreground" />
+                            <span className="truncate">{getFeatureName(task.featureId)}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-2 text-xs">
+                          {task.functionType ? getFunctionLabel(task.functionType) : "N/A"}
                         </TableCell>
                         <TableCell className="py-2 text-xs">
                           <div className="flex items-center gap-1">
@@ -304,6 +338,21 @@ export function TaskList({
                             <UserRound className="h-3 w-3 text-muted-foreground" />
                             <span>{task.assigneeId ? getPersonName(task.assigneeId) : "Unassigned"}</span>
                           </div>
+                        </TableCell>
+                        <TableCell className="py-2 text-xs">
+                          <div className="flex items-center gap-1">
+                            <MessageSquare className="h-3 w-3 text-muted-foreground" />
+                            <span>None</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-2 text-xs">
+                          {formatDate(task.startDate)}
+                        </TableCell>
+                        <TableCell className="py-2 text-xs">
+                          {formatDate(task.dueDate)}
+                        </TableCell>
+                        <TableCell className="py-2 text-xs">
+                          {formatDate(task.completedDate)}
                         </TableCell>
                         <TableCell className="py-2">
                           <div 
@@ -376,10 +425,9 @@ export function TaskList({
                       
                       {expandedTasks[task.id] && (
                         <TableRow>
-                          <TableCell colSpan={10} className="py-2 px-4 bg-muted/30">
+                          <TableCell colSpan={17} className="py-2 px-4 bg-muted/30">
                             <div className="grid grid-cols-2 gap-4 pt-1 pb-2">
                               <div>
-                                {/* Left column of expanded details */}
                                 {editingTask === task.id ? (
                                   <div className="mb-3">
                                     <div className="mb-2">
@@ -491,7 +539,6 @@ export function TaskList({
                               </div>
                               
                               <div>
-                                {/* Right column of expanded details */}
                                 <div className="mb-3">
                                   <h4 className="text-xs font-medium mb-1">Completion Progress</h4>
                                   <div className="flex items-center gap-2 mb-1">
