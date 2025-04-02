@@ -48,7 +48,7 @@ const TaskManagement = () => {
                 className="flex items-center gap-1"
               >
                 <FileUp className="h-4 w-4" />
-                Import Tasks
+                Import Tasks (CSV/Excel)
               </Button>
               <div className="h-8 w-8 rounded-full bg-gradient-to-r from-taskfinity-blue to-taskfinity-purple"></div>
             </div>

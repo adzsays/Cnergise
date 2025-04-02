@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { parseTasksFromCSV } from "@/utils/csvParser";
 import { Project, Feature, Task } from "@/components/tasks/ProjectTaskManager";
+import { Sheet } from "lucide-react";
 
 interface TaskUploadDialogProps {
   open: boolean;
@@ -53,23 +54,69 @@ export const TaskUploadDialog: React.FC<TaskUploadDialogProps> = ({
     
     try {
       // Read file content
-      const text = await file.text();
+      const fileExt = file.name.split('.').pop()?.toLowerCase();
       
-      // Parse CSV content
-      const { tasks, errors } = parseTasksFromCSV(text, projects, features);
-      
-      if (errors.length > 0) {
-        setErrors(errors);
-        if (tasks.length === 0) {
-          toast.error("Failed to import tasks. Please check the errors.");
-          setIsUploading(false);
-          return;
+      if (fileExt === 'xlsx' || fileExt === 'xls') {
+        // Handle Excel files
+        const { read, utils } = await import('xlsx');
+        const arrayBuffer = await file.arrayBuffer();
+        const workbook = read(arrayBuffer);
+        
+        // Get the first worksheet
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        
+        // Convert to JSON
+        const jsonData = utils.sheet_to_json(worksheet);
+        
+        // Convert to CSV format for our parser
+        const headers = Object.keys(jsonData[0]).join(',');
+        const rows = jsonData.map(row => 
+          Object.values(row).map(val => 
+            // Handle values that might contain commas
+            typeof val === 'string' && val.includes(',') ? `"${val}"` : val
+          ).join(',')
+        );
+        
+        const csvContent = [headers, ...rows].join('\n');
+        
+        // Parse the CSV content
+        const { tasks, errors } = parseTasksFromCSV(csvContent, projects, features);
+        
+        if (errors.length > 0) {
+          setErrors(errors);
+          if (tasks.length === 0) {
+            toast.error("Failed to import tasks. Please check the errors.");
+            setIsUploading(false);
+            return;
+          }
         }
+        
+        // Handle successful import
+        onTasksImported(tasks);
+        toast.success(`Successfully imported ${tasks.length} tasks from Excel`);
+        
+      } else if (fileExt === 'csv') {
+        // Handle CSV files (existing logic)
+        const text = await file.text();
+        const { tasks, errors } = parseTasksFromCSV(text, projects, features);
+        
+        if (errors.length > 0) {
+          setErrors(errors);
+          if (tasks.length === 0) {
+            toast.error("Failed to import tasks. Please check the errors.");
+            setIsUploading(false);
+            return;
+          }
+        }
+        
+        // Handle successful import
+        onTasksImported(tasks);
+        toast.success(`Successfully imported ${tasks.length} tasks from CSV`);
+      } else {
+        toast.error("Unsupported file format. Please upload a CSV or Excel file.");
+        setIsUploading(false);
+        return;
       }
-      
-      // Handle successful import
-      onTasksImported(tasks);
-      toast.success(`Successfully imported ${tasks.length} tasks`);
       
       // Close dialog and reset
       onOpenChange(false);
@@ -86,7 +133,7 @@ export const TaskUploadDialog: React.FC<TaskUploadDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Import Tasks from CSV</DialogTitle>
+          <DialogTitle>Import Tasks from File</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4 py-4">
@@ -94,12 +141,12 @@ export const TaskUploadDialog: React.FC<TaskUploadDialogProps> = ({
             <Input
               ref={fileInputRef}
               type="file"
-              accept=".csv"
+              accept=".csv,.xlsx,.xls"
               onChange={handleFileChange}
               className="cursor-pointer"
             />
             <p className="text-xs text-muted-foreground mt-2">
-              Upload a CSV file with task details
+              Upload a CSV or Excel file with task details
             </p>
           </div>
           
@@ -113,7 +160,7 @@ export const TaskUploadDialog: React.FC<TaskUploadDialogProps> = ({
             <Alert variant="destructive" className="mt-4">
               <AlertDescription>
                 <div className="text-sm font-medium mb-2">
-                  Errors found in CSV file:
+                  Errors found in file:
                 </div>
                 <ul className="text-xs list-disc pl-4 max-h-32 overflow-y-auto">
                   {errors.map((error, index) => (
