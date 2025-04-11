@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ProjectTaskManager, { Project, Feature, Task } from "@/components/tasks/ProjectTaskManager";
 import { EditableTaskTable } from "@/components/tasks/EditableTaskTable";
 import { Sidebar } from "@/components/Sidebar";
@@ -11,6 +11,13 @@ import { TaskUploadDialog } from "@/components/tasks/TaskUploadDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 
+// Local storage keys
+const STORAGE_KEYS = {
+  PROJECTS: 'taskmanagement-projects',
+  FEATURES: 'taskmanagement-features',
+  TASKS: 'taskmanagement-tasks',
+};
+
 const TaskManagement = () => {
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
   const [showNewFeatureDialog, setShowNewFeatureDialog] = useState(false);
@@ -19,6 +26,36 @@ const TaskManagement = () => {
   const [features, setFeatures] = useState<Feature[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const { toast } = useToast();
+
+  // Load data from localStorage on component mount
+  useEffect(() => {
+    const loadedProjects = localStorage.getItem(STORAGE_KEYS.PROJECTS);
+    const loadedFeatures = localStorage.getItem(STORAGE_KEYS.FEATURES);
+    const loadedTasks = localStorage.getItem(STORAGE_KEYS.TASKS);
+
+    if (loadedProjects) {
+      setProjects(JSON.parse(loadedProjects));
+    }
+    if (loadedFeatures) {
+      setFeatures(JSON.parse(loadedFeatures));
+    }
+    if (loadedTasks) {
+      setTasks(JSON.parse(loadedTasks));
+    }
+  }, []);
+
+  // Save data to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(projects));
+  }, [projects]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.FEATURES, JSON.stringify(features));
+  }, [features]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(tasks));
+  }, [tasks]);
 
   const handleCreateProject = (newProject: Project) => {
     setProjects([...projects, newProject]);
