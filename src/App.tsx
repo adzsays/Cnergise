@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import TaskManagement from "./pages/TaskManagement";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
+import { UnderConstruction } from "./pages/UnderConstruction";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,12 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/tasks" element={<TaskManagement />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/calendar" element={<UnderConstruction title="Calendar" />} />
+          <Route path="/mail" element={<UnderConstruction title="Mail" />} />
+          <Route path="/finances" element={<UnderConstruction title="Finances" />} />
+          <Route path="/goals" element={<UnderConstruction title="Goals" />} />
+          <Route path="/health" element={<UnderConstruction title="Health" />} />
+          <Route path="/portfolio" element={<UnderConstruction title="Portfolio" />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
