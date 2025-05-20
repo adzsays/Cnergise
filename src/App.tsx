@@ -7,8 +7,12 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import TaskManagement from "./pages/TaskManagement";
 import Dashboard from "./pages/Dashboard";
+import Calendar from "./pages/Calendar";
+import Mail from "./pages/Mail";
+import Goals from "./pages/Goals";
+import Health from "./pages/Health";
+import Portfolio from "./pages/Portfolio";
 import NotFound from "./pages/NotFound";
-import { UnderConstruction } from "./pages/UnderConstruction";
 
 const queryClient = new QueryClient();
 
@@ -22,12 +26,12 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/tasks" element={<TaskManagement />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/calendar" element={<UnderConstruction title="Calendar" />} />
-          <Route path="/mail" element={<UnderConstruction title="Mail" />} />
-          <Route path="/finances" element={<UnderConstruction title="Finances" />} />
-          <Route path="/goals" element={<UnderConstruction title="Goals" />} />
-          <Route path="/health" element={<UnderConstruction title="Health" />} />
-          <Route path="/portfolio" element={<UnderConstruction title="Portfolio" />} />
+          <Route path="/calendar" element={<Calendar />} />
+          <Route path="/mail" element={<Mail />} />
+          <Route path="/finances" element={<Portfolio />} />
+          <Route path="/goals" element={<Goals />} />
+          <Route path="/health" element={<Health />} />
+          <Route path="/portfolio" element={<Portfolio />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
