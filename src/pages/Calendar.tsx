@@ -62,10 +62,10 @@ export default function Calendar() {
               activeTab={activeTab}
               onTabChange={setActiveTab}
               tabs={[
-                { id: "month", label: "Month" },
-                { id: "week", label: "Week" },
-                { id: "day", label: "Day" },
-                { id: "schedule", label: "Schedule" }
+                { value: "month", label: "Month" },
+                { value: "week", label: "Week" },
+                { value: "day", label: "Day" },
+                { value: "schedule", label: "Schedule" }
               ]}
               actions={
                 <Button variant="outline" size="sm">
@@ -163,4 +163,3 @@ export default function Calendar() {
     </SidebarProvider>
   );
 }
-

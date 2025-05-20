@@ -6,7 +6,7 @@ import { NavigationTabs } from "@/components/NavigationTabs";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Avatar } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Mail as MailIcon, Star, Trash, Send, Archive, Bookmark } from "lucide-react";
 
@@ -82,10 +82,10 @@ export default function Mail() {
               activeTab={activeTab}
               onTabChange={setActiveTab}
               tabs={[
-                { id: "inbox", label: "Inbox" },
-                { id: "sent", label: "Sent" },
-                { id: "drafts", label: "Drafts" },
-                { id: "trash", label: "Trash" }
+                { value: "inbox", label: "Inbox" },
+                { value: "sent", label: "Sent" },
+                { value: "drafts", label: "Drafts" },
+                { value: "trash", label: "Trash" }
               ]}
               actions={
                 <Button variant="outline" size="sm">
@@ -179,4 +179,3 @@ export default function Mail() {
     </SidebarProvider>
   );
 }
-

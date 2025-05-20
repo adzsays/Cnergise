@@ -88,10 +88,10 @@ export default function Portfolio() {
               activeTab={activeTab}
               onTabChange={setActiveTab}
               tabs={[
-                { id: "overview", label: "Overview" },
-                { id: "holdings", label: "Holdings" },
-                { id: "performance", label: "Performance" },
-                { id: "transactions", label: "Transactions" }
+                { value: "overview", label: "Overview" },
+                { value: "holdings", label: "Holdings" },
+                { value: "performance", label: "Performance" },
+                { value: "transactions", label: "Transactions" }
               ]}
               actions={
                 <Button variant="outline" size="sm">
@@ -267,4 +267,3 @@ export default function Portfolio() {
     </SidebarProvider>
   );
 }
-

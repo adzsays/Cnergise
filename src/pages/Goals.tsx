@@ -79,9 +79,9 @@ export default function Goals() {
               activeTab={activeTab}
               onTabChange={setActiveTab}
               tabs={[
-                { id: "active", label: "Active Goals" },
-                { id: "completed", label: "Completed" },
-                { id: "all", label: "All Goals" }
+                { value: "active", label: "Active Goals" },
+                { value: "completed", label: "Completed" },
+                { value: "all", label: "All Goals" }
               ]}
               actions={
                 <Button variant="outline" size="sm">
@@ -213,4 +213,3 @@ export default function Goals() {
     </SidebarProvider>
   );
 }
-

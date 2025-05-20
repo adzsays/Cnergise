@@ -74,10 +74,10 @@ export default function Health() {
               activeTab={activeTab}
               onTabChange={setActiveTab}
               tabs={[
-                { id: "overview", label: "Overview" },
-                { id: "activity", label: "Activity" },
-                { id: "nutrition", label: "Nutrition" },
-                { id: "sleep", label: "Sleep" }
+                { value: "overview", label: "Overview" },
+                { value: "activity", label: "Activity" },
+                { value: "nutrition", label: "Nutrition" },
+                { value: "sleep", label: "Sleep" }
               ]}
               actions={
                 <Button variant="outline" size="sm">
@@ -244,4 +244,3 @@ export default function Health() {
     </SidebarProvider>
   );
 }
-
