@@ -6,14 +6,19 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { MailboxLayout } from "@/components/mail/MailboxLayout";
 import { EmailDetails } from "@/components/mail/EmailDetails";
-import { ComposeEmail } from "@/components/mail/ComposeEmail";
+import { ComposeEmail, EmailService } from "@/components/mail/ComposeEmail";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Mail() {
+  const { toast } = useToast();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeFolder, setActiveFolder] = useState("inbox");
   const [selectedEmail, setSelectedEmail] = useState<number | null>(null);
   const [composeOpen, setComposeOpen] = useState(false);
   const [composeMinimized, setComposeMinimized] = useState(false);
+  const [emailServices, setEmailServices] = useState<EmailService[]>([]);
+  const [defaultServiceId, setDefaultServiceId] = useState<string | undefined>();
+  const [activeServiceId, setActiveServiceId] = useState<string | undefined>();
   
   const emails = [
     {
@@ -78,6 +83,50 @@ export default function Mail() {
       folder: "sent"
     }
   ];
+  
+  const handleAddEmailService = (service: EmailService) => {
+    setEmailServices((prev) => [...prev, service]);
+    
+    // Set as default if it's the first one
+    if (prev.length === 0) {
+      setDefaultServiceId(service.id);
+      setActiveServiceId(service.id);
+    }
+  };
+  
+  const handleRemoveEmailService = (id: string) => {
+    setEmailServices((prev) => prev.filter(service => service.id !== id));
+    
+    // If removing the default, set a new default
+    if (defaultServiceId === id) {
+      const remaining = emailServices.filter(service => service.id !== id);
+      if (remaining.length > 0) {
+        setDefaultServiceId(remaining[0].id);
+        setActiveServiceId(remaining[0].id);
+      } else {
+        setDefaultServiceId(undefined);
+        setActiveServiceId(undefined);
+      }
+    }
+    
+    toast({
+      title: "Email account removed",
+      description: "The email account has been removed from your mailbox.",
+    });
+  };
+  
+  const handleSetDefaultService = (id: string) => {
+    setDefaultServiceId(id);
+    toast({
+      title: "Default email updated",
+      description: "Your default email account has been updated.",
+    });
+  };
+  
+  const getCurrentEmailService = () => {
+    if (!activeServiceId) return null;
+    return emailServices.find(service => service.id === activeServiceId) || null;
+  };
 
   const filteredEmails = emails.filter(email => {
     if (activeFolder === "starred") return email.folder === "starred";
@@ -126,6 +175,13 @@ export default function Mail() {
                   draft: 0,
                   sent: 1
                 }}
+                emailServices={emailServices}
+                onAddEmailService={handleAddEmailService}
+                onRemoveEmailService={handleRemoveEmailService}
+                onSetDefaultService={handleSetDefaultService}
+                defaultServiceId={defaultServiceId}
+                activeServiceId={activeServiceId}
+                onChangeService={setActiveServiceId}
               >
                 {selectedEmail === null ? (
                   <div className="divide-y">
@@ -191,6 +247,7 @@ export default function Mail() {
           minimized={composeMinimized}
           onMinimize={() => setComposeMinimized(true)}
           onMaximize={() => setComposeMinimized(false)}
+          emailService={getCurrentEmailService()}
         />
       )}
     </SidebarProvider>

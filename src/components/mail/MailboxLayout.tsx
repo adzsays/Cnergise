@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button";
 import { 
   Inbox, Trash, Send, Archive, Star, 
   FilePlus, Search, Filter, Mail as MailIcon, 
-  AlertCircle, PanelLeftClose, PanelLeftOpen
+  AlertCircle, PanelLeftClose, PanelLeftOpen, Settings
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { EmailSettings } from "./EmailSettings";
+import { EmailService } from "./ComposeEmail";
 
 interface MailboxLayoutProps {
   children: React.ReactNode;
@@ -22,6 +24,13 @@ interface MailboxLayoutProps {
     draft: number;
     sent: number;
   };
+  emailServices: EmailService[];
+  onAddEmailService: (service: EmailService) => void;
+  onRemoveEmailService: (id: string) => void;
+  onSetDefaultService: (id: string) => void;
+  defaultServiceId?: string;
+  activeServiceId?: string;
+  onChangeService: (id: string) => void;
 }
 
 export function MailboxLayout({
@@ -32,6 +41,13 @@ export function MailboxLayout({
   activeFolder,
   onFolderChange,
   emailCount = { inbox: 3, starred: 1, draft: 0, sent: 0 },
+  emailServices,
+  onAddEmailService,
+  onRemoveEmailService,
+  onSetDefaultService,
+  defaultServiceId,
+  activeServiceId,
+  onChangeService
 }: MailboxLayoutProps) {
   const folders = [
     { id: "inbox", name: "Inbox", icon: Inbox, count: emailCount.inbox },
@@ -66,6 +82,32 @@ export function MailboxLayout({
           </Button>
         </div>
 
+        {/* Email Accounts */}
+        {!sidebarCollapsed && emailServices.length > 0 && (
+          <div className="px-2 pb-2">
+            <h3 className="text-xs font-medium px-2 pt-2 pb-1 text-muted-foreground">
+              ACCOUNTS
+            </h3>
+            <div className="space-y-1">
+              {emailServices.map(service => (
+                <Button
+                  key={service.id}
+                  variant={activeServiceId === service.id ? "secondary" : "ghost"}
+                  className="w-full justify-start text-xs h-8"
+                  onClick={() => onChangeService(service.id)}
+                >
+                  <div className="w-4 h-4 bg-muted/80 rounded-full flex items-center justify-center mr-2 text-[10px]">
+                    {service.provider === 'gmail' && 'G'}
+                    {service.provider === 'outlook' && 'O'}
+                    {service.provider === 'other' && '#'}
+                  </div>
+                  <span className="truncate">{service.email}</span>
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
+        
         {/* Folder List */}
         <div className="flex-1 overflow-auto">
           <nav className="space-y-1 p-2">
@@ -95,8 +137,17 @@ export function MailboxLayout({
           </nav>
         </div>
 
-        {/* Toggle Sidebar */}
-        <div className="p-4 border-t">
+        {/* Settings and Toggle Sidebar */}
+        <div className="p-4 border-t space-y-2">
+          {!sidebarCollapsed && (
+            <EmailSettings 
+              emailServices={emailServices}
+              onAddEmailService={onAddEmailService}
+              onRemoveEmailService={onRemoveEmailService}
+              onSetDefaultService={onSetDefaultService}
+              defaultServiceId={defaultServiceId}
+            />
+          )}
           <Button
             variant="outline"
             size="icon"
