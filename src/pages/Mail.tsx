@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { SidebarProvider, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
@@ -88,7 +87,7 @@ export default function Mail() {
     setEmailServices((prev) => [...prev, service]);
     
     // Set as default if it's the first one
-    if (prev.length === 0) {
+    if (emailServices.length === 0) {
       setDefaultServiceId(service.id);
       setActiveServiceId(service.id);
     }
