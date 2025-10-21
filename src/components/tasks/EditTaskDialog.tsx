@@ -124,12 +124,12 @@ export function EditTaskDialog({
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="project-select">Project</Label>
-                <Select value={projectId} onValueChange={setProjectId}>
+                <Select value={projectId || "none"} onValueChange={(value) => setProjectId(value === "none" ? "" : value)}>
                   <SelectTrigger id="project-select">
                     <SelectValue placeholder="Select a project" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No Project</SelectItem>
+                    <SelectItem value="none">No Project</SelectItem>
                     {projects.map((project) => (
                       <SelectItem key={project.id} value={project.id}>
                         {project.name}
@@ -141,15 +141,15 @@ export function EditTaskDialog({
               
               <div className="space-y-2">
                 <Label htmlFor="team-select">Team</Label>
-                <Select value={teamId} onValueChange={(value) => {
-                  setTeamId(value);
+                <Select value={teamId || "none"} onValueChange={(value) => {
+                  setTeamId(value === "none" ? "" : value);
                   setAssignedTo(""); // Reset assignee when team changes
                 }}>
                   <SelectTrigger id="team-select">
                     <SelectValue placeholder="Select a team" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No Team</SelectItem>
+                    <SelectItem value="none">No Team</SelectItem>
                     {teams.map((team) => (
                       <SelectItem key={team.id} value={team.id}>
                         {team.name}
@@ -162,15 +162,15 @@ export function EditTaskDialog({
               <div className="space-y-2">
                 <Label htmlFor="assignee-select">Assign To</Label>
                 <Select 
-                  value={assignedTo} 
-                  onValueChange={setAssignedTo}
+                  value={assignedTo || "none"} 
+                  onValueChange={(value) => setAssignedTo(value === "none" ? "" : value)}
                   disabled={!teamId}
                 >
                   <SelectTrigger id="assignee-select">
                     <SelectValue placeholder={teamId ? "Select a person" : "Select team first"} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Unassigned</SelectItem>
+                    <SelectItem value="none">Unassigned</SelectItem>
                     {filteredTeamMembers.map((member) => (
                       <SelectItem key={member.id} value={member.id}>
                         {member.name}
