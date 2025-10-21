@@ -1,89 +1,16 @@
-
-import React, { useState, useEffect } from "react";
-import ProjectTaskManager, { Project, Feature, Task } from "@/components/tasks/ProjectTaskManager";
-import { EditableTaskTable } from "@/components/tasks/EditableTaskTable";
+import React, { useState } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
-import { FolderPlus, PlusCircle, Tag, FileUp } from "lucide-react";
-import { NewProjectDialog } from "@/components/tasks/NewProjectDialog";
-import { NewFeatureDialog } from "@/components/tasks/NewFeatureDialog";
+import { FileUp } from "lucide-react";
 import { TaskUploadDialog } from "@/components/tasks/TaskUploadDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
-
-// Local storage keys
-const STORAGE_KEYS = {
-  PROJECTS: 'taskmanagement-projects',
-  FEATURES: 'taskmanagement-features',
-  TASKS: 'taskmanagement-tasks',
-};
+import { ProjectsTab } from "@/components/tasks/ProjectsTab";
+import { SpacesTab } from "@/components/tasks/SpacesTab";
+import { TeamsTab } from "@/components/tasks/TeamsTab";
+import { TaskList } from "@/components/tasks/TaskList";
 
 const TaskManagement = () => {
-  const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
-  const [showNewFeatureDialog, setShowNewFeatureDialog] = useState(false);
   const [showTaskUploadDialog, setShowTaskUploadDialog] = useState(false);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [features, setFeatures] = useState<Feature[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const { toast } = useToast();
-
-  // Load data from localStorage on component mount
-  useEffect(() => {
-    const loadedProjects = localStorage.getItem(STORAGE_KEYS.PROJECTS);
-    const loadedFeatures = localStorage.getItem(STORAGE_KEYS.FEATURES);
-    const loadedTasks = localStorage.getItem(STORAGE_KEYS.TASKS);
-
-    if (loadedProjects) {
-      setProjects(JSON.parse(loadedProjects));
-    }
-    if (loadedFeatures) {
-      setFeatures(JSON.parse(loadedFeatures));
-    }
-    if (loadedTasks) {
-      setTasks(JSON.parse(loadedTasks));
-    }
-  }, []);
-
-  // Save data to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(projects));
-  }, [projects]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.FEATURES, JSON.stringify(features));
-  }, [features]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(tasks));
-  }, [tasks]);
-
-  const handleCreateProject = (newProject: Project) => {
-    setProjects([...projects, newProject]);
-    setShowNewProjectDialog(false);
-  };
-
-  const handleCreateFeature = (newFeature: Feature) => {
-    setFeatures([...features, newFeature]);
-    setShowNewFeatureDialog(false);
-  };
-
-  const handleTasksImported = (importedTasks: Task[]) => {
-    setTasks(prevTasks => [...prevTasks, ...importedTasks]);
-  };
-
-  const handleUpdateTask = (updatedTask: Task) => {
-    setTasks(prevTasks => prevTasks.map(task => 
-      task.id === updatedTask.id ? updatedTask : task
-    ));
-  };
-
-  const handleDeleteTask = (taskId: string) => {
-    setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
-    toast({
-      title: "Task deleted",
-      description: "The task has been deleted successfully",
-    });
-  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -111,74 +38,37 @@ const TaskManagement = () => {
         </header>
 
         <main className="p-6">
-          <Tabs defaultValue="card-view" className="space-y-6">
+          <Tabs defaultValue="tasks" className="space-y-6">
             <TabsList>
-              <TabsTrigger value="card-view">Card View</TabsTrigger>
-              <TabsTrigger value="table-view">Table View</TabsTrigger>
+              <TabsTrigger value="tasks">Tasks</TabsTrigger>
+              <TabsTrigger value="projects">Projects</TabsTrigger>
+              <TabsTrigger value="spaces">Spaces</TabsTrigger>
+              <TabsTrigger value="teams">Teams</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="card-view">
-              <ProjectTaskManager 
-                initialProjects={projects}
-                initialFeatures={features}
-                initialTasks={tasks}
-                onCreateProject={handleCreateProject}
-                onCreateFeature={handleCreateFeature}
-                onTasksImported={handleTasksImported}
-              />
+            <TabsContent value="tasks">
+              <TaskList />
             </TabsContent>
             
-            <TabsContent value="table-view">
-              <EditableTaskTable 
-                tasks={tasks}
-                projects={projects}
-                features={features}
-                teams={[
-                  { id: "team-1", name: "Engineering" },
-                  { id: "team-2", name: "Design" },
-                  { id: "team-3", name: "Product" },
-                  { id: "team-4", name: "Marketing" },
-                ]}
-                people={[
-                  { id: "person-1", name: "Alice Johnson", teamId: "team-1" },
-                  { id: "person-2", name: "Bob Smith", teamId: "team-1" },
-                  { id: "person-3", name: "Carol Williams", teamId: "team-2" },
-                  { id: "person-4", name: "Dave Brown", teamId: "team-2" },
-                  { id: "person-5", name: "Eve Davis", teamId: "team-3" },
-                  { id: "person-6", name: "Frank Miller", teamId: "team-3" },
-                  { id: "person-7", name: "Grace Wilson", teamId: "team-4" },
-                  { id: "person-8", name: "Hank Moore", teamId: "team-4" },
-                ]}
-                onUpdateTask={handleUpdateTask}
-                onDeleteTask={handleDeleteTask}
-              />
+            <TabsContent value="projects">
+              <ProjectsTab />
+            </TabsContent>
+            
+            <TabsContent value="spaces">
+              <SpacesTab />
+            </TabsContent>
+            
+            <TabsContent value="teams">
+              <TeamsTab />
             </TabsContent>
           </Tabs>
         </main>
       </div>
 
-      {/* Create Project Dialog */}
-      <NewProjectDialog 
-        open={showNewProjectDialog}
-        onOpenChange={setShowNewProjectDialog}
-        onCreateProject={handleCreateProject}
-      />
-      
-      {/* Create Feature Dialog */}
-      <NewFeatureDialog 
-        open={showNewFeatureDialog}
-        onOpenChange={setShowNewFeatureDialog}
-        onCreateFeature={handleCreateFeature}
-        projects={projects}
-      />
-      
       {/* Task Upload Dialog */}
       <TaskUploadDialog
         open={showTaskUploadDialog}
         onOpenChange={setShowTaskUploadDialog}
-        projects={projects}
-        features={features}
-        onTasksImported={handleTasksImported}
       />
     </div>
   );

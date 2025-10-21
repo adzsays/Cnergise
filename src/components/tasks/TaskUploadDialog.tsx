@@ -5,29 +5,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { parseTasksFromCSV } from "@/utils/csvParser";
-import { Project, Feature, Task } from "@/components/tasks/ProjectTaskManager";
-import { Sheet, Download } from "lucide-react";
+import { Download } from "lucide-react";
+import { useTasks } from "@/hooks/useTasks";
+import { useProjects } from "@/hooks/useProjects";
 
 interface TaskUploadDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  projects: Project[];
-  features: Feature[];
-  onTasksImported: (tasks: Task[]) => void;
 }
 
 export const TaskUploadDialog: React.FC<TaskUploadDialogProps> = ({
   open,
   onOpenChange,
-  projects,
-  features,
-  onTasksImported,
 }) => {
   const [file, setFile] = useState<File | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { bulkCreateTasks } = useTasks();
+  const { projects } = useProjects();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -46,8 +42,8 @@ export const TaskUploadDialog: React.FC<TaskUploadDialogProps> = ({
 
   const downloadSampleCsv = () => {
     const csvContent = 
-      "title,description,projectId,featureId,stage,status,priority,startDate,dueDate,subtasks\n" +
-      "Sample Task,This is a sample task description,,,requirements,todo,medium,,,Subtask 1|Subtask 2";
+      "title,description,priority,status,due_date,project_id\n" +
+      "Sample Task,This is a sample task description,medium,todo,2025-12-31,";
     
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -59,6 +55,60 @@ export const TaskUploadDialog: React.FC<TaskUploadDialogProps> = ({
     document.body.removeChild(link);
   };
 
+  const parseCsvLine = (line: string): string[] => {
+    const result: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      
+      if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === ',' && !inQuotes) {
+        result.push(current.trim());
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    result.push(current.trim());
+    return result;
+  };
+
+  const parseTasksFromData = (headers: string[], rows: string[][]): any[] => {
+    const tasks: any[] = [];
+    const titleIndex = headers.findIndex(h => h.toLowerCase() === 'title');
+    
+    if (titleIndex === -1) {
+      setErrors(["Missing required 'title' column"]);
+      return [];
+    }
+
+    const defaultProjectId = projects.length > 0 ? projects[0].id : null;
+
+    rows.forEach((row, index) => {
+      const title = row[titleIndex]?.trim();
+      if (!title) {
+        setErrors(prev => [...prev, `Row ${index + 2}: Missing title`]);
+        return;
+      }
+
+      const task: any = {
+        title,
+        description: row[headers.findIndex(h => h.toLowerCase() === 'description')] || null,
+        priority: (row[headers.findIndex(h => h.toLowerCase() === 'priority')] || 'medium') as 'low' | 'medium' | 'high',
+        status: (row[headers.findIndex(h => h.toLowerCase() === 'status')] || 'todo') as 'todo' | 'in_progress' | 'done',
+        due_date: row[headers.findIndex(h => h.toLowerCase() === 'due_date')] || null,
+        project_id: row[headers.findIndex(h => h.toLowerCase() === 'project_id')] || defaultProjectId,
+      };
+
+      tasks.push(task);
+    });
+
+    return tasks;
+  };
+
   const handleImport = async () => {
     if (!file) {
       toast.error("Please select a file to upload");
@@ -66,103 +116,58 @@ export const TaskUploadDialog: React.FC<TaskUploadDialogProps> = ({
     }
 
     setIsUploading(true);
+    setErrors([]);
     
     try {
-      // Read file content
       const fileExt = file.name.split('.').pop()?.toLowerCase();
+      let headers: string[] = [];
+      let rows: string[][] = [];
       
       if (fileExt === 'xlsx' || fileExt === 'xls') {
-        // Handle Excel files
         const { read, utils } = await import('xlsx');
         const arrayBuffer = await file.arrayBuffer();
         const workbook = read(arrayBuffer);
-        
-        // Get the first worksheet
         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
         
-        // Convert to JSON
-        const jsonData = utils.sheet_to_json(worksheet, { header: 1 });
-        
-        // Check if there's data
-        if (!Array.isArray(jsonData) || jsonData.length <= 1) {
+        if (jsonData.length <= 1) {
           setErrors(["File is empty or has no data"]);
           setIsUploading(false);
           return;
         }
         
-        // Check for title column
-        const headers = (jsonData[0] || []) as string[];
-        const titleIndex = headers.findIndex(h => 
-          typeof h === 'string' && h.toLowerCase() === 'title'
-        );
+        headers = jsonData[0].map((h: any) => String(h).toLowerCase());
+        rows = jsonData.slice(1).map(row => row.map(cell => cell != null ? String(cell) : ''));
+      } else if (fileExt === 'csv') {
+        const text = await file.text();
+        const lines = text.split('\n').filter(line => line.trim());
         
-        if (titleIndex === -1) {
-          setErrors(["Missing required 'title' column"]);
+        if (lines.length <= 1) {
+          setErrors(["File is empty or has no data"]);
           setIsUploading(false);
           return;
         }
         
-        // Convert to CSV format for our parser
-        const headersRow = headers.join(',');
-        const dataRows = jsonData.slice(1).map(row => 
-          (row as any[]).map(val => 
-            // Handle values that might contain commas
-            typeof val === 'string' && val.includes(',') ? `"${val}"` : (val || '')
-          ).join(',')
-        );
-        
-        const csvContent = [headersRow, ...dataRows].join('\n');
-        
-        // Parse the CSV content
-        const { tasks, errors: parseErrors } = parseTasksFromCSV(csvContent, projects, features);
-        
-        if (parseErrors.length > 0) {
-          setErrors(parseErrors);
-          if (tasks.length === 0) {
-            toast.error("Failed to import tasks. Please check the errors.");
-            setIsUploading(false);
-            return;
-          } else {
-            toast.warning(`Imported ${tasks.length} tasks with ${parseErrors.length} warnings`);
-          }
-        }
-        
-        if (tasks.length > 0) {
-          // Handle successful import
-          onTasksImported(tasks);
-          toast.success(`Successfully imported ${tasks.length} tasks from Excel`);
-          onOpenChange(false);
-          resetForm();
-        }
-        
-      } else if (fileExt === 'csv') {
-        // Handle CSV files
-        const text = await file.text();
-        const { tasks, errors: parseErrors } = parseTasksFromCSV(text, projects, features);
-        
-        if (parseErrors.length > 0) {
-          setErrors(parseErrors);
-          if (tasks.length === 0) {
-            toast.error("Failed to import tasks. Please check the errors.");
-            setIsUploading(false);
-            return;
-          } else {
-            toast.warning(`Imported ${tasks.length} tasks with ${parseErrors.length} warnings`);
-          }
-        }
-        
-        if (tasks.length > 0) {
-          // Handle successful import
-          onTasksImported(tasks);
-          toast.success(`Successfully imported ${tasks.length} tasks from CSV`);
-          onOpenChange(false);
-          resetForm();
-        }
+        headers = parseCsvLine(lines[0]).map(h => h.toLowerCase());
+        rows = lines.slice(1).map(line => parseCsvLine(line));
       } else {
         toast.error("Unsupported file format. Please upload a CSV or Excel file.");
         setIsUploading(false);
         return;
       }
+      
+      const tasks = parseTasksFromData(headers, rows);
+      
+      if (tasks.length === 0) {
+        toast.error("No valid tasks found in file");
+        setIsUploading(false);
+        return;
+      }
+      
+      await bulkCreateTasks.mutateAsync(tasks);
+      toast.success(`Successfully imported ${tasks.length} tasks`);
+      onOpenChange(false);
+      resetForm();
     } catch (error) {
       console.error("Error importing tasks:", error);
       setErrors([`Error parsing file: ${error instanceof Error ? error.message : 'Unknown error'}`]);
@@ -219,19 +224,17 @@ export const TaskUploadDialog: React.FC<TaskUploadDialogProps> = ({
           
           <div className="flex justify-between items-center">
             <div className="text-xs space-y-1">
-              <p className="font-medium">Only task title is required!</p>
-              <p className="font-medium mt-2">All columns are optional except for title:</p>
+              <p className="font-medium">Required column:</p>
               <ul className="list-disc pl-4">
-                <li>title - <span className="font-bold">Task title (required)</span></li>
-                <li>projectId - Project ID (defaults to first project if missing)</li>
-                <li>stage - Stage (defaults to "requirements")</li>
-                <li>status - Status (defaults to "todo")</li>
-                <li>priority - Priority (defaults to "medium")</li>
+                <li>title - Task title</li>
+              </ul>
+              <p className="font-medium mt-2">Optional columns:</p>
+              <ul className="list-disc pl-4">
                 <li>description - Task description</li>
-                <li>featureId - Feature ID</li>
-                <li>startDate - Start date (YYYY-MM-DD)</li>
-                <li>dueDate - Due date (YYYY-MM-DD)</li>
-                <li>subtasks - Subtasks (pipe-separated: "Task 1|Task 2|Task 3")</li>
+                <li>priority - Priority (low/medium/high, defaults to medium)</li>
+                <li>status - Status (todo/in_progress/done, defaults to todo)</li>
+                <li>due_date - Due date (YYYY-MM-DD format)</li>
+                <li>project_id - Project ID (uses first project if empty)</li>
               </ul>
             </div>
             
