@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
+import Auth from "./pages/Auth";
 import TaskManagement from "./pages/TaskManagement";
 import Dashboard from "./pages/Dashboard";
 import Calendar from "./pages/Calendar";
@@ -13,6 +14,7 @@ import Goals from "./pages/Goals";
 import Health from "./pages/Health";
 import Portfolio from "./pages/Portfolio";
 import NotFound from "./pages/NotFound";
+import { AuthGuard } from "./components/AuthGuard";
 
 const queryClient = new QueryClient();
 
@@ -24,14 +26,15 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/tasks" element={<TaskManagement />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/calendar" element={<Calendar />} />
-          <Route path="/mail" element={<Mail />} />
-          <Route path="/finances" element={<Portfolio />} />
-          <Route path="/goals" element={<Goals />} />
-          <Route path="/health" element={<Health />} />
-          <Route path="/portfolio" element={<Portfolio />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/tasks" element={<AuthGuard><TaskManagement /></AuthGuard>} />
+          <Route path="/dashboard" element={<AuthGuard><Dashboard /></AuthGuard>} />
+          <Route path="/calendar" element={<AuthGuard><Calendar /></AuthGuard>} />
+          <Route path="/mail" element={<AuthGuard><Mail /></AuthGuard>} />
+          <Route path="/finances" element={<AuthGuard><Portfolio /></AuthGuard>} />
+          <Route path="/goals" element={<AuthGuard><Goals /></AuthGuard>} />
+          <Route path="/health" element={<AuthGuard><Health /></AuthGuard>} />
+          <Route path="/portfolio" element={<AuthGuard><Portfolio /></AuthGuard>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
