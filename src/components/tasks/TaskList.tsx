@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useTasks } from "@/hooks/useTasks";
+import { useTasks, Task } from "@/hooks/useTasks";
 import { useProjects } from "@/hooks/useProjects";
 import { useTeams, useTeamMembers } from "@/hooks/useTeams";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +24,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { EditTaskDialog } from "./EditTaskDialog";
 
 export function TaskList() {
   const { tasks, isLoading, updateTask, deleteTask } = useTasks();
@@ -31,6 +32,8 @@ export function TaskList() {
   const { teams } = useTeams();
   const { teamMembers } = useTeamMembers();
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   
   const toggleTaskExpand = (taskId: string) => {
     setExpandedTasks(prev => ({
@@ -103,6 +106,15 @@ export function TaskList() {
     }
   };
 
+  const handleEdit = (task: Task) => {
+    setEditingTask(task);
+    setShowEditDialog(true);
+  };
+
+  const handleUpdateTask = (updates: Partial<Task> & { id: string }) => {
+    updateTask.mutate(updates);
+  };
+
   if (isLoading) {
     return <div className="text-center py-12">Loading tasks...</div>;
   }
@@ -137,9 +149,12 @@ export function TaskList() {
                     <React.Fragment key={task.id}>
                       <TableRow 
                         className={expandedTasks[task.id] ? "border-b-0 cursor-pointer hover:bg-muted/50" : "cursor-pointer hover:bg-muted/50"}
-                        onClick={() => toggleTaskExpand(task.id)}
+                        onClick={() => handleEdit(task)}
                       >
-                        <TableCell className="py-2">
+                        <TableCell className="py-2" onClick={(e) => {
+                          e.stopPropagation();
+                          toggleTaskExpand(task.id);
+                        }}>
                           <div className="flex items-center gap-1">
                             {expandedTasks[task.id] ? (
                               <ChevronDown className="h-3 w-3 text-muted-foreground" />
@@ -207,6 +222,9 @@ export function TaskList() {
                                 Mark as Done
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
+                              <DropdownMenuItem onSelect={() => handleEdit(task)}>
+                                Edit Task
+                              </DropdownMenuItem>
                               <DropdownMenuItem onSelect={() => handleDelete(task.id)} className="text-destructive">
                                 Delete Task
                               </DropdownMenuItem>
@@ -240,6 +258,16 @@ export function TaskList() {
           </ScrollArea>
         </div>
       )}
+      
+      <EditTaskDialog
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        onUpdateTask={handleUpdateTask}
+        task={editingTask}
+        projects={projects}
+        teams={teams}
+        teamMembers={teamMembers}
+      />
     </div>
   );
 }

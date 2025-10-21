@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
-import { FileUp, LogOut } from "lucide-react";
+import { FileUp, LogOut, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { TaskUploadDialog } from "@/components/tasks/TaskUploadDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,10 +11,12 @@ import { ProjectsTab } from "@/components/tasks/ProjectsTab";
 import { SpacesTab } from "@/components/tasks/SpacesTab";
 import { TeamsTab } from "@/components/tasks/TeamsTab";
 import { TaskList } from "@/components/tasks/TaskList";
+import { useTasks } from "@/hooks/useTasks";
 
 const TaskManagement = () => {
   const navigate = useNavigate();
   const [showTaskUploadDialog, setShowTaskUploadDialog] = useState(false);
+  const { deleteAllTasks } = useTasks();
 
   const handleSignOut = async () => {
     try {
@@ -23,6 +25,12 @@ const TaskManagement = () => {
       navigate("/auth");
     } catch (error: any) {
       toast.error("Failed to sign out");
+    }
+  };
+
+  const handleDeleteAllTasks = () => {
+    if (confirm('Are you sure you want to delete ALL tasks? This action cannot be undone.')) {
+      deleteAllTasks.mutate();
     }
   };
 
@@ -44,7 +52,16 @@ const TaskManagement = () => {
                 className="flex items-center gap-1"
               >
                 <FileUp className="h-4 w-4" />
-                Import Tasks (CSV/Excel)
+                Import Tasks
+              </Button>
+              <Button 
+                variant="destructive" 
+                size="sm" 
+                onClick={handleDeleteAllTasks}
+                className="flex items-center gap-1"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete All Tasks
               </Button>
               <Button
                 variant="ghost"

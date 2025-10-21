@@ -124,6 +124,27 @@ export function useTasks(projectId?: string) {
     },
   });
 
+  const deleteAllTasks = useMutation({
+    mutationFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      toast({ title: "All tasks deleted successfully" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error deleting tasks", description: error.message, variant: "destructive" });
+    },
+  });
+
   return {
     tasks,
     isLoading,
@@ -131,5 +152,6 @@ export function useTasks(projectId?: string) {
     updateTask,
     deleteTask,
     bulkCreateTasks,
+    deleteAllTasks,
   };
 }
