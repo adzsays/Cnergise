@@ -42,8 +42,8 @@ export const TaskUploadDialog: React.FC<TaskUploadDialogProps> = ({
 
   const downloadSampleCsv = () => {
     const csvContent = 
-      "title,description,priority,status,due_date,project_id\n" +
-      "Sample Task,This is a sample task description,medium,todo,2025-12-31,";
+      "title,description,priority,status,due_date,project_id,team_id,assigned_to,feature_id\n" +
+      "Sample Task,This is a sample task description,medium,todo,2025-12-31,,,,";
     
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -113,6 +113,18 @@ export const TaskUploadDialog: React.FC<TaskUploadDialogProps> = ({
       // Parse project_id
       const projectIdValue = row[headers.findIndex(h => h.toLowerCase() === 'project_id')]?.trim();
       const projectId = projectIdValue || defaultProjectId;
+      
+      // Parse team_id
+      const teamIdValue = row[headers.findIndex(h => h.toLowerCase() === 'team_id')]?.trim();
+      const teamId = teamIdValue || null;
+      
+      // Parse assigned_to
+      const assignedToValue = row[headers.findIndex(h => h.toLowerCase() === 'assigned_to')]?.trim();
+      const assignedTo = assignedToValue || null;
+      
+      // Parse feature_id
+      const featureIdValue = row[headers.findIndex(h => h.toLowerCase() === 'feature_id')]?.trim();
+      const featureId = featureIdValue || null;
 
       const task: any = {
         title,
@@ -121,6 +133,9 @@ export const TaskUploadDialog: React.FC<TaskUploadDialogProps> = ({
         status,
         due_date: dueDate,
         project_id: projectId,
+        team_id: teamId,
+        assigned_to: assignedTo,
+        feature_id: featureId,
       };
 
       tasks.push(task);
@@ -255,6 +270,9 @@ export const TaskUploadDialog: React.FC<TaskUploadDialogProps> = ({
                 <li>status - Status (todo/in_progress/done, defaults to todo)</li>
                 <li>due_date - Due date (YYYY-MM-DD format)</li>
                 <li>project_id - Project ID (uses first project if empty)</li>
+                <li>team_id - Team ID (optional)</li>
+                <li>assigned_to - Team member ID (optional)</li>
+                <li>feature_id - Feature ID (optional)</li>
               </ul>
             </div>
             
