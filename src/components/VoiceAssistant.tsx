@@ -1,36 +1,95 @@
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Mic, Square, Volume2, Play, PauseCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 export function VoiceAssistant() {
   const [isListening, setIsListening] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [response, setResponse] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
+  
+  const recognitionRef = useRef<any>(null);
+  const synthRef = useRef<SpeechSynthesisUtterance | null>(null);
 
-  // Mock function to start listening
+  useEffect(() => {
+    // Initialize speech recognition
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = false;
+      recognitionRef.current.lang = 'en-US';
+
+      recognitionRef.current.onresult = async (event: any) => {
+        const text = event.results[0][0].transcript;
+        setTranscript(text);
+        setIsListening(false);
+        await handleProcessCommand(text);
+      };
+
+      recognitionRef.current.onerror = (event: any) => {
+        console.error('Speech recognition error:', event.error);
+        setIsListening(false);
+        toast({
+          title: "Error",
+          description: "Failed to recognize speech. Please try again.",
+          variant: "destructive",
+        });
+      };
+
+      recognitionRef.current.onend = () => {
+        setIsListening(false);
+      };
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      if (synthRef.current) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
   const handleStartListening = () => {
+    if (!recognitionRef.current) {
+      toast({
+        title: "Not Supported",
+        description: "Speech recognition is not supported in your browser.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsListening(true);
+    setTranscript("");
+    setResponse("");
+    
     toast({
       title: "Voice Assistant Activated",
       description: "Listening for your command...",
     });
     
-    // Simulate receiving a transcript after 3 seconds
-    setTimeout(() => {
-      setTranscript("Add a meeting with the marketing team for tomorrow at 10 AM");
+    try {
+      recognitionRef.current.start();
+    } catch (error) {
+      console.error('Error starting recognition:', error);
       setIsListening(false);
-      handleProcessCommand();
-    }, 3000);
+    }
   };
 
-  // Mock function to stop listening
   const handleStopListening = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
     setIsListening(false);
     toast({
       title: "Voice Assistant Stopped",
@@ -38,39 +97,105 @@ export function VoiceAssistant() {
     });
   };
 
-  // Mock function to process the command
-  const handleProcessCommand = () => {
-    // Simulate AI processing
-    setTimeout(() => {
-      setResponse(
-        "I've added a new meeting called 'Marketing Team Meeting' to your calendar for tomorrow at 10 AM. Would you like me to invite the marketing team members?"
-      );
-      handlePlayResponse();
-    }, 1500);
-  };
-
-  // Mock function to play the response
-  const handlePlayResponse = () => {
-    setIsPlaying(true);
-    toast({
-      title: "Playing Response",
-      description: "Assistant is speaking...",
-    });
+  const handleProcessCommand = async (text: string) => {
+    setIsProcessing(true);
     
-    // Simulate end of playback
-    setTimeout(() => {
-      setIsPlaying(false);
-      toast({
-        title: "Action Completed",
-        description: "Meeting has been added to your calendar",
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to use the voice assistant.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('voice-assistant', {
+        body: { transcript: text },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
       });
-    }, 4000);
+
+      if (error) {
+        console.error('Error processing command:', error);
+        toast({
+          title: "Error",
+          description: error.message || "Failed to process command",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const aiResponse = data.response || "I've processed your request.";
+      setResponse(aiResponse);
+      
+      if (data.action) {
+        const actionType = data.action.type;
+        let actionMessage = "";
+        
+        if (actionType === "task") {
+          actionMessage = `Task "${data.action.data.title}" created successfully!`;
+        } else if (actionType === "calendar_event") {
+          actionMessage = `Calendar event "${data.action.data.title}" created successfully!`;
+        } else if (actionType === "email") {
+          actionMessage = `Email draft to ${data.action.data.to_email} created successfully!`;
+        }
+        
+        toast({
+          title: "Action Completed",
+          description: actionMessage,
+        });
+      }
+
+      handlePlayResponse(aiResponse);
+    } catch (error: any) {
+      console.error('Error:', error);
+      toast({
+        title: "Error",
+        description: error.message || "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  // Function to clear the conversation
+  const handlePlayResponse = (text: string) => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      
+      synthRef.current = new SpeechSynthesisUtterance(text);
+      synthRef.current.onstart = () => setIsPlaying(true);
+      synthRef.current.onend = () => setIsPlaying(false);
+      synthRef.current.onerror = () => setIsPlaying(false);
+      
+      window.speechSynthesis.speak(synthRef.current);
+      
+      toast({
+        title: "Playing Response",
+        description: "Assistant is speaking...",
+      });
+    }
+  };
+
+  const togglePlayPause = () => {
+    if (isPlaying) {
+      window.speechSynthesis.pause();
+      setIsPlaying(false);
+    } else {
+      window.speechSynthesis.resume();
+      setIsPlaying(true);
+    }
+  };
+
   const handleClearConversation = () => {
     setTranscript("");
     setResponse("");
+    window.speechSynthesis.cancel();
+    setIsPlaying(false);
   };
 
   return (
