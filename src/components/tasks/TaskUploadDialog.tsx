@@ -86,6 +86,10 @@ export const TaskUploadDialog: React.FC<TaskUploadDialogProps> = ({
     }
 
     const defaultProjectId = projects.length > 0 ? projects[0].id : null;
+    
+    // Valid values for priority and status
+    const validPriorities = ['low', 'medium', 'high'];
+    const validStatuses = ['todo', 'in_progress', 'done'];
 
     rows.forEach((row, index) => {
       const title = row[titleIndex]?.trim();
@@ -94,13 +98,29 @@ export const TaskUploadDialog: React.FC<TaskUploadDialogProps> = ({
         return;
       }
 
+      // Parse and validate priority
+      const priorityValue = row[headers.findIndex(h => h.toLowerCase() === 'priority')]?.trim().toLowerCase() || 'medium';
+      const priority = validPriorities.includes(priorityValue) ? priorityValue : 'medium';
+      
+      // Parse and validate status
+      const statusValue = row[headers.findIndex(h => h.toLowerCase() === 'status')]?.trim().toLowerCase() || 'todo';
+      const status = validStatuses.includes(statusValue) ? statusValue : 'todo';
+      
+      // Parse due date
+      const dueDateValue = row[headers.findIndex(h => h.toLowerCase() === 'due_date')]?.trim();
+      const dueDate = dueDateValue ? dueDateValue : null;
+      
+      // Parse project_id
+      const projectIdValue = row[headers.findIndex(h => h.toLowerCase() === 'project_id')]?.trim();
+      const projectId = projectIdValue || defaultProjectId;
+
       const task: any = {
         title,
-        description: row[headers.findIndex(h => h.toLowerCase() === 'description')] || null,
-        priority: (row[headers.findIndex(h => h.toLowerCase() === 'priority')] || 'medium') as 'low' | 'medium' | 'high',
-        status: (row[headers.findIndex(h => h.toLowerCase() === 'status')] || 'todo') as 'todo' | 'in_progress' | 'done',
-        due_date: row[headers.findIndex(h => h.toLowerCase() === 'due_date')] || null,
-        project_id: row[headers.findIndex(h => h.toLowerCase() === 'project_id')] || defaultProjectId,
+        description: row[headers.findIndex(h => h.toLowerCase() === 'description')]?.trim() || null,
+        priority,
+        status,
+        due_date: dueDate,
+        project_id: projectId,
       };
 
       tasks.push(task);
