@@ -127,7 +127,6 @@ export function useTeamMembers(teamId?: string) {
       if (error) throw error;
       return data as TeamMember[];
     },
-    enabled: !!teamId,
   });
 
   const addTeamMember = useMutation({

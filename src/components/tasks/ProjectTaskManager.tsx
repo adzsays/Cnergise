@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { ProjectList } from "./ProjectList";
-import { TaskList } from "./TaskList";
 import { NewTaskDialog } from "./NewTaskDialog";
 import { Button } from "@/components/ui/button";
 import { FolderPlus, PlusCircle, Tag } from "lucide-react";
@@ -296,18 +295,9 @@ const ProjectTaskManager: React.FC<ProjectTaskManagerProps> = ({
             </Button>
           </div>
           
-          <TaskList 
-            tasks={filteredTasks}
-            projects={projects}
-            features={features}
-            teams={teams}
-            people={people}
-            onStatusChange={handleTaskStatusChange}
-            onDelete={handleDeleteTask}
-            onEdit={handleEditTask}
-            onSubtaskToggle={handleSubtaskToggle}
-            onUpdateCompletion={handleUpdateCompletion}
-          />
+          <div className="text-center py-12 text-muted-foreground">
+            This component is deprecated. Use the Tasks tab in Task Management.
+          </div>
         </div>
       </div>
       

@@ -1,18 +1,9 @@
 import React, { useState } from "react";
-import { 
-  type Task, 
-  type Project, 
-  type Feature, 
-  type Team, 
-  type CurrencyType,
-  type Person,
-  type TaskStatus
-} from "./ProjectTaskManager";
+import { useTasks } from "@/hooks/useTasks";
+import { useProjects } from "@/hooks/useProjects";
+import { useTeams, useTeamMembers } from "@/hooks/useTeams";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Progress } from "@/components/ui/progress";
-import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   DropdownMenu, 
@@ -28,61 +19,18 @@ import {
   MoreHorizontal, 
   ChevronDown, 
   ChevronRight, 
-  AlertCircle,
   ArrowRight,
-  Tag,
-  Calendar,
-  CalendarCheck,
-  Pencil,
   Users,
   UserRound,
-  MessageSquare
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { 
-  Form, 
-  FormControl, 
-  FormField, 
-  FormItem, 
-  FormLabel 
-} from "@/components/ui/form";
-import { useForm } from "react-hook-form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
 
-interface TaskListProps {
-  tasks: Task[];
-  projects: Project[];
-  features: Feature[];
-  teams: Team[];
-  people: Person[];
-  onStatusChange: (taskId: string, status: TaskStatus) => void;
-  onDelete: (taskId: string) => void;
-  onEdit: (task: Task) => void;
-  onSubtaskToggle: (taskId: string, subtaskId: string, completed: boolean) => void;
-  onUpdateCompletion: (taskId: string, percentage: number) => void;
-}
-
-export function TaskList({ 
-  tasks, 
-  projects, 
-  features,
-  teams,
-  people,
-  onStatusChange, 
-  onDelete,
-  onEdit,
-  onSubtaskToggle,
-  onUpdateCompletion
-}: TaskListProps) {
+export function TaskList() {
+  const { tasks, isLoading, updateTask, deleteTask } = useTasks();
+  const { projects } = useProjects();
+  const { teams } = useTeams();
+  const { teamMembers } = useTeamMembers();
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
-  const [editingCompletion, setEditingCompletion] = useState<{taskId: string, value: string} | null>(null);
-  const [editingTask, setEditingTask] = useState<string | null>(null);
   
   const toggleTaskExpand = (taskId: string) => {
     setExpandedTasks(prev => ({
@@ -91,157 +39,79 @@ export function TaskList({
     }));
   };
   
-  const getStatusIcon = (status: Task['status']) => {
+  const getStatusIcon = (status: string) => {
     switch(status) {
       case 'todo':
         return <Clock className="h-3 w-3 text-muted-foreground" />;
-      case 'in-progress':
+      case 'in_progress':
         return <ArrowRight className="h-3 w-3 text-blue-500" />;
-      case 'completed':
+      case 'done':
         return <CheckCircle2 className="h-3 w-3 text-green-500" />;
-      case 'blocked':
-        return <AlertCircle className="h-3 w-3 text-red-500" />;
       default:
         return <Clock className="h-3 w-3 text-muted-foreground" />;
     }
   };
   
-  const getStatusLabel = (status: Task['status']) => {
+  const getStatusLabel = (status: string) => {
     switch(status) {
       case 'todo': return 'To Do';
-      case 'in-progress': return 'In Progress';
-      case 'completed': return 'Completed';
-      case 'blocked': return 'Blocked';
+      case 'in_progress': return 'In Progress';
+      case 'done': return 'Done';
       default: return status;
     }
   };
   
-  const getStageLabel = (stage: Task['stage']) => {
-    switch(stage) {
-      case 'requirements': return 'Requirements';
-      case 'development': return 'Development';
-      case 'testing': return 'Testing';
-      case 'release': return 'Release';
-      case 'go-live': return 'Go-Live';
-      default: return stage;
-    }
-  };
-  
-  const getFunctionLabel = (func?: string) => {
-    if (!func) return 'N/A';
-    switch(func) {
-      case 'backend': return 'Backend';
-      case 'frontend': return 'Frontend';
-      case 'design': return 'Design';
-      case 'qa': return 'QA';
-      case 'devops': return 'DevOps';
-      case 'business': return 'Business';
-      default: return 'Other';
-    }
-  };
-  
-  const getPriorityColor = (priority: Task['priority']) => {
+  const getPriorityColor = (priority: string) => {
     switch(priority) {
       case 'low': return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100";
       case 'medium': return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100";
       case 'high': return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100";
-      case 'urgent': return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100";
-      default: return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100";
+      default: return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100";
     }
   };
   
-  const getProjectColor = (projectId: string) => {
-    const project = projects.find(p => p.id === projectId);
-    return project ? project.color : "#6b7280";
-  };
-  
-  const getProjectName = (projectId: string) => {
+  const getProjectName = (projectId?: string | null) => {
+    if (!projectId) return "No Project";
     const project = projects.find(p => p.id === projectId);
     return project ? project.name : "Unknown Project";
   };
   
-  const getFeatureName = (featureId?: string) => {
-    if (!featureId) return "N/A";
-    const feature = features.find(f => f.id === featureId);
-    return feature ? feature.name : "Unknown Feature";
-  };
-  
-  const getTeamName = (teamId?: string) => {
-    if (!teamId) return "N/A";
+  const getTeamName = (teamId?: string | null) => {
+    if (!teamId) return "No Team";
     const team = teams.find(t => t.id === teamId);
     return team ? team.name : "Unknown Team";
   };
   
-  const getPersonName = (personId?: string) => {
-    if (!personId) return "Unassigned";
-    const person = people.find(p => p.id === personId);
-    return person ? person.name : "Unknown Person";
-  };
-  
-  const getTeamMembers = (teamId?: string) => {
-    if (!teamId) return [];
-    return people.filter(p => p.teamId === teamId);
-  };
-  
-  const handleCompletionChange = (taskId: string, value: string) => {
-    setEditingCompletion({ taskId, value });
-  };
-  
-  const handleCompletionBlur = () => {
-    if (editingCompletion) {
-      const { taskId, value } = editingCompletion;
-      const percentage = Math.min(100, Math.max(0, parseInt(value) || 0));
-      onUpdateCompletion(taskId, percentage);
-      setEditingCompletion(null);
-    }
-  };
-  
-  const handleEditTask = (task: Task) => {
-    onEdit(task);
-  };
-  
-  const handleInlineEdit = (taskId: string) => {
-    setEditingTask(taskId);
-    setExpandedTasks(prev => ({
-      ...prev,
-      [taskId]: true
-    }));
-  };
-  
-  const handleTaskTitleChange = (taskId: string, newTitle: string) => {
-    const task = tasks.find(t => t.id === taskId);
-    if (task) {
-      const updatedTask = {
-        ...task,
-        title: newTitle
-      };
-      onEdit(updatedTask);
-    }
-  };
-  
-  const handleTaskAssigneeChange = (taskId: string, personId: string) => {
-    const task = tasks.find(t => t.id === taskId);
-    if (task) {
-      const person = people.find(p => p.id === personId);
-      const updatedTask = {
-        ...task,
-        assigneeId: personId,
-        assignee: person ? person.name : ""
-      };
-      onEdit(updatedTask);
-    }
+  const getMemberName = (memberId?: string | null) => {
+    if (!memberId) return "Unassigned";
+    const member = teamMembers.find(m => m.id === memberId);
+    return member ? member.name : "Unknown Member";
   };
 
-  const formatDate = (dateString?: string) => {
+  const formatDate = (dateString?: string | null) => {
     if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString();
   };
+
+  const handleStatusChange = (taskId: string, status: 'todo' | 'in_progress' | 'done') => {
+    updateTask.mutate({ id: taskId, status });
+  };
+
+  const handleDelete = (taskId: string) => {
+    if (confirm('Are you sure you want to delete this task?')) {
+      deleteTask.mutate(taskId);
+    }
+  };
+
+  if (isLoading) {
+    return <div className="text-center py-12">Loading tasks...</div>;
+  }
 
   return (
     <div className="space-y-2">
       {tasks.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
-          No tasks found. Create a new task to get started!
+          No tasks found. Create a new task or import tasks from CSV to get started!
         </div>
       ) : (
         <div>
@@ -250,30 +120,23 @@ export function TaskList({
               <Table>
                 <TableHeader className="sticky top-0 z-10 bg-background">
                   <TableRow>
-                    <TableHead className="w-[60px]"></TableHead>
-                    <TableHead className="w-[180px]">Task Name</TableHead>
-                    <TableHead className="w-[100px]">Project</TableHead>
-                    <TableHead className="w-[90px]">Stage</TableHead>
-                    <TableHead className="w-[90px]">Status</TableHead>
-                    <TableHead className="w-[90px]">Priority</TableHead>
-                    <TableHead className="w-[120px]">Description</TableHead>
-                    <TableHead className="w-[100px]">Feature</TableHead>
-                    <TableHead className="w-[90px]">Track</TableHead>
-                    <TableHead className="w-[90px]">Team</TableHead>
-                    <TableHead className="w-[90px]">Person</TableHead>
-                    <TableHead className="w-[120px]">Latest Comments</TableHead>
-                    <TableHead className="w-[90px]">Start Date</TableHead>
-                    <TableHead className="w-[90px]">End Date</TableHead>
-                    <TableHead className="w-[90px]">Completed on</TableHead>
-                    <TableHead className="w-[80px]">Complete</TableHead>
-                    <TableHead className="w-[60px]">Actions</TableHead>
+                    <TableHead className="w-[50px]"></TableHead>
+                    <TableHead className="w-[250px]">Task Name</TableHead>
+                    <TableHead className="w-[150px]">Project</TableHead>
+                    <TableHead className="w-[120px]">Status</TableHead>
+                    <TableHead className="w-[100px]">Priority</TableHead>
+                    <TableHead className="w-[250px]">Description</TableHead>
+                    <TableHead className="w-[120px]">Team</TableHead>
+                    <TableHead className="w-[120px]">Assigned To</TableHead>
+                    <TableHead className="w-[120px]">Due Date</TableHead>
+                    <TableHead className="w-[80px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {tasks.map((task) => (
                     <React.Fragment key={task.id}>
                       <TableRow 
-                        className={expandedTasks[task.id] ? "border-b-0" : ""}
+                        className={expandedTasks[task.id] ? "border-b-0 cursor-pointer hover:bg-muted/50" : "cursor-pointer hover:bg-muted/50"}
                         onClick={() => toggleTaskExpand(task.id)}
                       >
                         <TableCell className="py-2">
@@ -287,15 +150,8 @@ export function TaskList({
                         </TableCell>
                         <TableCell className="py-2 font-medium text-xs">{task.title}</TableCell>
                         <TableCell className="py-2 text-xs">
-                          <div className="flex items-center gap-1">
-                            <div 
-                              className="h-2 w-2 rounded-full" 
-                              style={{ backgroundColor: getProjectColor(task.projectId) }}
-                            />
-                            <span className="truncate">{getProjectName(task.projectId)}</span>
-                          </div>
+                          {getProjectName(task.project_id)}
                         </TableCell>
-                        <TableCell className="py-2 text-xs">{getStageLabel(task.stage)}</TableCell>
                         <TableCell className="py-2 text-xs">
                           <div className="flex items-center gap-1">
                             {getStatusIcon(task.status)}
@@ -314,82 +170,24 @@ export function TaskList({
                           </Badge>
                         </TableCell>
                         <TableCell className="py-2 text-xs">
-                          <div className="truncate max-w-[120px]">
-                            {task.description || "N/A"}
+                          <div className="truncate max-w-[200px]">
+                            {task.description || "No description"}
                           </div>
-                        </TableCell>
-                        <TableCell className="py-2 text-xs">
-                          <div className="flex items-center gap-1">
-                            <Tag className="h-2.5 w-2.5 text-muted-foreground" />
-                            <span className="truncate">{getFeatureName(task.featureId)}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="py-2 text-xs">
-                          {task.functionType ? getFunctionLabel(task.functionType) : "N/A"}
                         </TableCell>
                         <TableCell className="py-2 text-xs">
                           <div className="flex items-center gap-1">
                             <Users className="h-3 w-3 text-muted-foreground" />
-                            <span>{task.teamId ? getTeamName(task.teamId) : "N/A"}</span>
+                            <span>{getTeamName(task.team_id)}</span>
                           </div>
                         </TableCell>
                         <TableCell className="py-2 text-xs">
                           <div className="flex items-center gap-1">
                             <UserRound className="h-3 w-3 text-muted-foreground" />
-                            <span>{task.assigneeId ? getPersonName(task.assigneeId) : "Unassigned"}</span>
+                            <span>{getMemberName(task.assigned_to)}</span>
                           </div>
                         </TableCell>
                         <TableCell className="py-2 text-xs">
-                          <div className="flex items-center gap-1">
-                            <MessageSquare className="h-3 w-3 text-muted-foreground" />
-                            <span>None</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="py-2 text-xs">
-                          {formatDate(task.startDate)}
-                        </TableCell>
-                        <TableCell className="py-2 text-xs">
-                          {formatDate(task.dueDate)}
-                        </TableCell>
-                        <TableCell className="py-2 text-xs">
-                          {formatDate(task.completedDate)}
-                        </TableCell>
-                        <TableCell className="py-2">
-                          <div 
-                            className="flex items-center gap-1 cursor-pointer"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setEditingCompletion({ 
-                                taskId: task.id, 
-                                value: task.completionPercentage.toString() 
-                              });
-                            }}
-                          >
-                            {editingCompletion?.taskId === task.id ? (
-                              <div className="flex items-center gap-1">
-                                <Input
-                                  className="h-5 w-12 text-xs px-1"
-                                  value={editingCompletion.value}
-                                  onChange={(e) => handleCompletionChange(task.id, e.target.value)}
-                                  onBlur={handleCompletionBlur}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') handleCompletionBlur();
-                                  }}
-                                  autoFocus
-                                  onClick={(e) => e.stopPropagation()}
-                                />
-                                <span className="text-xs">%</span>
-                              </div>
-                            ) : (
-                              <>
-                                <Progress 
-                                  value={task.completionPercentage} 
-                                  className="h-1.5 w-10" 
-                                />
-                                <span className="text-xs">{task.completionPercentage}%</span>
-                              </>
-                            )}
-                          </div>
+                          {formatDate(task.due_date)}
                         </TableCell>
                         <TableCell className="py-2">
                           <DropdownMenu>
@@ -399,23 +197,17 @@ export function TaskList({
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onSelect={() => onStatusChange(task.id, 'todo')}>
+                              <DropdownMenuItem onSelect={() => handleStatusChange(task.id, 'todo')}>
                                 Mark as To Do
                               </DropdownMenuItem>
-                              <DropdownMenuItem onSelect={() => onStatusChange(task.id, 'in-progress')}>
+                              <DropdownMenuItem onSelect={() => handleStatusChange(task.id, 'in_progress')}>
                                 Mark as In Progress
                               </DropdownMenuItem>
-                              <DropdownMenuItem onSelect={() => onStatusChange(task.id, 'completed')}>
-                                Mark as Completed
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onSelect={() => onStatusChange(task.id, 'blocked')}>
-                                Mark as Blocked
+                              <DropdownMenuItem onSelect={() => handleStatusChange(task.id, 'done')}>
+                                Mark as Done
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem onSelect={() => handleEditTask(task)}>
-                                <Pencil className="h-3.5 w-3.5 mr-2" /> Edit Task
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onSelect={() => onDelete(task.id)}>
+                              <DropdownMenuItem onSelect={() => handleDelete(task.id)} className="text-destructive">
                                 Delete Task
                               </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -425,205 +217,16 @@ export function TaskList({
                       
                       {expandedTasks[task.id] && (
                         <TableRow>
-                          <TableCell colSpan={17} className="py-2 px-4 bg-muted/30">
-                            <div className="grid grid-cols-2 gap-4 pt-1 pb-2">
+                          <TableCell colSpan={10} className="py-4 px-4 bg-muted/30">
+                            <div className="space-y-2 text-sm">
                               <div>
-                                {editingTask === task.id ? (
-                                  <div className="mb-3">
-                                    <div className="mb-2">
-                                      <FormLabel className="text-xs font-medium">Task Title</FormLabel>
-                                      <Input 
-                                        value={task.title}
-                                        className="h-8 text-sm"
-                                        onChange={(e) => handleTaskTitleChange(task.id, e.target.value)}
-                                      />
-                                    </div>
-                                    <div className="mb-2">
-                                      <FormLabel className="text-xs font-medium">Assignee</FormLabel>
-                                      <Select
-                                        value={task.assigneeId || ""}
-                                        onValueChange={(value) => handleTaskAssigneeChange(task.id, value)}
-                                      >
-                                        <SelectTrigger className="h-8 text-sm">
-                                          <SelectValue placeholder="Assign to..." />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          {people.map(person => (
-                                            <SelectItem key={person.id} value={person.id}>
-                                              {person.name} ({getTeamName(person.teamId)})
-                                            </SelectItem>
-                                          ))}
-                                        </SelectContent>
-                                      </Select>
-                                    </div>
-                                    <div className="mb-2">
-                                      <FormLabel className="text-xs font-medium">Completion Percentage</FormLabel>
-                                      <div className="flex items-center gap-2">
-                                        <Input 
-                                          type="number"
-                                          min="0"
-                                          max="100"
-                                          value={task.completionPercentage}
-                                          className="h-8 text-sm w-20"
-                                          onChange={(e) => {
-                                            const value = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
-                                            onUpdateCompletion(task.id, value);
-                                          }}
-                                        />
-                                        <span className="text-xs">%</span>
-                                        <Progress 
-                                          value={task.completionPercentage} 
-                                          className="h-2 flex-1" 
-                                        />
-                                      </div>
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <>
-                                    {task.description && (
-                                      <div className="mb-3">
-                                        <h4 className="text-xs font-medium mb-1">Description</h4>
-                                        <p className="text-xs text-muted-foreground">{task.description}</p>
-                                      </div>
-                                    )}
-                                  </>
-                                )}
-                                
-                                <div className="grid grid-cols-2 gap-3 mb-3">
-                                  <div>
-                                    <h4 className="text-xs font-medium mb-1 flex items-center gap-1">
-                                      <Calendar className="h-3 w-3" />
-                                      Start Date
-                                    </h4>
-                                    <p className="text-xs">
-                                      {task.startDate ? new Date(task.startDate).toLocaleDateString() : 'Not set'}
-                                    </p>
-                                  </div>
-                                  
-                                  <div>
-                                    <h4 className="text-xs font-medium mb-1 flex items-center gap-1">
-                                      <Calendar className="h-3 w-3" />
-                                      Due Date
-                                    </h4>
-                                    <p className="text-xs">
-                                      {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'Not set'}
-                                    </p>
-                                  </div>
-                                </div>
-                                
-                                <div className="grid grid-cols-2 gap-3">
-                                  <div>
-                                    <h4 className="text-xs font-medium mb-1 flex items-center gap-1">
-                                      <CalendarCheck className="h-3 w-3" />
-                                      Completed Date
-                                    </h4>
-                                    <p className="text-xs">
-                                      {task.completedDate ? new Date(task.completedDate).toLocaleDateString() : 'Not completed'}
-                                    </p>
-                                  </div>
-                                  
-                                  <div>
-                                    <h4 className="text-xs font-medium mb-1 flex items-center gap-1">
-                                      <div className="flex items-center">
-                                        {getStatusIcon(task.status)}
-                                        <span className="ml-1">Status</span>
-                                      </div>
-                                    </h4>
-                                    <div>
-                                      <Button variant="outline" size="sm" className="h-6 text-xs">
-                                        {getStatusLabel(task.status)}
-                                      </Button>
-                                    </div>
-                                  </div>
-                                </div>
+                                <span className="font-medium">Description:</span> {task.description || "No description"}
                               </div>
-                              
                               <div>
-                                <div className="mb-3">
-                                  <h4 className="text-xs font-medium mb-1">Completion Progress</h4>
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <Progress value={task.completionPercentage} className="h-2 flex-1" />
-                                    <span className="text-xs font-semibold">{task.completionPercentage}%</span>
-                                  </div>
-                                </div>
-                                
-                                <div className="mb-3">
-                                  <h4 className="text-xs font-medium mb-1 flex items-center gap-1">
-                                    <Users className="h-3 w-3" />
-                                    Team
-                                  </h4>
-                                  <div className="text-xs mb-1">
-                                    {task.teamId ? getTeamName(task.teamId) : "No team assigned"}
-                                  </div>
-                                  
-                                  <h4 className="text-xs font-medium mb-1 flex items-center gap-1 mt-2">
-                                    <UserRound className="h-3 w-3" />
-                                    Assigned To
-                                  </h4>
-                                  <div className="text-xs">
-                                    {task.assigneeId ? getPersonName(task.assigneeId) : "Unassigned"}
-                                  </div>
-                                </div>
-                                
-                                {task.subtasks.length > 0 && (
-                                  <div className="mb-3">
-                                    <div className="flex items-center justify-between mb-1">
-                                      <h4 className="text-xs font-medium">Subtasks</h4>
-                                      <span className="text-xs text-muted-foreground">
-                                        {task.subtasks.filter(st => st.completed).length}/{task.subtasks.length}
-                                      </span>
-                                    </div>
-                                    <div className="space-y-1.5">
-                                      {task.subtasks.map((subtask) => (
-                                        <div key={subtask.id} className="flex items-center gap-1.5">
-                                          <Checkbox 
-                                            checked={subtask.completed}
-                                            onCheckedChange={(checked) => {
-                                              onSubtaskToggle(task.id, subtask.id, checked === true);
-                                            }}
-                                            id={`subtask-${subtask.id}`}
-                                            className="h-3 w-3"
-                                          />
-                                          <label 
-                                            htmlFor={`subtask-${subtask.id}`}
-                                            className={cn(
-                                              "text-xs",
-                                              subtask.completed && "line-through text-muted-foreground"
-                                            )}
-                                          >
-                                            {subtask.title}
-                                          </label>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-                                
-                                <div>
-                                  {editingTask === task.id ? (
-                                    <Button 
-                                      variant="default" 
-                                      size="sm" 
-                                      className="w-full text-xs h-7"
-                                      onClick={() => setEditingTask(null)}
-                                    >
-                                      Save Changes
-                                    </Button>
-                                  ) : (
-                                    <Button 
-                                      variant="outline" 
-                                      size="sm" 
-                                      className="w-full text-xs h-7"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleInlineEdit(task.id);
-                                      }}
-                                    >
-                                      <Pencil className="h-3 w-3 mr-1" />
-                                      Edit Task
-                                    </Button>
-                                  )}
-                                </div>
+                                <span className="font-medium">Created:</span> {formatDate(task.created_at)}
+                              </div>
+                              <div>
+                                <span className="font-medium">Last Updated:</span> {formatDate(task.updated_at)}
                               </div>
                             </div>
                           </TableCell>
