@@ -4,7 +4,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FinancialDataProvider } from "@/contexts/FinancialDataContext";
 import { CashFlowView } from "@/components/finances/CashFlowView";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BalanceSheetView } from "@/components/finances/BalanceSheetView";
 
 const Finances = () => {
   const [activeTab, setActiveTab] = useState("cashflow");
@@ -42,16 +42,7 @@ const Finances = () => {
                   </TabsContent>
 
                   <TabsContent value="balance">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Balance Sheet</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-muted-foreground">
-                          Balance sheet view coming next...
-                        </p>
-                      </CardContent>
-                    </Card>
+                    <BalanceSheetView />
                   </TabsContent>
                 </Tabs>
               </div>
