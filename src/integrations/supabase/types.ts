@@ -240,6 +240,48 @@ export type Database = {
           },
         ]
       }
+      goals: {
+        Row: {
+          category: string
+          completed_date: string | null
+          created_at: string
+          deadline: string | null
+          description: string | null
+          id: string
+          progress: number
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          completed_date?: string | null
+          created_at?: string
+          deadline?: string | null
+          description?: string | null
+          id?: string
+          progress?: number
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          completed_date?: string | null
+          created_at?: string
+          deadline?: string | null
+          description?: string | null
+          id?: string
+          progress?: number
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       projects: {
         Row: {
           created_at: string | null
