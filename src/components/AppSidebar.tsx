@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   Sidebar,
@@ -13,49 +13,70 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuBadge,
-  SidebarProvider,
 } from "@/components/ui/sidebar";
 import {
   Home,
-  Inbox,
-  FileText,
   LayoutDashboard,
   CheckSquare,
-  PanelLeft,
-  ClipboardList,
-  Activity,
-  Clock,
+  Calendar,
+  DollarSign,
+  Target,
+  Heart,
+  Briefcase,
+  Mail,
   PlusCircle,
   User,
 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useSpaces } from "@/hooks/useSpaces";
+import { toast } from "sonner";
 
 const sidebarItems = [
   { icon: Home, label: "Home", href: "/" },
-  { icon: Inbox, label: "Inbox", href: "/inbox", badge: 3 },
-  { icon: FileText, label: "Docs", href: "/docs" },
   { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
-  { icon: CheckSquare, label: "Tasks", href: "/tasks", badge: 5 },
-  { icon: PanelLeft, label: "Whiteboards", href: "/whiteboards" },
-  { icon: ClipboardList, label: "Forms", href: "/forms" },
-  { icon: Activity, label: "Activity", href: "/activity" },
-  { icon: Clock, label: "Timesheets", href: "/timesheets" },
+  { icon: CheckSquare, label: "Tasks", href: "/tasks" },
+  { icon: Calendar, label: "Calendar", href: "/calendar" },
+  { icon: Mail, label: "Mail", href: "/mail" },
+  { icon: DollarSign, label: "Finances", href: "/finances" },
+  { icon: Target, label: "Goals", href: "/goals" },
+  { icon: Heart, label: "Health", href: "/health" },
+  { icon: Briefcase, label: "Portfolio", href: "/portfolio" },
 ];
 
 export function AppSidebar() {
   const location = useLocation();
+  const { spaces, isLoading, createSpace } = useSpaces();
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    color: "#3b82f6",
+  });
+
+  const handleCreateSpace = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await createSpace.mutateAsync(formData);
+      setFormData({ name: "", description: "", color: "#3b82f6" });
+      setIsCreateDialogOpen(false);
+      toast.success("Space created successfully");
+    } catch (error) {
+      toast.error("Failed to create space");
+    }
+  };
   
   return (
     <Sidebar>
       <SidebarHeader>
         <div className="flex items-center gap-2 px-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-white">
-            <span className="font-semibold">C</span>
+            <span className="font-semibold">T</span>
           </div>
-          <span className="font-medium text-lg">Corential</span>
+          <span className="font-medium text-lg">Taskfinity</span>
         </div>
       </SidebarHeader>
       
@@ -75,9 +96,6 @@ export function AppSidebar() {
                       <span>{item.label}</span>
                     </Link>
                   </SidebarMenuButton>
-                  {item.badge && (
-                    <SidebarMenuBadge>{item.badge}</SidebarMenuBadge>
-                  )}
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -87,46 +105,71 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupLabel>Spaces</SidebarGroupLabel>
           <SidebarGroupContent>
-            <div className="flex items-center justify-between px-2 py-1">
-              <span className="text-xs text-muted-foreground">Everything</span>
-              <Button variant="ghost" size="icon" className="h-5 w-5">
-                <PlusCircle className="h-3 w-3" />
-              </Button>
+            <div className="flex items-center justify-between px-2 py-1 mb-2">
+              <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="ghost" size="sm" className="w-full justify-start text-xs text-muted-foreground hover:text-foreground">
+                    <PlusCircle className="mr-2 h-3 w-3" />
+                    Create Space
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Create New Space</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleCreateSpace} className="space-y-4">
+                    <div>
+                      <Label htmlFor="name">Name</Label>
+                      <Input
+                        id="name"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="description">Description</Label>
+                      <Textarea
+                        id="description"
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="color">Color</Label>
+                      <Input
+                        id="color"
+                        type="color"
+                        value={formData.color}
+                        onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                      />
+                    </div>
+                    <Button type="submit" className="w-full">Create Space</Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
             </div>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton>
-                  <div className="flex h-5 w-5 items-center justify-center rounded bg-blue-500 text-white">
-                    <span className="text-xs">L</span>
-                  </div>
-                  <span>Libre</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton>
-                  <div className="flex h-5 w-5 items-center justify-center rounded bg-purple-500 text-white">
-                    <span className="text-xs">M</span>
-                  </div>
-                  <span>Maud Street</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton>
-                  <div className="flex h-5 w-5 items-center justify-center rounded bg-blue-700 text-white">
-                    <span className="text-xs">C</span>
-                  </div>
-                  <span>Corential</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton>
-                  <div className="flex h-5 w-5 items-center justify-center rounded bg-violet-500 text-white">
-                    <span className="text-xs">V</span>
-                  </div>
-                  <span>Valuetrix</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
+            {isLoading ? (
+              <div className="px-2 text-xs text-muted-foreground">Loading spaces...</div>
+            ) : spaces && spaces.length > 0 ? (
+              <SidebarMenu>
+                {spaces.map((space) => (
+                  <SidebarMenuItem key={space.id}>
+                    <SidebarMenuButton>
+                      <div 
+                        className="flex h-5 w-5 items-center justify-center rounded text-white text-xs font-semibold"
+                        style={{ backgroundColor: space.color || "#3b82f6" }}
+                      >
+                        {space.name.charAt(0).toUpperCase()}
+                      </div>
+                      <span>{space.name}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            ) : (
+              <div className="px-2 text-xs text-muted-foreground">No spaces yet</div>
+            )}
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
