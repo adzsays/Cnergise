@@ -47,16 +47,7 @@ export function NavigationTabs({
 
   return (
     <div className="flex flex-col w-full">
-      <header className="flex items-center justify-between px-4 py-2 border-b">
-        <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-500 text-white">
-            <span className="font-semibold">L</span>
-          </div>
-          <h1 className="font-semibold">Libre</h1>
-          <Button variant="ghost" size="sm">
-            <ChevronDown className="h-4 w-4" />
-          </Button>
-        </div>
+      <header className="flex items-center justify-end px-4 py-2 border-b">
         <div className="flex items-center gap-2">
           <div className="relative w-64">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
