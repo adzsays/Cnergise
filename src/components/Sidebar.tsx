@@ -17,6 +17,9 @@ import {
   Settings,
   HelpCircle,
   LogOut,
+  User,
+  Users,
+  Shield,
 } from "lucide-react";
 
 type SidebarItem = {
@@ -36,6 +39,9 @@ const sidebarItems: SidebarItem[] = [
   { icon: Target, label: "Goals", href: "/goals" },
   { icon: Heart, label: "Health", href: "/health" },
   { icon: PieChart, label: "Portfolio", href: "/portfolio" },
+  { icon: User, label: "Profile", href: "/profile" },
+  { icon: Users, label: "Users", href: "/users" },
+  { icon: Shield, label: "Admin", href: "/admin" },
 ];
 
 interface SidebarProps {

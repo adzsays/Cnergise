@@ -14,6 +14,9 @@ import Goals from "./pages/Goals";
 import Health from "./pages/Health";
 import Portfolio from "./pages/Portfolio";
 import Finances from "./pages/Finances";
+import Profile from "./pages/Profile";
+import Users from "./pages/Users";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import { AuthGuard } from "./components/AuthGuard";
 
@@ -36,6 +39,9 @@ const App = () => (
           <Route path="/goals" element={<AuthGuard><Goals /></AuthGuard>} />
           <Route path="/health" element={<AuthGuard><Health /></AuthGuard>} />
           <Route path="/portfolio" element={<AuthGuard><Portfolio /></AuthGuard>} />
+          <Route path="/profile" element={<AuthGuard><Profile /></AuthGuard>} />
+          <Route path="/users" element={<AuthGuard><Users /></AuthGuard>} />
+          <Route path="/admin" element={<AuthGuard><Admin /></AuthGuard>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
