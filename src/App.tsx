@@ -13,6 +13,7 @@ import Mail from "./pages/Mail";
 import Goals from "./pages/Goals";
 import Health from "./pages/Health";
 import Portfolio from "./pages/Portfolio";
+import Finances from "./pages/Finances";
 import NotFound from "./pages/NotFound";
 import { AuthGuard } from "./components/AuthGuard";
 
@@ -31,7 +32,7 @@ const App = () => (
           <Route path="/dashboard" element={<AuthGuard><Dashboard /></AuthGuard>} />
           <Route path="/calendar" element={<AuthGuard><Calendar /></AuthGuard>} />
           <Route path="/mail" element={<AuthGuard><Mail /></AuthGuard>} />
-          <Route path="/finances" element={<AuthGuard><Portfolio /></AuthGuard>} />
+          <Route path="/finances" element={<AuthGuard><Finances /></AuthGuard>} />
           <Route path="/goals" element={<AuthGuard><Goals /></AuthGuard>} />
           <Route path="/health" element={<AuthGuard><Health /></AuthGuard>} />
           <Route path="/portfolio" element={<AuthGuard><Portfolio /></AuthGuard>} />
