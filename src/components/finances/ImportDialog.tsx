@@ -24,20 +24,38 @@ export const ImportDialog = ({ open, onOpenChange }: ImportDialogProps) => {
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
-    if (!selectedFile) return;
+    if (!selectedFile) {
+      console.log('No file selected');
+      return;
+    }
 
+    console.log('File selected:', selectedFile.name, 'Size:', selectedFile.size);
     setFile(selectedFile);
     
     try {
       const data = await selectedFile.arrayBuffer();
+      console.log('File read successfully, size:', data.byteLength);
+      
       const workbook = XLSX.read(data);
+      console.log('Workbook sheets:', workbook.SheetNames);
+      
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
       
+      console.log('Parsed data rows:', jsonData.length);
+      console.log('First row sample:', jsonData[0]);
+      
       setPreview(jsonData.slice(0, 5));
+      
+      if (jsonData.length === 0) {
+        toast.error('File is empty or has no valid data');
+      } else {
+        toast.success(`Loaded ${jsonData.length} rows from ${selectedFile.name}`);
+      }
     } catch (error) {
-      toast.error('Failed to read file');
-      console.error(error);
+      toast.error('Failed to read file. Please check the file format.');
+      console.error('File parsing error:', error);
+      setPreview([]);
     }
   };
 
@@ -130,6 +148,11 @@ export const ImportDialog = ({ open, onOpenChange }: ImportDialogProps) => {
       return;
     }
 
+    if (preview.length === 0) {
+      toast.error('No valid data to import');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -137,6 +160,12 @@ export const ImportDialog = ({ open, onOpenChange }: ImportDialogProps) => {
       const workbook = XLSX.read(data);
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+      if (jsonData.length === 0) {
+        toast.error('No data found in file');
+        setLoading(false);
+        return;
+      }
 
       if (importType === 'transactions') {
         await importTransactions(jsonData);
@@ -150,6 +179,7 @@ export const ImportDialog = ({ open, onOpenChange }: ImportDialogProps) => {
       setPreview([]);
     } catch (error) {
       console.error('Import error:', error);
+      toast.error('Import failed. Check console for details.');
     } finally {
       setLoading(false);
     }
@@ -203,10 +233,19 @@ export const ImportDialog = ({ open, onOpenChange }: ImportDialogProps) => {
             {preview.length > 0 && (
               <div className="space-y-2">
                 <Label>Preview (first 5 rows)</Label>
-                <div className="rounded-md border p-4 max-h-[200px] overflow-auto">
-                  <pre className="text-xs">{JSON.stringify(preview, null, 2)}</pre>
+                <div className="rounded-md border bg-muted/50 p-4 max-h-[200px] overflow-auto">
+                  <pre className="text-xs text-foreground whitespace-pre-wrap">{JSON.stringify(preview, null, 2)}</pre>
                 </div>
               </div>
+            )}
+
+            {file && preview.length === 0 && (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  No data could be parsed from the file. Please check the file format.
+                </AlertDescription>
+              </Alert>
             )}
           </TabsContent>
 
@@ -245,10 +284,19 @@ export const ImportDialog = ({ open, onOpenChange }: ImportDialogProps) => {
             {preview.length > 0 && (
               <div className="space-y-2">
                 <Label>Preview (first 5 rows)</Label>
-                <div className="rounded-md border p-4 max-h-[200px] overflow-auto">
-                  <pre className="text-xs">{JSON.stringify(preview, null, 2)}</pre>
+                <div className="rounded-md border bg-muted/50 p-4 max-h-[200px] overflow-auto">
+                  <pre className="text-xs text-foreground whitespace-pre-wrap">{JSON.stringify(preview, null, 2)}</pre>
                 </div>
               </div>
+            )}
+
+            {file && preview.length === 0 && (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  No data could be parsed from the file. Please check the file format.
+                </AlertDescription>
+              </Alert>
             )}
           </TabsContent>
         </Tabs>
