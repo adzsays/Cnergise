@@ -1,16 +1,18 @@
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Filter } from 'lucide-react';
+import { Plus, Filter, Upload } from 'lucide-react';
 import { useFinancialData } from '@/contexts/FinancialDataContext';
 import { TransactionDialog } from './TransactionDialog';
 import { TransactionTable } from './TransactionTable';
 import { CashFlowChart } from './CashFlowChart';
 import { CategoryFilter } from './CategoryFilter';
+import { ImportDialog } from './ImportDialog';
 
 export const CashFlowView = () => {
   const { transactions, loading } = useFinancialData();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<string>('all');
 
@@ -44,10 +46,16 @@ export const CashFlowView = () => {
             {selectedType === 'all' ? 'All Types' : selectedType === 'income' ? 'Income' : 'Expenses'}
           </Button>
         </div>
-        <Button onClick={() => setIsDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Transaction
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setIsImportOpen(true)}>
+            <Upload className="mr-2 h-4 w-4" />
+            Import CSV
+          </Button>
+          <Button onClick={() => setIsDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Transaction
+          </Button>
+        </div>
       </div>
 
       <CashFlowChart transactions={filteredTransactions} />
@@ -64,6 +72,11 @@ export const CashFlowView = () => {
       <TransactionDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
+      />
+
+      <ImportDialog
+        open={isImportOpen}
+        onOpenChange={setIsImportOpen}
       />
     </div>
   );
