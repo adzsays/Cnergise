@@ -26,6 +26,7 @@ import {
   Mail,
   PlusCircle,
   User,
+  Share2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -42,6 +43,7 @@ const sidebarItems = [
   { icon: Calendar, label: "Calendar", href: "/calendar" },
   { icon: Mail, label: "Mail", href: "/mail" },
   { icon: DollarSign, label: "Finances", href: "/finances" },
+  { icon: Share2, label: "Social Media", href: "/social" },
   { icon: Target, label: "Goals", href: "/goals" },
   { icon: Heart, label: "Health", href: "/health" },
   { icon: Briefcase, label: "Portfolio", href: "/portfolio" },
