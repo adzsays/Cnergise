@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
@@ -13,6 +12,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuBadge,
+  SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import {
   Home,
@@ -27,6 +28,8 @@ import {
   PlusCircle,
   User,
   Share2,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -52,6 +55,8 @@ const sidebarItems = [
 export function AppSidebar() {
   const location = useLocation();
   const { spaces, isLoading, createSpace } = useSpaces();
+  const { state, toggleSidebar } = useSidebar();
+  const isCollapsed = state === "collapsed";
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -72,13 +77,23 @@ export function AppSidebar() {
   };
   
   return (
-    <Sidebar>
+    <Sidebar collapsible="icon">
       <SidebarHeader>
-        <div className="flex items-center gap-2 px-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-white">
-            <span className="font-semibold">T</span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 px-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-white shrink-0">
+              <span className="font-semibold">T</span>
+            </div>
+            {!isCollapsed && <span className="font-medium text-lg">Taskfinity</span>}
           </div>
-          <span className="font-medium text-lg">Taskfinity</span>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={toggleSidebar}
+            className="h-7 w-7 shrink-0"
+          >
+            {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          </Button>
         </div>
       </SidebarHeader>
       
@@ -104,83 +119,85 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
         
-        <SidebarGroup>
-          <SidebarGroupLabel>Spaces</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <div className="flex items-center justify-between px-2 py-1 mb-2">
-              <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="ghost" size="sm" className="w-full justify-start text-xs text-muted-foreground hover:text-foreground">
-                    <PlusCircle className="mr-2 h-3 w-3" />
-                    Create Space
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Create New Space</DialogTitle>
-                  </DialogHeader>
-                  <form onSubmit={handleCreateSpace} className="space-y-4">
-                    <div>
-                      <Label htmlFor="name">Name</Label>
-                      <Input
-                        id="name"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="description">Description</Label>
-                      <Textarea
-                        id="description"
-                        value={formData.description}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="color">Color</Label>
-                      <Input
-                        id="color"
-                        type="color"
-                        value={formData.color}
-                        onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                      />
-                    </div>
-                    <Button type="submit" className="w-full">Create Space</Button>
-                  </form>
-                </DialogContent>
-              </Dialog>
-            </div>
-            {isLoading ? (
-              <div className="px-2 text-xs text-muted-foreground">Loading spaces...</div>
-            ) : spaces && spaces.length > 0 ? (
-              <SidebarMenu>
-                {spaces.map((space) => (
-                  <SidebarMenuItem key={space.id}>
-                    <SidebarMenuButton>
-                      <div 
-                        className="flex h-5 w-5 items-center justify-center rounded text-white text-xs font-semibold"
-                        style={{ backgroundColor: space.color || "#3b82f6" }}
-                      >
-                        {space.name.charAt(0).toUpperCase()}
+        {!isCollapsed && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Spaces</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <div className="flex items-center justify-between px-2 py-1 mb-2">
+                <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="ghost" size="sm" className="w-full justify-start text-xs text-muted-foreground hover:text-foreground">
+                      <PlusCircle className="mr-2 h-3 w-3" />
+                      Create Space
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Create New Space</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleCreateSpace} className="space-y-4">
+                      <div>
+                        <Label htmlFor="name">Name</Label>
+                        <Input
+                          id="name"
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          required
+                        />
                       </div>
-                      <span>{space.name}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            ) : (
-              <div className="px-2 text-xs text-muted-foreground">No spaces yet</div>
-            )}
-          </SidebarGroupContent>
-        </SidebarGroup>
+                      <div>
+                        <Label htmlFor="description">Description</Label>
+                        <Textarea
+                          id="description"
+                          value={formData.description}
+                          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="color">Color</Label>
+                        <Input
+                          id="color"
+                          type="color"
+                          value={formData.color}
+                          onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                        />
+                      </div>
+                      <Button type="submit" className="w-full">Create Space</Button>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              </div>
+              {isLoading ? (
+                <div className="px-2 text-xs text-muted-foreground">Loading spaces...</div>
+              ) : spaces && spaces.length > 0 ? (
+                <SidebarMenu>
+                  {spaces.map((space) => (
+                    <SidebarMenuItem key={space.id}>
+                      <SidebarMenuButton tooltip={space.name}>
+                        <div 
+                          className="flex h-5 w-5 items-center justify-center rounded text-white text-xs font-semibold shrink-0"
+                          style={{ backgroundColor: space.color || "#3b82f6" }}
+                        >
+                          {space.name.charAt(0).toUpperCase()}
+                        </div>
+                        <span>{space.name}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              ) : (
+                <div className="px-2 text-xs text-muted-foreground">No spaces yet</div>
+              )}
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
       
       <SidebarFooter>
         <div className="flex items-center gap-2 p-2">
-          <Button variant="ghost" size="sm" className="w-full justify-start">
-            <User className="mr-2 h-4 w-4" />
-            <span>Invite</span>
+          <Button variant="ghost" size="sm" className={isCollapsed ? "w-full justify-center p-2" : "w-full justify-start"}>
+            <User className={isCollapsed ? "h-4 w-4" : "mr-2 h-4 w-4"} />
+            {!isCollapsed && <span>Invite</span>}
           </Button>
         </div>
       </SidebarFooter>

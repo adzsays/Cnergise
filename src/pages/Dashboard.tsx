@@ -12,7 +12,7 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("overview");
   
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider defaultOpen={false}>
       <div className="flex h-screen w-full overflow-hidden bg-background">
         <AppSidebar />
         <SidebarRail />
