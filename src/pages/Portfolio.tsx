@@ -6,7 +6,8 @@ import { NavigationTabs } from "@/components/NavigationTabs";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, TrendingUp, TrendingDown, DollarSign, PieChart } from "lucide-react";
+import { PlusCircle, TrendingUp, TrendingDown, DollarSign, PieChart, ArrowRightLeft } from "lucide-react";
+import { TradeEntry } from "@/components/portfolio/TradeEntry";
 import { 
   AreaChart, 
   Area, 
@@ -89,6 +90,7 @@ export default function Portfolio() {
               onTabChange={setActiveTab}
               tabs={[
                 { value: "overview", label: "Overview" },
+                { value: "trade", label: "Trade" },
                 { value: "holdings", label: "Holdings" },
                 { value: "performance", label: "Performance" },
                 { value: "transactions", label: "Transactions" }
@@ -212,6 +214,10 @@ export default function Portfolio() {
                       </CardContent>
                     </Card>
                   </div>
+                </TabsContent>
+                
+                <TabsContent value="trade" className="mt-0">
+                  <TradeEntry />
                 </TabsContent>
                 
                 <TabsContent value="holdings">
