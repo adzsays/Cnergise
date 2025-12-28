@@ -69,7 +69,7 @@ const SocialMedia = () => {
   );
 
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider defaultOpen={false}>
       <div className="flex h-screen w-full overflow-hidden bg-background">
         <AppSidebar />
         <SidebarRail />

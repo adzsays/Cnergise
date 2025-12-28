@@ -18,7 +18,7 @@ export default function Goals() {
   const completedGoals = allGoals?.filter(goal => goal.status === 'completed') || [];
 
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider defaultOpen={false}>
       <div className="flex h-screen w-full overflow-hidden bg-background">
         <AppSidebar />
         <SidebarRail />
