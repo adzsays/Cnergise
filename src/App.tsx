@@ -14,6 +14,7 @@ import Goals from "./pages/Goals";
 import Health from "./pages/Health";
 import Portfolio from "./pages/Portfolio";
 import Finances from "./pages/Finances";
+import SocialMedia from "./pages/SocialMedia";
 import Profile from "./pages/Profile";
 import Users from "./pages/Users";
 import Admin from "./pages/Admin";
@@ -36,6 +37,7 @@ const App = () => (
           <Route path="/calendar" element={<AuthGuard><Calendar /></AuthGuard>} />
           <Route path="/mail" element={<AuthGuard><Mail /></AuthGuard>} />
           <Route path="/finances" element={<AuthGuard><Finances /></AuthGuard>} />
+          <Route path="/social" element={<AuthGuard><SocialMedia /></AuthGuard>} />
           <Route path="/goals" element={<AuthGuard><Goals /></AuthGuard>} />
           <Route path="/health" element={<AuthGuard><Health /></AuthGuard>} />
           <Route path="/portfolio" element={<AuthGuard><Portfolio /></AuthGuard>} />
