@@ -62,7 +62,7 @@ export function AppSidebar() {
               <Sun className="h-4 w-4" />
             </div>
             {!isCollapsed && (
-              <span className="font-semibold text-base">Life OS</span>
+              <span className="font-semibold text-base">Cnergise</span>
             )}
           </div>
           <Button
