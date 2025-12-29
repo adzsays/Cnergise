@@ -4,16 +4,18 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { TopBar } from "@/components/layout/TopBar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FinancialDataProvider } from "@/contexts/FinancialDataContext";
+import { FinanceDashboardView } from "@/components/finances/FinanceDashboardView";
 import { CashFlowView } from "@/components/finances/CashFlowView";
 import { BalanceSheetView } from "@/components/finances/BalanceSheetView";
+import { ProjectionTableView } from "@/components/finances/ProjectionTableView";
 import { AccountBalancesView } from "@/components/finances/AccountBalancesView";
 import { CreditScoreView } from "@/components/finances/CreditScoreView";
 import { BudgetView } from "@/components/finances/BudgetView";
 
-import { Wallet, TrendingUp, PieChart, CreditCard, PiggyBank } from "lucide-react";
+import { LayoutDashboard, Wallet, TrendingUp, PieChart, Table2, CreditCard, PiggyBank } from "lucide-react";
 
 const Finances = () => {
-  const [activeTab, setActiveTab] = useState("accounts");
+  const [activeTab, setActiveTab] = useState("dashboard");
 
   return (
     <FinancialDataProvider>
@@ -30,6 +32,10 @@ const Finances = () => {
               <div className="flex-1 overflow-auto p-4 md:p-6">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
                   <TabsList className="bg-muted/50 flex-wrap h-auto gap-1 p-1">
+                    <TabsTrigger value="dashboard" className="text-sm">
+                      <LayoutDashboard className="h-4 w-4 mr-2" />
+                      Dashboard
+                    </TabsTrigger>
                     <TabsTrigger value="accounts" className="text-sm">
                       <Wallet className="h-4 w-4 mr-2" />
                       Accounts
@@ -37,6 +43,10 @@ const Finances = () => {
                     <TabsTrigger value="cashflow" className="text-sm">
                       <TrendingUp className="h-4 w-4 mr-2" />
                       Cash Flow
+                    </TabsTrigger>
+                    <TabsTrigger value="projections" className="text-sm">
+                      <Table2 className="h-4 w-4 mr-2" />
+                      Projections
                     </TabsTrigger>
                     <TabsTrigger value="balance" className="text-sm">
                       <PieChart className="h-4 w-4 mr-2" />
@@ -52,12 +62,20 @@ const Finances = () => {
                     </TabsTrigger>
                   </TabsList>
 
+                  <TabsContent value="dashboard" className="mt-0">
+                    <FinanceDashboardView />
+                  </TabsContent>
+
                   <TabsContent value="accounts" className="mt-0">
                     <AccountBalancesView />
                   </TabsContent>
 
                   <TabsContent value="cashflow" className="mt-0">
                     <CashFlowView />
+                  </TabsContent>
+
+                  <TabsContent value="projections" className="mt-0">
+                    <ProjectionTableView />
                   </TabsContent>
 
                   <TabsContent value="balance" className="mt-0">

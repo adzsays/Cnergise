@@ -87,6 +87,14 @@ export default {
           DEFAULT: 'hsl(var(--social))',
           foreground: 'hsl(var(--social-foreground))'
         },
+        income: {
+          DEFAULT: 'hsl(var(--income))',
+          foreground: 'hsl(var(--income-foreground))'
+        },
+        expense: {
+          DEFAULT: 'hsl(var(--expense))',
+          foreground: 'hsl(var(--expense-foreground))'
+        },
         // Legacy taskfinity colors (for backward compatibility)
         taskfinity: {
           blue: {
