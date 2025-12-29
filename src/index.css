@@ -48,6 +48,12 @@
     --finance-neutral: 38 92% 50%;
     --finance-negative: 0 84% 60%;
 
+    /* Income/Expense colors */
+    --income: 142 71% 45%;
+    --income-foreground: 0 0% 100%;
+    --expense: 0 84% 60%;
+    --expense-foreground: 0 0% 100%;
+
     /* Social/Comms */
     --social: 262 83% 58%;
     --social-foreground: 0 0% 100%;
