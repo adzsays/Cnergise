@@ -9,8 +9,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Save, MessageCircle, Send, Eye, EyeOff, Shield, AlertTriangle,
-  TrendingUp, Mail, Calendar, Building2
+  TrendingUp, Mail, Calendar, Building2, Landmark
 } from "lucide-react";
+import { FinexerSettings } from "./FinexerSettings";
 
 export function IntegrationSettings() {
   const { integrations, isLoading, saveIntegrations } = useIntegrations();
@@ -175,7 +176,11 @@ export function IntegrationSettings() {
       </Alert>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="banking" className="text-xs sm:text-sm">
+            <Landmark className="h-4 w-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Banking</span>
+          </TabsTrigger>
           <TabsTrigger value="messaging" className="text-xs sm:text-sm">
             <MessageCircle className="h-4 w-4 mr-1 sm:mr-2" />
             <span className="hidden sm:inline">Messaging</span>
@@ -193,6 +198,11 @@ export function IntegrationSettings() {
             <span className="hidden sm:inline">Calendar</span>
           </TabsTrigger>
         </TabsList>
+
+        {/* Banking/Finexer Tab */}
+        <TabsContent value="banking" className="space-y-4 mt-4">
+          <FinexerSettings />
+        </TabsContent>
 
         {/* Messaging Tab */}
         <TabsContent value="messaging" className="space-y-4 mt-4">
