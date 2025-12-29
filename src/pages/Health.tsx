@@ -2,17 +2,15 @@
 import React from "react";
 import { SidebarProvider, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { NavigationTabs } from "@/components/NavigationTabs";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { TopBar } from "@/components/layout/TopBar";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { 
   Heart, 
   Timer, 
   Droplets, 
   Moon, 
-  PlusCircle, 
   ArrowUpRight, 
   ArrowDownRight 
 } from "lucide-react";
@@ -43,8 +41,8 @@ export default function Health() {
   const stepsGoal = 10000;
   const stepsPercentage = Math.min(100, Math.round((steps / stepsGoal) * 100));
   
-  const waterIntake = 1.8; // liters
-  const waterGoal = 2.5; // liters
+  const waterIntake = 1.8;
+  const waterGoal = 2.5;
   const waterPercentage = Math.min(100, Math.round((waterIntake / waterGoal) * 100));
   
   const heartRate = {
@@ -61,36 +59,21 @@ export default function Health() {
         
         <SidebarInset>
           <div className="flex h-full flex-col">
-            <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-              <div className="flex h-16 items-center justify-between px-6">
-                <h1 className="text-2xl font-bold gradient-heading">Health</h1>
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-full bg-gradient-to-r from-taskfinity-blue to-taskfinity-purple"></div>
+            <TopBar title="Health" />
+            
+            <div className="flex-1 overflow-auto p-4 md:p-6">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <div className="flex items-center justify-between mb-6">
+                  <TabsList className="bg-muted/50">
+                    <TabsTrigger value="overview" className="text-sm">Overview</TabsTrigger>
+                    <TabsTrigger value="activity" className="text-sm">Activity</TabsTrigger>
+                    <TabsTrigger value="nutrition" className="text-sm">Nutrition</TabsTrigger>
+                    <TabsTrigger value="sleep" className="text-sm">Sleep</TabsTrigger>
+                  </TabsList>
                 </div>
-              </div>
-            </header>
-            
-            <NavigationTabs
-              activeTab={activeTab}
-              onTabChange={setActiveTab}
-              tabs={[
-                { value: "overview", label: "Overview" },
-                { value: "activity", label: "Activity" },
-                { value: "nutrition", label: "Nutrition" },
-                { value: "sleep", label: "Sleep" }
-              ]}
-              actions={
-                <Button variant="outline" size="sm">
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Add Data
-                </Button>
-              }
-            />
-            
-            <div className="flex-1 overflow-auto p-6">
-              <Tabs value={activeTab} className="w-full">
+                
                 <TabsContent value="overview" className="mt-0">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
                     <Card>
                       <CardHeader className="pb-2">
                         <CardTitle className="flex items-center gap-2">
