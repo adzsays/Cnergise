@@ -21,6 +21,7 @@ import Admin from "./pages/Admin";
 import Teams from "./pages/Teams";
 import Contacts from "./pages/Contacts";
 import Chat from "./pages/Chat";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import { AuthGuard } from "./components/AuthGuard";
 
@@ -50,6 +51,7 @@ const App = () => (
           <Route path="/teams" element={<AuthGuard><Teams /></AuthGuard>} />
           <Route path="/contacts" element={<AuthGuard><Contacts /></AuthGuard>} />
           <Route path="/chat" element={<AuthGuard><Chat /></AuthGuard>} />
+          <Route path="/settings" element={<AuthGuard><Settings /></AuthGuard>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

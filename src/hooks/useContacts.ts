@@ -12,6 +12,8 @@ export type Contact = {
   title?: string | null;
   notes?: string | null;
   avatar_url?: string | null;
+  whatsapp_number?: string | null;
+  telegram_username?: string | null;
   created_at: string;
   updated_at: string;
 };
