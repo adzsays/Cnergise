@@ -17,7 +17,7 @@ import {
 import {
   CalendarDays,
   Heart,
-  DollarSign,
+  Wallet,
   Mail,
   MessageSquare,
   Settings,
@@ -40,7 +40,7 @@ const navItems = [
   { icon: Target, label: "Goals", href: "/goals" },
   { icon: Share2, label: "Social", href: "/social" },
   { icon: Heart, label: "Health", href: "/health" },
-  { icon: DollarSign, label: "Finance", href: "/finances" },
+  { icon: Wallet, label: "Finance", href: "/finances" },
   { icon: Briefcase, label: "Portfolio", href: "/portfolio" },
   { icon: Mail, label: "Mail", href: "/mail" },
   { icon: CalendarDays, label: "Calendar", href: "/calendar" },
