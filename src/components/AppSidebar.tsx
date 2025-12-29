@@ -29,6 +29,7 @@ import {
   CheckSquare,
   Target,
   Briefcase,
+  FolderKanban,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -37,6 +38,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { icon: Sun, label: "Today", href: "/" },
   { icon: CheckSquare, label: "Tasks", href: "/tasks" },
+  { icon: FolderKanban, label: "Projects", href: "/projects" },
   { icon: Target, label: "Goals", href: "/goals" },
   { icon: Share2, label: "Social", href: "/social" },
   { icon: Activity, label: "Health", href: "/health" },
