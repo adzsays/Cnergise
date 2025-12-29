@@ -4,7 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Save, MessageCircle, Send, Eye, EyeOff } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Save, MessageCircle, Send, Eye, EyeOff, Shield, AlertTriangle } from "lucide-react";
 
 export function IntegrationSettings() {
   const { integrations, isLoading, saveIntegrations } = useIntegrations();
@@ -24,11 +25,26 @@ export function IntegrationSettings() {
     }
   }, [integrations]);
 
+  // Auto-hide tokens after 30 seconds
+  useEffect(() => {
+    if (showWhatsappToken) {
+      const timer = setTimeout(() => setShowWhatsappToken(false), 30000);
+      return () => clearTimeout(timer);
+    }
+  }, [showWhatsappToken]);
+
+  useEffect(() => {
+    if (showTelegramToken) {
+      const timer = setTimeout(() => setShowTelegramToken(false), 30000);
+      return () => clearTimeout(timer);
+    }
+  }, [showTelegramToken]);
+
   const handleSave = () => {
     saveIntegrations.mutate({
-      whatsapp_phone_number_id: whatsappPhoneId || null,
-      whatsapp_access_token: whatsappToken || null,
-      telegram_bot_token: telegramToken || null,
+      whatsapp_phone_number_id: whatsappPhoneId.trim() || null,
+      whatsapp_access_token: whatsappToken.trim() || null,
+      telegram_bot_token: telegramToken.trim() || null,
     });
   };
 
@@ -38,6 +54,20 @@ export function IntegrationSettings() {
 
   return (
     <div className="space-y-6">
+      <Alert className="border-primary/20 bg-primary/5">
+        <Shield className="h-4 w-4" />
+        <AlertDescription>
+          Your API credentials are encrypted and stored securely. They are only accessible to you and protected by row-level security policies.
+        </AlertDescription>
+      </Alert>
+
+      <Alert variant="destructive" className="border-destructive/20 bg-destructive/5">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertDescription>
+          Never share your API tokens with anyone. If you suspect your tokens have been compromised, regenerate them immediately from the respective platforms.
+        </AlertDescription>
+      </Alert>
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
