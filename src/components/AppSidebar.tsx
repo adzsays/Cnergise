@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/sidebar";
 import {
   CalendarDays,
-  Heart,
+  Activity,
   Wallet,
   Mail,
   MessageSquare,
@@ -39,7 +39,7 @@ const navItems = [
   { icon: CheckSquare, label: "Tasks", href: "/tasks" },
   { icon: Target, label: "Goals", href: "/goals" },
   { icon: Share2, label: "Social", href: "/social" },
-  { icon: Heart, label: "Health", href: "/health" },
+  { icon: Activity, label: "Health", href: "/health" },
   { icon: Wallet, label: "Finance", href: "/finances" },
   { icon: Briefcase, label: "Portfolio", href: "/portfolio" },
   { icon: Mail, label: "Mail", href: "/mail" },
