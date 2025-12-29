@@ -128,9 +128,11 @@ export type Database = {
           name: string
           notes: string | null
           phone: string | null
+          telegram_username: string | null
           title: string | null
           updated_at: string
           user_id: string
+          whatsapp_number: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -141,9 +143,11 @@ export type Database = {
           name: string
           notes?: string | null
           phone?: string | null
+          telegram_username?: string | null
           title?: string | null
           updated_at?: string
           user_id: string
+          whatsapp_number?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -154,9 +158,11 @@ export type Database = {
           name?: string
           notes?: string | null
           phone?: string | null
+          telegram_username?: string | null
           title?: string | null
           updated_at?: string
           user_id?: string
+          whatsapp_number?: string | null
         }
         Relationships: []
       }
@@ -195,6 +201,53 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      external_messages: {
+        Row: {
+          contact_id: string | null
+          content: string
+          created_at: string
+          direction: string
+          external_message_id: string | null
+          id: string
+          platform: string
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          contact_id?: string | null
+          content: string
+          created_at?: string
+          direction: string
+          external_message_id?: string | null
+          id?: string
+          platform: string
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          contact_id?: string | null
+          content?: string
+          created_at?: string
+          direction?: string
+          external_message_id?: string | null
+          id?: string
+          platform?: string
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "external_messages_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       features: {
         Row: {
