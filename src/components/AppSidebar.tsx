@@ -26,6 +26,9 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
+  CheckSquare,
+  Target,
+  Briefcase,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -33,9 +36,12 @@ import { cn } from "@/lib/utils";
 // Core navigation items per spec
 const navItems = [
   { icon: Sun, label: "Today", href: "/" },
+  { icon: CheckSquare, label: "Tasks", href: "/tasks" },
+  { icon: Target, label: "Goals", href: "/goals" },
   { icon: Share2, label: "Social", href: "/social" },
   { icon: Heart, label: "Health", href: "/health" },
   { icon: DollarSign, label: "Finance", href: "/finances" },
+  { icon: Briefcase, label: "Portfolio", href: "/portfolio" },
   { icon: Mail, label: "Mail", href: "/mail" },
   { icon: CalendarDays, label: "Calendar", href: "/calendar" },
   { icon: MessageSquare, label: "Chat", href: "/chat" },
