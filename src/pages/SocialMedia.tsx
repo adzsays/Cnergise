@@ -24,7 +24,6 @@ import {
   Newspaper
 } from "lucide-react";
 import { NewsFeed } from "@/components/social/NewsFeed";
-import { MarketTicker } from "@/components/social/MarketTicker";
 
 // Mock data for social media feeds
 const instagramPosts = [
@@ -79,9 +78,6 @@ const SocialMedia = () => {
         
         <SidebarInset>
           <div className="flex h-full flex-col">
-            {/* Market Ticker */}
-            <MarketTicker />
-
             <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
               <div className="flex h-16 items-center justify-between px-6">
                 <div>
