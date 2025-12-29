@@ -698,6 +698,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_integrations: {
+        Row: {
+          created_at: string
+          id: string
+          telegram_bot_token: string | null
+          updated_at: string
+          user_id: string
+          whatsapp_access_token: string | null
+          whatsapp_phone_number_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          telegram_bot_token?: string | null
+          updated_at?: string
+          user_id: string
+          whatsapp_access_token?: string | null
+          whatsapp_phone_number_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          telegram_bot_token?: string | null
+          updated_at?: string
+          user_id?: string
+          whatsapp_access_token?: string | null
+          whatsapp_phone_number_id?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
