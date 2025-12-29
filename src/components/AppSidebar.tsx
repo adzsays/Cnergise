@@ -30,6 +30,9 @@ import {
   Share2,
   ChevronLeft,
   ChevronRight,
+  Users,
+  UserCircle,
+  MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -50,6 +53,9 @@ const sidebarItems = [
   { icon: Target, label: "Goals", href: "/goals" },
   { icon: Heart, label: "Health", href: "/health" },
   { icon: Briefcase, label: "Portfolio", href: "/portfolio" },
+  { icon: Users, label: "Teams", href: "/teams" },
+  { icon: UserCircle, label: "Contacts", href: "/contacts" },
+  { icon: MessageSquare, label: "Chat", href: "/chat" },
 ];
 
 export function AppSidebar() {
