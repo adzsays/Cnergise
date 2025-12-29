@@ -21,6 +21,7 @@ import Admin from "./pages/Admin";
 import Teams from "./pages/Teams";
 import Contacts from "./pages/Contacts";
 import Chat from "./pages/Chat";
+import ProjectsAnalytics from "./pages/ProjectsAnalytics";
 
 import Monitoring from "./pages/Monitoring";
 import NotFound from "./pages/NotFound";
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/tasks" element={<AuthGuard><TaskManagement /></AuthGuard>} />
+            <Route path="/projects" element={<AuthGuard><ProjectsAnalytics /></AuthGuard>} />
             <Route path="/dashboard" element={<AuthGuard><Dashboard /></AuthGuard>} />
             <Route path="/calendar" element={<AuthGuard><Calendar /></AuthGuard>} />
             <Route path="/mail" element={<AuthGuard><Mail /></AuthGuard>} />
