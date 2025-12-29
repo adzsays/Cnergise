@@ -5,7 +5,8 @@
 
 @layer base {
   :root {
-    --background: 220 100% 99%;
+    /* Light mode - clean, minimal SaaS style */
+    --background: 240 10% 98%;
     --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
@@ -14,65 +15,97 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    --primary: 221 83% 53%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary accent - modern teal/blue */
+    --primary: 187 72% 42%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 215 16% 47%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222 47% 11%;
 
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
 
-    --accent: 174 72% 40%;
+    --accent: 187 72% 42%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 221 83% 53%;
+    /* Semantic colors */
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --info: 199 89% 48%;
+    --info-foreground: 0 0% 100%;
 
-    --radius: 0.75rem;
+    /* Health semantic */
+    --health: 174 72% 40%;
+    --health-foreground: 0 0% 100%;
 
-    --sidebar-background: 236 67% 17%;
-    --sidebar-foreground: 213 27% 84%;
-    --sidebar-primary: 221 83% 53%;
+    /* Finance semantic */
+    --finance-positive: 142 71% 45%;
+    --finance-neutral: 38 92% 50%;
+    --finance-negative: 0 84% 60%;
+
+    /* Social/Comms */
+    --social: 262 83% 58%;
+    --social-foreground: 0 0% 100%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 187 72% 42%;
+
+    --radius: 0.5rem;
+
+    /* Sidebar - cleaner light theme */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 187 72% 42%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 235 60% 25%;
-    --sidebar-accent-foreground: 213 27% 84%;
-    --sidebar-border: 235 60% 25%;
-    --sidebar-ring: 221 83% 53%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 187 72% 42%;
   }
 
   .dark {
-    --background: 240 10% 4%;
-    --foreground: 213 27% 84%;
+    --background: 222 47% 8%;
+    --foreground: 210 40% 98%;
 
-    --card: 240 10% 10%;
-    --card-foreground: 213 27% 84%;
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 240 10% 10%;
-    --popover-foreground: 213 27% 84%;
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 221 83% 53%;
+    --primary: 187 72% 42%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 215 16% 47%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 240 10% 16%;
-    --muted-foreground: 213 27% 84%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 174 72% 40%;
+    --accent: 187 72% 42%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 237 11% 24%;
-    --input: 237 11% 24%;
-    --ring: 221 83% 53%;
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 187 72% 42%;
+
+    --sidebar-background: 222 47% 11%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 187 72% 42%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 217 33% 17%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217 33% 17%;
+    --sidebar-ring: 187 72% 42%;
   }
 }
 
@@ -82,28 +115,128 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "cv11", "ss01", "tnum";
+  }
+
+  /* Typography scale */
+  h1 {
+    @apply text-2xl font-semibold tracking-tight;
+  }
+
+  h2 {
+    @apply text-lg font-medium;
+  }
+
+  h3 {
+    @apply text-base font-medium;
+  }
+
+  p, span, div {
+    @apply text-sm;
   }
 }
 
 @layer components {
+  /* Card styles - 6px radius, subtle shadow, proper padding */
+  .dashboard-card {
+    @apply bg-card rounded-md shadow-sm border border-border p-4 md:p-6 transition-shadow duration-150 hover:shadow-md;
+  }
+
+  .dashboard-card-header {
+    @apply flex items-center justify-between mb-4;
+  }
+
+  .dashboard-card-title {
+    @apply text-base font-medium text-foreground;
+  }
+
+  .dashboard-card-content {
+    @apply space-y-4;
+  }
+
+  /* Widget specific styles */
+  .widget-metric {
+    @apply text-2xl font-semibold tabular-nums;
+  }
+
+  .widget-metric-label {
+    @apply text-xs text-muted-foreground uppercase tracking-wide;
+  }
+
+  .widget-metric-change {
+    @apply text-xs font-medium;
+  }
+
+  .widget-metric-change.positive {
+    @apply text-[hsl(var(--success))];
+  }
+
+  .widget-metric-change.negative {
+    @apply text-destructive;
+  }
+
+  .widget-metric-change.neutral {
+    @apply text-[hsl(var(--warning))];
+  }
+
+  /* Navigation active state */
+  .nav-item-active {
+    @apply bg-sidebar-accent text-sidebar-primary relative;
+  }
+
+  .nav-item-active::before {
+    content: "";
+    @apply absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-primary rounded-r;
+  }
+
+  /* Skeleton loader */
+  .skeleton {
+    @apply animate-pulse bg-muted rounded;
+  }
+
+  /* Time range filter */
+  .time-filter {
+    @apply inline-flex items-center gap-1 text-xs;
+  }
+
+  .time-filter-button {
+    @apply px-2 py-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-150;
+  }
+
+  .time-filter-button.active {
+    @apply bg-primary text-primary-foreground;
+  }
+
+  /* Legacy gradient heading - keeping for backward compatibility */
   .gradient-heading {
-    @apply bg-gradient-to-r from-taskfinity-blue to-taskfinity-purple bg-clip-text text-transparent;
+    @apply text-foreground font-semibold;
   }
   
   .taskfinity-card {
-    @apply bg-white dark:bg-card rounded-xl shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden;
+    @apply dashboard-card;
   }
 
   .taskfinity-card-header {
-    @apply border-b border-border p-4 flex justify-between items-center;
+    @apply dashboard-card-header border-b border-border pb-4;
   }
 
   .taskfinity-card-content {
-    @apply p-4;
+    @apply dashboard-card-content pt-4;
   }
 
   .dialog-gradient {
-    @apply bg-gradient-to-br from-taskfinity-blue/10 to-taskfinity-purple/10;
+    @apply bg-muted/50;
+  }
+}
+
+/* Smooth transitions */
+@layer utilities {
+  .transition-fast {
+    @apply transition-all duration-150 ease-out;
+  }
+
+  .transition-medium {
+    @apply transition-all duration-200 ease-out;
   }
 }

@@ -1,150 +1,263 @@
 
-import React, { useState, Suspense } from "react";
+import React from "react";
 import { SidebarProvider, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { Dashboard } from "@/components/Dashboard";
-import { TaskSection } from "@/components/TaskSection";
-import { CalendarSection } from "@/components/CalendarSection";
-import { FinanceSection } from "@/components/FinanceSection";
-import { VoiceAssistant } from "@/components/VoiceAssistant";
+import { TopBar } from "@/components/layout/TopBar";
+import { DashboardWidget, MetricCard } from "@/components/ui/DashboardWidget";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { StatsSidebar } from "@/components/StatsSidebar";
-import { CustomizableDashboard } from "@/components/CustomizableDashboard";
-
-// Properly type the ErrorBoundary props
-type ErrorBoundaryProps = {
-  children: React.ReactNode;
-  fallback: React.ReactNode;
-};
-
-// Properly type the ErrorBoundary state
-type ErrorBoundaryState = {
-  hasError: boolean;
-};
-
-// Error boundary class component with proper TypeScript typing
-class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  constructor(props: ErrorBoundaryProps) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
-    console.error("Error caught by ErrorBoundary:", error, errorInfo);
-  }
-
-  render(): React.ReactNode {
-    if (this.state.hasError) {
-      return this.props.fallback;
-    }
-    return this.props.children;
-  }
-}
+import { Badge } from "@/components/ui/badge";
+import {
+  CalendarDays,
+  Heart,
+  DollarSign,
+  Mail,
+  MessageSquare,
+  TrendingUp,
+  TrendingDown,
+  Activity,
+  Moon,
+} from "lucide-react";
+import { format } from "date-fns";
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState("dashboard");
-  const [showStats, setShowStats] = useState(false);
+  // Mock data
+  const upcomingEvents = [
+    { id: 1, title: "Team standup", time: "09:00 AM", type: "meeting" },
+    { id: 2, title: "Dentist appointment", time: "11:30 AM", type: "personal" },
+    { id: 3, title: "Project review", time: "02:00 PM", type: "meeting" },
+  ];
 
-  // Simple error fallback component to catch errors in child components
-  const ErrorFallback = () => (
-    <div className="p-6 border border-red-300 rounded-md bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200">
-      <h3 className="text-lg font-medium mb-2">Something went wrong</h3>
-      <p>There was an error loading this component. We're working on fixing it.</p>
-    </div>
-  );
+  const unreadEmails = [
+    { id: 1, from: "John Smith", subject: "Q4 Budget Review", time: "10 min ago" },
+    { id: 2, from: "Sarah Connor", subject: "Meeting reschedule", time: "1 hour ago" },
+  ];
+
+  const recentChats = [
+    { id: 1, name: "Design Team", message: "New mockups ready for review", unread: 3 },
+    { id: 2, name: "Mike Johnson", message: "Thanks for the update!", unread: 0 },
+  ];
 
   return (
     <SidebarProvider defaultOpen={false}>
       <div className="flex h-screen w-full overflow-hidden bg-background">
         <AppSidebar />
         <SidebarRail />
-        
+
         <SidebarInset>
           <div className="flex h-full flex-col">
-            <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-              <div className="flex h-16 items-center justify-between px-6">
-                <h1 className="text-2xl font-bold gradient-heading">
-                  {activeTab === "dashboard" && "Dashboard"}
-                  {activeTab === "tasks" && "Task Management"}
-                  {activeTab === "calendar" && "Calendar"}
-                  {activeTab === "finances" && "Financial Overview"}
-                </h1>
-                <div className="flex items-center gap-4">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => setShowStats(!showStats)}
-                  >
-                    {showStats ? "Hide Stats" : "Show Stats"}
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    Upgrade Plan
-                  </Button>
-                  <div className="h-8 w-8 rounded-full bg-gradient-to-r from-taskfinity-blue to-taskfinity-purple"></div>
-                </div>
-              </div>
-            </header>
+            <TopBar title="Today" />
 
-            <main className="flex-1 overflow-auto p-6">
-              <div className="flex gap-4">
-                <div className={`${showStats ? 'w-3/4' : 'w-full'}`}>
-                  <Tabs 
-                    defaultValue="dashboard" 
-                    value={activeTab}
-                    onValueChange={setActiveTab}
-                    className="mb-6"
-                  >
-                    <TabsList>
-                      <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-                      <TabsTrigger value="tasks">Tasks</TabsTrigger>
-                      <TabsTrigger value="calendar">Calendar</TabsTrigger>
-                      <TabsTrigger value="finances">Finances</TabsTrigger>
-                    </TabsList>
-                    
-                    <TabsContent value="dashboard" className="mt-6">
-                      <Suspense fallback={<div>Loading dashboard...</div>}>
-                        <ErrorBoundary fallback={<ErrorFallback />}>
-                          <CustomizableDashboard />
-                        </ErrorBoundary>
-                      </Suspense>
-                    </TabsContent>
-                    
-                    <TabsContent value="tasks" className="mt-6">
-                      <div className="max-w-3xl mx-auto">
-                        <TaskSection />
+            <main className="flex-1 overflow-auto p-4 md:p-6">
+              {/* Date header */}
+              <div className="mb-6">
+                <p className="text-muted-foreground text-sm">
+                  {format(new Date(), "EEEE, MMMM d, yyyy")}
+                </p>
+              </div>
+
+              {/* Key metrics row */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <MetricCard
+                  label="Steps Today"
+                  value="6,432"
+                  change={{ value: "+12% vs avg", type: "positive" }}
+                  icon={<Activity className="h-5 w-5" />}
+                />
+                <MetricCard
+                  label="Sleep"
+                  value="7h 24m"
+                  change={{ value: "Good", type: "positive" }}
+                  icon={<Moon className="h-5 w-5" />}
+                />
+                <MetricCard
+                  label="Today's Spend"
+                  value="£42.50"
+                  change={{ value: "Under budget", type: "positive" }}
+                  icon={<DollarSign className="h-5 w-5" />}
+                />
+                <MetricCard
+                  label="Unread"
+                  value="5"
+                  change={{ value: "2 urgent", type: "neutral" }}
+                  icon={<Mail className="h-5 w-5" />}
+                />
+              </div>
+
+              {/* Main content grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
+                {/* Calendar Events */}
+                <DashboardWidget
+                  title="Upcoming Events"
+                  action={
+                    <Button variant="ghost" size="sm" className="text-xs h-7">
+                      View All
+                    </Button>
+                  }
+                >
+                  <div className="space-y-3">
+                    {upcomingEvents.map((event) => (
+                      <div
+                        key={event.id}
+                        className="flex items-center justify-between py-2 border-b border-border last:border-0"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="h-2 w-2 rounded-full bg-primary" />
+                          <div>
+                            <p className="text-sm font-medium">{event.title}</p>
+                            <p className="text-xs text-muted-foreground">{event.time}</p>
+                          </div>
+                        </div>
+                        <Badge variant="secondary" className="text-xs">
+                          {event.type}
+                        </Badge>
                       </div>
-                    </TabsContent>
-                    
-                    <TabsContent value="calendar" className="mt-6">
-                      <div className="max-w-4xl mx-auto">
-                        <CalendarSection />
-                      </div>
-                    </TabsContent>
-                    
-                    <TabsContent value="finances" className="mt-6">
-                      <div className="max-w-4xl mx-auto">
-                        <FinanceSection />
-                      </div>
-                    </TabsContent>
-                  </Tabs>
-                </div>
-                
-                {showStats && (
-                  <div className="w-1/4">
-                    <StatsSidebar />
+                    ))}
                   </div>
-                )}
+                </DashboardWidget>
+
+                {/* Health Summary */}
+                <DashboardWidget
+                  title="Health Summary"
+                  action={
+                    <Button variant="ghost" size="sm" className="text-xs h-7">
+                      Details
+                    </Button>
+                  }
+                >
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Heart className="h-4 w-4 text-health" />
+                        <span className="text-sm">Resting HR</span>
+                      </div>
+                      <span className="text-sm font-medium">62 bpm</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Activity className="h-4 w-4 text-health" />
+                        <span className="text-sm">Active calories</span>
+                      </div>
+                      <span className="text-sm font-medium">324 kcal</span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-2">
+                      <div
+                        className="bg-health h-2 rounded-full transition-all"
+                        style={{ width: "65%" }}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      65% of daily move goal
+                    </p>
+                  </div>
+                </DashboardWidget>
+
+                {/* Finance Snapshot */}
+                <DashboardWidget
+                  title="Finance Snapshot"
+                  action={
+                    <Button variant="ghost" size="sm" className="text-xs h-7">
+                      View All
+                    </Button>
+                  }
+                >
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Today's spending</span>
+                      <span className="text-sm font-medium">£42.50</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">This week</span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-sm font-medium">£312.80</span>
+                        <TrendingDown className="h-3 w-3 text-success" />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Monthly budget</span>
+                      <span className="text-sm font-medium">£1,247 / £2,000</span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-2">
+                      <div
+                        className="bg-success h-2 rounded-full transition-all"
+                        style={{ width: "62%" }}
+                      />
+                    </div>
+                  </div>
+                </DashboardWidget>
+
+                {/* Inbox Preview */}
+                <DashboardWidget
+                  title="Inbox"
+                  action={
+                    <Badge variant="secondary" className="text-xs">
+                      2 unread
+                    </Badge>
+                  }
+                >
+                  <div className="space-y-3">
+                    {unreadEmails.map((email) => (
+                      <div
+                        key={email.id}
+                        className="flex items-start gap-3 py-2 border-b border-border last:border-0 cursor-pointer hover:bg-muted/50 -mx-2 px-2 rounded transition-colors"
+                      >
+                        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+                          <span className="text-xs font-medium">
+                            {email.from.charAt(0)}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm font-medium truncate">{email.from}</p>
+                            <span className="text-xs text-muted-foreground">{email.time}</span>
+                          </div>
+                          <p className="text-sm text-muted-foreground truncate">
+                            {email.subject}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </DashboardWidget>
+
+                {/* Chats Preview */}
+                <DashboardWidget
+                  title="Recent Chats"
+                  action={
+                    <Button variant="ghost" size="sm" className="text-xs h-7">
+                      Open Chat
+                    </Button>
+                  }
+                >
+                  <div className="space-y-3">
+                    {recentChats.map((chat) => (
+                      <div
+                        key={chat.id}
+                        className="flex items-center gap-3 py-2 border-b border-border last:border-0 cursor-pointer hover:bg-muted/50 -mx-2 px-2 rounded transition-colors"
+                      >
+                        <div className="h-8 w-8 rounded-full bg-social/10 flex items-center justify-center shrink-0">
+                          <MessageSquare className="h-4 w-4 text-social" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm font-medium">{chat.name}</p>
+                            {chat.unread > 0 && (
+                              <Badge className="h-5 w-5 p-0 flex items-center justify-center text-xs">
+                                {chat.unread}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground truncate">
+                            {chat.message}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </DashboardWidget>
               </div>
             </main>
           </div>
         </SidebarInset>
-
-        <VoiceAssistant />
       </div>
     </SidebarProvider>
   );
