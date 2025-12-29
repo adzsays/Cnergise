@@ -1,73 +1,517 @@
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Filter, Upload } from 'lucide-react';
+import { Plus, Filter, Upload, ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown, Edit2, Trash2, Building2, User } from 'lucide-react';
 import { useFinancialData } from '@/contexts/FinancialDataContext';
 import { TransactionDialog } from './TransactionDialog';
 import { TransactionTable } from './TransactionTable';
 import { CashFlowChart } from './CashFlowChart';
 import { CategoryFilter } from './CategoryFilter';
 import { ImportDialog } from './ImportDialog';
+import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 
 export const CashFlowView = () => {
-  const { transactions, loading } = useFinancialData();
+  const { 
+    transactions, 
+    accounts,
+    loading, 
+    monthLabels,
+    updateTransaction, 
+    updateTransactionName, 
+    updateTransactionDate, 
+    updateTransactionCategory,
+    deleteTransaction,
+    addTransaction, 
+    viewMode, 
+    setViewMode, 
+    group, 
+    setGroup 
+  } = useFinancialData();
+  
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<string>('all');
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState({ name: '', amount: '', date: 1, category: '' });
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [newTransactionData, setNewTransactionData] = useState({
+    type: 'expense' as 'expense' | 'income',
+    category: '',
+    subcategory: '',
+    amount: '',
+    date: 1,
+    group_name: 'Personal'
+  });
+
+  const today = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
+
+  const getRecurringDay = (timestamp: number) => new Date(timestamp).getDate();
+
+  const getTransactionDateInCurrentMonth = (dayOfMonth: number) => {
+    const date = new Date(today.getFullYear(), today.getMonth(), dayOfMonth);
+    date.setHours(0, 0, 0, 0);
+    return date;
+  };
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter((t) => {
       const categoryMatch = selectedCategory === 'all' || t.category === selectedCategory;
       const typeMatch = selectedType === 'all' || t.type === selectedType;
-      return categoryMatch && typeMatch;
+      const groupMatch = group === 'all' || t.group_name.toLowerCase() === group.toLowerCase();
+      return categoryMatch && typeMatch && groupMatch;
     });
-  }, [transactions, selectedCategory, selectedType]);
+  }, [transactions, selectedCategory, selectedType, group]);
 
   const categories = useMemo(() => {
     const cats = new Set(transactions.map((t) => t.category));
     return ['all', ...Array.from(cats)];
   }, [transactions]);
 
+  const groupedByCategory = useMemo(() => {
+    return filteredTransactions.reduce((acc, transaction) => {
+      if (!acc[transaction.category]) {
+        acc[transaction.category] = [];
+      }
+      acc[transaction.category].push(transaction);
+      return acc;
+    }, {} as Record<string, typeof transactions>);
+  }, [filteredTransactions]);
+
+  const groupedByType = useMemo(() => {
+    return filteredTransactions.reduce((acc, transaction) => {
+      const type = transaction.type === 'income' ? 'Income' : 'Expenses';
+      if (!acc[type]) {
+        acc[type] = [];
+      }
+      acc[type].push(transaction);
+      return acc;
+    }, {} as Record<string, typeof transactions>);
+  }, [filteredTransactions]);
+
+  const displayGroups = viewMode === 'costcentre' ? groupedByCategory : groupedByType;
+  const categoryKeys = Object.keys(displayGroups);
+
+  const toggleCategory = (category: string) => {
+    const newExpanded = new Set(expandedCategories);
+    if (newExpanded.has(category)) {
+      newExpanded.delete(category);
+    } else {
+      newExpanded.add(category);
+    }
+    setExpandedCategories(newExpanded);
+  };
+
+  const expandAll = () => setExpandedCategories(new Set(categoryKeys));
+  const collapseAll = () => setExpandedCategories(new Set());
+
+  const startEdit = (transactionId: string, currentName: string, currentMonthly: number, currentDate: number, currentCategory: string) => {
+    setEditingId(transactionId);
+    setEditValue({ 
+      name: currentName, 
+      amount: Math.abs(currentMonthly).toString(),
+      date: getRecurringDay(currentDate),
+      category: currentCategory
+    });
+  };
+
+  const saveEdit = async (transactionId: string, transactionType: 'income' | 'expense', currentCategory: string) => {
+    if (!editValue.name.trim() || !editValue.category.trim()) return;
+
+    const newMonthly = parseFloat(editValue.amount);
+    if (isNaN(newMonthly) || newMonthly < 0) return;
+
+    const finalValue = transactionType === 'expense' ? -Math.abs(newMonthly) : Math.abs(newMonthly);
+    
+    await Promise.all([
+      updateTransactionName(transactionId, editValue.name.trim()),
+      updateTransaction(transactionId, finalValue),
+      updateTransactionDate(transactionId, new Date(2024, 0, editValue.date).getTime()),
+      editValue.category.trim() !== currentCategory && updateTransactionCategory(transactionId, editValue.category.trim())
+    ]);
+    
+    setEditingId(null);
+    setEditValue({ name: '', amount: '', date: 1, category: '' });
+  };
+
+  const handleAddTransaction = async () => {
+    if (!newTransactionData.subcategory || !newTransactionData.amount || !newTransactionData.category) return;
+
+    const amount = parseFloat(newTransactionData.amount);
+    if (isNaN(amount) || amount <= 0) return;
+
+    const finalAmount = newTransactionData.type === 'expense' ? -Math.abs(amount) : Math.abs(amount);
+
+    await addTransaction({
+      category: newTransactionData.category,
+      subcategory: newTransactionData.subcategory,
+      type: newTransactionData.type,
+      monthly: finalAmount,
+      amount: finalAmount,
+      group_name: newTransactionData.group_name,
+    });
+
+    setAddDialogOpen(false);
+    setNewTransactionData({
+      type: 'expense',
+      category: '',
+      subcategory: '',
+      amount: '',
+      date: 1,
+      group_name: 'Personal'
+    });
+  };
+
+  const initialCashBalance = useMemo(() => {
+    return accounts
+      .filter(a => a.type === 'Asset')
+      .reduce((sum, acc) => sum + acc.balance, 0);
+  }, [accounts]);
+
+  const monthlyTotals = useMemo(() => {
+    return monthLabels.map((_, monthIndex) => {
+      return filteredTransactions.reduce((sum, t) => {
+        if (monthIndex === 0) {
+          const recurringDay = getRecurringDay(t.date);
+          const transactionDate = getTransactionDateInCurrentMonth(recurringDay);
+          if (transactionDate < today) return sum;
+        }
+        const projection = Array.isArray(t.projections) ? t.projections[monthIndex] : t.monthly;
+        return sum + (projection || 0);
+      }, 0);
+    });
+  }, [filteredTransactions, monthLabels, today]);
+
+  const rollingCashFlow = useMemo(() => {
+    return monthlyTotals.reduce((acc, monthTotal, index) => {
+      const previousBalance = index === 0 ? initialCashBalance : acc[index - 1];
+      acc.push(previousBalance + monthTotal);
+      return acc;
+    }, [] as number[]);
+  }, [monthlyTotals, initialCashBalance]);
+
+  const formatCurrency = (amount: number) => `£${Math.abs(amount).toLocaleString()}`;
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div className="flex gap-2">
-          <CategoryFilter
-            categories={categories}
-            selectedCategory={selectedCategory}
-            onCategoryChange={setSelectedCategory}
-          />
-          <Button
-            variant="outline"
-            onClick={() => setSelectedType(selectedType === 'all' ? 'income' : selectedType === 'income' ? 'expense' : 'all')}
-          >
-            <Filter className="mr-2 h-4 w-4" />
-            {selectedType === 'all' ? 'All Types' : selectedType === 'income' ? 'Income' : 'Expenses'}
-          </Button>
+      {/* Header Controls */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <Select value={group} onValueChange={(v) => setGroup(v as any)}>
+            <SelectTrigger className="w-[120px] h-9">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="personal">Personal</SelectItem>
+              <SelectItem value="business">Business</SelectItem>
+            </SelectContent>
+          </Select>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50">
+            <span className={`text-xs ${viewMode === 'type' ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>Type</span>
+            <Switch checked={viewMode === 'costcentre'} onCheckedChange={(c) => setViewMode(c ? 'costcentre' : 'type')} className="scale-90" />
+            <span className={`text-xs ${viewMode === 'costcentre' ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>Category</span>
+          </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setIsImportOpen(true)}>
-            <Upload className="mr-2 h-4 w-4" />
-            Import CSV
+          <Button variant="outline" size="sm" onClick={() => setIsImportOpen(true)}>
+            <Upload className="h-4 w-4 mr-1.5" />
+            Import
           </Button>
-          <Button onClick={() => setIsDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Transaction
+          <Button size="sm" onClick={() => setAddDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-1.5" />
+            Add
           </Button>
         </div>
       </div>
 
+      {/* Cash Flow Chart */}
       <CashFlowChart transactions={filteredTransactions} />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Transactions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <TransactionTable transactions={filteredTransactions} loading={loading} />
-        </CardContent>
-      </Card>
+      {/* Rolling Cash Flow Summary */}
+      <div className="rounded-xl border border-border/50 overflow-hidden">
+        <div className="flex items-center justify-between p-4 bg-muted/30">
+          <h3 className="text-sm font-semibold">12-Month Projection</h3>
+          <Button
+            onClick={() => expandedCategories.size === categoryKeys.length ? collapseAll() : expandAll()}
+            variant="ghost"
+            size="sm"
+          >
+            {expandedCategories.size === categoryKeys.length ? (
+              <><ChevronsUpDown className="h-4 w-4 mr-1" />Collapse</>
+            ) : (
+              <><ChevronsDownUp className="h-4 w-4 mr-1" />Expand</>
+            )}
+          </Button>
+        </div>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/20">
+                <TableHead className="text-xs font-medium py-2 px-3">Balance</TableHead>
+                <TableHead className="text-right text-xs font-medium py-2 px-3">Monthly</TableHead>
+                {monthLabels.map((month) => (
+                  <TableHead key={month} className="text-right text-xs font-medium py-2 px-3">{month}</TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow className="bg-primary/5 font-semibold border-b-2 border-primary/20">
+                <TableCell colSpan={2} className="text-xs py-2 px-3">Rolling Cash Flow</TableCell>
+                {rollingCashFlow.map((balance, idx) => (
+                  <TableCell
+                    key={idx}
+                    className={`text-right text-xs py-2 px-3 ${balance >= 0 ? 'text-income' : 'text-expense'}`}
+                  >
+                    {formatCurrency(balance)}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+
+      {/* Transactions by Category */}
+      <div className="rounded-xl border border-border/50 overflow-hidden">
+        <ScrollArea className="h-[400px]">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/20">
+                <TableHead className="text-xs font-medium py-2 px-3">Item</TableHead>
+                <TableHead className="text-right text-xs font-medium py-2 px-3">Monthly</TableHead>
+                {monthLabels.map((month) => (
+                  <TableHead key={month} className="text-right text-xs font-medium py-2 px-3">{month}</TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {Object.entries(displayGroups).map(([groupName, groupTransactions]) => {
+                const isExpanded = expandedCategories.has(groupName);
+                
+                const groupMonthlyTotals = monthLabels.map((_, monthIndex) => {
+                  return groupTransactions.reduce((sum, t) => {
+                    if (monthIndex === 0) {
+                      const recurringDay = getRecurringDay(t.date);
+                      const transactionDate = getTransactionDateInCurrentMonth(recurringDay);
+                      if (transactionDate < today) return sum;
+                    }
+                    const projection = Array.isArray(t.projections) ? t.projections[monthIndex] : t.monthly;
+                    return sum + (projection || 0);
+                  }, 0);
+                });
+
+                const groupRecurringTotal = groupTransactions.reduce((sum, t) => sum + t.monthly, 0);
+                
+                return (
+                  <React.Fragment key={groupName}>
+                    <TableRow 
+                      className="bg-muted/30 hover:bg-muted/50 cursor-pointer transition-colors" 
+                      onClick={() => toggleCategory(groupName)}
+                    >
+                      <TableCell className="font-medium text-xs py-2 px-3">
+                        <div className="flex items-center gap-2">
+                          {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                          {groupName}
+                        </div>
+                      </TableCell>
+                      <TableCell className={`text-right text-xs font-medium py-2 px-3 ${groupRecurringTotal >= 0 ? 'text-income' : 'text-expense'}`}>
+                        {formatCurrency(groupRecurringTotal)}
+                      </TableCell>
+                      {groupMonthlyTotals.map((total, idx) => (
+                        <TableCell key={idx} className={`text-right text-xs font-medium py-2 px-3 ${total >= 0 ? 'text-income' : 'text-expense'}`}>
+                          {formatCurrency(total)}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                    
+                    {isExpanded && groupTransactions.map((transaction) => {
+                      const isEditing = editingId === transaction.id;
+                      const projections = Array.isArray(transaction.projections) ? transaction.projections : Array(12).fill(transaction.monthly);
+                      
+                      return (
+                        <TableRow key={transaction.id} className="hover:bg-muted/10 transition-colors">
+                          <TableCell className="py-2 px-3">
+                            {isEditing ? (
+                              <div className="space-y-2 py-2">
+                                <Input
+                                  value={editValue.name}
+                                  onChange={(e) => setEditValue({ ...editValue, name: e.target.value })}
+                                  className="h-8 text-xs"
+                                  placeholder="Name"
+                                />
+                                <Input
+                                  value={editValue.category}
+                                  onChange={(e) => setEditValue({ ...editValue, category: e.target.value })}
+                                  className="h-8 text-xs"
+                                  placeholder="Category"
+                                />
+                                <div className="grid grid-cols-2 gap-2">
+                                  <Input
+                                    type="number"
+                                    value={editValue.amount}
+                                    onChange={(e) => setEditValue({ ...editValue, amount: e.target.value })}
+                                    className="h-8 text-xs"
+                                    placeholder="Amount"
+                                  />
+                                  <Input
+                                    type="number"
+                                    min="1"
+                                    max="31"
+                                    value={editValue.date}
+                                    onChange={(e) => setEditValue({ ...editValue, date: parseInt(e.target.value) || 1 })}
+                                    className="h-8 text-xs"
+                                    placeholder="Day"
+                                  />
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button size="sm" onClick={() => saveEdit(transaction.id, transaction.type as 'income' | 'expense', transaction.category)} className="flex-1 h-7 text-xs">Save</Button>
+                                  <Button size="sm" variant="outline" onClick={() => setEditingId(null)} className="flex-1 h-7 text-xs">Cancel</Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2 pl-6">
+                                <span className="text-xs text-muted-foreground">{transaction.subcategory}</span>
+                                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-50 hover:opacity-100" onClick={(e) => {
+                                  e.stopPropagation();
+                                  startEdit(transaction.id, transaction.subcategory, transaction.monthly, transaction.date, transaction.category);
+                                }}>
+                                  <Edit2 className="h-3 w-3" />
+                                </Button>
+                                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-50 hover:opacity-100 text-destructive" onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteTransaction(transaction.id);
+                                }}>
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                                {transaction.group_name === 'Business' ? (
+                                  <Building2 className="h-3 w-3 text-primary" />
+                                ) : (
+                                  <User className="h-3 w-3 text-muted-foreground" />
+                                )}
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell className={`text-right text-xs py-2 px-3 ${transaction.monthly >= 0 ? 'text-income' : 'text-expense'}`}>
+                            {formatCurrency(transaction.monthly)}
+                          </TableCell>
+                          {projections.map((proj, idx) => {
+                            let displayValue = proj;
+                            if (idx === 0) {
+                              const recurringDay = getRecurringDay(transaction.date);
+                              const transactionDate = getTransactionDateInCurrentMonth(recurringDay);
+                              if (transactionDate < today) displayValue = 0;
+                            }
+                            return (
+                              <TableCell key={idx} className={`text-right text-xs py-2 px-3 ${displayValue >= 0 ? 'text-income/70' : 'text-expense/70'}`}>
+                                {displayValue !== 0 ? formatCurrency(displayValue) : '-'}
+                              </TableCell>
+                            );
+                          })}
+                        </TableRow>
+                      );
+                    })}
+                  </React.Fragment>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </ScrollArea>
+      </div>
+
+      {/* Add Transaction Dialog */}
+      <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Transaction</DialogTitle>
+            <DialogDescription>Add a new recurring transaction</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Type</Label>
+                <Select value={newTransactionData.type} onValueChange={(v) => setNewTransactionData({ ...newTransactionData, type: v as 'income' | 'expense' })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="income">Income</SelectItem>
+                    <SelectItem value="expense">Expense</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Group</Label>
+                <Select value={newTransactionData.group_name} onValueChange={(v) => setNewTransactionData({ ...newTransactionData, group_name: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Personal">Personal</SelectItem>
+                    <SelectItem value="Business">Business</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div>
+              <Label>Category</Label>
+              <Input
+                value={newTransactionData.category}
+                onChange={(e) => setNewTransactionData({ ...newTransactionData, category: e.target.value })}
+                placeholder="e.g., Salary, Rent, Utilities"
+              />
+            </div>
+            <div>
+              <Label>Name</Label>
+              <Input
+                value={newTransactionData.subcategory}
+                onChange={(e) => setNewTransactionData({ ...newTransactionData, subcategory: e.target.value })}
+                placeholder="e.g., Monthly salary, Electric bill"
+              />
+            </div>
+            <div>
+              <Label>Monthly Amount (£)</Label>
+              <Input
+                type="number"
+                value={newTransactionData.amount}
+                onChange={(e) => setNewTransactionData({ ...newTransactionData, amount: e.target.value })}
+                placeholder="0"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleAddTransaction}>Add Transaction</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <TransactionDialog
         open={isDialogOpen}
