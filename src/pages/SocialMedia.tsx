@@ -20,8 +20,11 @@ import {
   MessageSquare,
   Send,
   Plus,
-  RefreshCw
+  RefreshCw,
+  Newspaper
 } from "lucide-react";
+import { NewsFeed } from "@/components/social/NewsFeed";
+import { MarketTicker } from "@/components/social/MarketTicker";
 
 // Mock data for social media feeds
 const instagramPosts = [
@@ -76,6 +79,9 @@ const SocialMedia = () => {
         
         <SidebarInset>
           <div className="flex h-full flex-col">
+            {/* Market Ticker */}
+            <MarketTicker />
+
             <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
               <div className="flex h-16 items-center justify-between px-6">
                 <div>
@@ -124,6 +130,10 @@ const SocialMedia = () => {
                   <TabsTrigger value="telegram" className="gap-2">
                     <Send className="h-4 w-4" />
                     Telegram
+                  </TabsTrigger>
+                  <TabsTrigger value="news" className="gap-2">
+                    <Newspaper className="h-4 w-4" />
+                    News
                   </TabsTrigger>
                 </TabsList>
 
@@ -442,6 +452,13 @@ const SocialMedia = () => {
                         </CardContent>
                       </Card>
                     ))}
+                  </div>
+                </TabsContent>
+
+                {/* News Tab */}
+                <TabsContent value="news">
+                  <div className="max-w-4xl mx-auto">
+                    <NewsFeed />
                   </div>
                 </TabsContent>
               </Tabs>
