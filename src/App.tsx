@@ -18,6 +18,9 @@ import SocialMedia from "./pages/SocialMedia";
 import Profile from "./pages/Profile";
 import Users from "./pages/Users";
 import Admin from "./pages/Admin";
+import Teams from "./pages/Teams";
+import Contacts from "./pages/Contacts";
+import Chat from "./pages/Chat";
 import NotFound from "./pages/NotFound";
 import { AuthGuard } from "./components/AuthGuard";
 
@@ -44,6 +47,9 @@ const App = () => (
           <Route path="/profile" element={<AuthGuard><Profile /></AuthGuard>} />
           <Route path="/users" element={<AuthGuard><Users /></AuthGuard>} />
           <Route path="/admin" element={<AuthGuard><Admin /></AuthGuard>} />
+          <Route path="/teams" element={<AuthGuard><Teams /></AuthGuard>} />
+          <Route path="/contacts" element={<AuthGuard><Contacts /></AuthGuard>} />
+          <Route path="/chat" element={<AuthGuard><Chat /></AuthGuard>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
