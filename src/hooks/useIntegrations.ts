@@ -5,12 +5,34 @@ import { useToast } from "@/hooks/use-toast";
 export type UserIntegration = {
   id: string;
   user_id: string;
+  // Messaging
   whatsapp_phone_number_id: string | null;
   whatsapp_access_token: string | null;
   telegram_bot_token: string | null;
+  // Broker
+  broker_name: string | null;
+  broker_api_key: string | null;
+  broker_api_secret: string | null;
+  broker_account_id: string | null;
+  // Email
+  email_provider: string | null;
+  email_smtp_host: string | null;
+  email_smtp_port: number | null;
+  email_smtp_user: string | null;
+  email_smtp_password: string | null;
+  email_imap_host: string | null;
+  email_imap_port: number | null;
+  email_oauth_token: string | null;
+  // Calendar
+  calendar_provider: string | null;
+  calendar_oauth_token: string | null;
+  calendar_refresh_token: string | null;
+  // Timestamps
   created_at: string;
   updated_at: string;
 };
+
+export type IntegrationUpdates = Partial<Omit<UserIntegration, 'id' | 'user_id' | 'created_at' | 'updated_at'>>;
 
 export function useIntegrations() {
   const { toast } = useToast();
@@ -34,11 +56,7 @@ export function useIntegrations() {
   });
 
   const saveIntegrations = useMutation({
-    mutationFn: async (updates: {
-      whatsapp_phone_number_id?: string | null;
-      whatsapp_access_token?: string | null;
-      telegram_bot_token?: string | null;
-    }) => {
+    mutationFn: async (updates: IntegrationUpdates) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
