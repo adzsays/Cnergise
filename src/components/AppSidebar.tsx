@@ -34,6 +34,7 @@ import {
   UserCircle,
   MessageSquare,
   Settings,
+  BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -58,6 +59,7 @@ const sidebarItems = [
   { icon: UserCircle, label: "Contacts", href: "/contacts" },
   { icon: MessageSquare, label: "Chat", href: "/chat" },
   { icon: Settings, label: "Settings", href: "/settings" },
+  { icon: BarChart3, label: "Monitoring", href: "/monitoring" },
 ];
 
 export function AppSidebar() {

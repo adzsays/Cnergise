@@ -22,40 +22,45 @@ import Teams from "./pages/Teams";
 import Contacts from "./pages/Contacts";
 import Chat from "./pages/Chat";
 import Settings from "./pages/Settings";
+import Monitoring from "./pages/Monitoring";
 import NotFound from "./pages/NotFound";
 import { AuthGuard } from "./components/AuthGuard";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/tasks" element={<AuthGuard><TaskManagement /></AuthGuard>} />
-          <Route path="/dashboard" element={<AuthGuard><Dashboard /></AuthGuard>} />
-          <Route path="/calendar" element={<AuthGuard><Calendar /></AuthGuard>} />
-          <Route path="/mail" element={<AuthGuard><Mail /></AuthGuard>} />
-          <Route path="/finances" element={<AuthGuard><Finances /></AuthGuard>} />
-          <Route path="/social" element={<AuthGuard><SocialMedia /></AuthGuard>} />
-          <Route path="/goals" element={<AuthGuard><Goals /></AuthGuard>} />
-          <Route path="/health" element={<AuthGuard><Health /></AuthGuard>} />
-          <Route path="/portfolio" element={<AuthGuard><Portfolio /></AuthGuard>} />
-          <Route path="/profile" element={<AuthGuard><Profile /></AuthGuard>} />
-          <Route path="/users" element={<AuthGuard><Users /></AuthGuard>} />
-          <Route path="/admin" element={<AuthGuard><Admin /></AuthGuard>} />
-          <Route path="/teams" element={<AuthGuard><Teams /></AuthGuard>} />
-          <Route path="/contacts" element={<AuthGuard><Contacts /></AuthGuard>} />
-          <Route path="/chat" element={<AuthGuard><Chat /></AuthGuard>} />
-          <Route path="/settings" element={<AuthGuard><Settings /></AuthGuard>} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <ErrorBoundary>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/tasks" element={<AuthGuard><TaskManagement /></AuthGuard>} />
+            <Route path="/dashboard" element={<AuthGuard><Dashboard /></AuthGuard>} />
+            <Route path="/calendar" element={<AuthGuard><Calendar /></AuthGuard>} />
+            <Route path="/mail" element={<AuthGuard><Mail /></AuthGuard>} />
+            <Route path="/finances" element={<AuthGuard><Finances /></AuthGuard>} />
+            <Route path="/social" element={<AuthGuard><SocialMedia /></AuthGuard>} />
+            <Route path="/goals" element={<AuthGuard><Goals /></AuthGuard>} />
+            <Route path="/health" element={<AuthGuard><Health /></AuthGuard>} />
+            <Route path="/portfolio" element={<AuthGuard><Portfolio /></AuthGuard>} />
+            <Route path="/profile" element={<AuthGuard><Profile /></AuthGuard>} />
+            <Route path="/users" element={<AuthGuard><Users /></AuthGuard>} />
+            <Route path="/admin" element={<AuthGuard><Admin /></AuthGuard>} />
+            <Route path="/teams" element={<AuthGuard><Teams /></AuthGuard>} />
+            <Route path="/contacts" element={<AuthGuard><Contacts /></AuthGuard>} />
+            <Route path="/chat" element={<AuthGuard><Chat /></AuthGuard>} />
+            <Route path="/settings" element={<AuthGuard><Settings /></AuthGuard>} />
+            <Route path="/monitoring" element={<AuthGuard><Monitoring /></AuthGuard>} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </ErrorBoundary>
     </TooltipProvider>
   </QueryClientProvider>
 );

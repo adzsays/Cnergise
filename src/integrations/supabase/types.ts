@@ -202,6 +202,42 @@ export type Database = {
         }
         Relationships: []
       }
+      error_logs: {
+        Row: {
+          component: string | null
+          created_at: string
+          error_context: Json | null
+          error_message: string
+          error_stack: string | null
+          id: string
+          severity: string
+          url: string | null
+          user_id: string | null
+        }
+        Insert: {
+          component?: string | null
+          created_at?: string
+          error_context?: Json | null
+          error_message: string
+          error_stack?: string | null
+          id?: string
+          severity?: string
+          url?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          component?: string | null
+          created_at?: string
+          error_context?: Json | null
+          error_message?: string
+          error_stack?: string | null
+          id?: string
+          severity?: string
+          url?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       external_messages: {
         Row: {
           contact_id: string | null
@@ -419,6 +455,45 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      performance_metrics: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          execution_time_ms: number
+          id: string
+          metadata: Json | null
+          operation_name: string
+          operation_type: string
+          success: boolean
+          table_name: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          execution_time_ms: number
+          id?: string
+          metadata?: Json | null
+          operation_name: string
+          operation_type: string
+          success?: boolean
+          table_name?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          execution_time_ms?: number
+          id?: string
+          metadata?: Json | null
+          operation_name?: string
+          operation_type?: string
+          success?: boolean
+          table_name?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -694,6 +769,42 @@ export type Database = {
           id?: string
           name?: string
           updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      usage_stats: {
+        Row: {
+          created_at: string
+          date: string
+          estimated_cost_units: number
+          id: string
+          operation_count: number
+          operation_type: string
+          total_time_ms: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          date?: string
+          estimated_cost_units?: number
+          id?: string
+          operation_count?: number
+          operation_type: string
+          total_time_ms?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          estimated_cost_units?: number
+          id?: string
+          operation_count?: number
+          operation_type?: string
+          total_time_ms?: number
+          updated_at?: string
           user_id?: string | null
         }
         Relationships: []
