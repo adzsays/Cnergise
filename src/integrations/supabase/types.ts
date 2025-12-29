@@ -811,7 +811,22 @@ export type Database = {
       }
       user_integrations: {
         Row: {
+          broker_account_id: string | null
+          broker_api_key: string | null
+          broker_api_secret: string | null
+          broker_name: string | null
+          calendar_oauth_token: string | null
+          calendar_provider: string | null
+          calendar_refresh_token: string | null
           created_at: string
+          email_imap_host: string | null
+          email_imap_port: number | null
+          email_oauth_token: string | null
+          email_provider: string | null
+          email_smtp_host: string | null
+          email_smtp_password: string | null
+          email_smtp_port: number | null
+          email_smtp_user: string | null
           id: string
           telegram_bot_token: string | null
           updated_at: string
@@ -820,7 +835,22 @@ export type Database = {
           whatsapp_phone_number_id: string | null
         }
         Insert: {
+          broker_account_id?: string | null
+          broker_api_key?: string | null
+          broker_api_secret?: string | null
+          broker_name?: string | null
+          calendar_oauth_token?: string | null
+          calendar_provider?: string | null
+          calendar_refresh_token?: string | null
           created_at?: string
+          email_imap_host?: string | null
+          email_imap_port?: number | null
+          email_oauth_token?: string | null
+          email_provider?: string | null
+          email_smtp_host?: string | null
+          email_smtp_password?: string | null
+          email_smtp_port?: number | null
+          email_smtp_user?: string | null
           id?: string
           telegram_bot_token?: string | null
           updated_at?: string
@@ -829,7 +859,22 @@ export type Database = {
           whatsapp_phone_number_id?: string | null
         }
         Update: {
+          broker_account_id?: string | null
+          broker_api_key?: string | null
+          broker_api_secret?: string | null
+          broker_name?: string | null
+          calendar_oauth_token?: string | null
+          calendar_provider?: string | null
+          calendar_refresh_token?: string | null
           created_at?: string
+          email_imap_host?: string | null
+          email_imap_port?: number | null
+          email_oauth_token?: string | null
+          email_provider?: string | null
+          email_smtp_host?: string | null
+          email_smtp_password?: string | null
+          email_smtp_port?: number | null
+          email_smtp_user?: string | null
           id?: string
           telegram_bot_token?: string | null
           updated_at?: string
