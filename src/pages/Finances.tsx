@@ -7,7 +7,7 @@ import { FinancialDataProvider } from "@/contexts/FinancialDataContext";
 import { CashFlowView } from "@/components/finances/CashFlowView";
 import { BalanceSheetView } from "@/components/finances/BalanceSheetView";
 import { AccountBalancesView } from "@/components/finances/AccountBalancesView";
-import { MarketTicker } from "@/components/social/MarketTicker";
+
 import { Wallet, TrendingUp, PieChart } from "lucide-react";
 
 const Finances = () => {
@@ -22,7 +22,7 @@ const Finances = () => {
           
           <SidebarInset>
             <div className="flex h-full flex-col">
-              <MarketTicker />
+              
               <TopBar title="Finance" />
 
               <div className="flex-1 overflow-auto p-4 md:p-6">

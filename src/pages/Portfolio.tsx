@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { PlusCircle, TrendingUp, TrendingDown, DollarSign, PieChart, ArrowRightLeft } from "lucide-react";
 import { TradeEntry } from "@/components/portfolio/TradeEntry";
+import { MarketTicker } from "@/components/social/MarketTicker";
 import { 
   AreaChart, 
   Area, 
@@ -76,6 +77,7 @@ export default function Portfolio() {
         
         <SidebarInset>
           <div className="flex h-full flex-col">
+            <MarketTicker />
             <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
               <div className="flex h-16 items-center justify-between px-6">
                 <h1 className="text-2xl font-bold gradient-heading">Portfolio</h1>
