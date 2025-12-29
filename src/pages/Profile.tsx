@@ -8,8 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Sidebar } from "@/components/Sidebar";
-import { Upload, Save } from "lucide-react";
+import { Upload, Save, Key } from "lucide-react";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { IntegrationSettings } from "@/components/settings/IntegrationSettings";
 
 export default function Profile() {
   const { profile, roles, isLoading, updateProfile, uploadAvatar } = useProfile();
@@ -56,86 +58,102 @@ export default function Profile() {
           <div className="max-w-2xl mx-auto space-y-6">
             <div>
               <h1 className="text-3xl font-bold">My Profile</h1>
-              <p className="text-muted-foreground mt-2">Manage your personal information</p>
+              <p className="text-muted-foreground mt-2">Manage your personal information and API connections</p>
             </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Profile Information</CardTitle>
-                <CardDescription>Update your profile details and avatar</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex items-center gap-6">
-                  <Avatar className="h-24 w-24">
-                    <AvatarImage src={profile?.avatar_url || ""} />
-                    <AvatarFallback className="text-2xl">
-                      {profile?.name?.charAt(0)?.toUpperCase() || "U"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
+            <Tabs defaultValue="profile" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="profile">Profile</TabsTrigger>
+                <TabsTrigger value="integrations" className="flex items-center gap-2">
+                  <Key className="h-4 w-4" />
+                  API Connections
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="profile" className="mt-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Profile Information</CardTitle>
+                    <CardDescription>Update your profile details and avatar</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="flex items-center gap-6">
+                      <Avatar className="h-24 w-24">
+                        <AvatarImage src={profile?.avatar_url || ""} />
+                        <AvatarFallback className="text-2xl">
+                          {profile?.name?.charAt(0)?.toUpperCase() || "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <Button
+                          variant="outline"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={uploadAvatar.isPending}
+                        >
+                          <Upload className="mr-2 h-4 w-4" />
+                          {uploadAvatar.isPending ? "Uploading..." : "Upload Avatar"}
+                        </Button>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleAvatarUpload}
+                        />
+                        <p className="text-sm text-muted-foreground mt-2">
+                          JPG, PNG or WEBP. Max 5MB.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Name</Label>
+                      <Input
+                        id="name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Enter your name"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="bio">Bio</Label>
+                      <Textarea
+                        id="bio"
+                        value={bio}
+                        onChange={(e) => setBio(e.target.value)}
+                        placeholder="Tell us about yourself"
+                        rows={4}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Roles</Label>
+                      <div className="flex gap-2">
+                        {roles?.map((role) => (
+                          <Badge key={role.id} variant="secondary">
+                            {role.role}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+
                     <Button
-                      variant="outline"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={uploadAvatar.isPending}
+                      onClick={handleSave}
+                      disabled={updateProfile.isPending}
+                      className="w-full"
                     >
-                      <Upload className="mr-2 h-4 w-4" />
-                      {uploadAvatar.isPending ? "Uploading..." : "Upload Avatar"}
+                      <Save className="mr-2 h-4 w-4" />
+                      {updateProfile.isPending ? "Saving..." : "Save Changes"}
                     </Button>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleAvatarUpload}
-                    />
-                    <p className="text-sm text-muted-foreground mt-2">
-                      JPG, PNG or WEBP. Max 5MB.
-                    </p>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
-                <div className="space-y-2">
-                  <Label htmlFor="name">Name</Label>
-                  <Input
-                    id="name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Enter your name"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="bio">Bio</Label>
-                  <Textarea
-                    id="bio"
-                    value={bio}
-                    onChange={(e) => setBio(e.target.value)}
-                    placeholder="Tell us about yourself"
-                    rows={4}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Roles</Label>
-                  <div className="flex gap-2">
-                    {roles?.map((role) => (
-                      <Badge key={role.id} variant="secondary">
-                        {role.role}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-
-                <Button
-                  onClick={handleSave}
-                  disabled={updateProfile.isPending}
-                  className="w-full"
-                >
-                  <Save className="mr-2 h-4 w-4" />
-                  {updateProfile.isPending ? "Saving..." : "Save Changes"}
-                </Button>
-              </CardContent>
-            </Card>
+              <TabsContent value="integrations" className="mt-6">
+                <IntegrationSettings />
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </div>

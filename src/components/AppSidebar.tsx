@@ -58,7 +58,7 @@ const sidebarItems = [
   { icon: Users, label: "Teams", href: "/teams" },
   { icon: UserCircle, label: "Contacts", href: "/contacts" },
   { icon: MessageSquare, label: "Chat", href: "/chat" },
-  { icon: Settings, label: "Settings", href: "/settings" },
+  { icon: Settings, label: "Settings", href: "/profile" },
   { icon: BarChart3, label: "Monitoring", href: "/monitoring" },
 ];
 
