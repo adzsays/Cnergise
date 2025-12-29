@@ -13,8 +13,8 @@ const ACCOUNT_TYPES = [
   { value: 'liability', label: 'Liability' },
 ];
 
-const ASSET_CATEGORIES = ['Cash', 'Bank Account', 'Investment', 'Property', 'Vehicle', 'Other'];
-const LIABILITY_CATEGORIES = ['Credit Card', 'Loan', 'Mortgage', 'Other'];
+const ASSET_CATEGORIES = ['Bank Account', 'Digital Wallet', 'Cash', 'Savings', 'Investment', 'Crypto', 'Property', 'Vehicle', 'Other'];
+const LIABILITY_CATEGORIES = ['Credit Card', 'Loan', 'Mortgage', 'Overdraft', 'Other'];
 
 interface AccountDialogProps {
   open: boolean;
