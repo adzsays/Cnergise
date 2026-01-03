@@ -13,7 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { IntegrationSettings } from "@/components/settings/IntegrationSettings";
 import { SubscriptionSettings } from "@/components/settings/SubscriptionSettings";
-import { Upload, Save, User, Key, CreditCard } from "lucide-react";
+import { SecuritySettings } from "@/components/settings/SecuritySettings";
+import { Upload, Save, User, Key, CreditCard, ShieldCheck } from "lucide-react";
 import { SkeletonCard } from "@/components/ui/DashboardWidget";
 
 export default function Profile() {
@@ -58,6 +59,10 @@ export default function Profile() {
                     <TabsTrigger value="profile" className="text-sm">
                       <User className="h-4 w-4 mr-2" />
                       <span className="hidden sm:inline">Profile</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="security" className="text-sm">
+                      <ShieldCheck className="h-4 w-4 mr-2" />
+                      <span className="hidden sm:inline">Security</span>
                     </TabsTrigger>
                     <TabsTrigger value="subscriptions" className="text-sm">
                       <CreditCard className="h-4 w-4 mr-2" />
@@ -156,6 +161,10 @@ export default function Profile() {
                             </Button>
                           </CardContent>
                         </Card>
+                      </TabsContent>
+
+                      <TabsContent value="security" className="mt-0">
+                        <SecuritySettings />
                       </TabsContent>
 
                       <TabsContent value="subscriptions" className="mt-0">
