@@ -47,7 +47,7 @@ const Auth = () => {
       if (error) throw error;
       
       toast.success("Account created! You can now sign in.");
-      navigate("/tasks");
+      navigate("/home");
     } catch (error: any) {
       toast.error(error.message || "Failed to sign up");
     } finally {
@@ -68,7 +68,7 @@ const Auth = () => {
       if (error) throw error;
       
       toast.success("Signed in successfully!");
-      navigate("/tasks");
+      navigate("/home");
     } catch (error: any) {
       toast.error(error.message || "Failed to sign in");
     } finally {

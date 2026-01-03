@@ -36,7 +36,7 @@ import { cn } from "@/lib/utils";
 
 // Core navigation items per spec
 const navItems = [
-  { icon: Sun, label: "Today", href: "/" },
+  { icon: Sun, label: "Today", href: "/home" },
   { icon: CheckSquare, label: "Tasks", href: "/tasks" },
   { icon: FolderKanban, label: "Projects", href: "/projects" },
   { icon: Target, label: "Goals", href: "/goals" },
