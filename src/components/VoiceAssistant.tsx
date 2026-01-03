@@ -1,9 +1,9 @@
 
 import React, { useState, useRef, useEffect } from "react";
-import { Mic, Square, Volume2, Play, PauseCircle } from "lucide-react";
+import { Mic, Square, Volume2, Play, PauseCircle, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -13,7 +13,7 @@ export function VoiceAssistant() {
   const [transcript, setTranscript] = useState("");
   const [response, setResponse] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const { toast } = useToast();
+  const [isExpanded, setIsExpanded] = useState(false);
   
   const recognitionRef = useRef<any>(null);
   const synthRef = useRef<SpeechSynthesisUtterance | null>(null);
@@ -37,11 +37,7 @@ export function VoiceAssistant() {
       recognitionRef.current.onerror = (event: any) => {
         console.error('Speech recognition error:', event.error);
         setIsListening(false);
-        toast({
-          title: "Error",
-          description: "Failed to recognize speech. Please try again.",
-          variant: "destructive",
-        });
+        toast.error("Failed to recognize speech. Please try again.");
       };
 
       recognitionRef.current.onend = () => {
@@ -61,23 +57,16 @@ export function VoiceAssistant() {
 
   const handleStartListening = () => {
     if (!recognitionRef.current) {
-      toast({
-        title: "Not Supported",
-        description: "Speech recognition is not supported in your browser.",
-        variant: "destructive",
-      });
+      toast.error("Speech recognition is not supported in your browser.");
       return;
     }
 
     setIsListening(true);
+    setIsExpanded(true);
     setTranscript("");
     setResponse("");
     
-    toast({
-      title: "Voice Assistant Activated",
-      description: "Listening for your command...",
-    });
-    
+    toast.info("Listening for your command...");
     try {
       recognitionRef.current.start();
     } catch (error) {
@@ -91,10 +80,6 @@ export function VoiceAssistant() {
       recognitionRef.current.stop();
     }
     setIsListening(false);
-    toast({
-      title: "Voice Assistant Stopped",
-      description: "Stopped listening",
-    });
   };
 
   const handleProcessCommand = async (text: string) => {
@@ -104,11 +89,7 @@ export function VoiceAssistant() {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        toast({
-          title: "Authentication Required",
-          description: "Please sign in to use the voice assistant.",
-          variant: "destructive",
-        });
+        toast.error("Please sign in to use the voice assistant.");
         return;
       }
 
@@ -121,11 +102,7 @@ export function VoiceAssistant() {
 
       if (error) {
         console.error('Error processing command:', error);
-        toast({
-          title: "Error",
-          description: error.message || "Failed to process command",
-          variant: "destructive",
-        });
+        toast.error(error.message || "Failed to process command");
         return;
       }
 
@@ -142,22 +119,21 @@ export function VoiceAssistant() {
           actionMessage = `Calendar event "${data.action.data.title}" created successfully!`;
         } else if (actionType === "email") {
           actionMessage = `Email draft to ${data.action.data.to_email} created successfully!`;
+        } else if (actionType === "goal") {
+          actionMessage = `Goal "${data.action.data.title}" created successfully!`;
+        } else if (actionType === "general") {
+          actionMessage = data.action.message;
         }
         
-        toast({
-          title: "Action Completed",
-          description: actionMessage,
-        });
+        if (actionMessage) {
+          toast.success(actionMessage);
+        }
       }
 
       handlePlayResponse(aiResponse);
     } catch (error: any) {
       console.error('Error:', error);
-      toast({
-        title: "Error",
-        description: error.message || "An unexpected error occurred",
-        variant: "destructive",
-      });
+      toast.error(error.message || "An unexpected error occurred");
     } finally {
       setIsProcessing(false);
     }
@@ -173,11 +149,6 @@ export function VoiceAssistant() {
       synthRef.current.onerror = () => setIsPlaying(false);
       
       window.speechSynthesis.speak(synthRef.current);
-      
-      toast({
-        title: "Playing Response",
-        description: "Assistant is speaking...",
-      });
     }
   };
 
@@ -191,28 +162,123 @@ export function VoiceAssistant() {
     }
   };
 
-  const handleClearConversation = () => {
+  const handleClose = () => {
     setTranscript("");
     setResponse("");
     window.speechSynthesis.cancel();
     setIsPlaying(false);
+    setIsExpanded(false);
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+      {/* Expanded card */}
+      {isExpanded && (
+        <div className="w-80 sm:w-96 bg-card rounded-xl shadow-2xl border border-border overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-primary to-accent">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+                <Mic className="h-4 w-4 text-white" />
+              </div>
+              <span className="font-medium text-white">Cnergise Voice</span>
+            </div>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8 text-white hover:bg-white/20"
+              onClick={handleClose}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Content */}
+          <div className="p-4 max-h-64 overflow-y-auto">
+            {isProcessing && (
+              <div className="flex items-center gap-3 text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-sm">Processing your request...</span>
+              </div>
+            )}
+            
+            {isListening && !transcript && (
+              <div className="flex items-center gap-3">
+                <div className="flex gap-1">
+                  <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
+                <span className="text-sm text-muted-foreground">Listening...</span>
+              </div>
+            )}
+
+            {transcript && (
+              <div className="mb-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
+                    <span className="text-xs font-medium">You</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground">Your command</span>
+                </div>
+                <p className="text-sm pl-8 text-foreground">{transcript}</p>
+              </div>
+            )}
+
+            {response && (
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Volume2 className="h-3 w-3 text-primary" />
+                  </div>
+                  <span className="text-xs text-muted-foreground">Assistant</span>
+                  {response && (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-6 w-6 ml-auto"
+                      onClick={togglePlayPause}
+                    >
+                      {isPlaying ? (
+                        <PauseCircle className="h-4 w-4" />
+                      ) : (
+                        <Play className="h-4 w-4" />
+                      )}
+                    </Button>
+                  )}
+                </div>
+                <p className="text-sm pl-8 text-foreground">{response}</p>
+                {isPlaying && <Progress className="h-1 mt-2 ml-8" value={65} />}
+              </div>
+            )}
+          </div>
+
+          {/* Footer hints */}
+          <div className="px-4 py-3 bg-muted/50 border-t border-border">
+            <p className="text-xs text-muted-foreground text-center">
+              Try: "Create a task to review budget tomorrow" or "Set a goal to exercise more"
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Main button */}
       <div className="relative">
         <Button
           onClick={isListening ? handleStopListening : handleStartListening}
           size="lg"
+          disabled={isProcessing}
           className={cn(
-            "h-14 w-14 rounded-full shadow-lg transition-all duration-500",
+            "h-14 w-14 rounded-full shadow-lg transition-all duration-300",
             isListening
               ? "bg-destructive hover:bg-destructive/90"
-              : "bg-gradient-to-r from-taskfinity-blue to-taskfinity-purple hover:opacity-90"
+              : "bg-gradient-to-r from-primary to-accent hover:opacity-90"
           )}
         >
-          {isListening ? (
-            <Square className="h-6 w-6" />
+          {isProcessing ? (
+            <Loader2 className="h-6 w-6 animate-spin" />
+          ) : isListening ? (
+            <Square className="h-5 w-5" />
           ) : (
             <Mic className="h-6 w-6" />
           )}
@@ -221,64 +287,9 @@ export function VoiceAssistant() {
         {/* Animated rings when listening */}
         {isListening && (
           <>
-            <span className="absolute inset-0 rounded-full animate-ping opacity-25 bg-destructive"></span>
-            <span className="absolute inset-[-8px] rounded-full animate-pulse opacity-10 bg-destructive"></span>
+            <span className="absolute inset-0 rounded-full animate-ping opacity-25 bg-destructive pointer-events-none" />
+            <span className="absolute inset-[-8px] rounded-full animate-pulse opacity-10 bg-destructive pointer-events-none" />
           </>
-        )}
-
-        {/* Transcript and response card */}
-        {(transcript || response) && (
-          <div className="absolute bottom-16 right-0 w-80 bg-white dark:bg-card rounded-lg shadow-lg border p-4 mb-2 transition-all duration-300">
-            {transcript && (
-              <div className="mb-3">
-                <div className="flex items-center mb-1">
-                  <div className="w-6 h-6 rounded-full bg-gradient-to-r from-taskfinity-blue to-taskfinity-purple flex items-center justify-center mr-2">
-                    <Mic className="h-3 w-3 text-white" />
-                  </div>
-                  <p className="text-sm font-medium">You</p>
-                </div>
-                <p className="text-sm pl-8">{transcript}</p>
-              </div>
-            )}
-
-            {response && (
-              <div>
-                <div className="flex items-start mb-1">
-                  <div className="w-6 h-6 rounded-full bg-taskfinity-teal flex items-center justify-center mr-2">
-                    <Volume2 className="h-3 w-3 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Assistant</p>
-                    {isPlaying && <Progress className="h-1 mt-1" value={65} />}
-                  </div>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-6 w-6"
-                    onClick={() => setIsPlaying(!isPlaying)}
-                  >
-                    {isPlaying ? (
-                      <PauseCircle className="h-4 w-4" />
-                    ) : (
-                      <Play className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-                <p className="text-sm pl-8">{response}</p>
-              </div>
-            )}
-
-            <div className="flex justify-end mt-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleClearConversation}
-                className="text-xs"
-              >
-                Clear
-              </Button>
-            </div>
-          </div>
         )}
       </div>
     </div>

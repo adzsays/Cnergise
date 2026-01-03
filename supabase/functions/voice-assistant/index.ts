@@ -58,9 +58,16 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `You are a helpful voice assistant. Analyze the user's voice command and extract structured data.
+            content: `You are Cnergise, a helpful AI voice assistant for life management. Analyze the user's voice command and extract structured data.
 The current date and time is ${new Date().toISOString()}.
-Extract tasks, calendar events, or email information from the user's request.`,
+You can help users:
+- Create tasks with priorities and due dates
+- Schedule calendar events
+- Draft emails
+- Set goals with categories (health, finance, career, personal, education)
+- Log financial transactions
+
+Always respond with a brief, friendly confirmation of what you're doing. If you're unsure about details, make reasonable assumptions based on context.`,
           },
           {
             role: "user",
@@ -72,14 +79,14 @@ Extract tasks, calendar events, or email information from the user's request.`,
             type: "function",
             function: {
               name: "create_task",
-              description: "Create a new task",
+              description: "Create a new task or to-do item",
               parameters: {
                 type: "object",
                 properties: {
-                  title: { type: "string" },
-                  description: { type: "string" },
-                  priority: { type: "string", enum: ["low", "medium", "high"] },
-                  due_date: { type: "string", format: "date-time" },
+                  title: { type: "string", description: "The task title" },
+                  description: { type: "string", description: "Additional details about the task" },
+                  priority: { type: "string", enum: ["low", "medium", "high"], description: "Task priority level" },
+                  due_date: { type: "string", format: "date-time", description: "When the task is due" },
                 },
                 required: ["title"],
               },
@@ -89,15 +96,15 @@ Extract tasks, calendar events, or email information from the user's request.`,
             type: "function",
             function: {
               name: "create_calendar_event",
-              description: "Create a new calendar event",
+              description: "Create a new calendar event or meeting",
               parameters: {
                 type: "object",
                 properties: {
-                  title: { type: "string" },
-                  description: { type: "string" },
-                  start_time: { type: "string", format: "date-time" },
-                  end_time: { type: "string", format: "date-time" },
-                  location: { type: "string" },
+                  title: { type: "string", description: "Event title" },
+                  description: { type: "string", description: "Event details" },
+                  start_time: { type: "string", format: "date-time", description: "Event start time" },
+                  end_time: { type: "string", format: "date-time", description: "Event end time" },
+                  location: { type: "string", description: "Event location" },
                 },
                 required: ["title", "start_time", "end_time"],
               },
@@ -111,11 +118,42 @@ Extract tasks, calendar events, or email information from the user's request.`,
               parameters: {
                 type: "object",
                 properties: {
-                  subject: { type: "string" },
-                  body: { type: "string" },
-                  to_email: { type: "string" },
+                  subject: { type: "string", description: "Email subject line" },
+                  body: { type: "string", description: "Email body content" },
+                  to_email: { type: "string", description: "Recipient email address" },
                 },
                 required: ["subject", "body", "to_email"],
+              },
+            },
+          },
+          {
+            type: "function",
+            function: {
+              name: "create_goal",
+              description: "Create a new personal goal",
+              parameters: {
+                type: "object",
+                properties: {
+                  title: { type: "string", description: "Goal title" },
+                  description: { type: "string", description: "Goal details" },
+                  category: { type: "string", enum: ["health", "finance", "career", "personal", "education"], description: "Goal category" },
+                  deadline: { type: "string", format: "date-time", description: "Target completion date" },
+                },
+                required: ["title", "category"],
+              },
+            },
+          },
+          {
+            type: "function",
+            function: {
+              name: "general_response",
+              description: "Provide a general helpful response when no specific action is needed",
+              parameters: {
+                type: "object",
+                properties: {
+                  message: { type: "string", description: "The helpful response message" },
+                },
+                required: ["message"],
               },
             },
           },
@@ -190,6 +228,22 @@ Extract tasks, calendar events, or email information from the user's request.`,
 
         if (error) throw error;
         actionResult = { type: "email", data };
+      } else if (functionName === "create_goal") {
+        const { data, error } = await supabase.from("goals").insert({
+          user_id: user.id,
+          title: args.title,
+          description: args.description,
+          category: args.category,
+          deadline: args.deadline,
+          status: "active",
+          progress: 0,
+        }).select().single();
+
+        if (error) throw error;
+        actionResult = { type: "goal", data };
+      } else if (functionName === "general_response") {
+        // No database action needed, just return the message
+        actionResult = { type: "general", message: args.message };
       }
     }
 

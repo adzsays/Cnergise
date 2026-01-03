@@ -6,6 +6,7 @@ import { TopBar } from "@/components/layout/TopBar";
 import { DashboardWidget, MetricCard } from "@/components/ui/DashboardWidget";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { VoiceAssistant } from "@/components/VoiceAssistant";
 import {
   CalendarDays,
   Heart,
@@ -258,6 +259,7 @@ const Index = () => {
             </main>
           </div>
         </SidebarInset>
+        <VoiceAssistant />
       </div>
     </SidebarProvider>
   );
