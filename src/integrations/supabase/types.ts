@@ -21,6 +21,7 @@ export type Database = {
           end_time: string
           id: string
           location: string | null
+          space_id: string | null
           start_time: string
           title: string
           updated_at: string | null
@@ -32,6 +33,7 @@ export type Database = {
           end_time: string
           id?: string
           location?: string | null
+          space_id?: string | null
           start_time: string
           title: string
           updated_at?: string | null
@@ -43,12 +45,21 @@ export type Database = {
           end_time?: string
           id?: string
           location?: string | null
+          space_id?: string | null
           start_time?: string
           title?: string
           updated_at?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "calendar_events_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       chat_channels: {
         Row: {
@@ -57,6 +68,7 @@ export type Database = {
           id: string
           is_private: boolean | null
           name: string
+          space_id: string | null
           updated_at: string
           user_id: string
         }
@@ -66,6 +78,7 @@ export type Database = {
           id?: string
           is_private?: boolean | null
           name: string
+          space_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -75,10 +88,19 @@ export type Database = {
           id?: string
           is_private?: boolean | null
           name?: string
+          space_id?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "chat_channels_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       chat_messages: {
         Row: {
@@ -128,6 +150,7 @@ export type Database = {
           name: string
           notes: string | null
           phone: string | null
+          space_id: string | null
           telegram_username: string | null
           title: string | null
           updated_at: string
@@ -143,6 +166,7 @@ export type Database = {
           name: string
           notes?: string | null
           phone?: string | null
+          space_id?: string | null
           telegram_username?: string | null
           title?: string | null
           updated_at?: string
@@ -158,13 +182,22 @@ export type Database = {
           name?: string
           notes?: string | null
           phone?: string | null
+          space_id?: string | null
           telegram_username?: string | null
           title?: string | null
           updated_at?: string
           user_id?: string
           whatsapp_number?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "contacts_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       emails: {
         Row: {
@@ -173,6 +206,7 @@ export type Database = {
           from_email: string | null
           id: string
           sent_at: string | null
+          space_id: string | null
           status: string | null
           subject: string
           to_email: string
@@ -184,6 +218,7 @@ export type Database = {
           from_email?: string | null
           id?: string
           sent_at?: string | null
+          space_id?: string | null
           status?: string | null
           subject: string
           to_email: string
@@ -195,12 +230,21 @@ export type Database = {
           from_email?: string | null
           id?: string
           sent_at?: string | null
+          space_id?: string | null
           status?: string | null
           subject?: string
           to_email?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "emails_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       error_logs: {
         Row: {
@@ -333,6 +377,7 @@ export type Database = {
           group_name: string
           id: string
           name: string
+          space_id: string | null
           type: string
           updated_at: string
           user_id: string
@@ -346,6 +391,7 @@ export type Database = {
           group_name: string
           id?: string
           name: string
+          space_id?: string | null
           type: string
           updated_at?: string
           user_id: string
@@ -359,11 +405,20 @@ export type Database = {
           group_name?: string
           id?: string
           name?: string
+          space_id?: string | null
           type?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "financial_accounts_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       financial_transactions: {
         Row: {
@@ -377,6 +432,7 @@ export type Database = {
           monthly: number
           percentage: number
           projections: Json
+          space_id: string | null
           subcategory: string
           type: string
           updated_at: string
@@ -393,6 +449,7 @@ export type Database = {
           monthly: number
           percentage?: number
           projections?: Json
+          space_id?: string | null
           subcategory: string
           type: string
           updated_at?: string
@@ -409,12 +466,21 @@ export type Database = {
           monthly?: number
           percentage?: number
           projections?: Json
+          space_id?: string | null
           subcategory?: string
           type?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "financial_transactions_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       goals: {
         Row: {
@@ -425,6 +491,7 @@ export type Database = {
           description: string | null
           id: string
           progress: number
+          space_id: string | null
           status: string
           title: string
           updated_at: string
@@ -438,6 +505,7 @@ export type Database = {
           description?: string | null
           id?: string
           progress?: number
+          space_id?: string | null
           status?: string
           title: string
           updated_at?: string
@@ -451,12 +519,21 @@ export type Database = {
           description?: string | null
           id?: string
           progress?: number
+          space_id?: string | null
           status?: string
           title?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "goals_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       performance_metrics: {
         Row: {
@@ -503,6 +580,7 @@ export type Database = {
           created_at: string
           group_name: string
           id: string
+          space_id: string | null
           updated_at: string
           user_id: string
           value: number
@@ -512,6 +590,7 @@ export type Database = {
           created_at?: string
           group_name: string
           id?: string
+          space_id?: string | null
           updated_at?: string
           user_id: string
           value?: number
@@ -521,11 +600,20 @@ export type Database = {
           created_at?: string
           group_name?: string
           id?: string
+          space_id?: string | null
           updated_at?: string
           user_id?: string
           value?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "physical_assets_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -607,6 +695,7 @@ export type Database = {
           created_at: string | null
           description: string | null
           id: string
+          is_default: boolean | null
           name: string
           updated_at: string | null
           user_id: string | null
@@ -616,6 +705,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          is_default?: boolean | null
           name: string
           updated_at?: string | null
           user_id?: string | null
@@ -625,6 +715,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          is_default?: boolean | null
           name?: string
           updated_at?: string | null
           user_id?: string | null

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Search, Plus, Bell, User, Calendar, CheckSquare, FileText, Bookmark, X, Menu } from "lucide-react";
-import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -18,6 +18,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Link } from "react-router-dom";
+import { SpaceSelector } from "@/components/layout/SpaceSelector";
 
 interface TopBarProps {
   title?: string;
@@ -31,13 +32,16 @@ export function TopBar({ title = "Today" }: TopBarProps) {
   return (
     <header className="sticky top-0 z-20 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
       <div className="flex h-14 items-center justify-between px-4 md:px-6">
-        {/* Left side - burger menu + title */}
+        {/* Left side - burger menu + title + space selector */}
         <div className="flex items-center gap-3">
           {/* Mobile burger menu */}
           <SidebarTrigger className="md:hidden h-9 w-9" />
           
           {/* Title */}
           <h1 className="text-xl font-semibold text-foreground">{title}</h1>
+          
+          {/* Space Selector */}
+          <SpaceSelector />
         </div>
 
         {/* Right side actions */}
