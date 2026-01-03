@@ -56,10 +56,10 @@ export const BalanceSheetView = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <BalanceSheetSummary summary={summary} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         <NetWorthChart
           data={Object.entries(summary.assetsByCategory).map(([name, value]) => ({
             name,
@@ -79,25 +79,29 @@ export const BalanceSheetView = () => {
       </div>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Accounts</CardTitle>
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-3 md:px-6">
+          <CardTitle className="text-sm md:text-base">Accounts</CardTitle>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setIsImportOpen(true)}>
-              <Upload className="mr-2 h-4 w-4" />
-              Import CSV
+            <Button variant="outline" size="sm" onClick={() => setIsImportOpen(true)} className="text-xs md:text-sm">
+              <Upload className="mr-1.5 h-3.5 w-3.5 md:h-4 md:w-4" />
+              <span className="hidden sm:inline">Import CSV</span>
+              <span className="sm:hidden">Import</span>
             </Button>
-            <Button onClick={handleAddNew}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Account
+            <Button size="sm" onClick={handleAddNew} className="text-xs md:text-sm">
+              <Plus className="mr-1.5 h-3.5 w-3.5 md:h-4 md:w-4" />
+              <span className="hidden sm:inline">Add Account</span>
+              <span className="sm:hidden">Add</span>
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
-          <AccountsTable
-            accounts={accounts}
-            loading={loading}
-            onEdit={handleEdit}
-          />
+        <CardContent className="px-2 md:px-6">
+          <div className="overflow-x-auto">
+            <AccountsTable
+              accounts={accounts}
+              loading={loading}
+              onEdit={handleEdit}
+            />
+          </div>
         </CardContent>
       </Card>
 

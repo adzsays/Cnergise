@@ -69,16 +69,16 @@ export function ProjectAnalyticsDashboard() {
   ].filter(d => d.value > 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header with project selector */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col gap-3">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight">Project Analytics</h2>
-          <p className="text-sm text-muted-foreground">Track progress and performance across your projects</p>
+          <h2 className="text-xl md:text-2xl font-semibold tracking-tight">Project Analytics</h2>
+          <p className="text-xs md:text-sm text-muted-foreground">Track progress and performance across your projects</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center">
           <Select value={selectedProject} onValueChange={setSelectedProject}>
-            <SelectTrigger className="w-48">
+            <SelectTrigger className="w-full sm:w-48">
               <SelectValue placeholder="All Projects" />
             </SelectTrigger>
             <SelectContent>
@@ -121,13 +121,13 @@ export function ProjectAnalyticsDashboard() {
       </div>
 
       {/* Progress Chart & Status Pie */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         {/* Progress Over Time */}
         <Card className="lg:col-span-2 border-border/50">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base font-medium">Progress Over Time</CardTitle>
-              <div className="flex items-center gap-4 text-xs">
+          <CardHeader className="pb-2 px-3 md:px-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <CardTitle className="text-sm md:text-base font-medium">Progress Over Time</CardTitle>
+              <div className="flex items-center gap-3 text-xs">
                 <div className="flex items-center gap-1.5">
                   <div className="h-2 w-2 rounded-full" style={{ background: COLORS.info }} />
                   <span className="text-muted-foreground">Target</span>
@@ -139,66 +139,72 @@ export function ProjectAnalyticsDashboard() {
               </div>
             </div>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={240}>
-              <LineChart data={metrics.progressOverTime}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
-                <XAxis 
-                  dataKey="month" 
-                  tick={{ fontSize: 12 }} 
-                  stroke="hsl(var(--muted-foreground))"
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis 
-                  tick={{ fontSize: 12 }} 
-                  stroke="hsl(var(--muted-foreground))"
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <Tooltip 
-                  contentStyle={{ 
-                    background: "hsl(var(--card))", 
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "8px",
-                    fontSize: "12px"
-                  }} 
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="tasksTarget" 
-                  stroke={COLORS.info}
-                  strokeWidth={2}
-                  dot={false}
-                  name="Tasks Target"
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="tasksCompleted" 
-                  stroke={COLORS.done}
-                  strokeWidth={2}
-                  dot={false}
-                  name="Tasks Completed"
-                />
-              </LineChart>
-            </ResponsiveContainer>
+          <CardContent className="px-2 md:px-6">
+            <div className="w-full overflow-x-auto">
+              <div className="min-w-[300px]">
+                <ResponsiveContainer width="100%" height={200}>
+                  <LineChart data={metrics.progressOverTime} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
+                    <XAxis 
+                      dataKey="month" 
+                      tick={{ fontSize: 10 }} 
+                      stroke="hsl(var(--muted-foreground))"
+                      axisLine={false}
+                      tickLine={false}
+                      interval="preserveStartEnd"
+                    />
+                    <YAxis 
+                      tick={{ fontSize: 10 }} 
+                      stroke="hsl(var(--muted-foreground))"
+                      axisLine={false}
+                      tickLine={false}
+                      width={30}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        background: "hsl(var(--card))", 
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "8px",
+                        fontSize: "11px"
+                      }} 
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="tasksTarget" 
+                      stroke={COLORS.info}
+                      strokeWidth={2}
+                      dot={false}
+                      name="Tasks Target"
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="tasksCompleted" 
+                      stroke={COLORS.done}
+                      strokeWidth={2}
+                      dot={false}
+                      name="Tasks Completed"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
         {/* Project Status Pie */}
         <Card className="border-border/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-medium">Project Status</CardTitle>
+          <CardHeader className="pb-2 px-3 md:px-6">
+            <CardTitle className="text-sm md:text-base font-medium">Project Status</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col items-center">
-            <ResponsiveContainer width="100%" height={180}>
+          <CardContent className="flex flex-col items-center px-2 md:px-6">
+            <ResponsiveContainer width="100%" height={160}>
               <PieChart>
                 <Pie
                   data={projectStatusData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={50}
-                  outerRadius={75}
+                  innerRadius={35}
+                  outerRadius={60}
                   paddingAngle={2}
                   dataKey="value"
                 >
@@ -211,14 +217,14 @@ export function ProjectAnalyticsDashboard() {
                     background: "hsl(var(--card))", 
                     border: "1px solid hsl(var(--border))",
                     borderRadius: "8px",
-                    fontSize: "12px"
+                    fontSize: "11px"
                   }} 
                 />
               </PieChart>
             </ResponsiveContainer>
-            <div className="flex flex-wrap justify-center gap-3 mt-2">
+            <div className="flex flex-wrap justify-center gap-2 mt-2">
               {projectStatusData.map((entry, index) => (
-                <div key={entry.name} className="flex items-center gap-1.5 text-xs">
+                <div key={entry.name} className="flex items-center gap-1 text-xs">
                   <div 
                     className="h-2 w-2 rounded-full" 
                     style={{ background: PIE_COLORS[index % PIE_COLORS.length] }}
@@ -233,7 +239,7 @@ export function ProjectAnalyticsDashboard() {
       </div>
 
       {/* Completion Gauges & Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6">
         <GaugeCard 
           title="% Complete" 
           value={metrics.overallCompletion} 
@@ -244,27 +250,27 @@ export function ProjectAnalyticsDashboard() {
           value={Math.min(metrics.overallCompletion + 15, 100)} 
           subtitle="vs Target"
         />
-        <Card className="border-border/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-medium">Summary</CardTitle>
+        <Card className="border-border/50 col-span-2 md:col-span-1">
+          <CardHeader className="pb-2 px-3 md:px-6">
+            <CardTitle className="text-sm md:text-base font-medium">Summary</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center p-3 bg-muted/30 rounded-lg">
-                <div className="text-2xl font-bold">{metrics.totalProjects}</div>
-                <div className="text-xs text-muted-foreground">Projects</div>
+          <CardContent className="px-3 md:px-6">
+            <div className="grid grid-cols-4 md:grid-cols-2 gap-2 md:gap-4">
+              <div className="text-center p-2 md:p-3 bg-muted/30 rounded-lg">
+                <div className="text-lg md:text-2xl font-bold">{metrics.totalProjects}</div>
+                <div className="text-[10px] md:text-xs text-muted-foreground">Projects</div>
               </div>
-              <div className="text-center p-3 bg-muted/30 rounded-lg">
-                <div className="text-2xl font-bold">{metrics.teamStats.totalTeams}</div>
-                <div className="text-xs text-muted-foreground">Teams</div>
+              <div className="text-center p-2 md:p-3 bg-muted/30 rounded-lg">
+                <div className="text-lg md:text-2xl font-bold">{metrics.teamStats.totalTeams}</div>
+                <div className="text-[10px] md:text-xs text-muted-foreground">Teams</div>
               </div>
-              <div className="text-center p-3 bg-muted/30 rounded-lg">
-                <div className="text-2xl font-bold">{metrics.totalTasks}</div>
-                <div className="text-xs text-muted-foreground">Tasks</div>
+              <div className="text-center p-2 md:p-3 bg-muted/30 rounded-lg">
+                <div className="text-lg md:text-2xl font-bold">{metrics.totalTasks}</div>
+                <div className="text-[10px] md:text-xs text-muted-foreground">Tasks</div>
               </div>
-              <div className="text-center p-3 bg-muted/30 rounded-lg">
-                <div className="text-2xl font-bold">{metrics.teamStats.totalSpaces}</div>
-                <div className="text-xs text-muted-foreground">Spaces</div>
+              <div className="text-center p-2 md:p-3 bg-muted/30 rounded-lg">
+                <div className="text-lg md:text-2xl font-bold">{metrics.teamStats.totalSpaces}</div>
+                <div className="text-[10px] md:text-xs text-muted-foreground">Spaces</div>
               </div>
             </div>
           </CardContent>
@@ -273,58 +279,64 @@ export function ProjectAnalyticsDashboard() {
 
       {/* Status by Project Bar Chart */}
       <Card className="border-border/50">
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base font-medium">Task Status by Project</CardTitle>
-            <div className="flex items-center gap-4 text-xs">
-              <div className="flex items-center gap-1.5">
+        <CardHeader className="pb-2 px-3 md:px-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <CardTitle className="text-sm md:text-base font-medium">Task Status by Project</CardTitle>
+            <div className="flex items-center gap-3 text-xs">
+              <div className="flex items-center gap-1">
                 <div className="h-2 w-2 rounded-full" style={{ background: COLORS.todo }} />
                 <span className="text-muted-foreground">Todo</span>
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1">
                 <div className="h-2 w-2 rounded-full" style={{ background: COLORS.inProgress }} />
                 <span className="text-muted-foreground">In Progress</span>
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1">
                 <div className="h-2 w-2 rounded-full" style={{ background: COLORS.done }} />
                 <span className="text-muted-foreground">Done</span>
               </div>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={metrics.statusByProject} layout="horizontal">
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
-              <XAxis 
-                dataKey="project" 
-                tick={{ fontSize: 11 }} 
-                stroke="hsl(var(--muted-foreground))"
-                axisLine={false}
-                tickLine={false}
-                angle={-15}
-                textAnchor="end"
-                height={60}
-              />
-              <YAxis 
-                tick={{ fontSize: 12 }} 
-                stroke="hsl(var(--muted-foreground))"
-                axisLine={false}
-                tickLine={false}
-              />
-              <Tooltip 
-                contentStyle={{ 
-                  background: "hsl(var(--card))", 
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "8px",
-                  fontSize: "12px"
-                }} 
-              />
-              <Bar dataKey="todo" stackId="a" fill={COLORS.todo} name="Todo" radius={[0, 0, 0, 0]} />
-              <Bar dataKey="inProgress" stackId="a" fill={COLORS.inProgress} name="In Progress" radius={[0, 0, 0, 0]} />
-              <Bar dataKey="done" stackId="a" fill={COLORS.done} name="Done" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+        <CardContent className="px-2 md:px-6">
+          <div className="w-full overflow-x-auto">
+            <div className="min-w-[300px]">
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={metrics.statusByProject} layout="horizontal" margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
+                  <XAxis 
+                    dataKey="project" 
+                    tick={{ fontSize: 9 }} 
+                    stroke="hsl(var(--muted-foreground))"
+                    axisLine={false}
+                    tickLine={false}
+                    angle={-20}
+                    textAnchor="end"
+                    height={50}
+                    interval={0}
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 10 }} 
+                    stroke="hsl(var(--muted-foreground))"
+                    axisLine={false}
+                    tickLine={false}
+                    width={25}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      background: "hsl(var(--card))", 
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
+                      fontSize: "11px"
+                    }} 
+                  />
+                  <Bar dataKey="todo" stackId="a" fill={COLORS.todo} name="Todo" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="inProgress" stackId="a" fill={COLORS.inProgress} name="In Progress" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="done" stackId="a" fill={COLORS.done} name="Done" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
@@ -347,23 +359,23 @@ function MetricCard({
 }) {
   return (
     <Card className="border-border/50">
-      <CardContent className="p-4">
+      <CardContent className="p-3 md:p-4">
         <div className="flex items-start justify-between">
-          <div className="p-2 bg-primary/10 rounded-lg text-primary">
+          <div className="p-1.5 md:p-2 bg-primary/10 rounded-lg text-primary">
             {icon}
           </div>
           {badge && (
             <Badge 
               variant="secondary" 
-              className={badgeVariant === "success" ? "bg-success/10 text-success border-0" : ""}
+              className={`text-[10px] md:text-xs ${badgeVariant === "success" ? "bg-success/10 text-success border-0" : ""}`}
             >
               {badge}
             </Badge>
           )}
         </div>
-        <div className="mt-3">
-          <div className="text-2xl font-bold">{value}</div>
-          <div className="text-sm text-muted-foreground">{label}</div>
+        <div className="mt-2 md:mt-3">
+          <div className="text-lg md:text-2xl font-bold">{value}</div>
+          <div className="text-xs md:text-sm text-muted-foreground">{label}</div>
         </div>
       </CardContent>
     </Card>
@@ -385,9 +397,9 @@ function GaugeCard({
   
   return (
     <Card className="border-border/50">
-      <CardContent className="p-6 flex flex-col items-center">
-        <div className="text-sm font-medium text-muted-foreground mb-2">{title}</div>
-        <div className="relative">
+      <CardContent className="p-3 md:p-6 flex flex-col items-center">
+        <div className="text-xs md:text-sm font-medium text-muted-foreground mb-1 md:mb-2">{title}</div>
+        <div className="relative scale-75 md:scale-100">
           <svg width="120" height="80" viewBox="0 0 120 80">
             <path
               d="M 10 70 A 50 50 0 0 1 110 70"
@@ -406,10 +418,10 @@ function GaugeCard({
             />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center pt-4">
-            <span className="text-2xl font-bold">{value}%</span>
+            <span className="text-lg md:text-2xl font-bold">{value}%</span>
           </div>
         </div>
-        <div className="text-xs text-muted-foreground mt-1">{subtitle}</div>
+        <div className="text-[10px] md:text-xs text-muted-foreground mt-0 md:mt-1">{subtitle}</div>
       </CardContent>
     </Card>
   );
