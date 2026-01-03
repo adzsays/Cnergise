@@ -12,6 +12,7 @@ import { ProjectsTab } from "@/components/tasks/ProjectsTab";
 import { SpacesTab } from "@/components/tasks/SpacesTab";
 import { TeamsTab } from "@/components/tasks/TeamsTab";
 import { TaskList } from "@/components/tasks/TaskList";
+import { ProjectAnalyticsDashboard } from "@/components/projects/ProjectAnalyticsDashboard";
 import { useTasks } from "@/hooks/useTasks";
 
 const TaskManagement = () => {
@@ -82,13 +83,18 @@ const TaskManagement = () => {
             </header>
 
             <main className="flex-1 overflow-auto p-6">
-              <Tabs defaultValue="tasks" className="space-y-6">
-                <TabsList>
-                  <TabsTrigger value="tasks">Tasks</TabsTrigger>
-                  <TabsTrigger value="projects">Projects</TabsTrigger>
-                  <TabsTrigger value="spaces">Spaces</TabsTrigger>
-                  <TabsTrigger value="teams">Teams</TabsTrigger>
+              <Tabs defaultValue="dashboard" className="space-y-6">
+                <TabsList className="bg-muted/50 p-1">
+                  <TabsTrigger value="dashboard" className="data-[state=active]:bg-background">Dashboard</TabsTrigger>
+                  <TabsTrigger value="tasks" className="data-[state=active]:bg-background">Tasks</TabsTrigger>
+                  <TabsTrigger value="projects" className="data-[state=active]:bg-background">Projects</TabsTrigger>
+                  <TabsTrigger value="spaces" className="data-[state=active]:bg-background">Spaces</TabsTrigger>
+                  <TabsTrigger value="teams" className="data-[state=active]:bg-background">Teams</TabsTrigger>
                 </TabsList>
+                
+                <TabsContent value="dashboard">
+                  <ProjectAnalyticsDashboard />
+                </TabsContent>
                 
                 <TabsContent value="tasks">
                   <TaskList />
