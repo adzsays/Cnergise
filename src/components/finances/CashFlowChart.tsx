@@ -65,52 +65,58 @@ export const CashFlowChart = ({ transactions }: CashFlowChartProps) => {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>12-Month Cash Flow Projection</CardTitle>
+      <CardHeader className="px-3 md:px-6">
+        <CardTitle className="text-sm md:text-base">12-Month Cash Flow Projection</CardTitle>
       </CardHeader>
-      <CardContent>
-        <ChartContainer config={chartConfig} className="h-[400px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-              <XAxis
-                dataKey="month"
-                className="text-xs"
-                tick={{ fill: 'hsl(var(--muted-foreground))' }}
-              />
-              <YAxis
-                className="text-xs"
-                tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                tickFormatter={(value) => `£${(value / 1000).toFixed(0)}k`}
-              />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="income"
-                stroke="var(--color-income)"
-                strokeWidth={2}
-                dot={false}
-                name="Income"
-              />
-              <Line
-                type="monotone"
-                dataKey="expense"
-                stroke="var(--color-expense)"
-                strokeWidth={2}
-                dot={false}
-                name="Expenses"
-              />
-              <Line
-                type="monotone"
-                dataKey="balance"
-                stroke="var(--color-balance)"
-                strokeWidth={3}
-                dot={false}
-                name="Running Balance"
-              />
-            </LineChart>
-          </ResponsiveContainer>
+      <CardContent className="px-2 md:px-6">
+        <ChartContainer config={chartConfig} className="h-[250px] md:h-[400px]">
+          <div className="w-full overflow-x-auto">
+            <div className="min-w-[350px] h-[250px] md:h-[400px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData} margin={{ top: 5, right: 10, left: -15, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis
+                    dataKey="month"
+                    className="text-xs"
+                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                    interval="preserveStartEnd"
+                  />
+                  <YAxis
+                    className="text-xs"
+                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                    tickFormatter={(value) => `£${(value / 1000).toFixed(0)}k`}
+                    width={35}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Legend wrapperStyle={{ fontSize: '11px' }} />
+                  <Line
+                    type="monotone"
+                    dataKey="income"
+                    stroke="var(--color-income)"
+                    strokeWidth={2}
+                    dot={false}
+                    name="Income"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="expense"
+                    stroke="var(--color-expense)"
+                    strokeWidth={2}
+                    dot={false}
+                    name="Expenses"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="balance"
+                    stroke="var(--color-balance)"
+                    strokeWidth={3}
+                    dot={false}
+                    name="Running Balance"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
         </ChartContainer>
       </CardContent>
     </Card>

@@ -224,12 +224,12 @@ export const CashFlowView = () => {
   const formatCurrency = (amount: number) => `£${Math.abs(amount).toLocaleString()}`;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header Controls */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 md:gap-4">
         <div className="flex flex-wrap items-center gap-2">
           <Select value={group} onValueChange={(v) => setGroup(v as any)}>
-            <SelectTrigger className="w-[120px] h-9">
+            <SelectTrigger className="w-[100px] md:w-[120px] h-8 md:h-9 text-xs md:text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -238,19 +238,19 @@ export const CashFlowView = () => {
               <SelectItem value="business">Business</SelectItem>
             </SelectContent>
           </Select>
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50">
-            <span className={`text-xs ${viewMode === 'type' ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>Type</span>
-            <Switch checked={viewMode === 'costcentre'} onCheckedChange={(c) => setViewMode(c ? 'costcentre' : 'type')} className="scale-90" />
-            <span className={`text-xs ${viewMode === 'costcentre' ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>Category</span>
+          <div className="flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1 md:py-1.5 rounded-lg bg-muted/50">
+            <span className={`text-[10px] md:text-xs ${viewMode === 'type' ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>Type</span>
+            <Switch checked={viewMode === 'costcentre'} onCheckedChange={(c) => setViewMode(c ? 'costcentre' : 'type')} className="scale-75 md:scale-90" />
+            <span className={`text-[10px] md:text-xs ${viewMode === 'costcentre' ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>Category</span>
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => setIsImportOpen(true)}>
-            <Upload className="h-4 w-4 mr-1.5" />
-            Import
+          <Button variant="outline" size="sm" onClick={() => setIsImportOpen(true)} className="h-8 text-xs md:text-sm">
+            <Upload className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1 md:mr-1.5" />
+            <span className="hidden sm:inline">Import</span>
           </Button>
-          <Button size="sm" onClick={() => setAddDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-1.5" />
+          <Button size="sm" onClick={() => setAddDialogOpen(true)} className="h-8 text-xs md:text-sm">
+            <Plus className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1 md:mr-1.5" />
             Add
           </Button>
         </div>
@@ -260,18 +260,19 @@ export const CashFlowView = () => {
       <CashFlowChart transactions={filteredTransactions} />
 
       {/* Rolling Cash Flow Summary */}
-      <div className="rounded-xl border border-border/50 overflow-hidden">
-        <div className="flex items-center justify-between p-4 bg-muted/30">
-          <h3 className="text-sm font-semibold">12-Month Projection</h3>
+      <div className="rounded-lg md:rounded-xl border border-border/50 overflow-hidden">
+        <div className="flex items-center justify-between p-3 md:p-4 bg-muted/30">
+          <h3 className="text-xs md:text-sm font-semibold">12-Month Projection</h3>
           <Button
             onClick={() => expandedCategories.size === categoryKeys.length ? collapseAll() : expandAll()}
             variant="ghost"
             size="sm"
+            className="h-7 md:h-8 text-xs"
           >
             {expandedCategories.size === categoryKeys.length ? (
-              <><ChevronsUpDown className="h-4 w-4 mr-1" />Collapse</>
+              <><ChevronsUpDown className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1" />Collapse</>
             ) : (
-              <><ChevronsDownUp className="h-4 w-4 mr-1" />Expand</>
+              <><ChevronsDownUp className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1" />Expand</>
             )}
           </Button>
         </div>
@@ -279,20 +280,20 @@ export const CashFlowView = () => {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/20">
-                <TableHead className="text-xs font-medium py-2 px-3">Balance</TableHead>
-                <TableHead className="text-right text-xs font-medium py-2 px-3">Monthly</TableHead>
+                <TableHead className="text-[10px] md:text-xs font-medium py-2 px-2 md:px-3 min-w-[80px]">Balance</TableHead>
+                <TableHead className="text-right text-[10px] md:text-xs font-medium py-2 px-2 md:px-3 min-w-[60px]">Monthly</TableHead>
                 {monthLabels.map((month) => (
-                  <TableHead key={month} className="text-right text-xs font-medium py-2 px-3">{month}</TableHead>
+                  <TableHead key={month} className="text-right text-[10px] md:text-xs font-medium py-2 px-1 md:px-3 min-w-[50px]">{month}</TableHead>
                 ))}
               </TableRow>
             </TableHeader>
             <TableBody>
               <TableRow className="bg-primary/5 font-semibold border-b-2 border-primary/20">
-                <TableCell colSpan={2} className="text-xs py-2 px-3">Rolling Cash Flow</TableCell>
+                <TableCell colSpan={2} className="text-[10px] md:text-xs py-2 px-2 md:px-3">Rolling Cash Flow</TableCell>
                 {rollingCashFlow.map((balance, idx) => (
                   <TableCell
                     key={idx}
-                    className={`text-right text-xs py-2 px-3 ${balance >= 0 ? 'text-income' : 'text-expense'}`}
+                    className={`text-right text-[10px] md:text-xs py-2 px-1 md:px-3 ${balance >= 0 ? 'text-income' : 'text-expense'}`}
                   >
                     {formatCurrency(balance)}
                   </TableCell>
@@ -304,15 +305,15 @@ export const CashFlowView = () => {
       </div>
 
       {/* Transactions by Category */}
-      <div className="rounded-xl border border-border/50 overflow-hidden">
-        <ScrollArea className="h-[400px]">
+      <div className="rounded-lg md:rounded-xl border border-border/50 overflow-hidden">
+        <ScrollArea className="h-[300px] md:h-[400px]">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/20">
-                <TableHead className="text-xs font-medium py-2 px-3">Item</TableHead>
-                <TableHead className="text-right text-xs font-medium py-2 px-3">Monthly</TableHead>
+                <TableHead className="text-[10px] md:text-xs font-medium py-2 px-2 md:px-3 min-w-[100px]">Item</TableHead>
+                <TableHead className="text-right text-[10px] md:text-xs font-medium py-2 px-2 md:px-3 min-w-[60px]">Monthly</TableHead>
                 {monthLabels.map((month) => (
-                  <TableHead key={month} className="text-right text-xs font-medium py-2 px-3">{month}</TableHead>
+                  <TableHead key={month} className="text-right text-[10px] md:text-xs font-medium py-2 px-1 md:px-3 min-w-[50px]">{month}</TableHead>
                 ))}
               </TableRow>
             </TableHeader>

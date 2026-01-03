@@ -52,11 +52,11 @@ export const NetWorthChart = ({ data, title, color }: NetWorthChartProps) => {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
+      <CardHeader className="px-3 md:px-6 pb-2">
+        <CardTitle className="text-sm md:text-base">{title}</CardTitle>
       </CardHeader>
-      <CardContent>
-        <ChartContainer config={chartConfig} className="h-[300px]">
+      <CardContent className="px-2 md:px-6">
+        <ChartContainer config={chartConfig} className="h-[200px] md:h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
@@ -65,7 +65,7 @@ export const NetWorthChart = ({ data, title, color }: NetWorthChartProps) => {
                 cy="50%"
                 labelLine={false}
                 label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                outerRadius={80}
+                outerRadius={60}
                 fill={color}
                 dataKey="value"
               >
@@ -80,7 +80,7 @@ export const NetWorthChart = ({ data, title, color }: NetWorthChartProps) => {
                   />
                 }
               />
-              <Legend />
+              <Legend wrapperStyle={{ fontSize: '11px' }} />
             </PieChart>
           </ResponsiveContainer>
         </ChartContainer>
