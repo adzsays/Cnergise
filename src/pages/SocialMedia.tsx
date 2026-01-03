@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { SidebarProvider, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarInset, SidebarRail, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -79,12 +79,15 @@ const SocialMedia = () => {
         <SidebarInset>
           <div className="flex h-full flex-col">
             <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-              <div className="flex h-16 items-center justify-between px-6">
-                <div>
-                  <h1 className="text-2xl font-bold gradient-heading">Social Media Hub</h1>
-                  <p className="text-sm text-muted-foreground">
-                    All your social feeds in one place
-                  </p>
+              <div className="flex h-16 items-center justify-between px-4 md:px-6">
+                <div className="flex items-center gap-3">
+                  <SidebarTrigger className="md:hidden h-9 w-9" />
+                  <div>
+                    <h1 className="text-2xl font-bold gradient-heading">Social Media Hub</h1>
+                    <p className="text-sm text-muted-foreground">
+                      All your social feeds in one place
+                    </p>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Button variant="outline" size="sm">

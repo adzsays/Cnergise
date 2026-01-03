@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { SidebarProvider, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarInset, SidebarRail, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { NavigationTabs } from "@/components/NavigationTabs";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
@@ -50,8 +50,11 @@ export default function Calendar() {
         <SidebarInset>
           <div className="flex h-full flex-col">
             <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-              <div className="flex h-16 items-center justify-between px-6">
-                <h1 className="text-2xl font-bold gradient-heading">Calendar</h1>
+              <div className="flex h-16 items-center justify-between px-4 md:px-6">
+                <div className="flex items-center gap-3">
+                  <SidebarTrigger className="md:hidden h-9 w-9" />
+                  <h1 className="text-2xl font-bold gradient-heading">Calendar</h1>
+                </div>
                 <div className="flex items-center gap-2">
                   <div className="h-8 w-8 rounded-full bg-gradient-to-r from-taskfinity-blue to-taskfinity-purple"></div>
                 </div>

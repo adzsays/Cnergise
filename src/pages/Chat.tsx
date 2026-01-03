@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { SidebarProvider, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarInset, SidebarRail, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -88,7 +88,10 @@ const Chat = () => {
             <div className="w-64 border-r bg-muted/30 flex flex-col">
               <div className="p-4 border-b">
                 <div className="flex items-center justify-between">
-                  <h2 className="font-semibold">Channels</h2>
+                  <div className="flex items-center gap-2">
+                    <SidebarTrigger className="md:hidden h-8 w-8" />
+                    <h2 className="font-semibold">Channels</h2>
+                  </div>
                   <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                     <DialogTrigger asChild>
                       <Button variant="ghost" size="icon" className="h-8 w-8">
