@@ -7,6 +7,7 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Bookmark } from "lucide-react";
+import { VoiceAssistant } from "@/components/VoiceAssistant";
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("overview");
@@ -102,6 +103,7 @@ export default function Dashboard() {
             </div>
           </div>
         </SidebarInset>
+        <VoiceAssistant />
       </div>
     </SidebarProvider>
   );

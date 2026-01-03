@@ -14,6 +14,7 @@ import { TeamsTab } from "@/components/tasks/TeamsTab";
 import { TaskList } from "@/components/tasks/TaskList";
 import { ProjectAnalyticsDashboard } from "@/components/projects/ProjectAnalyticsDashboard";
 import { useTasks } from "@/hooks/useTasks";
+import { VoiceAssistant } from "@/components/VoiceAssistant";
 
 const TaskManagement = () => {
   const navigate = useNavigate();
@@ -150,6 +151,7 @@ const TaskManagement = () => {
           open={showTaskUploadDialog}
           onOpenChange={setShowTaskUploadDialog}
         />
+        <VoiceAssistant />
       </div>
     </SidebarProvider>
   );
