@@ -12,7 +12,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { IntegrationSettings } from "@/components/settings/IntegrationSettings";
-import { Upload, Save, User, Key } from "lucide-react";
+import { SubscriptionSettings } from "@/components/settings/SubscriptionSettings";
+import { Upload, Save, User, Key, CreditCard } from "lucide-react";
 import { SkeletonCard } from "@/components/ui/DashboardWidget";
 
 export default function Profile() {
@@ -56,11 +57,15 @@ export default function Profile() {
                   <TabsList className="bg-muted/50 mb-6">
                     <TabsTrigger value="profile" className="text-sm">
                       <User className="h-4 w-4 mr-2" />
-                      Profile
+                      <span className="hidden sm:inline">Profile</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="subscriptions" className="text-sm">
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      <span className="hidden sm:inline">Subscriptions</span>
                     </TabsTrigger>
                     <TabsTrigger value="integrations" className="text-sm">
                       <Key className="h-4 w-4 mr-2" />
-                      API Connections
+                      <span className="hidden sm:inline">API Connections</span>
                     </TabsTrigger>
                   </TabsList>
 
@@ -151,6 +156,10 @@ export default function Profile() {
                             </Button>
                           </CardContent>
                         </Card>
+                      </TabsContent>
+
+                      <TabsContent value="subscriptions" className="mt-0">
+                        <SubscriptionSettings />
                       </TabsContent>
 
                       <TabsContent value="integrations" className="mt-0">
