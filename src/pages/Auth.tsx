@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { toast } from "sonner";
 import { 
   CheckCircle, 
@@ -20,7 +21,9 @@ import {
   Zap,
   Users,
   Calendar,
-  Brain
+  Brain,
+  Fingerprint,
+  Loader2
 } from "lucide-react";
 
 const Auth = () => {
@@ -30,6 +33,23 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authTab, setAuthTab] = useState<"signin" | "signup">("signup");
+  
+  // MFA state
+  const [showMFAVerification, setShowMFAVerification] = useState(false);
+  const [mfaFactorId, setMfaFactorId] = useState<string>("");
+  const [mfaCode, setMfaCode] = useState("");
+  const [mfaVerifying, setMfaVerifying] = useState(false);
+  
+  // Biometric state
+  const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const [biometricLoading, setBiometricLoading] = useState(false);
+
+  useEffect(() => {
+    // Check if biometric login is available
+    const storedCredential = localStorage.getItem("cnergise_biometric_credential");
+    const isSupported = window.PublicKeyCredential !== undefined;
+    setBiometricAvailable(isSupported && !!storedCredential);
+  }, []);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,12 +80,24 @@ const Auth = () => {
     setIsLoading(true);
     
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       
       if (error) throw error;
+      
+      // Check if MFA is required
+      if (data.session === null && data.user) {
+        // MFA required - get factors
+        const { data: factorsData } = await supabase.auth.mfa.listFactors();
+        if (factorsData?.totp && factorsData.totp.length > 0) {
+          setMfaFactorId(factorsData.totp[0].id);
+          setShowMFAVerification(true);
+          setIsLoading(false);
+          return;
+        }
+      }
       
       toast.success("Signed in successfully!");
       navigate("/home");
@@ -73,6 +105,94 @@ const Auth = () => {
       toast.error(error.message || "Failed to sign in");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleMFAVerification = async () => {
+    if (mfaCode.length !== 6) {
+      toast.error("Please enter a 6-digit code");
+      return;
+    }
+
+    setMfaVerifying(true);
+    try {
+      const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({
+        factorId: mfaFactorId,
+      });
+
+      if (challengeError) throw challengeError;
+
+      const { error: verifyError } = await supabase.auth.mfa.verify({
+        factorId: mfaFactorId,
+        challengeId: challengeData.id,
+        code: mfaCode,
+      });
+
+      if (verifyError) throw verifyError;
+
+      toast.success("Signed in successfully!");
+      setShowMFAVerification(false);
+      setShowAuthModal(false);
+      navigate("/home");
+    } catch (error: any) {
+      toast.error(error.message || "Invalid verification code");
+    } finally {
+      setMfaVerifying(false);
+    }
+  };
+
+  const handleBiometricLogin = async () => {
+    setBiometricLoading(true);
+    try {
+      const storedCredentialId = localStorage.getItem("cnergise_biometric_credential");
+      const storedUserId = localStorage.getItem("cnergise_biometric_user");
+      
+      if (!storedCredentialId || !storedUserId) {
+        throw new Error("No biometric credentials found");
+      }
+
+      // Generate challenge
+      const challenge = new Uint8Array(32);
+      crypto.getRandomValues(challenge);
+
+      const publicKeyCredentialRequestOptions: PublicKeyCredentialRequestOptions = {
+        challenge,
+        rpId: window.location.hostname,
+        allowCredentials: [{
+          id: Uint8Array.from(atob(storedCredentialId.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0)),
+          type: "public-key",
+          transports: ["internal"],
+        }],
+        userVerification: "required",
+        timeout: 60000,
+      };
+
+      const credential = await navigator.credentials.get({
+        publicKey: publicKeyCredentialRequestOptions,
+      });
+
+      if (credential) {
+        // Biometric verification successful - check if there's a valid session
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+          toast.success("Welcome back!");
+          navigate("/home");
+        } else {
+          // Session expired, need to re-authenticate with password
+          toast.info("Session expired. Please sign in with your password.");
+          setShowAuthModal(true);
+          setAuthTab("signin");
+        }
+      }
+    } catch (error: any) {
+      if (error.name === "NotAllowedError") {
+        toast.error("Biometric authentication was cancelled");
+      } else {
+        toast.error("Biometric login failed. Please use password.");
+      }
+    } finally {
+      setBiometricLoading(false);
     }
   };
 
@@ -170,7 +290,7 @@ const Auth = () => {
             Cnergise brings together tasks, goals, health, finances, and investments in one intelligent platform. 
             Let AI handle the complexity while you focus on what matters most.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
             <Button 
               size="lg" 
               onClick={() => { setAuthTab("signup"); setShowAuthModal(true); }}
@@ -187,6 +307,26 @@ const Auth = () => {
               Watch Demo
             </Button>
           </div>
+
+          {/* Biometric Login Option */}
+          {biometricAvailable && (
+            <div className="mb-8">
+              <Button
+                size="lg"
+                variant="secondary"
+                onClick={handleBiometricLogin}
+                disabled={biometricLoading}
+                className="gap-2"
+              >
+                {biometricLoading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <Fingerprint className="w-5 h-5" />
+                )}
+                Sign in with Biometrics
+              </Button>
+            </div>
+          )}
           
           {/* Quick Benefits */}
           <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
@@ -345,74 +485,171 @@ const Auth = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Tabs value={authTab} onValueChange={(v) => setAuthTab(v as "signin" | "signup")} className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="signin">Sign In</TabsTrigger>
-                  <TabsTrigger value="signup">Sign Up</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="signin">
-                  <form onSubmit={handleSignIn} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="signin-email">Email</Label>
-                      <Input
-                        id="signin-email"
-                        type="email"
-                        placeholder="you@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signin-password">Password</Label>
-                      <Input
-                        id="signin-password"
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <Button type="submit" className="w-full" disabled={isLoading}>
-                      {isLoading ? "Signing in..." : "Sign In"}
-                    </Button>
-                  </form>
-                </TabsContent>
-                
-                <TabsContent value="signup">
-                  <form onSubmit={handleSignUp} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-email">Email</Label>
-                      <Input
-                        id="signup-email"
-                        type="email"
-                        placeholder="you@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-password">Password</Label>
-                      <Input
-                        id="signup-password"
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        minLength={6}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Password must be at least 6 characters
-                      </p>
-                    </div>
-                    <Button type="submit" className="w-full" disabled={isLoading}>
-                      {isLoading ? "Creating account..." : "Create Account"}
-                    </Button>
-                  </form>
-                </TabsContent>
-              </Tabs>
+              {showMFAVerification ? (
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <Shield className="w-12 h-12 mx-auto text-primary mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">Two-Factor Authentication</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Enter the 6-digit code from your authenticator app
+                    </p>
+                  </div>
+                  
+                  <div className="flex justify-center">
+                    <InputOTP
+                      maxLength={6}
+                      value={mfaCode}
+                      onChange={setMfaCode}
+                    >
+                      <InputOTPGroup>
+                        <InputOTPSlot index={0} />
+                        <InputOTPSlot index={1} />
+                        <InputOTPSlot index={2} />
+                        <InputOTPSlot index={3} />
+                        <InputOTPSlot index={4} />
+                        <InputOTPSlot index={5} />
+                      </InputOTPGroup>
+                    </InputOTP>
+                  </div>
+
+                  <Button
+                    onClick={handleMFAVerification}
+                    disabled={mfaVerifying || mfaCode.length !== 6}
+                    className="w-full"
+                  >
+                    {mfaVerifying ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Verifying...
+                      </>
+                    ) : (
+                      "Verify & Sign In"
+                    )}
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      setShowMFAVerification(false);
+                      setMfaCode("");
+                    }}
+                    className="w-full"
+                  >
+                    Back to Sign In
+                  </Button>
+                </div>
+              ) : (
+                <Tabs value={authTab} onValueChange={(v) => setAuthTab(v as "signin" | "signup")} className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="signin">Sign In</TabsTrigger>
+                    <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="signin">
+                    <form onSubmit={handleSignIn} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="signin-email">Email</Label>
+                        <Input
+                          id="signin-email"
+                          type="email"
+                          placeholder="you@example.com"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="signin-password">Password</Label>
+                        <Input
+                          id="signin-password"
+                          type="password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <Button type="submit" className="w-full" disabled={isLoading}>
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Signing in...
+                          </>
+                        ) : (
+                          "Sign In"
+                        )}
+                      </Button>
+                      
+                      {biometricAvailable && (
+                        <>
+                          <div className="relative">
+                            <div className="absolute inset-0 flex items-center">
+                              <span className="w-full border-t" />
+                            </div>
+                            <div className="relative flex justify-center text-xs uppercase">
+                              <span className="bg-card px-2 text-muted-foreground">Or</span>
+                            </div>
+                          </div>
+                          
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={handleBiometricLogin}
+                            disabled={biometricLoading}
+                            className="w-full"
+                          >
+                            {biometricLoading ? (
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                              <Fingerprint className="mr-2 h-4 w-4" />
+                            )}
+                            Use Biometrics
+                          </Button>
+                        </>
+                      )}
+                    </form>
+                  </TabsContent>
+                  
+                  <TabsContent value="signup">
+                    <form onSubmit={handleSignUp} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="signup-email">Email</Label>
+                        <Input
+                          id="signup-email"
+                          type="email"
+                          placeholder="you@example.com"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="signup-password">Password</Label>
+                        <Input
+                          id="signup-password"
+                          type="password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          required
+                          minLength={6}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Password must be at least 6 characters
+                        </p>
+                      </div>
+                      <Button type="submit" className="w-full" disabled={isLoading}>
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Creating account...
+                          </>
+                        ) : (
+                          "Create Account"
+                        )}
+                      </Button>
+                    </form>
+                  </TabsContent>
+                </Tabs>
+              )}
             </CardContent>
           </Card>
         </div>
