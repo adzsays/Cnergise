@@ -8,6 +8,7 @@ export type Space = {
   name: string;
   description?: string | null;
   color?: string | null;
+  is_default?: boolean | null;
   created_at: string;
   updated_at: string;
 };
