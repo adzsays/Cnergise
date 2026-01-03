@@ -1,6 +1,8 @@
 
-import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import React from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import {
   Sidebar,
   SidebarContent,
@@ -52,8 +54,18 @@ const navItems = [
 
 export function AppSidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast.error("Failed to log out");
+    } else {
+      navigate("/");
+    }
+  };
 
   return (
     <Sidebar collapsible="icon" className="border-r bg-sidebar">
@@ -118,7 +130,11 @@ export function AppSidebar() {
       <SidebarFooter className="p-2">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Log out" className="text-muted-foreground hover:text-destructive">
+            <SidebarMenuButton 
+              tooltip="Log out" 
+              className="text-muted-foreground hover:text-destructive"
+              onClick={handleLogout}
+            >
               <LogOut className="h-4 w-4" />
               {!isCollapsed && <span>Log out</span>}
             </SidebarMenuButton>
