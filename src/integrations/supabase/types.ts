@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_search_history: {
+        Row: {
+          created_at: string
+          id: string
+          metadata_ids: string[] | null
+          query: string
+          results: Json | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metadata_ids?: string[] | null
+          query: string
+          results?: Json | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metadata_ids?: string[] | null
+          query?: string
+          results?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       calendar_events: {
         Row: {
           created_at: string | null
@@ -887,6 +914,86 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      unified_metadata: {
+        Row: {
+          ai_summary: string | null
+          amount: number | null
+          app_type: string | null
+          created_at: string
+          date_occurred: string | null
+          description: string | null
+          external_url: string | null
+          id: string
+          is_notification: boolean | null
+          keywords: string[] | null
+          notification_priority: string | null
+          notification_read: boolean | null
+          notification_read_at: string | null
+          participants: string[] | null
+          source_id: string
+          source_table: string
+          source_type: string
+          space_id: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_summary?: string | null
+          amount?: number | null
+          app_type?: string | null
+          created_at?: string
+          date_occurred?: string | null
+          description?: string | null
+          external_url?: string | null
+          id?: string
+          is_notification?: boolean | null
+          keywords?: string[] | null
+          notification_priority?: string | null
+          notification_read?: boolean | null
+          notification_read_at?: string | null
+          participants?: string[] | null
+          source_id: string
+          source_table: string
+          source_type: string
+          space_id?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_summary?: string | null
+          amount?: number | null
+          app_type?: string | null
+          created_at?: string
+          date_occurred?: string | null
+          description?: string | null
+          external_url?: string | null
+          id?: string
+          is_notification?: boolean | null
+          keywords?: string[] | null
+          notification_priority?: string | null
+          notification_read?: boolean | null
+          notification_read_at?: string | null
+          participants?: string[] | null
+          source_id?: string
+          source_table?: string
+          source_type?: string
+          space_id?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unified_metadata_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       usage_stats: {
         Row: {
