@@ -5,7 +5,7 @@ import { TeamsTab } from "@/components/tasks/TeamsTab";
 const Teams = () => {
   return (
     <SidebarProvider defaultOpen={false}>
-      <div className="flex h-screen w-full overflow-hidden bg-background">
+      <div className="flex min-h-[100dvh] w-full overflow-hidden bg-background pt-[env(safe-area-inset-top)]">
         <AppSidebar />
         <SidebarRail />
         

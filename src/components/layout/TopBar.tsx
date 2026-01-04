@@ -70,7 +70,7 @@ export function TopBar({ title = "Today" }: TopBarProps) {
           {/* Quick Add Button - hidden on very small screens */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="icon" className="h-8 w-8 hidden xs:flex sm:h-9 sm:w-9">
+              <Button size="icon" className="hidden sm:inline-flex h-9 w-9">
                 <Plus className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
