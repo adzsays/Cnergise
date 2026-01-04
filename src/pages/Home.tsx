@@ -7,6 +7,7 @@ import { DashboardWidget, MetricCard } from "@/components/ui/DashboardWidget";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { VoiceAssistant } from "@/components/VoiceAssistant";
+import { NewsTicker } from "@/components/dashboard/NewsTicker";
 import {
   CalendarDays,
   Heart,
@@ -49,6 +50,11 @@ const Index = () => {
             <TopBar title="Today" />
 
             <main className="flex-1 overflow-auto p-4 md:p-6">
+              {/* News Ticker */}
+              <div className="mb-6">
+                <NewsTicker />
+              </div>
+
               {/* Date header */}
               <div className="mb-6">
                 <p className="text-muted-foreground text-sm">
