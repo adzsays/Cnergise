@@ -75,21 +75,21 @@ interface MetricCardProps {
 export function MetricCard({ label, value, change, icon, className }: MetricCardProps) {
   return (
     <Card className={cn(
-      "bg-card border border-border rounded-md shadow-card p-4",
+      "bg-card border border-border rounded-md shadow-card p-3 sm:p-4",
       className
     )}>
-      <div className="flex items-start justify-between">
-        <div className="space-y-1">
-          <p className="widget-metric-label">{label}</p>
-          <p className="widget-metric">{value}</p>
+      <div className="flex items-start justify-between gap-2">
+        <div className="space-y-0.5 sm:space-y-1 min-w-0 flex-1">
+          <p className="widget-metric-label text-[10px] sm:text-xs truncate">{label}</p>
+          <p className="widget-metric text-lg sm:text-2xl">{value}</p>
           {change && (
-            <p className={cn("widget-metric-change", change.type)}>
+            <p className={cn("widget-metric-change text-[10px] sm:text-xs truncate", change.type)}>
               {change.value}
             </p>
           )}
         </div>
         {icon && (
-          <div className="text-muted-foreground">
+          <div className="text-muted-foreground shrink-0">
             {icon}
           </div>
         )}
