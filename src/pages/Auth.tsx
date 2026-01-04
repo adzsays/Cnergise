@@ -249,7 +249,7 @@ const Auth = () => {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               <img src={cnergiseLogo} alt="Cnergise" className="w-10 h-10 object-contain" />
               <span className="text-xl font-bold text-foreground">Cnergise</span>
             </div>
