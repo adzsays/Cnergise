@@ -22,6 +22,7 @@ import Contacts from "./pages/Contacts";
 import Chat from "./pages/Chat";
 import ProjectsAnalytics from "./pages/ProjectsAnalytics";
 import Monitoring from "./pages/Monitoring";
+import Learning from "./pages/Learning";
 import NotFound from "./pages/NotFound";
 import { AuthGuard } from "./components/AuthGuard";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -57,6 +58,7 @@ const App = () => (
               <Route path="/contacts" element={<AuthGuard><Contacts /></AuthGuard>} />
               <Route path="/chat" element={<AuthGuard><Chat /></AuthGuard>} />
               <Route path="/monitoring" element={<AuthGuard><Monitoring /></AuthGuard>} />
+              <Route path="/learning" element={<AuthGuard><Learning /></AuthGuard>} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

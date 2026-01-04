@@ -32,6 +32,7 @@ import {
   Target,
   Briefcase,
   FolderKanban,
+  GraduationCap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -43,6 +44,7 @@ const navItems = [
   { icon: CheckSquare, label: "Tasks", href: "/tasks" },
   { icon: FolderKanban, label: "Projects", href: "/projects" },
   { icon: Target, label: "Goals", href: "/goals" },
+  { icon: GraduationCap, label: "Learning", href: "/learning" },
   { icon: Share2, label: "Social", href: "/social" },
   { icon: Activity, label: "Health", href: "/health" },
   { icon: Wallet, label: "Finance", href: "/finances" },
