@@ -562,6 +562,83 @@ export type Database = {
           },
         ]
       }
+      learning_courses: {
+        Row: {
+          certificate_url: string | null
+          completed_at: string | null
+          course_url: string | null
+          created_at: string
+          description: string | null
+          estimated_hours: number | null
+          external_course_id: string | null
+          id: string
+          image_url: string | null
+          instructor: string | null
+          last_synced_at: string | null
+          progress_percent: number | null
+          provider: string
+          space_id: string | null
+          started_at: string | null
+          status: string
+          synced_from_provider: boolean | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          certificate_url?: string | null
+          completed_at?: string | null
+          course_url?: string | null
+          created_at?: string
+          description?: string | null
+          estimated_hours?: number | null
+          external_course_id?: string | null
+          id?: string
+          image_url?: string | null
+          instructor?: string | null
+          last_synced_at?: string | null
+          progress_percent?: number | null
+          provider?: string
+          space_id?: string | null
+          started_at?: string | null
+          status?: string
+          synced_from_provider?: boolean | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          certificate_url?: string | null
+          completed_at?: string | null
+          course_url?: string | null
+          created_at?: string
+          description?: string | null
+          estimated_hours?: number | null
+          external_course_id?: string | null
+          id?: string
+          image_url?: string | null
+          instructor?: string | null
+          last_synced_at?: string | null
+          progress_percent?: number | null
+          provider?: string
+          space_id?: string | null
+          started_at?: string | null
+          status?: string
+          synced_from_provider?: boolean | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_courses_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       performance_metrics: {
         Row: {
           created_at: string
@@ -1040,6 +1117,9 @@ export type Database = {
           calendar_oauth_token: string | null
           calendar_provider: string | null
           calendar_refresh_token: string | null
+          coursera_oauth_token: string | null
+          coursera_refresh_token: string | null
+          coursera_user_id: string | null
           created_at: string
           email_imap_host: string | null
           email_imap_port: number | null
@@ -1064,6 +1144,9 @@ export type Database = {
           calendar_oauth_token?: string | null
           calendar_provider?: string | null
           calendar_refresh_token?: string | null
+          coursera_oauth_token?: string | null
+          coursera_refresh_token?: string | null
+          coursera_user_id?: string | null
           created_at?: string
           email_imap_host?: string | null
           email_imap_port?: number | null
@@ -1088,6 +1171,9 @@ export type Database = {
           calendar_oauth_token?: string | null
           calendar_provider?: string | null
           calendar_refresh_token?: string | null
+          coursera_oauth_token?: string | null
+          coursera_refresh_token?: string | null
+          coursera_user_id?: string | null
           created_at?: string
           email_imap_host?: string | null
           email_imap_port?: number | null
