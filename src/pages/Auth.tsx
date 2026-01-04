@@ -250,7 +250,7 @@ const Auth = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-2">
-              <img src={cnergiseLogo} alt="Cnergise" className="w-8 h-8 object-contain" />
+              <img src={cnergiseLogo} alt="Cnergise" className="w-10 h-10 object-contain" />
               <span className="text-xl font-bold text-foreground">Cnergise</span>
             </div>
             <div className="flex items-center gap-3">
@@ -454,7 +454,7 @@ const Auth = () => {
       <footer className="py-12 px-4 sm:px-6 lg:px-8 border-t border-border">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <img src={cnergiseLogo} alt="Cnergise" className="w-6 h-6 object-contain" />
+            <img src={cnergiseLogo} alt="Cnergise" className="w-8 h-8 object-contain" />
             <span className="font-semibold text-foreground">Cnergise</span>
           </div>
           <p className="text-sm text-muted-foreground">
