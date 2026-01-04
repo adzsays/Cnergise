@@ -12,10 +12,11 @@ interface NewsHeadline {
 
 export function NewsTicker() {
   const [headlines, setHeadlines] = useState<NewsHeadline[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [isActive, setIsActive] = useState(false);
 
   const fetchNews = async () => {
     setIsLoading(true);
@@ -42,22 +43,24 @@ export function NewsTicker() {
   };
 
   useEffect(() => {
-    fetchNews();
-    // Refresh every 15 minutes
-    const interval = setInterval(fetchNews, 15 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
+    if (isActive) {
+      fetchNews();
+      // Refresh every 15 minutes while active
+      const interval = setInterval(fetchNews, 15 * 60 * 1000);
+      return () => clearInterval(interval);
+    }
+  }, [isActive]);
 
   // Auto-rotate headlines
   useEffect(() => {
-    if (headlines.length === 0 || isPaused) return;
+    if (headlines.length === 0 || isPaused || !isActive) return;
     
     const timer = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % headlines.length);
     }, 5000);
     
     return () => clearInterval(timer);
-  }, [headlines.length, isPaused]);
+  }, [headlines.length, isPaused, isActive]);
 
   const getCategoryColor = (category: string) => {
     switch (category) {
@@ -68,6 +71,20 @@ export function NewsTicker() {
       default: return "bg-muted text-muted-foreground";
     }
   };
+
+  if (!isActive) {
+    return (
+      <div className="flex items-center justify-between gap-2 px-4 py-2 bg-muted/50 rounded-lg">
+        <div className="flex items-center gap-2">
+          <Newspaper className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm text-muted-foreground">News ticker paused</span>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => setIsActive(true)} className="h-7 px-3">
+          Activate
+        </Button>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
