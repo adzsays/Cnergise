@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Search, Plus, Bell, User, Calendar, CheckSquare, FileText, Bookmark, X, Menu } from "lucide-react";
+import { Search, Plus, User, Calendar, CheckSquare, FileText, Bookmark, X, Sparkles } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,14 +11,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Link } from "react-router-dom";
 import { SpaceSelector } from "@/components/layout/SpaceSelector";
+import { NotificationCenter } from "@/components/notifications/NotificationCenter";
+import { AISearchDialog } from "@/components/ai/AISearchDialog";
 
 interface TopBarProps {
   title?: string;
@@ -98,22 +94,11 @@ export function TopBar({ title = "Today" }: TopBarProps) {
             </DropdownMenuContent>
           </DropdownMenu>
 
+          {/* AI Search */}
+          <AISearchDialog />
+
           {/* Notifications */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9 relative">
-                <Bell className="h-4 w-4" />
-                <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-destructive" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80">
-              <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <div className="p-4 text-center text-sm text-muted-foreground">
-                No new notifications
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <NotificationCenter />
 
           {/* User Menu */}
           <DropdownMenu>
