@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingUp, TrendingDown, Play, Pause } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface TickerItem {
   symbol: string;
@@ -29,14 +30,17 @@ const tickerData: TickerItem[] = [
 
 export const MarketTicker = () => {
   const [offset, setOffset] = useState(0);
+  const [isActive, setIsActive] = useState(false);
 
   useEffect(() => {
+    if (!isActive) return;
+    
     const interval = setInterval(() => {
       setOffset((prev) => prev - 1);
     }, 30);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [isActive]);
 
   // Duplicate items for seamless loop
   const items = [...tickerData, ...tickerData, ...tickerData];
@@ -46,8 +50,32 @@ export const MarketTicker = () => {
   // Reset offset when it exceeds one full cycle
   const adjustedOffset = offset % totalWidth;
 
+  if (!isActive) {
+    return (
+      <div className="w-full bg-card border-y border-border py-2 px-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <TrendingUp className="h-4 w-4" />
+            <span className="text-sm">Market ticker paused</span>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setIsActive(true)}>
+            Activate
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full overflow-hidden bg-card border-y border-border">
+    <div className="w-full overflow-hidden bg-card border-y border-border relative">
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-card/80"
+        onClick={() => setIsActive(false)}
+      >
+        <Pause className="h-4 w-4" />
+      </Button>
       <div 
         className="flex items-center py-2 whitespace-nowrap"
         style={{ 
