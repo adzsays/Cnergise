@@ -49,49 +49,49 @@ const Index = () => {
           <div className="flex h-full flex-col">
             <TopBar title="Today" />
 
-            <main className="flex-1 overflow-auto p-4 md:p-6">
+            <main className="flex-1 overflow-auto p-3 sm:p-4 md:p-6">
               {/* News Ticker */}
-              <div className="mb-6">
+              <div className="mb-4 sm:mb-6">
                 <NewsTicker />
               </div>
 
               {/* Date header */}
-              <div className="mb-6">
-                <p className="text-muted-foreground text-sm">
+              <div className="mb-4 sm:mb-6">
+                <p className="text-muted-foreground text-xs sm:text-sm">
                   {format(new Date(), "EEEE, MMMM d, yyyy")}
                 </p>
               </div>
 
-              {/* Key metrics row */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              {/* Key metrics row - 2x2 grid on mobile */}
+              <div className="grid grid-cols-2 gap-2 sm:gap-4 md:grid-cols-4 mb-4 sm:mb-6">
                 <MetricCard
-                  label="Steps Today"
+                  label="Steps"
                   value="6,432"
-                  change={{ value: "+12% vs avg", type: "positive" }}
-                  icon={<Activity className="h-5 w-5" />}
+                  change={{ value: "+12%", type: "positive" }}
+                  icon={<Activity className="h-4 w-4 sm:h-5 sm:w-5" />}
                 />
                 <MetricCard
                   label="Sleep"
                   value="7h 24m"
                   change={{ value: "Good", type: "positive" }}
-                  icon={<Moon className="h-5 w-5" />}
+                  icon={<Moon className="h-4 w-4 sm:h-5 sm:w-5" />}
                 />
                 <MetricCard
-                  label="Today's Spend"
+                  label="Spend"
                   value="£42.50"
-                  change={{ value: "Under budget", type: "positive" }}
-                  icon={<DollarSign className="h-5 w-5" />}
+                  change={{ value: "On track", type: "positive" }}
+                  icon={<DollarSign className="h-4 w-4 sm:h-5 sm:w-5" />}
                 />
                 <MetricCard
                   label="Unread"
                   value="5"
                   change={{ value: "2 urgent", type: "neutral" }}
-                  icon={<Mail className="h-5 w-5" />}
+                  icon={<Mail className="h-4 w-4 sm:h-5 sm:w-5" />}
                 />
               </div>
 
               {/* Main content grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
+              <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-2 xl:grid-cols-3 md:gap-6">
                 {/* Calendar Events */}
                 <DashboardWidget
                   title="Upcoming Events"
