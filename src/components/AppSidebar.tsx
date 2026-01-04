@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import cnergiseLogo from "@/assets/cnergise-logo.png";
 
 // Core navigation items per spec
 const navItems = [
@@ -72,9 +73,11 @@ export function AppSidebar() {
       <SidebarHeader className="p-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground shrink-0">
-              <Sun className="h-4 w-4" />
-            </div>
+            <img 
+              src={cnergiseLogo} 
+              alt="Cnergise" 
+              className="h-8 w-8 object-contain shrink-0"
+            />
             {!isCollapsed && (
               <span className="font-semibold text-base">Cnergise</span>
             )}

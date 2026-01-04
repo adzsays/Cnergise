@@ -21,6 +21,7 @@ import {
   Users,
   Shield,
 } from "lucide-react";
+import cnergiseLogo from "@/assets/cnergise-logo.png";
 
 type SidebarItem = {
   icon: React.ElementType;
@@ -63,12 +64,13 @@ export function Sidebar({ className }: SidebarProps) {
     >
       <div className="flex items-center justify-between px-4 py-5">
         {expanded ? (
-          <Link to="/" className="text-xl font-bold bg-gradient-to-r from-taskfinity-blue-light to-taskfinity-purple-light bg-clip-text text-transparent">
-            TaskFinity
+          <Link to="/" className="flex items-center gap-2">
+            <img src={cnergiseLogo} alt="Cnergise" className="h-8 w-8 object-contain" />
+            <span className="text-xl font-bold text-foreground">Cnergise</span>
           </Link>
         ) : (
-          <Link to="/" className="w-10 h-10 mx-auto bg-gradient-to-r from-taskfinity-blue-light to-taskfinity-purple-light rounded-md flex items-center justify-center">
-            <span className="text-white font-bold text-lg">TF</span>
+          <Link to="/" className="w-10 h-10 mx-auto flex items-center justify-center">
+            <img src={cnergiseLogo} alt="Cnergise" className="h-8 w-8 object-contain" />
           </Link>
         )}
       </div>
