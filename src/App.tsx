@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Auth from "./pages/Auth";
 import Home from "./pages/Home";
+import Install from "./pages/Install";
 import TaskManagement from "./pages/TaskManagement";
 import Dashboard from "./pages/Dashboard";
 import Calendar from "./pages/Calendar";
@@ -40,6 +41,7 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Auth />} />
+              <Route path="/install" element={<Install />} />
               <Route path="/home" element={<AuthGuard><Home /></AuthGuard>} />
               <Route path="/tasks" element={<AuthGuard><TaskManagement /></AuthGuard>} />
               <Route path="/projects" element={<AuthGuard><ProjectsAnalytics /></AuthGuard>} />
