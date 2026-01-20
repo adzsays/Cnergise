@@ -123,14 +123,21 @@ export function ProjectsTab() {
               </div>
               <div>
                 <Label htmlFor="space">Space</Label>
-                <Select value={formData.space_id} onValueChange={(value) => setFormData({ ...formData, space_id: value })}>
+                <Select
+                  value={formData.space_id}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, space_id: value === "__none__" ? "" : value })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a space (optional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No Space</SelectItem>
+                    <SelectItem value="__none__">No Space</SelectItem>
                     {spaces.map((space) => (
-                      <SelectItem key={space.id} value={space.id}>{space.name}</SelectItem>
+                      <SelectItem key={space.id} value={space.id}>
+                        {space.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
