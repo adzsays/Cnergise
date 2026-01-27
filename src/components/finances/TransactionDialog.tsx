@@ -111,11 +111,11 @@ export const TransactionDialog = ({ open, onOpenChange, transaction }: Transacti
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[500px] max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>{transaction?.id ? 'Edit Transaction' : 'Add Transaction'}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto flex-1 pr-2">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="type">Type</Label>
@@ -123,7 +123,7 @@ export const TransactionDialog = ({ open, onOpenChange, transaction }: Transacti
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-background z-50">
                   {TRANSACTION_TYPES.map((type) => (
                     <SelectItem key={type} value={type}>
                       {type.charAt(0).toUpperCase() + type.slice(1)}
@@ -139,7 +139,7 @@ export const TransactionDialog = ({ open, onOpenChange, transaction }: Transacti
                 <SelectTrigger>
                   <SelectValue placeholder="Select frequency" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-background z-50">
                   {FREQUENCIES.map((freq) => (
                     <SelectItem key={freq.value} value={freq.value}>
                       {freq.label}
@@ -157,7 +157,7 @@ export const TransactionDialog = ({ open, onOpenChange, transaction }: Transacti
                 <SelectTrigger>
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-background z-50">
                   {CATEGORIES[formData.type as keyof typeof CATEGORIES]?.map((cat) => (
                     <SelectItem key={cat} value={cat}>
                       {cat}
@@ -173,7 +173,7 @@ export const TransactionDialog = ({ open, onOpenChange, transaction }: Transacti
                 <SelectTrigger>
                   <SelectValue placeholder="Select cost centre" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-background z-50">
                   {COST_CENTRES.map((centre) => (
                     <SelectItem key={centre} value={centre}>
                       {centre}
