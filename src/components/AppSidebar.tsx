@@ -78,7 +78,7 @@ export function AppSidebar() {
             <img 
               src={cnergiseLogo} 
               alt="Cnergise" 
-              className="h-10 w-10 object-contain shrink-0"
+              className="h-12 w-12 object-contain shrink-0"
             />
             {!isCollapsed && (
               <span className="font-semibold text-base">Cnergise</span>
