@@ -67,8 +67,10 @@ export const CashFlowView = () => {
     category: '',
     subcategory: '',
     amount: '',
-    date: 1,
-    group_name: 'Personal'
+    date: new Date().toISOString().split('T')[0],
+    group_name: 'Personal',
+    frequency: 'one-time',
+    cost_centre: 'General'
   });
 
   const today = useMemo(() => {
@@ -172,6 +174,7 @@ export const CashFlowView = () => {
     if (isNaN(amount) || amount <= 0) return;
 
     const finalAmount = newTransactionData.type === 'expense' ? -Math.abs(amount) : Math.abs(amount);
+    const dateTimestamp = new Date(newTransactionData.date).getTime();
 
     await addTransaction({
       category: newTransactionData.category,
@@ -180,6 +183,9 @@ export const CashFlowView = () => {
       monthly: finalAmount,
       amount: finalAmount,
       group_name: newTransactionData.group_name,
+      date: dateTimestamp,
+      frequency: newTransactionData.frequency,
+      cost_centre: newTransactionData.cost_centre,
     });
 
     setAddDialogOpen(false);
@@ -188,8 +194,10 @@ export const CashFlowView = () => {
       category: '',
       subcategory: '',
       amount: '',
-      date: 1,
-      group_name: 'Personal'
+      date: new Date().toISOString().split('T')[0],
+      group_name: 'Personal',
+      frequency: 'one-time',
+      cost_centre: 'General'
     });
   };
 
@@ -453,30 +461,65 @@ export const CashFlowView = () => {
 
       {/* Add Transaction Dialog */}
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[500px] max-h-[85vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Add Transaction</DialogTitle>
-            <DialogDescription>Add a new recurring transaction</DialogDescription>
+            <DialogDescription>Add a new transaction with frequency and cost centre</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-4 overflow-y-auto flex-1 pr-2">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Type</Label>
                 <Select value={newTransactionData.type} onValueChange={(v) => setNewTransactionData({ ...newTransactionData, type: v as 'income' | 'expense' })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-background z-50">
                     <SelectItem value="income">Income</SelectItem>
                     <SelectItem value="expense">Expense</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
+                <Label>Frequency</Label>
+                <Select value={newTransactionData.frequency} onValueChange={(v) => setNewTransactionData({ ...newTransactionData, frequency: v })}>
+                  <SelectTrigger><SelectValue placeholder="Select frequency" /></SelectTrigger>
+                  <SelectContent className="bg-background z-50">
+                    <SelectItem value="one-time">One-time</SelectItem>
+                    <SelectItem value="daily">Daily</SelectItem>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                    <SelectItem value="quarterly">Quarterly</SelectItem>
+                    <SelectItem value="yearly">Yearly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
                 <Label>Group</Label>
                 <Select value={newTransactionData.group_name} onValueChange={(v) => setNewTransactionData({ ...newTransactionData, group_name: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-background z-50">
                     <SelectItem value="Personal">Personal</SelectItem>
                     <SelectItem value="Business">Business</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Cost Centre</Label>
+                <Select value={newTransactionData.cost_centre} onValueChange={(v) => setNewTransactionData({ ...newTransactionData, cost_centre: v })}>
+                  <SelectTrigger><SelectValue placeholder="Select cost centre" /></SelectTrigger>
+                  <SelectContent className="bg-background z-50">
+                    <SelectItem value="General">General</SelectItem>
+                    <SelectItem value="Operations">Operations</SelectItem>
+                    <SelectItem value="Marketing">Marketing</SelectItem>
+                    <SelectItem value="Sales">Sales</SelectItem>
+                    <SelectItem value="IT & Technology">IT & Technology</SelectItem>
+                    <SelectItem value="Human Resources">Human Resources</SelectItem>
+                    <SelectItem value="Finance">Finance</SelectItem>
+                    <SelectItem value="Research & Development">Research & Development</SelectItem>
+                    <SelectItem value="Customer Service">Customer Service</SelectItem>
+                    <SelectItem value="Administration">Administration</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -497,14 +540,24 @@ export const CashFlowView = () => {
                 placeholder="e.g., Monthly salary, Electric bill"
               />
             </div>
-            <div>
-              <Label>Monthly Amount (£)</Label>
-              <Input
-                type="number"
-                value={newTransactionData.amount}
-                onChange={(e) => setNewTransactionData({ ...newTransactionData, amount: e.target.value })}
-                placeholder="0"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Amount (£)</Label>
+                <Input
+                  type="number"
+                  value={newTransactionData.amount}
+                  onChange={(e) => setNewTransactionData({ ...newTransactionData, amount: e.target.value })}
+                  placeholder="0"
+                />
+              </div>
+              <div>
+                <Label>Transaction Date</Label>
+                <Input
+                  type="date"
+                  value={newTransactionData.date}
+                  onChange={(e) => setNewTransactionData({ ...newTransactionData, date: e.target.value })}
+                />
+              </div>
             </div>
           </div>
           <DialogFooter>
