@@ -451,9 +451,11 @@ export type Database = {
         Row: {
           amount: number
           category: string
+          cost_centre: string | null
           created_at: string
           daily: number
           date: number
+          frequency: string | null
           group_name: string
           id: string
           monthly: number
@@ -468,9 +470,11 @@ export type Database = {
         Insert: {
           amount: number
           category: string
+          cost_centre?: string | null
           created_at?: string
           daily?: number
           date: number
+          frequency?: string | null
           group_name: string
           id?: string
           monthly: number
@@ -485,9 +489,11 @@ export type Database = {
         Update: {
           amount?: number
           category?: string
+          cost_centre?: string | null
           created_at?: string
           daily?: number
           date?: number
+          frequency?: string | null
           group_name?: string
           id?: string
           monthly?: number
