@@ -15,6 +15,8 @@ interface FinancialTransaction {
   daily: number;
   monthly: number;
   projections: number[];
+  cost_centre: string | null;
+  frequency: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -56,7 +58,7 @@ interface FinancialDataContextType {
   monthLabels: string[];
   // Transaction operations
   updateTransaction: (transactionId: string, newMonthly: number) => Promise<void>;
-  addTransaction: (transaction: Omit<FinancialTransaction, 'id' | 'user_id' | 'date' | 'percentage' | 'daily' | 'projections' | 'created_at' | 'updated_at'>) => Promise<void>;
+  addTransaction: (transaction: Omit<FinancialTransaction, 'id' | 'user_id' | 'percentage' | 'daily' | 'projections' | 'created_at' | 'updated_at'>) => Promise<void>;
   updateTransactionName: (transactionId: string, newName: string) => Promise<void>;
   updateTransactionGroup: (transactionId: string, newGroup: string) => Promise<void>;
   updateTransactionDate: (transactionId: string, newDate: number) => Promise<void>;
@@ -195,7 +197,7 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
     }
   };
 
-  const addTransaction = async (transactionData: Omit<FinancialTransaction, 'id' | 'user_id' | 'date' | 'percentage' | 'daily' | 'projections' | 'created_at' | 'updated_at'>) => {
+  const addTransaction = async (transactionData: Omit<FinancialTransaction, 'id' | 'user_id' | 'percentage' | 'daily' | 'projections' | 'created_at' | 'updated_at'>) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -206,10 +208,12 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
       const newTransaction = {
         ...transactionData,
         user_id: user.id,
-        date: Date.now(),
+        date: transactionData.date || Date.now(),
         percentage: 0,
         daily: transactionData.monthly / 30,
         projections: Array(12).fill(transactionData.monthly),
+        cost_centre: transactionData.cost_centre || 'General',
+        frequency: transactionData.frequency || 'one-time',
       };
 
       const { error } = await supabase
