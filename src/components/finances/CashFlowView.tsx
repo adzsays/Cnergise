@@ -10,6 +10,12 @@ import { CategoryFilter } from './CategoryFilter';
 import { ImportDialog } from './ImportDialog';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
+import { 
+  getDayOfPeriodLabel, 
+  getMaxDayOfPeriod, 
+  getWeekdayOptions,
+  getNextBusinessDay 
+} from '@/utils/businessDays';
 import {
   Select,
   SelectContent,
@@ -67,11 +73,14 @@ export const CashFlowView = () => {
     category: '',
     subcategory: '',
     amount: '',
-    date: new Date().toISOString().split('T')[0],
+    oneTimeDate: new Date().toISOString().split('T')[0],
+    dayOfPeriod: new Date().getDate(),
     group_name: 'Personal',
-    frequency: 'one-time',
+    frequency: 'monthly',
     cost_centre: 'General'
   });
+
+  const weekdayOptions = useMemo(() => getWeekdayOptions(), []);
 
   const today = useMemo(() => {
     const d = new Date();
@@ -167,6 +176,35 @@ export const CashFlowView = () => {
     setEditValue({ name: '', amount: '', date: 1, category: '' });
   };
 
+  // Calculate timestamp from day of period or one-time date for new transactions
+  const calculateNewTransactionTimestamp = (): number => {
+    const freq = newTransactionData.frequency;
+    
+    if (freq === 'one-time') {
+      const date = new Date(newTransactionData.oneTimeDate);
+      return getNextBusinessDay(date).getTime();
+    }
+    
+    if (freq === 'daily') {
+      return new Date().getTime();
+    }
+    
+    const now = new Date();
+    let referenceDate: Date;
+    
+    if (freq === 'weekly') {
+      const currentDay = now.getDay() || 7;
+      const targetDay = newTransactionData.dayOfPeriod;
+      const daysUntil = (targetDay - currentDay + 7) % 7 || 7;
+      referenceDate = new Date(now);
+      referenceDate.setDate(now.getDate() + daysUntil);
+    } else {
+      referenceDate = new Date(now.getFullYear(), now.getMonth(), newTransactionData.dayOfPeriod);
+    }
+    
+    return referenceDate.getTime();
+  };
+
   const handleAddTransaction = async () => {
     if (!newTransactionData.subcategory || !newTransactionData.amount || !newTransactionData.category) return;
 
@@ -174,7 +212,7 @@ export const CashFlowView = () => {
     if (isNaN(amount) || amount <= 0) return;
 
     const finalAmount = newTransactionData.type === 'expense' ? -Math.abs(amount) : Math.abs(amount);
-    const dateTimestamp = new Date(newTransactionData.date).getTime();
+    const dateTimestamp = calculateNewTransactionTimestamp();
 
     await addTransaction({
       category: newTransactionData.category,
@@ -194,9 +232,10 @@ export const CashFlowView = () => {
       category: '',
       subcategory: '',
       amount: '',
-      date: new Date().toISOString().split('T')[0],
+      oneTimeDate: new Date().toISOString().split('T')[0],
+      dayOfPeriod: new Date().getDate(),
       group_name: 'Personal',
-      frequency: 'one-time',
+      frequency: 'monthly',
       cost_centre: 'General'
     });
   };
@@ -550,14 +589,65 @@ export const CashFlowView = () => {
                   placeholder="0"
                 />
               </div>
-              <div>
-                <Label>Transaction Date</Label>
-                <Input
-                  type="date"
-                  value={newTransactionData.date}
-                  onChange={(e) => setNewTransactionData({ ...newTransactionData, date: e.target.value })}
-                />
-              </div>
+              {newTransactionData.frequency === 'one-time' ? (
+                <div>
+                  <Label>Transaction Date</Label>
+                  <Input
+                    type="date"
+                    value={newTransactionData.oneTimeDate}
+                    onChange={(e) => setNewTransactionData({ ...newTransactionData, oneTimeDate: e.target.value })}
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    Adjusted to next business day if weekend/holiday
+                  </p>
+                </div>
+              ) : newTransactionData.frequency === 'daily' ? (
+                <div>
+                  <Label>Schedule</Label>
+                  <p className="text-sm text-muted-foreground py-2">
+                    Repeats every business day
+                  </p>
+                </div>
+              ) : newTransactionData.frequency === 'weekly' ? (
+                <div>
+                  <Label>{getDayOfPeriodLabel(newTransactionData.frequency)}</Label>
+                  <Select 
+                    value={newTransactionData.dayOfPeriod.toString()} 
+                    onValueChange={(v) => setNewTransactionData({ ...newTransactionData, dayOfPeriod: parseInt(v) })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select day" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background z-50">
+                      {weekdayOptions.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value.toString()}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    Moves to next business day if needed
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <Label>{getDayOfPeriodLabel(newTransactionData.frequency)}</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    max={getMaxDayOfPeriod(newTransactionData.frequency)}
+                    value={newTransactionData.dayOfPeriod}
+                    onChange={(e) => setNewTransactionData({ ...newTransactionData, dayOfPeriod: parseInt(e.target.value) || 1 })}
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    {newTransactionData.frequency === 'monthly' && 'e.g., 15 = 15th of each month'}
+                    {newTransactionData.frequency === 'quarterly' && 'e.g., 45 = 45th day of quarter'}
+                    {newTransactionData.frequency === 'yearly' && 'e.g., 100 = 100th day of year'}
+                    {' '}• Adjusted to business day
+                  </p>
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter>
