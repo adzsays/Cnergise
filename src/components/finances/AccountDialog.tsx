@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useFinancialData } from '@/contexts/FinancialDataContext';
+import { useSpaceFilter } from '@/hooks/useSpaceFilter';
 
 const ACCOUNT_TYPES = [
   { value: 'asset', label: 'Asset' },
@@ -24,12 +25,13 @@ interface AccountDialogProps {
 
 export const AccountDialog = ({ open, onOpenChange, account }: AccountDialogProps) => {
   const { refreshData } = useFinancialData();
+  const { spaces, getDefaultSpaceId } = useSpaceFilter();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     type: 'asset',
     category: '',
-    group_name: 'General',
+    space_id: '',
     balance: '',
     currency: 'GBP',
     credit_limit: '',
@@ -41,7 +43,7 @@ export const AccountDialog = ({ open, onOpenChange, account }: AccountDialogProp
         name: account.name || '',
         type: account.type || 'asset',
         category: account.category || '',
-        group_name: account.group_name || 'General',
+        space_id: account.space_id || getDefaultSpaceId() || '',
         balance: account.balance?.toString() || '',
         currency: account.currency || 'GBP',
         credit_limit: account.credit_limit?.toString() || '',
@@ -51,13 +53,13 @@ export const AccountDialog = ({ open, onOpenChange, account }: AccountDialogProp
         name: '',
         type: 'asset',
         category: '',
-        group_name: 'General',
+        space_id: getDefaultSpaceId() || '',
         balance: '',
         currency: 'GBP',
         credit_limit: '',
       });
     }
-  }, [account, open]);
+  }, [account, open, getDefaultSpaceId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,12 +72,17 @@ export const AccountDialog = ({ open, onOpenChange, account }: AccountDialogProp
       return;
     }
 
+    // Get space name for group_name field (backward compatibility)
+    const selectedSpace = spaces.find(s => s.id === formData.space_id);
+    const spaceName = selectedSpace?.name || 'General';
+    
     const accountData = {
       user_id: user.id,
       name: formData.name,
       type: formData.type,
       category: formData.category,
-      group_name: formData.group_name,
+      space_id: formData.space_id || null,
+      group_name: spaceName, // Use space name for backward compatibility
       balance: parseFloat(formData.balance) || 0,
       currency: formData.currency,
       credit_limit: formData.credit_limit ? parseFloat(formData.credit_limit) : null,
@@ -151,13 +158,19 @@ export const AccountDialog = ({ open, onOpenChange, account }: AccountDialogProp
           </div>
 
           <div>
-            <Label htmlFor="group_name">Group</Label>
-            <Input
-              id="group_name"
-              value={formData.group_name}
-              onChange={(e) => setFormData({ ...formData, group_name: e.target.value })}
-              required
-            />
+            <Label htmlFor="space_id">Space</Label>
+            <Select value={formData.space_id} onValueChange={(value) => setFormData({ ...formData, space_id: value })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select space" />
+              </SelectTrigger>
+              <SelectContent className="bg-background z-50">
+                {spaces.map((space) => (
+                  <SelectItem key={space.id} value={space.id}>
+                    {space.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>

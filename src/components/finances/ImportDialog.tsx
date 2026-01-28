@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useFinancialData } from '@/contexts/FinancialDataContext';
+import { useSpaceFilter } from '@/hooks/useSpaceFilter';
 import * as XLSX from 'xlsx';
 
 interface ImportDialogProps {
@@ -17,10 +18,18 @@ interface ImportDialogProps {
 
 export const ImportDialog = ({ open, onOpenChange }: ImportDialogProps) => {
   const { refreshData } = useFinancialData();
+  const { getDefaultSpaceId, spaces } = useSpaceFilter();
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<any[]>([]);
   const [importType, setImportType] = useState<'transactions' | 'accounts'>('transactions');
+
+  // Helper to find space by name or return default
+  const findSpaceIdByName = (spaceName: string | undefined): string | null => {
+    if (!spaceName) return getDefaultSpaceId();
+    const space = spaces.find(s => s.name.toLowerCase() === spaceName.toLowerCase());
+    return space?.id || getDefaultSpaceId();
+  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -82,6 +91,9 @@ export const ImportDialog = ({ open, onOpenChange }: ImportDialogProps) => {
       const amount = parseFloat(row.amount || row.Amount || '0');
       const monthly = parseFloat(row.monthly || row.Monthly || amount.toString());
       const daily = parseFloat(row.daily || row.Daily || (amount / 30).toString());
+      const spaceName = row.space || row.Space || row.group_name || row['Group Name'] || row.group;
+      const spaceId = findSpaceIdByName(spaceName);
+      const spaceForGroupName = spaces.find(s => s.id === spaceId);
       
       return {
         user_id: user.id,
@@ -89,7 +101,8 @@ export const ImportDialog = ({ open, onOpenChange }: ImportDialogProps) => {
         type: (row.type || row.Type || 'expense').toLowerCase(),
         category: row.category || row.Category || 'Other',
         subcategory: row.subcategory || row.Subcategory || '',
-        group_name: row.group_name || row['Group Name'] || row.group || 'General',
+        space_id: spaceId,
+        group_name: spaceForGroupName?.name || 'General',
         amount,
         percentage: parseFloat(row.percentage || row.Percentage || '0'),
         daily,
@@ -118,16 +131,23 @@ export const ImportDialog = ({ open, onOpenChange }: ImportDialogProps) => {
       return;
     }
 
-    const accounts = data.map((row) => ({
-      user_id: user.id,
-      name: row.name || row.Name || 'Unnamed Account',
-      type: (row.type || row.Type || 'asset').toLowerCase(),
-      category: row.category || row.Category || null,
-      group_name: row.group_name || row['Group Name'] || row.group || 'General',
-      balance: parseFloat(row.balance || row.Balance || '0'),
-      currency: row.currency || row.Currency || 'GBP',
-      credit_limit: row.credit_limit || row['Credit Limit'] ? parseFloat(row.credit_limit || row['Credit Limit']) : null,
-    }));
+    const accounts = data.map((row) => {
+      const spaceName = row.space || row.Space || row.group_name || row['Group Name'] || row.group;
+      const spaceId = findSpaceIdByName(spaceName);
+      const spaceForGroupName = spaces.find(s => s.id === spaceId);
+      
+      return {
+        user_id: user.id,
+        name: row.name || row.Name || 'Unnamed Account',
+        type: (row.type || row.Type || 'asset').toLowerCase(),
+        category: row.category || row.Category || null,
+        space_id: spaceId,
+        group_name: spaceForGroupName?.name || 'General',
+        balance: parseFloat(row.balance || row.Balance || '0'),
+        currency: row.currency || row.Currency || 'GBP',
+        credit_limit: row.credit_limit || row['Credit Limit'] ? parseFloat(row.credit_limit || row['Credit Limit']) : null,
+      };
+    });
 
     const { error } = await supabase
       .from('financial_accounts')
@@ -204,7 +224,7 @@ export const ImportDialog = ({ open, onOpenChange }: ImportDialogProps) => {
               <AlertDescription>
                 <strong>Required columns:</strong> date, type, category, amount
                 <br />
-                <strong>Optional:</strong> subcategory, group_name, monthly, daily, percentage
+                <strong>Optional:</strong> subcategory, space, monthly, daily, percentage
               </AlertDescription>
             </Alert>
 
@@ -255,7 +275,7 @@ export const ImportDialog = ({ open, onOpenChange }: ImportDialogProps) => {
               <AlertDescription>
                 <strong>Required columns:</strong> name, type, balance
                 <br />
-                <strong>Optional:</strong> category, group_name, currency, credit_limit
+                <strong>Optional:</strong> category, space, currency, credit_limit
               </AlertDescription>
             </Alert>
 

@@ -6,6 +6,7 @@ import { Pencil, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useFinancialData } from '@/contexts/FinancialDataContext';
+import { useSpaceFilter } from '@/hooks/useSpaceFilter';
 
 interface AccountsTableProps {
   accounts: any[];
@@ -15,6 +16,13 @@ interface AccountsTableProps {
 
 export const AccountsTable = ({ accounts, loading, onEdit }: AccountsTableProps) => {
   const { refreshData } = useFinancialData();
+  const { spaces } = useSpaceFilter();
+
+  const getSpaceName = (spaceId: string | null) => {
+    if (!spaceId) return '-';
+    const space = spaces.find(s => s.id === spaceId);
+    return space?.name || '-';
+  };
 
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from('financial_accounts').delete().eq('id', id);
@@ -52,7 +60,7 @@ export const AccountsTable = ({ accounts, loading, onEdit }: AccountsTableProps)
             <TableHead>Name</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Category</TableHead>
-            <TableHead>Group</TableHead>
+            <TableHead>Space</TableHead>
             <TableHead className="text-right">Balance</TableHead>
             <TableHead className="text-right">Credit Limit</TableHead>
             <TableHead className="w-[100px]">Actions</TableHead>
@@ -68,7 +76,7 @@ export const AccountsTable = ({ accounts, loading, onEdit }: AccountsTableProps)
                 </Badge>
               </TableCell>
               <TableCell className="text-muted-foreground">{account.category || '-'}</TableCell>
-              <TableCell className="text-muted-foreground">{account.group_name}</TableCell>
+              <TableCell className="text-muted-foreground">{getSpaceName(account.space_id)}</TableCell>
               <TableCell className="text-right font-medium">
                 {formatCurrency(account.balance)}
               </TableCell>

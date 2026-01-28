@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, Filter, Upload, ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown, Edit2, Trash2, Building2, User } from 'lucide-react';
 import { useFinancialData } from '@/contexts/FinancialDataContext';
+import { useSpaceFilter } from '@/hooks/useSpaceFilter';
 import { TransactionDialog } from './TransactionDialog';
 import { TransactionTable } from './TransactionTable';
 import { CashFlowChart } from './CashFlowChart';
@@ -59,6 +60,7 @@ export const CashFlowView = () => {
     group, 
     setGroup 
   } = useFinancialData();
+  const { spaces, getDefaultSpaceId, currentSpaceId } = useSpaceFilter();
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
@@ -75,7 +77,7 @@ export const CashFlowView = () => {
     amount: '',
     oneTimeDate: new Date().toISOString().split('T')[0],
     dayOfPeriod: new Date().getDate(),
-    group_name: 'Personal',
+    space_id: getDefaultSpaceId() || '',
     frequency: 'monthly',
     cost_centre: 'General'
   });
@@ -100,10 +102,11 @@ export const CashFlowView = () => {
     return transactions.filter((t) => {
       const categoryMatch = selectedCategory === 'all' || t.category === selectedCategory;
       const typeMatch = selectedType === 'all' || t.type === selectedType;
-      const groupMatch = group === 'all' || t.group_name.toLowerCase() === group.toLowerCase();
-      return categoryMatch && typeMatch && groupMatch;
+      // Filter by current space if one is selected
+      const spaceMatch = !currentSpaceId || t.space_id === currentSpaceId;
+      return categoryMatch && typeMatch && spaceMatch;
     });
-  }, [transactions, selectedCategory, selectedType, group]);
+  }, [transactions, selectedCategory, selectedType, currentSpaceId]);
 
   const categories = useMemo(() => {
     const cats = new Set(transactions.map((t) => t.category));
@@ -214,13 +217,18 @@ export const CashFlowView = () => {
     const finalAmount = newTransactionData.type === 'expense' ? -Math.abs(amount) : Math.abs(amount);
     const dateTimestamp = calculateNewTransactionTimestamp();
 
+    // Get space name for group_name field (backward compatibility)
+    const selectedSpace = spaces.find(s => s.id === newTransactionData.space_id);
+    const spaceName = selectedSpace?.name || 'General';
+
     await addTransaction({
       category: newTransactionData.category,
       subcategory: newTransactionData.subcategory,
       type: newTransactionData.type,
       monthly: finalAmount,
       amount: finalAmount,
-      group_name: newTransactionData.group_name,
+      group_name: spaceName,
+      space_id: newTransactionData.space_id || null,
       date: dateTimestamp,
       frequency: newTransactionData.frequency,
       cost_centre: newTransactionData.cost_centre,
@@ -234,7 +242,7 @@ export const CashFlowView = () => {
       amount: '',
       oneTimeDate: new Date().toISOString().split('T')[0],
       dayOfPeriod: new Date().getDate(),
-      group_name: 'Personal',
+      space_id: getDefaultSpaceId() || '',
       frequency: 'monthly',
       cost_centre: 'General'
     });
@@ -275,16 +283,6 @@ export const CashFlowView = () => {
       {/* Header Controls */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 md:gap-4">
         <div className="flex flex-wrap items-center gap-2">
-          <Select value={group} onValueChange={(v) => setGroup(v as any)}>
-            <SelectTrigger className="w-[100px] md:w-[120px] h-8 md:h-9 text-xs md:text-sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="personal">Personal</SelectItem>
-              <SelectItem value="business">Business</SelectItem>
-            </SelectContent>
-          </Select>
           <div className="flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1 md:py-1.5 rounded-lg bg-muted/50">
             <span className={`text-[10px] md:text-xs ${viewMode === 'type' ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>Type</span>
             <Switch checked={viewMode === 'costcentre'} onCheckedChange={(c) => setViewMode(c ? 'costcentre' : 'type')} className="scale-75 md:scale-90" />
@@ -534,12 +532,15 @@ export const CashFlowView = () => {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Group</Label>
-                <Select value={newTransactionData.group_name} onValueChange={(v) => setNewTransactionData({ ...newTransactionData, group_name: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Label>Space</Label>
+                <Select value={newTransactionData.space_id} onValueChange={(v) => setNewTransactionData({ ...newTransactionData, space_id: v })}>
+                  <SelectTrigger><SelectValue placeholder="Select space" /></SelectTrigger>
                   <SelectContent className="bg-background z-50">
-                    <SelectItem value="Personal">Personal</SelectItem>
-                    <SelectItem value="Business">Business</SelectItem>
+                    {spaces.map((space) => (
+                      <SelectItem key={space.id} value={space.id}>
+                        {space.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

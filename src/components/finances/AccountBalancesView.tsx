@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Building2, Wallet, CreditCard, Landmark, Bitcoin, PiggyBank, TrendingUp, TrendingDown } from 'lucide-react';
 import { useFinancialData } from '@/contexts/FinancialDataContext';
+import { useSpaceFilter } from '@/hooks/useSpaceFilter';
 import { AccountDialog } from './AccountDialog';
 import { SkeletonCard } from '@/components/ui/DashboardWidget';
 import { cn } from '@/lib/utils';
@@ -38,8 +39,15 @@ const formatCurrency = (amount: number, currency: string = 'GBP') => {
 
 export const AccountBalancesView = () => {
   const { accounts, loading, refreshData } = useFinancialData();
+  const { spaces } = useSpaceFilter();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<any>(null);
+
+  const getSpaceName = (spaceId: string | null) => {
+    if (!spaceId) return '';
+    const space = spaces.find(s => s.id === spaceId);
+    return space?.name || '';
+  };
 
   const groupedAccounts = useMemo(() => {
     const groups: Record<string, typeof accounts> = {
@@ -234,7 +242,7 @@ export const AccountBalancesView = () => {
                       </div>
                       <div>
                         <p className="text-sm font-medium">{account.name}</p>
-                        <p className="text-xs text-muted-foreground">{account.group_name}</p>
+                        <p className="text-xs text-muted-foreground">{getSpaceName(account.space_id)}</p>
                       </div>
                     </div>
                     <div className="text-right">
