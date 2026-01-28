@@ -10,6 +10,7 @@ interface FinancialTransaction {
   category: string;
   subcategory: string;
   group_name: string;
+  space_id: string | null;
   amount: number;
   percentage: number;
   daily: number;
@@ -27,6 +28,7 @@ interface FinancialAccount {
   name: string;
   type: string;
   group_name: string;
+  space_id: string | null;
   category: string | null;
   balance: number;
   currency: string;

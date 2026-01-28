@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useFinancialData } from '@/contexts/FinancialDataContext';
+import { useSpaceFilter } from '@/hooks/useSpaceFilter';
 import { 
   getDayOfPeriodLabel, 
   getMaxDayOfPeriod, 
@@ -67,6 +68,7 @@ const extractDayOfPeriod = (timestamp: number, frequency: string): number => {
 
 export const TransactionDialog = ({ open, onOpenChange, transaction }: TransactionDialogProps) => {
   const { refreshData } = useFinancialData();
+  const { spaces, getDefaultSpaceId } = useSpaceFilter();
   const [loading, setLoading] = useState(false);
   
   const initialFrequency = transaction?.frequency || 'one-time';
@@ -78,7 +80,7 @@ export const TransactionDialog = ({ open, onOpenChange, transaction }: Transacti
     type: transaction?.type || 'expense',
     category: transaction?.category || '',
     subcategory: transaction?.subcategory || '',
-    group_name: transaction?.group_name || 'General',
+    space_id: transaction?.space_id || getDefaultSpaceId() || '',
     amount: transaction?.amount?.toString() || '',
     dayOfPeriod: initialDayOfPeriod,
     oneTimeDate: transaction?.date && initialFrequency === 'one-time' 
@@ -143,12 +145,17 @@ export const TransactionDialog = ({ open, onOpenChange, transaction }: Transacti
     const monthly = amount;
     const daily = amount / 30;
 
+    // Get space name for group_name field (backward compatibility)
+    const selectedSpace = spaces.find(s => s.id === formData.space_id);
+    const spaceName = selectedSpace?.name || 'General';
+
     const transactionData = {
       user_id: user.id,
       type: formData.type,
       category: formData.category,
       subcategory: formData.subcategory,
-      group_name: formData.group_name,
+      space_id: formData.space_id || null,
+      group_name: spaceName, // Use space name for backward compatibility
       amount,
       date: dateTimestamp,
       percentage: formData.percentage,
@@ -262,13 +269,19 @@ export const TransactionDialog = ({ open, onOpenChange, transaction }: Transacti
           </div>
 
           <div>
-            <Label htmlFor="group_name">Group</Label>
-            <Input
-              id="group_name"
-              value={formData.group_name}
-              onChange={(e) => setFormData({ ...formData, group_name: e.target.value })}
-              required
-            />
+            <Label htmlFor="space_id">Space</Label>
+            <Select value={formData.space_id} onValueChange={(value) => setFormData({ ...formData, space_id: value })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select space" />
+              </SelectTrigger>
+              <SelectContent className="bg-background z-50">
+                {spaces.map((space) => (
+                  <SelectItem key={space.id} value={space.id}>
+                    {space.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
