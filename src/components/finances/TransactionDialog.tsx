@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useFinancialData } from '@/contexts/FinancialDataContext';
+import { 
+  getDayOfPeriodLabel, 
+  getMaxDayOfPeriod, 
+  getWeekdayOptions,
+  getNextBusinessDay 
+} from '@/utils/businessDays';
 
 const TRANSACTION_TYPES = ['income', 'expense', 'transfer'];
 const CATEGORIES = {
@@ -44,20 +50,81 @@ interface TransactionDialogProps {
   transaction?: any;
 }
 
+// Extract day of period from stored timestamp based on frequency
+const extractDayOfPeriod = (timestamp: number, frequency: string): number => {
+  const date = new Date(timestamp);
+  switch (frequency) {
+    case 'weekly':
+      return date.getDay() === 0 ? 7 : date.getDay(); // Convert Sunday to 7
+    case 'monthly':
+    case 'quarterly':
+    case 'yearly':
+      return date.getDate();
+    default:
+      return date.getDate();
+  }
+};
+
 export const TransactionDialog = ({ open, onOpenChange, transaction }: TransactionDialogProps) => {
   const { refreshData } = useFinancialData();
   const [loading, setLoading] = useState(false);
+  
+  const initialFrequency = transaction?.frequency || 'one-time';
+  const initialDayOfPeriod = transaction?.date 
+    ? extractDayOfPeriod(transaction.date, initialFrequency) 
+    : new Date().getDate();
+
   const [formData, setFormData] = useState({
     type: transaction?.type || 'expense',
     category: transaction?.category || '',
     subcategory: transaction?.subcategory || '',
     group_name: transaction?.group_name || 'General',
     amount: transaction?.amount?.toString() || '',
-    date: transaction?.date ? new Date(transaction.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+    dayOfPeriod: initialDayOfPeriod,
+    oneTimeDate: transaction?.date && initialFrequency === 'one-time' 
+      ? new Date(transaction.date).toISOString().split('T')[0] 
+      : new Date().toISOString().split('T')[0],
     percentage: transaction?.percentage || 0,
     cost_centre: transaction?.cost_centre || 'General',
-    frequency: transaction?.frequency || 'one-time',
+    frequency: initialFrequency,
   });
+
+  const isRecurring = formData.frequency !== 'one-time' && formData.frequency !== 'daily';
+  const weekdayOptions = useMemo(() => getWeekdayOptions(), []);
+
+  // Calculate timestamp from day of period or one-time date
+  const calculateDateTimestamp = (): number => {
+    if (formData.frequency === 'one-time') {
+      // For one-time transactions, use the actual date and adjust to next business day
+      const date = new Date(formData.oneTimeDate);
+      const businessDate = getNextBusinessDay(date);
+      return businessDate.getTime();
+    }
+    
+    if (formData.frequency === 'daily') {
+      // Daily transactions use today as reference
+      return new Date().getTime();
+    }
+    
+    // For recurring transactions, store a reference date with the day of period
+    // This allows us to extract the recurring day later
+    const now = new Date();
+    let referenceDate: Date;
+    
+    if (formData.frequency === 'weekly') {
+      // For weekly, set to the next occurrence of that weekday
+      const currentDay = now.getDay() || 7;
+      const targetDay = formData.dayOfPeriod;
+      const daysUntil = (targetDay - currentDay + 7) % 7 || 7;
+      referenceDate = new Date(now);
+      referenceDate.setDate(now.getDate() + daysUntil);
+    } else {
+      // For monthly/quarterly/yearly, use a date with that day of month
+      referenceDate = new Date(now.getFullYear(), now.getMonth(), formData.dayOfPeriod);
+    }
+    
+    return referenceDate.getTime();
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,7 +138,7 @@ export const TransactionDialog = ({ open, onOpenChange, transaction }: Transacti
     }
 
     const amount = parseFloat(formData.amount);
-    const dateTimestamp = new Date(formData.date).getTime();
+    const dateTimestamp = calculateDateTimestamp();
     
     const monthly = amount;
     const daily = amount / 30;
@@ -217,16 +284,68 @@ export const TransactionDialog = ({ open, onOpenChange, transaction }: Transacti
               />
             </div>
 
-            <div>
-              <Label htmlFor="date">Transaction Date</Label>
-              <Input
-                id="date"
-                type="date"
-                value={formData.date}
-                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                required
-              />
-            </div>
+            {formData.frequency === 'one-time' ? (
+              <div>
+                <Label htmlFor="oneTimeDate">Transaction Date</Label>
+                <Input
+                  id="oneTimeDate"
+                  type="date"
+                  value={formData.oneTimeDate}
+                  onChange={(e) => setFormData({ ...formData, oneTimeDate: e.target.value })}
+                  required
+                />
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Adjusted to next business day if weekend/holiday
+                </p>
+              </div>
+            ) : formData.frequency === 'daily' ? (
+              <div>
+                <Label>Schedule</Label>
+                <p className="text-sm text-muted-foreground py-2">
+                  Repeats every business day
+                </p>
+              </div>
+            ) : formData.frequency === 'weekly' ? (
+              <div>
+                <Label>{getDayOfPeriodLabel(formData.frequency)}</Label>
+                <Select 
+                  value={formData.dayOfPeriod.toString()} 
+                  onValueChange={(v) => setFormData({ ...formData, dayOfPeriod: parseInt(v) })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select day" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background z-50">
+                    {weekdayOptions.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value.toString()}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Moves to next business day if needed
+                </p>
+              </div>
+            ) : (
+              <div>
+                <Label>{getDayOfPeriodLabel(formData.frequency)}</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  max={getMaxDayOfPeriod(formData.frequency)}
+                  value={formData.dayOfPeriod}
+                  onChange={(e) => setFormData({ ...formData, dayOfPeriod: parseInt(e.target.value) || 1 })}
+                  required
+                />
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  {formData.frequency === 'monthly' && 'e.g., 15 = 15th of each month'}
+                  {formData.frequency === 'quarterly' && 'e.g., 45 = 45th day of quarter'}
+                  {formData.frequency === 'yearly' && 'e.g., 100 = 100th day of year'}
+                  {' '}• Adjusted to business day
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
