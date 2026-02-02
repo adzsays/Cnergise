@@ -33,6 +33,10 @@ interface FinancialAccount {
   balance: number;
   currency: string;
   credit_limit: number | null;
+  account_code: string | null;
+  account_class: string | null;
+  opening_balance: number;
+  opening_balance_date: string | null;
   created_at: string;
   updated_at: string;
 }
