@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      accounting_periods: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: string
+          is_closed: boolean
+          name: string
+          space_id: string | null
+          start_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: string
+          is_closed?: boolean
+          name: string
+          space_id?: string | null
+          start_date: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: string
+          is_closed?: boolean
+          name?: string
+          space_id?: string | null
+          start_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounting_periods_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_search_history: {
         Row: {
           created_at: string
@@ -396,6 +440,8 @@ export type Database = {
       }
       financial_accounts: {
         Row: {
+          account_class: string | null
+          account_code: string | null
           balance: number
           category: string | null
           created_at: string
@@ -404,12 +450,16 @@ export type Database = {
           group_name: string
           id: string
           name: string
+          opening_balance: number
+          opening_balance_date: string | null
           space_id: string | null
           type: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          account_class?: string | null
+          account_code?: string | null
           balance?: number
           category?: string | null
           created_at?: string
@@ -418,12 +468,16 @@ export type Database = {
           group_name: string
           id?: string
           name: string
+          opening_balance?: number
+          opening_balance_date?: string | null
           space_id?: string | null
           type: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          account_class?: string | null
+          account_code?: string | null
           balance?: number
           category?: string | null
           created_at?: string
@@ -432,6 +486,8 @@ export type Database = {
           group_name?: string
           id?: string
           name?: string
+          opening_balance?: number
+          opening_balance_date?: string | null
           space_id?: string | null
           type?: string
           updated_at?: string
@@ -564,6 +620,102 @@ export type Database = {
             columns: ["space_id"]
             isOneToOne: false
             referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journal_entries: {
+        Row: {
+          created_at: string
+          description: string | null
+          entry_date: string
+          id: string
+          is_opening_balance: boolean
+          reference_number: string | null
+          space_id: string | null
+          transaction_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          entry_date: string
+          id?: string
+          is_opening_balance?: boolean
+          reference_number?: string | null
+          space_id?: string | null
+          transaction_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          entry_date?: string
+          id?: string
+          is_opening_balance?: boolean
+          reference_number?: string | null
+          space_id?: string | null
+          transaction_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_entries_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journal_entries_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "financial_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journal_entry_lines: {
+        Row: {
+          account_id: string
+          created_at: string
+          credit_amount: number
+          debit_amount: number
+          id: string
+          journal_entry_id: string
+        }
+        Insert: {
+          account_id: string
+          created_at?: string
+          credit_amount?: number
+          debit_amount?: number
+          id?: string
+          journal_entry_id: string
+        }
+        Update: {
+          account_id?: string
+          created_at?: string
+          credit_amount?: number
+          debit_amount?: number
+          id?: string
+          journal_entry_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_entry_lines_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journal_entry_lines_journal_entry_id_fkey"
+            columns: ["journal_entry_id"]
+            isOneToOne: false
+            referencedRelation: "journal_entries"
             referencedColumns: ["id"]
           },
         ]

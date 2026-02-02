@@ -10,8 +10,9 @@ import { BalanceSheetView } from "@/components/finances/BalanceSheetView";
 import { AccountBalancesView } from "@/components/finances/AccountBalancesView";
 import { CreditScoreView } from "@/components/finances/CreditScoreView";
 import { BudgetView } from "@/components/finances/BudgetView";
+import { TrialBalanceView } from "@/components/finances/TrialBalanceView";
 
-import { LayoutDashboard, Wallet, TrendingUp, PieChart, CreditCard, PiggyBank } from "lucide-react";
+import { LayoutDashboard, Wallet, TrendingUp, PieChart, CreditCard, PiggyBank, FileSpreadsheet } from "lucide-react";
 
 const Finances = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -56,6 +57,10 @@ const Finances = () => {
                         <PiggyBank className="h-3.5 w-3.5 md:h-4 md:w-4 md:mr-2" />
                         <span className="hidden md:inline">Budget</span>
                       </TabsTrigger>
+                      <TabsTrigger value="trial-balance" className="text-xs md:text-sm rounded-md md:rounded-lg px-2 md:px-3 py-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                        <FileSpreadsheet className="h-3.5 w-3.5 md:h-4 md:w-4 md:mr-2" />
+                        <span className="hidden md:inline">Trial Balance</span>
+                      </TabsTrigger>
                     </TabsList>
                   </div>
 
@@ -81,6 +86,10 @@ const Finances = () => {
 
                   <TabsContent value="budget" className="mt-0">
                     <BudgetView />
+                  </TabsContent>
+
+                  <TabsContent value="trial-balance" className="mt-0">
+                    <TrialBalanceView />
                   </TabsContent>
                 </Tabs>
               </div>
