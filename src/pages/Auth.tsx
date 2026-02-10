@@ -47,6 +47,25 @@ const Auth = () => {
   const [biometricLoading, setBiometricLoading] = useState(false);
 
   useEffect(() => {
+    // Check for existing session (e.g. after Google OAuth redirect)
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        navigate("/home");
+      }
+    };
+    checkSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        navigate("/home");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  useEffect(() => {
     // Check if biometric login is available
     const storedCredential = localStorage.getItem("cnergise_biometric_credential");
     const isSupported = window.PublicKeyCredential !== undefined;
