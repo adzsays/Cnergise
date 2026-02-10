@@ -198,6 +198,20 @@ const Auth = () => {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    try {
+      const { error } = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+      });
+      if (error) throw error;
+    } catch (error: any) {
+      toast.error(error.message || "Google sign-in failed");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const features = [
     {
       icon: CheckCircle,
