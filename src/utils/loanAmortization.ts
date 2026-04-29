@@ -41,15 +41,20 @@ const annuityPayment = (principal: number, monthlyRate: number, months: number) 
   return (principal * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -months));
 };
 
-/** Find the schedule term active at month-offset `monthIdx` from loan start. */
+/** Find the schedule term active at `atDate`.
+ *  Picks the term with the LATEST start_date that is still <= atDate,
+ *  regardless of `sequence` ordering (sequence may not match chronology). */
 const termAt = (schedule: RateTerm[], loanStart: Date, atDate: Date) => {
   if (!schedule.length) return -1;
   let active = -1;
+  let activeStart = -Infinity;
   for (let i = 0; i < schedule.length; i++) {
     const t = schedule[i];
-    const ts = new Date(t.start_date);
-    if (ts <= atDate) active = i;
-    else break;
+    const ts = new Date(t.start_date).getTime();
+    if (ts <= atDate.getTime() && ts >= activeStart) {
+      active = i;
+      activeStart = ts;
+    }
   }
   return active;
 };
