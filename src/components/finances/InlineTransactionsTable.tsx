@@ -210,14 +210,14 @@ export function InlineTransactionsTable() {
         <table className="w-full text-xs">
           <thead>
             <tr className="text-muted-foreground uppercase text-[10px] tracking-wider border-b">
-              <th className="text-left py-2 px-2 font-medium w-24">Type</th>
-              <th className="text-left py-2 px-2 font-medium">Description</th>
-              <th className="text-right py-2 px-2 font-medium">Amount</th>
-              <th className="text-left py-2 px-2 font-medium">Recurring Date</th>
-              <th className="text-left py-2 px-2 font-medium">Cost Centre</th>
-              <th className="text-left py-2 px-2 font-medium">Frequency</th>
-              <th className="text-left py-2 px-2 font-medium">End Date</th>
-              <th className="text-left py-2 px-2 font-medium">Account</th>
+              <SortHeader k="type" label="Type" className="w-24" />
+              <SortHeader k="subcategory" label="Description" />
+              <SortHeader k="monthly" label="Amount" align="right" />
+              <SortHeader k="date" label="Recurring Date" />
+              <SortHeader k="cost_centre" label="Cost Centre" />
+              <SortHeader k="frequency" label="Frequency" />
+              <SortHeader k="end_date" label="End Date" />
+              <SortHeader k="category" label="Account" />
               <th className="w-8"></th>
             </tr>
           </thead>
