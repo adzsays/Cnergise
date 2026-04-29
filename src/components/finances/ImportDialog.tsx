@@ -55,6 +55,7 @@ export const ImportDialog = ({ open, onOpenChange }: ImportDialogProps) => {
       console.log('Parsed data rows:', jsonData.length);
       console.log('First row sample:', jsonData[0]);
       
+      setAllRows(jsonData);
       setPreview(jsonData.slice(0, 5));
       
       if (jsonData.length === 0) {
@@ -65,6 +66,7 @@ export const ImportDialog = ({ open, onOpenChange }: ImportDialogProps) => {
     } catch (error) {
       toast.error('Failed to read file. Please check the file format.');
       console.error('File parsing error:', error);
+      setAllRows([]);
       setPreview([]);
     }
   };
