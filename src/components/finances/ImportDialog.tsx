@@ -220,23 +220,15 @@ export const ImportDialog = ({ open, onOpenChange }: ImportDialogProps) => {
   };
 
   const handleImport = async () => {
-    if (!file) {
-      toast.error('Please select a file');
-      return;
-    }
-
-    if (preview.length === 0) {
-      toast.error('No valid data to import');
+    if (preview.length === 0 || allRows.length === 0) {
+      toast.error('No valid data to import. Please select a file first.');
       return;
     }
 
     setLoading(true);
 
     try {
-      const data = await file.arrayBuffer();
-      const workbook = XLSX.read(data);
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+      const jsonData = allRows;
 
       if (jsonData.length === 0) {
         toast.error('No data found in file');
