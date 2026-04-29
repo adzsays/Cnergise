@@ -20,9 +20,11 @@ export function BalancesView() {
   const { accounts, refreshData } = useFinancialData();
   const [savingId, setSavingId] = useState<string | null>(null);
 
-  const update = async (id: string, patch: Record<string, any>) => {
+  const update = async (id: string, patch: Partial<{
+    name: string; category: string; balance: number; credit_limit: number | null;
+  }>) => {
     setSavingId(id);
-    const { error } = await supabase.from('financial_accounts').update(patch).eq('id', id);
+    const { error } = await supabase.from('financial_accounts').update(patch as any).eq('id', id);
     setSavingId(null);
     if (error) {
       toast.error('Save failed');

@@ -30,9 +30,12 @@ export function InlineTransactionsTable() {
     [transactions]
   );
 
-  const updateField = async (id: string, patch: Record<string, any>) => {
+  const updateField = async (id: string, patch: Partial<{
+    subcategory: string; category: string; monthly: number; daily: number; amount: number;
+    projections: number[]; date: number; cost_centre: string; frequency: string; end_date: string | null;
+  }>) => {
     setSavingId(id);
-    const { error } = await supabase.from('financial_transactions').update(patch).eq('id', id);
+    const { error } = await supabase.from('financial_transactions').update(patch as any).eq('id', id);
     setSavingId(null);
     if (error) {
       toast.error('Save failed');
