@@ -10,6 +10,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { applyHistoricalPayments, projectAmortization, RateTerm } from '@/utils/loanAmortization';
+import { InlineTransactionsTable } from './InlineTransactionsTable';
+import { ImportDialog } from './ImportDialog';
+import { Upload } from 'lucide-react';
 
 const fmtGBP = (n: number) =>
   new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 }).format(n);
