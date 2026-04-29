@@ -1,0 +1,1 @@
+ALTER TABLE public.financial_accounts ADD COLUMN IF NOT EXISTS cost_centre text;

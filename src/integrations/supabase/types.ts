@@ -444,6 +444,7 @@ export type Database = {
           account_code: string | null
           balance: number
           category: string | null
+          cost_centre: string | null
           created_at: string
           credit_limit: number | null
           currency: string
@@ -469,6 +470,7 @@ export type Database = {
           account_code?: string | null
           balance?: number
           category?: string | null
+          cost_centre?: string | null
           created_at?: string
           credit_limit?: number | null
           currency?: string
@@ -494,6 +496,7 @@ export type Database = {
           account_code?: string | null
           balance?: number
           category?: string | null
+          cost_centre?: string | null
           created_at?: string
           credit_limit?: number | null
           currency?: string
