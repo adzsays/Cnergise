@@ -141,7 +141,7 @@ export function CashFlowView() {
     const groupFilter = (t: any) =>
       costCentre === 'all' ? true : (t.cost_centre || '').toLowerCase() === costCentre.toLowerCase();
     const filtered = transactions.filter(groupFilter);
-    const initialCash = balanceSheet.bankAccounts.reduce((s, a) => s + a.balance, 0);
+    const initialCash = liquidBankAccounts.reduce((s, a) => s + a.balance, 0);
 
     const today = new Date();
     const startMonth = new Date(today.getFullYear(), today.getMonth(), 1);
