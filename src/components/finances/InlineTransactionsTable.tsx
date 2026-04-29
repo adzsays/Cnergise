@@ -273,6 +273,63 @@ export function InlineTransactionsTable() {
   );
 }
 
+function CostCentreCell({
+  transactionId,
+  value,
+  costCentres,
+  onChange,
+  onManage,
+}: {
+  transactionId: string;
+  value: string | null | undefined;
+  costCentres: string[];
+  onChange: (v: string) => void;
+  onManage: () => void;
+}) {
+  const [local, setLocal] = useState<string>(value || costCentres[0] || 'Personal');
+
+  // Sync from upstream when prop changes (e.g. realtime update from DB)
+  useEffect(() => {
+    if (value && value !== local) setLocal(value);
+  }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const showLegacy = local && !costCentres.includes(local);
+
+  return (
+    <Select
+      value={local}
+      onValueChange={(v) => {
+        if (v === '__manage__') {
+          onManage();
+          return;
+        }
+        setLocal(v); // optimistic
+        onChange(v);
+      }}
+    >
+      <SelectTrigger className="h-7 border-0 bg-transparent px-1 focus:ring-1">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {costCentres.map((c) => (
+          <SelectItem key={c} value={c}>
+            {c}
+          </SelectItem>
+        ))}
+        {showLegacy && (
+          <SelectItem value={local}>{local} (legacy)</SelectItem>
+        )}
+        <SelectSeparator />
+        <SelectItem value="__manage__" className="text-primary">
+          <span className="flex items-center gap-1.5">
+            <Settings2 className="h-3 w-3" /> Manage cost centres…
+          </span>
+        </SelectItem>
+      </SelectContent>
+    </Select>
+  );
+}
+
 function ManageCostCentresDialog({
   open,
   onOpenChange,
