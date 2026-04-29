@@ -138,6 +138,27 @@ export function InlineTransactionsTable() {
     type: 'income' | 'expense';
   }>) => {
     setSavingId(id);
+    // Synthetic loan-projection rows (id="loan-projection-<accountId>") aren't real
+    // financial_transactions — they're derived from financial_accounts. Persist
+    // edits (currently just cost_centre / subcategory) onto the underlying account.
+    if (id.startsWith('loan-projection-')) {
+      const accountId = id.replace('loan-projection-', '');
+      const accountPatch: Record<string, any> = {};
+      if (patch.cost_centre !== undefined) accountPatch.cost_centre = patch.cost_centre;
+      if (patch.subcategory !== undefined) accountPatch.name = patch.subcategory;
+      if (Object.keys(accountPatch).length === 0) {
+        setSavingId(null);
+        toast.error("This row is auto-generated from a loan — only Cost Centre / Name can be edited here.");
+        return;
+      }
+      const { error } = await supabase.from('financial_accounts').update(accountPatch).eq('id', accountId);
+      setSavingId(null);
+      if (error) {
+        toast.error('Save failed');
+        console.error(error);
+      }
+      return;
+    }
     const { error } = await supabase.from('financial_transactions').update(patch as any).eq('id', id);
     setSavingId(null);
     if (error) {
