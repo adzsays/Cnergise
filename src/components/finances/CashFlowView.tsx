@@ -58,10 +58,41 @@ export function CashFlowView() {
     return out;
   }, []);
 
+  // Only liquid Bank accounts contribute to running cash. Other assets
+  // (savings, investments, pension, crypto, cash, etc.) are excluded.
+  const liquidBankAccounts = useMemo(
+    () => balanceSheet.bankAccounts.filter((a) => (a.category || '').toLowerCase() === 'bank'),
+    [balanceSheet.bankAccounts]
+  );
+
+  // Credit card liabilities — balance is stored negative on liabilities; absolute value is debt owed.
+  const creditCards = useMemo(
+    () =>
+      balanceSheet.liabilities
+        .filter((l) => (l.category || '').toLowerCase() === 'credit card')
+        .map((l) => {
+          const owed = Math.abs(l.balance);
+          // Find the underlying account for monthly_payment if set
+          // Estimate min payment if not provided: max(£25, 3% of balance)
+          const estimated = Math.max(25, owed * 0.03);
+          return { id: l.id, name: l.name, owed, payment: estimated };
+        })
+        .filter((c) => c.owed > 0),
+    [balanceSheet.liabilities]
+  );
+
+  // Total monthly credit card payment (capped to remaining owed each month, computed in projections).
+  const totalCcPaymentMonthly = useMemo(
+    () => creditCards.reduce((s, c) => s + c.payment, 0),
+    [creditCards]
+  );
+
   const chartData = useMemo(() => {
     const div = PERIOD_DIVISOR[period];
-    const initialCash = balanceSheet.bankAccounts.reduce((s, a) => s + a.balance, 0);
+    const initialCash = liquidBankAccounts.reduce((s, a) => s + a.balance, 0);
     let running = initialCash;
+    // Track remaining credit card balance so payments stop when paid off
+    let ccRemaining = creditCards.reduce((s, c) => s + c.owed, 0);
     const rows: any[] = [];
     const groupFilter = (t: any) =>
       costCentre === 'all' ? true : (t.cost_centre || '').toLowerCase() === costCentre.toLowerCase();
