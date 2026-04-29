@@ -38,7 +38,7 @@ const toDateInput = (ms: number | null | undefined) => {
 const fromDateInput = (s: string) => (s ? new Date(s).getTime() : null);
 
 export function InlineTransactionsTable() {
-  const { transactions, accounts, addTransaction, deleteTransaction } = useFinancialData();
+  const { transactions, accounts, addTransaction, deleteTransaction, refreshData } = useFinancialData() as any;
   const [savingId, setSavingId] = useState<string | null>(null);
   const [costCentres, setCostCentres] = useState<string[]>(loadCostCentres());
   const [manageOpen, setManageOpen] = useState(false);
@@ -48,6 +48,28 @@ export function InlineTransactionsTable() {
     window.addEventListener('cost-centres-changed', handler);
     return () => window.removeEventListener('cost-centres-changed', handler);
   }, []);
+
+  // Merge stored centres with any centres present in the data so nothing is shown as "legacy".
+  // Persist newly discovered centres so they appear in the manager too.
+  const allCostCentres = useMemo(() => {
+    const seen = new Map<string, string>(); // lowercase -> canonical display
+    costCentres.forEach((c) => seen.set(c.toLowerCase(), c));
+    transactions.forEach((t: any) => {
+      const c = (t.cost_centre || '').trim();
+      if (c && !seen.has(c.toLowerCase())) seen.set(c.toLowerCase(), c);
+    });
+    return Array.from(seen.values()).sort((a, b) => a.localeCompare(b));
+  }, [costCentres, transactions]);
+
+  // Auto-persist any newly discovered centres into the managed list
+  useEffect(() => {
+    const known = new Set(costCentres.map((c) => c.toLowerCase()));
+    const missing = allCostCentres.filter((c) => !known.has(c.toLowerCase()));
+    if (missing.length > 0) {
+      saveCostCentres(allCostCentres);
+      setCostCentres(allCostCentres);
+    }
+  }, [allCostCentres]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const accountNames = useMemo(() => accounts.map((a) => a.name), [accounts]);
 
@@ -74,13 +96,28 @@ export function InlineTransactionsTable() {
     }
   };
 
+  // Rename a cost centre across ALL transactions that currently use it
+  const renameCostCentreInDb = async (oldName: string, newName: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { error } = await supabase
+      .from('financial_transactions')
+      .update({ cost_centre: newName })
+      .eq('user_id', user.id)
+      .eq('cost_centre', oldName);
+    if (error) {
+      toast.error(`Failed to rename "${oldName}"`);
+      console.error(error);
+    }
+  };
+
   const handleAddRow = async (type: 'income' | 'expense') => {
     await addTransaction({
       type,
       category: 'Other',
       subcategory: type === 'income' ? 'New income' : 'New expense',
       monthly: 0,
-      cost_centre: costCentres[0] || 'Personal',
+      cost_centre: allCostCentres[0] || 'Personal',
       frequency: 'monthly',
       date: Date.now(),
     });
@@ -97,10 +134,17 @@ export function InlineTransactionsTable() {
           <ManageCostCentresDialog
             open={manageOpen}
             onOpenChange={setManageOpen}
-            list={costCentres}
-            onSave={(next) => {
+            list={allCostCentres}
+            onSave={async (next, renames) => {
+              // Apply renames to the DB first, then persist the new list
+              for (const { from, to } of renames) {
+                if (from !== to) await renameCostCentreInDb(from, to);
+              }
               saveCostCentres(next);
               setCostCentres(next);
+              if (renames.some((r) => r.from !== r.to)) {
+                refreshData?.();
+              }
             }}
           />
           <Button size="sm" variant="outline" onClick={() => handleAddRow('income')} className="text-success">
@@ -202,7 +246,7 @@ export function InlineTransactionsTable() {
                     <CostCentreCell
                       transactionId={t.id}
                       value={t.cost_centre}
-                      costCentres={costCentres}
+                      costCentres={allCostCentres}
                       onChange={(v) => updateField(t.id, { cost_centre: v })}
                       onManage={() => setManageOpen(true)}
                     />
@@ -293,7 +337,8 @@ function CostCentreCell({
     if (value && value !== local) setLocal(value);
   }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const showLegacy = local && !costCentres.includes(local);
+  // Ensure the current value is always selectable, even if not yet in the managed list
+  const optionList = local && !costCentres.includes(local) ? [local, ...costCentres] : costCentres;
 
   return (
     <Select
@@ -311,14 +356,11 @@ function CostCentreCell({
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
-        {costCentres.map((c) => (
+        {optionList.map((c) => (
           <SelectItem key={c} value={c}>
             {c}
           </SelectItem>
         ))}
-        {showLegacy && (
-          <SelectItem value={local}>{local} (legacy)</SelectItem>
-        )}
         <SelectSeparator />
         <SelectItem value="__manage__" className="text-primary">
           <span className="flex items-center gap-1.5">
@@ -339,29 +381,32 @@ function ManageCostCentresDialog({
   open: boolean;
   onOpenChange: (v: boolean) => void;
   list: string[];
-  onSave: (next: string[]) => void;
+  onSave: (next: string[], renames: { from: string; to: string }[]) => void;
 }) {
-  const [draft, setDraft] = useState<string[]>(list);
+  // Each row tracks its original name so renames can be detected and propagated
+  const [draft, setDraft] = useState<{ original: string; current: string }[]>(
+    list.map((c) => ({ original: c, current: c }))
+  );
   const [newItem, setNewItem] = useState('');
 
   useEffect(() => {
-    if (open) setDraft(list);
+    if (open) setDraft(list.map((c) => ({ original: c, current: c })));
   }, [open, list]);
 
   const add = () => {
     const v = newItem.trim();
     if (!v) return;
-    if (draft.some((d) => d.toLowerCase() === v.toLowerCase())) {
+    if (draft.some((d) => d.current.toLowerCase() === v.toLowerCase())) {
       toast.error('Already exists');
       return;
     }
-    setDraft([...draft, v]);
+    setDraft([...draft, { original: '', current: v }]);
     setNewItem('');
   };
 
   const rename = (i: number, v: string) => {
     const next = [...draft];
-    next[i] = v;
+    next[i] = { ...next[i], current: v };
     setDraft(next);
   };
 
@@ -374,13 +419,22 @@ function ManageCostCentresDialog({
   };
 
   const save = () => {
-    const cleaned = draft.map((d) => d.trim()).filter(Boolean);
+    const cleaned = draft
+      .map((d) => ({ original: d.original, current: d.current.trim() }))
+      .filter((d) => d.current);
     if (!cleaned.length) {
       toast.error('Add at least one cost centre');
       return;
     }
-    onSave(cleaned);
-    toast.success('Cost centres updated');
+    const renames = cleaned
+      .filter((d) => d.original && d.original !== d.current)
+      .map((d) => ({ from: d.original, to: d.current }));
+    onSave(cleaned.map((d) => d.current), renames);
+    if (renames.length > 0) {
+      toast.success(`Renamed ${renames.length} cost centre${renames.length > 1 ? 's' : ''}`);
+    } else {
+      toast.success('Cost centres updated');
+    }
     onOpenChange(false);
   };
 
@@ -398,7 +452,7 @@ function ManageCostCentresDialog({
         <div className="flex flex-col gap-2 max-h-[50vh] overflow-y-auto">
           {draft.map((c, i) => (
             <div key={i} className="flex items-center gap-2">
-              <Input value={c} onChange={(e) => rename(i, e.target.value)} className="h-8" />
+              <Input value={c.current} onChange={(e) => rename(i, e.target.value)} className="h-8" />
               <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => remove(i)}>
                 <X className="h-4 w-4" />
               </Button>
