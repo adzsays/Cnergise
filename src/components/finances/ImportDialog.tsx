@@ -113,24 +113,38 @@ export const ImportDialog = ({ open, onOpenChange }: ImportDialogProps) => {
     const transactions = data.map((row) => {
       const type = (pick(row, 'type', 'Type', 'Type ') || 'expense').toString().toLowerCase();
       const description = pick(row, 'description', 'Description', 'subcategory', 'Subcategory') || '';
-      const amount = parseFloat(pick(row, 'amount', 'Amount') ?? '0');
-      const recurringRaw = pick(row, 'recurring', 'Recurring');
-      const recurring = recurringRaw === undefined
-        ? true
-        : ['true', 'yes', '1', 'y'].includes(recurringRaw.toString().toLowerCase());
-      const date = parseTransactionDate(pick(row, 'date', 'Date'));
-      const costCentre = pick(row, 'cost centre', 'Cost Centre', 'cost_centre', 'costCentre', 'Cost Center', 'cost center') || 'Personal';
+      const monthlyInput = pick(row, 'monthly', 'Monthly');
+      const amountInput = pick(row, 'amount', 'Amount');
+      const amount = parseFloat((amountInput ?? monthlyInput ?? '0').toString()) || 0;
       const frequency = parseFrequency(pick(row, 'frequency', 'Frequency'));
+
+      // Date: full date OR "Recurring Date" (day of month)
+      const fullDate = pick(row, 'date', 'Date');
+      const recurringDay = pick(row, 'recurring date', 'Recurring Date', 'recurring_date');
+      let date: number;
+      if (fullDate !== undefined) {
+        date = parseTransactionDate(fullDate);
+      } else if (recurringDay !== undefined) {
+        const day = Math.min(28, Math.max(1, parseInt(recurringDay.toString(), 10) || 1));
+        const now = new Date();
+        date = new Date(now.getFullYear(), now.getMonth(), day).getTime();
+      } else {
+        date = Date.now();
+      }
+
+      const costCentre = pick(row, 'cost centre', 'Cost Centre', 'cost_centre', 'costCentre', 'Cost Center', 'cost center') || 'Personal';
       const endDateRaw = pick(row, 'end date', 'End Date', 'end_date', 'endDate');
       const endDate = endDateRaw ? new Date(parseTransactionDate(endDateRaw)).toISOString().slice(0, 10) : null;
       const accountName = pick(row, 'account', 'Account');
 
-      const monthly = monthlyFromFrequency(amount, frequency);
+      // If user supplied "Monthly" directly, use it; otherwise derive from amount+frequency
+      const monthly = monthlyInput !== undefined
+        ? (parseFloat(monthlyInput.toString()) || 0)
+        : monthlyFromFrequency(amount, frequency);
       const daily = monthly / 30;
 
       const spaceName = pick(row, 'space', 'Space', 'group_name', 'Group Name', 'group');
       const spaceId = findSpaceIdByName(spaceName);
-      const spaceForGroupName = spaces.find(s => s.id === spaceId);
 
       return {
         user_id: user.id,
@@ -139,15 +153,14 @@ export const ImportDialog = ({ open, onOpenChange }: ImportDialogProps) => {
         category: accountName || costCentre || 'Other',
         subcategory: description,
         space_id: spaceId,
-        group_name: spaceForGroupName?.name || 'General',
-        amount,
+        group_name: 'Personal',
+        amount: amount || monthly,
         percentage: 0,
         daily,
         monthly,
         cost_centre: costCentre,
         frequency,
         end_date: endDate,
-        
         projections: [],
       };
     });
