@@ -70,7 +70,7 @@ export function CashFlowView() {
     let running = initialCash;
     const rows: any[] = [];
     const groupFilter = (t: any) =>
-      group === 'all' ? true : (t.group || '').toLowerCase() === group.toLowerCase();
+      costCentre === 'all' ? true : (t.cost_centre || '').toLowerCase() === costCentre.toLowerCase();
 
     if (period === 'yearly') {
       // Single yearly bucket (sum of 12 months)
