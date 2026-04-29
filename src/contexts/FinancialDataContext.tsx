@@ -620,6 +620,7 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
       .on('postgres_changes', { event: '*', schema: 'public', table: 'financial_transactions' }, () => refreshData())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'financial_accounts' }, () => refreshData())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'physical_assets' }, () => refreshData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'loan_rate_terms' }, () => refreshData())
       .subscribe();
 
     return () => {
@@ -628,10 +629,81 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Synthesize loan-payment "transactions" from each loan's rate schedule so the
+  // Cash Flow view automatically reflects future payment changes (e.g. when a
+  // fixed-rate period ends and rolls onto a new fixed or variable rate).
+  // Only loans that have a rate schedule defined are auto-projected here, to
+  // avoid double-counting any existing manual recurring mortgage entry.
+  const projectedTransactions = useMemo<FinancialTransaction[]>(() => {
+    if (!rateTerms.length || !accounts.length) return transactions;
+    const termsByAccount: Record<string, RateTerm[]> = {};
+    rateTerms.forEach((t: any) => {
+      const id = t.account_id as string;
+      termsByAccount[id] = termsByAccount[id] || [];
+      termsByAccount[id].push(t);
+    });
+
+    const today = new Date();
+    const startMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const synthetic: FinancialTransaction[] = [];
+
+    accounts.forEach((a) => {
+      if (a.type !== 'liability') return;
+      const schedule = termsByAccount[a.id];
+      if (!schedule || schedule.length === 0) return;
+      const start = a.loan_start_date ? new Date(a.loan_start_date) : startMonth;
+      const balance = Math.abs(Number(a.balance) || 0);
+      if (balance <= 0) return;
+
+      const projection = projectAmortization(
+        {
+          startingBalance: balance,
+          loanStartDate: start,
+          totalTermMonths: a.term_months || null,
+          fallbackRate: Number(a.interest_rate) || 0,
+          fallbackPayment: Number(a.monthly_payment) || 0,
+          schedule,
+        },
+        startMonth,
+        12
+      );
+      if (projection.length === 0) return;
+
+      const projections = Array(12).fill(0);
+      projection.forEach((m) => {
+        if (m.index >= 0 && m.index < 12) projections[m.index] = m.payment;
+      });
+      const monthly = projections.reduce((s, n) => s + n, 0) / 12;
+
+      synthetic.push({
+        id: `loan-projection-${a.id}`,
+        user_id: a.user_id,
+        date: today.getTime(),
+        type: 'expense',
+        category: 'Loan Payments',
+        subcategory: a.name,
+        group_name: a.group_name || 'Personal',
+        group: a.group_name || 'Personal',
+        space_id: a.space_id ?? null,
+        amount: monthly,
+        percentage: 0,
+        daily: monthly / 30,
+        monthly,
+        projections,
+        cost_centre: 'Debt Service',
+        frequency: 'monthly',
+        created_at: a.created_at,
+        updated_at: a.updated_at,
+      });
+    });
+
+    return [...transactions, ...synthetic];
+  }, [transactions, accounts, rateTerms]);
+
   return (
     <FinancialDataContext.Provider
       value={{
-        transactions,
+        transactions: projectedTransactions,
         accounts,
         loading,
         refreshData,
