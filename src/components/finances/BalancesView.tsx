@@ -98,23 +98,32 @@ export function BalancesView() {
   };
 
   // Auto-amortize using the multi-term rate schedule (falls back to single rate if none defined).
-  const applyLoanPayments = async (a: any) => {
+  // fromOrigin=true rebuilds the balance from the original principal at loan start (full history).
+  const applyLoanPayments = async (a: any, fromOrigin = false) => {
     const start = a.loan_start_date ? new Date(a.loan_start_date) : null;
     if (!start) return toast.error('Set a loan start date first');
 
-    const lastApplied = a.last_payment_applied_date ? new Date(a.last_payment_applied_date) : start;
+    const useOrigin = fromOrigin && a.original_principal && Number(a.original_principal) > 0;
+    const startingBalance = useOrigin
+      ? Number(a.original_principal)
+      : Math.abs(Number(a.balance) || 0);
+    const lastApplied = useOrigin
+      ? start
+      : a.last_payment_applied_date
+        ? new Date(a.last_payment_applied_date)
+        : start;
     const today = new Date();
 
     const schedule = (schedules[a.id] || []).slice().sort((x, y) => x.sequence - y.sequence);
     const fallbackPayment = Number(a.monthly_payment) || 0;
     const fallbackRate = Number(a.interest_rate) || 0;
-    if (schedule.length === 0 && fallbackPayment <= 0) {
-      return toast.error('Add a rate term or set a monthly payment');
+    if (schedule.length === 0 && fallbackPayment <= 0 && fallbackRate <= 0) {
+      return toast.error('Add a rate term or set a monthly payment / rate');
     }
 
     const result = applyHistoricalPayments(
       {
-        startingBalance: Math.abs(Number(a.balance) || 0),
+        startingBalance,
         loanStartDate: start,
         totalTermMonths: a.term_months || null,
         fallbackRate,
@@ -265,7 +274,9 @@ export function BalancesView() {
             a={a}
             update={update}
             apply={() => applyLoanPayments(a)}
+            applyFromOrigin={() => applyLoanPayments(a, true)}
             schedule={schedules[a.id] || []}
+            reloadSchedules={loadSchedules}
           />
         )}
       </>
@@ -400,12 +411,16 @@ function LoanDetailRow({
   a,
   update,
   apply,
+  applyFromOrigin,
   schedule,
+  reloadSchedules,
 }: {
   a: any;
   update: (id: string, patch: Record<string, any>) => Promise<void>;
   apply: () => void;
+  applyFromOrigin: () => void;
   schedule: RateTerm[];
+  reloadSchedules: () => Promise<void>;
 }) {
   const balance = Math.abs(Number(a.balance) || 0);
   const start = a.loan_start_date ? new Date(a.loan_start_date) : new Date();
@@ -454,8 +469,11 @@ function LoanDetailRow({
   );
 
   const addTerm = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    const { data: { user }, error: authErr } = await supabase.auth.getUser();
+    if (authErr || !user) {
+      toast.error('Sign in required to add a term');
+      return;
+    }
     const lastSeq = sortedSchedule.length ? sortedSchedule[sortedSchedule.length - 1].sequence : -1;
     const lastEnd = (() => {
       if (!sortedSchedule.length) return a.loan_start_date || new Date().toISOString().slice(0, 10);
@@ -473,17 +491,33 @@ function LoanDetailRow({
       rate_type: 'fixed',
       interest_rate: fallbackRate || 5,
     });
-    if (error) toast.error('Could not add term');
+    if (error) {
+      console.error('addTerm failed', error);
+      toast.error(error.message || 'Could not add term');
+    } else {
+      toast.success('Term added');
+      await reloadSchedules();
+    }
   };
 
   const updateTerm = async (id: string, patch: Record<string, any>) => {
     const { error } = await supabase.from('loan_rate_terms' as any).update(patch).eq('id', id);
-    if (error) toast.error('Save failed');
+    if (error) {
+      console.error('updateTerm failed', error);
+      toast.error(error.message || 'Save failed');
+    } else {
+      await reloadSchedules();
+    }
   };
 
   const removeTerm = async (id: string) => {
     const { error } = await supabase.from('loan_rate_terms' as any).delete().eq('id', id);
-    if (error) toast.error('Delete failed');
+    if (error) {
+      console.error('removeTerm failed', error);
+      toast.error(error.message || 'Delete failed');
+    } else {
+      await reloadSchedules();
+    }
   };
 
   return (
@@ -692,9 +726,21 @@ function LoanDetailRow({
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Outstanding</p>
             <p className="text-sm font-semibold tabular-nums">{fmtGBP(balance)}</p>
           </div>
-          <Button size="sm" onClick={apply} className="h-8">
-            <Calculator className="h-3.5 w-3.5 mr-1" /> Apply Payments to Date
-          </Button>
+          <div className="flex flex-col gap-1">
+            <Button size="sm" onClick={apply} className="h-7 text-[11px]">
+              <Calculator className="h-3.5 w-3.5 mr-1" /> Apply to Date
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={applyFromOrigin}
+              className="h-7 text-[11px]"
+              disabled={!a.original_principal || !a.loan_start_date}
+              title="Rebuilds the current balance from the original principal at loan start"
+            >
+              From Loan Start
+            </Button>
+          </div>
         </div>
 
         {/* 12-month payment schedule preview (drives cash flow) */}
