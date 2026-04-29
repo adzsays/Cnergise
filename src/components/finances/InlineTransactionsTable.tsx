@@ -40,6 +40,12 @@ const fromDateInput = (s: string) => (s ? new Date(s).getTime() : null);
 
 export function InlineTransactionsTable() {
   const { transactions, accounts, addTransaction, deleteTransaction, refreshData } = useFinancialData() as any;
+  const { currency } = useUserCurrency();
+  const currencySymbol = (() => {
+    try {
+      return (0).toLocaleString(undefined, { style: 'currency', currency, maximumFractionDigits: 0 }).replace(/[\d\s.,]/g, '') || '£';
+    } catch { return '£'; }
+  })();
   const [savingId, setSavingId] = useState<string | null>(null);
   const [costCentres, setCostCentres] = useState<string[]>(loadCostCentres());
   const [manageOpen, setManageOpen] = useState(false);
