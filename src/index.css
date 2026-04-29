@@ -58,6 +58,19 @@
     --social: 262 83% 58%;
     --social-foreground: 0 0% 100%;
 
+    /* Personal / Corential cost-centre semantic */
+    --personal: 221 83% 53%;
+    --personal-foreground: 0 0% 100%;
+    --corential: 250 95% 63%;
+    --corential-foreground: 0 0% 100%;
+
+    /* Chart palette */
+    --chart-1: 221 83% 53%;
+    --chart-2: 142 71% 45%;
+    --chart-3: 250 95% 63%;
+    --chart-4: 32 95% 44%;
+    --chart-5: 0 72% 51%;
+
     --border: 220 13% 91%;
     --input: 220 13% 91%;
     --ring: 187 72% 42%;
@@ -99,6 +112,24 @@
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
+
+    --income: 142 71% 45%;
+    --income-foreground: 0 0% 100%;
+    --expense: 0 84% 60%;
+    --expense-foreground: 0 0% 100%;
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --personal: 221 83% 60%;
+    --personal-foreground: 0 0% 100%;
+    --corential: 250 95% 70%;
+    --corential-foreground: 0 0% 100%;
+
+    --chart-1: 221 83% 60%;
+    --chart-2: 142 71% 45%;
+    --chart-3: 250 95% 70%;
+    --chart-4: 32 95% 50%;
+    --chart-5: 0 72% 55%;
 
     --border: 217 33% 17%;
     --input: 217 33% 17%;
