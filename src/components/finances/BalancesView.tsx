@@ -174,8 +174,12 @@ export function BalancesView() {
 
 
   const { assets, liabilities, totals } = useMemo(() => {
-    const a = accounts.filter((x) => x.type === 'asset');
-    const l = accounts.filter((x) => x.type === 'liability');
+    // An account is a "liability" only if explicitly classified or typed as such.
+    // Everything else (bank, pension, investment, etc.) is treated as an asset.
+    const isLiability = (x: any) =>
+      (x as any).account_class === 'liability' || x.type === 'liability';
+    const a = accounts.filter((x) => !isLiability(x));
+    const l = accounts.filter((x) => isLiability(x));
     const tA = a.reduce((s, x) => s + Number(x.balance), 0);
     const tL = l.reduce((s, x) => s + Math.abs(Number(x.balance)), 0);
     return { assets: a, liabilities: l, totals: { tA, tL, net: tA - tL } };
