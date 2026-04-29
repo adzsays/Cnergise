@@ -147,7 +147,7 @@ export const ImportDialog = ({ open, onOpenChange }: ImportDialogProps) => {
         cost_centre: costCentre,
         frequency,
         end_date: endDate,
-        recurring,
+        
         projections: [],
       };
     });
