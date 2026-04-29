@@ -99,7 +99,7 @@ export function CashFlowView() {
       });
     }
     return rows;
-  }, [transactions, balanceSheet, group, period, monthLabels]);
+  }, [transactions, balanceSheet, costCentre, period, monthLabels]);
 
   const kpis = useMemo(() => {
     const incomeTotal = chartData.reduce((s, r) => s + r.income, 0);
