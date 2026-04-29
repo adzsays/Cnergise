@@ -31,7 +31,6 @@ const fmt = (n: number) =>
 export function CashFlowView() {
   const { transactions, balanceSheet } = useFinancialData();
   const [period, setPeriod] = useState<Period>('monthly');
-  const [importOpen, setImportOpen] = useState(false);
   const [costCentre, setCostCentre] = useState<string>('all');
   const [costCentres, setCostCentres] = useState<string[]>(loadCostCentres());
 
