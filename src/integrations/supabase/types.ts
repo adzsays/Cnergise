@@ -449,10 +449,16 @@ export type Database = {
           currency: string
           group_name: string
           id: string
+          interest_rate: number | null
+          last_payment_applied_date: string | null
+          loan_start_date: string | null
+          monthly_payment: number | null
           name: string
           opening_balance: number
           opening_balance_date: string | null
+          original_principal: number | null
           space_id: string | null
+          term_months: number | null
           type: string
           updated_at: string
           user_id: string
@@ -467,10 +473,16 @@ export type Database = {
           currency?: string
           group_name: string
           id?: string
+          interest_rate?: number | null
+          last_payment_applied_date?: string | null
+          loan_start_date?: string | null
+          monthly_payment?: number | null
           name: string
           opening_balance?: number
           opening_balance_date?: string | null
+          original_principal?: number | null
           space_id?: string | null
+          term_months?: number | null
           type: string
           updated_at?: string
           user_id: string
@@ -485,10 +497,16 @@ export type Database = {
           currency?: string
           group_name?: string
           id?: string
+          interest_rate?: number | null
+          last_payment_applied_date?: string | null
+          loan_start_date?: string | null
+          monthly_payment?: number | null
           name?: string
           opening_balance?: number
           opening_balance_date?: string | null
+          original_principal?: number | null
           space_id?: string | null
+          term_months?: number | null
           type?: string
           updated_at?: string
           user_id?: string
