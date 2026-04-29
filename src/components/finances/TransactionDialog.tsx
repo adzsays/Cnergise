@@ -365,6 +365,34 @@ export const TransactionDialog = ({ open, onOpenChange, transaction }: Transacti
             )}
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="start_date">Projection Start Date</Label>
+              <Input
+                id="start_date"
+                type="date"
+                value={formData.start_date}
+                onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Optional — projects from this date
+              </p>
+            </div>
+            <div>
+              <Label htmlFor="end_date">Projection End Date</Label>
+              <Input
+                id="end_date"
+                type="date"
+                value={formData.end_date}
+                onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                min={formData.start_date || undefined}
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Optional — stops projecting after this date
+              </p>
+            </div>
+          </div>
+
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
