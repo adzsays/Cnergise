@@ -40,6 +40,12 @@ interface FinancialAccount {
   account_class: string | null;
   opening_balance: number;
   opening_balance_date: string | null;
+  interest_rate?: number | null;
+  term_months?: number | null;
+  monthly_payment?: number | null;
+  loan_start_date?: string | null;
+  original_principal?: number | null;
+  last_payment_applied_date?: string | null;
   created_at: string;
   updated_at: string;
 }
