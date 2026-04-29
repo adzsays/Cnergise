@@ -452,7 +452,7 @@ function ManageCostCentresDialog({
         <div className="flex flex-col gap-2 max-h-[50vh] overflow-y-auto">
           {draft.map((c, i) => (
             <div key={i} className="flex items-center gap-2">
-              <Input value={c} onChange={(e) => rename(i, e.target.value)} className="h-8" />
+              <Input value={c.current} onChange={(e) => rename(i, e.target.value)} className="h-8" />
               <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => remove(i)}>
                 <X className="h-4 w-4" />
               </Button>
