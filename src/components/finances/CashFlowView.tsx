@@ -96,6 +96,132 @@ export function CashFlowView() {
     return rows;
   }, [transactions, balanceSheet, costCentre, period, monthLabels]);
 
+  // Daily-level running balance projected over the next 12 months,
+  // then aggregated into the chosen period (daily/weekly/monthly/yearly).
+  const runningBalanceRows = useMemo(() => {
+    const groupFilter = (t: any) =>
+      costCentre === 'all' ? true : (t.cost_centre || '').toLowerCase() === costCentre.toLowerCase();
+    const filtered = transactions.filter(groupFilter);
+    const initialCash = balanceSheet.bankAccounts.reduce((s, a) => s + a.balance, 0);
+
+    const today = new Date();
+    const startMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+    // Build a flat array of daily { date, income, expense } across the next 12 months
+    type Day = { date: Date; income: number; expense: number };
+    const days: Day[] = [];
+    for (let i = 0; i < 12; i++) {
+      const monthDate = new Date(startMonth.getFullYear(), startMonth.getMonth() + i, 1);
+      const daysInMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0).getDate();
+
+      const monthIncome = filtered
+        .filter((t) => t.type === 'income')
+        .reduce((s, t) => s + (t.projections?.[i] || 0), 0);
+      const monthExpense = Math.abs(
+        filtered
+          .filter((t) => t.type === 'expense')
+          .reduce((s, t) => s + (t.projections?.[i] || 0), 0)
+      );
+
+      const dailyIncome = monthIncome / daysInMonth;
+      const dailyExpense = monthExpense / daysInMonth;
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        days.push({
+          date: new Date(monthDate.getFullYear(), monthDate.getMonth(), d),
+          income: dailyIncome,
+          expense: dailyExpense,
+        });
+      }
+    }
+
+    // Aggregate based on selected period
+    type Row = { label: string; income: number; expense: number; net: number; balance: number };
+    const rows: Row[] = [];
+    let running = initialCash;
+
+    const fmtDate = (d: Date) =>
+      d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+    if (period === 'daily') {
+      // Cap to ~90 days for usability
+      const cap = Math.min(days.length, 90);
+      for (let i = 0; i < cap; i++) {
+        const day = days[i];
+        running += day.income - day.expense;
+        rows.push({
+          label: fmtDate(day.date),
+          income: day.income,
+          expense: day.expense,
+          net: day.income - day.expense,
+          balance: running,
+        });
+      }
+    } else if (period === 'weekly') {
+      // Group into 7-day buckets starting from today
+      let bucketStart = days[0]?.date;
+      let bucketEnd: Date | null = null;
+      let inc = 0,
+        exp = 0,
+        count = 0;
+      for (let i = 0; i < days.length; i++) {
+        if (count === 0) bucketStart = days[i].date;
+        inc += days[i].income;
+        exp += days[i].expense;
+        count++;
+        bucketEnd = days[i].date;
+        if (count === 7 || i === days.length - 1) {
+          running += inc - exp;
+          rows.push({
+            label: `${fmtDate(bucketStart!)} – ${fmtDate(bucketEnd!)}`,
+            income: inc,
+            expense: exp,
+            net: inc - exp,
+            balance: running,
+          });
+          inc = 0;
+          exp = 0;
+          count = 0;
+        }
+      }
+    } else if (period === 'monthly') {
+      const names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      for (let i = 0; i < 12; i++) {
+        const monthDate = new Date(startMonth.getFullYear(), startMonth.getMonth() + i, 1);
+        const monthIncome = filtered
+          .filter((t) => t.type === 'income')
+          .reduce((s, t) => s + (t.projections?.[i] || 0), 0);
+        const monthExpense = Math.abs(
+          filtered
+            .filter((t) => t.type === 'expense')
+            .reduce((s, t) => s + (t.projections?.[i] || 0), 0)
+        );
+        running += monthIncome - monthExpense;
+        rows.push({
+          label: `${names[monthDate.getMonth()]} ${monthDate.getFullYear()}`,
+          income: monthIncome,
+          expense: monthExpense,
+          net: monthIncome - monthExpense,
+          balance: running,
+        });
+      }
+    } else {
+      // yearly — single bucket sum across 12 months
+      const totalIncome = days.reduce((s, d) => s + d.income, 0);
+      const totalExpense = days.reduce((s, d) => s + d.expense, 0);
+      running += totalIncome - totalExpense;
+      rows.push({
+        label: String(today.getFullYear()),
+        income: totalIncome,
+        expense: totalExpense,
+        net: totalIncome - totalExpense,
+        balance: running,
+      });
+    }
+
+    return rows;
+  }, [transactions, balanceSheet, costCentre, period]);
+
   const kpis = useMemo(() => {
     const incomeTotal = chartData.reduce((s, r) => s + r.income, 0);
     const expenseTotal = chartData.reduce((s, r) => s + r.expense, 0);
