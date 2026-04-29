@@ -359,6 +359,45 @@ export function CashFlowView() {
     return { avgIncome, avgExpense, net: avgIncome - avgExpense, firstNeg: firstNeg?.label || 'Never' };
   }, [chartData]);
 
+  // Monthly summary with weekly & daily breakdowns plus per-category split for tooltips.
+  const monthlySummary = useMemo(() => {
+    const groupFilter = (t: any) =>
+      costCentre === 'all' ? true : (t.cost_centre || '').toLowerCase() === costCentre.toLowerCase();
+    const incomes = transactions.filter((t) => t.type === 'income' && groupFilter(t));
+    const expenses = transactions.filter((t) => t.type === 'expense' && groupFilter(t));
+
+    const monthlyIncome = incomes.reduce((s, t) => s + Math.abs(Number(t.monthly) || 0), 0);
+    const baseMonthlyExpense = expenses.reduce((s, t) => s + Math.abs(Number(t.monthly) || 0), 0);
+    const monthlyExpense = baseMonthlyExpense + totalCcPaymentMonthly;
+
+    const breakdown = (txs: any[], extra?: { name: string; value: number }) => {
+      const map = new Map<string, number>();
+      txs.forEach((t) => {
+        const key = t.subcategory || t.category || 'Other';
+        map.set(key, (map.get(key) || 0) + Math.abs(Number(t.monthly) || 0));
+      });
+      if (extra && extra.value > 0) map.set(extra.name, (map.get(extra.name) || 0) + extra.value);
+      return Array.from(map.entries())
+        .map(([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value);
+    };
+
+    const incomeBreakdown = breakdown(incomes);
+    const expenseBreakdown = breakdown(expenses, { name: 'Credit Card Payments', value: totalCcPaymentMonthly });
+
+    return {
+      monthlyIncome,
+      monthlyExpense,
+      weeklyIncome: monthlyIncome * 12 / 52,
+      weeklyExpense: monthlyExpense * 12 / 52,
+      dailyIncome: monthlyIncome / 30,
+      dailyExpense: monthlyExpense / 30,
+      incomeBreakdown,
+      expenseBreakdown,
+    };
+  }, [transactions, costCentre, totalCcPaymentMonthly]);
+
+
   return (
     <div className="flex flex-col gap-4">
       {/* Controls */}
