@@ -698,7 +698,7 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
         daily: monthly / 30,
         monthly,
         projections,
-        cost_centre: 'Debt Service',
+        cost_centre: a.name || 'Debt Service',
         frequency: 'monthly',
         created_at: a.created_at,
         updated_at: a.updated_at,
