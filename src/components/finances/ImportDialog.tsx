@@ -196,7 +196,7 @@ export const ImportDialog = ({ open, onOpenChange }: ImportDialogProps) => {
         type: (row.type || row.Type || 'asset').toLowerCase(),
         category: row.category || row.Category || null,
         space_id: spaceId,
-        group_name: spaceForGroupName?.name || 'General',
+        group_name: 'Personal',
         balance: parseFloat(row.balance || row.Balance || '0'),
         currency: row.currency || row.Currency || 'GBP',
         credit_limit: row.credit_limit || row['Credit Limit'] ? parseFloat(row.credit_limit || row['Credit Limit']) : null,
