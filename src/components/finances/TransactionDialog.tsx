@@ -89,6 +89,8 @@ export const TransactionDialog = ({ open, onOpenChange, transaction }: Transacti
     percentage: transaction?.percentage || 0,
     cost_centre: transaction?.cost_centre || 'General',
     frequency: initialFrequency,
+    start_date: transaction?.start_date || '',
+    end_date: transaction?.end_date || '',
   });
 
   const isRecurring = formData.frequency !== 'one-time' && formData.frequency !== 'daily';
@@ -164,6 +166,8 @@ export const TransactionDialog = ({ open, onOpenChange, transaction }: Transacti
       projections: [],
       cost_centre: formData.cost_centre,
       frequency: formData.frequency,
+      start_date: formData.start_date || null,
+      end_date: formData.end_date || null,
     };
 
     const { error } = transaction?.id
@@ -359,6 +363,34 @@ export const TransactionDialog = ({ open, onOpenChange, transaction }: Transacti
                 </p>
               </div>
             )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="start_date">Projection Start Date</Label>
+              <Input
+                id="start_date"
+                type="date"
+                value={formData.start_date}
+                onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Optional — projects from this date
+              </p>
+            </div>
+            <div>
+              <Label htmlFor="end_date">Projection End Date</Label>
+              <Input
+                id="end_date"
+                type="date"
+                value={formData.end_date}
+                onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                min={formData.start_date || undefined}
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Optional — stops projecting after this date
+              </p>
+            </div>
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
