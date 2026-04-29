@@ -46,6 +46,7 @@ interface FinancialAccount {
   loan_start_date?: string | null;
   original_principal?: number | null;
   last_payment_applied_date?: string | null;
+  payment_day?: number | null;
   created_at: string;
   updated_at: string;
 }
