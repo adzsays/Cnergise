@@ -22,6 +22,7 @@ export const ImportDialog = ({ open, onOpenChange }: ImportDialogProps) => {
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<any[]>([]);
+  const [allRows, setAllRows] = useState<any[]>([]);
   const [importType, setImportType] = useState<'transactions' | 'accounts'>('transactions');
 
   // Helper to find space by name or return default
