@@ -457,6 +457,7 @@ export type Database = {
           opening_balance: number
           opening_balance_date: string | null
           original_principal: number | null
+          payment_day: number | null
           space_id: string | null
           term_months: number | null
           type: string
@@ -481,6 +482,7 @@ export type Database = {
           opening_balance?: number
           opening_balance_date?: string | null
           original_principal?: number | null
+          payment_day?: number | null
           space_id?: string | null
           term_months?: number | null
           type: string
@@ -505,6 +507,7 @@ export type Database = {
           opening_balance?: number
           opening_balance_date?: string | null
           original_principal?: number | null
+          payment_day?: number | null
           space_id?: string | null
           term_months?: number | null
           type?: string

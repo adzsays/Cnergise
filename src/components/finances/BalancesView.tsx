@@ -98,8 +98,11 @@ export function BalancesView() {
   };
 
   // Auto-amortize using the multi-term rate schedule (falls back to single rate if none defined).
-  // fromOrigin=true rebuilds the balance from the original principal at loan start (full history).
-  const applyLoanPayments = async (a: any, fromOrigin = false) => {
+  // fromOrigin=true (default when origin data exists) rebuilds the current balance from the
+  // original principal at loan start, applying every historical monthly payment using the
+  // rate term active at each month — so the displayed balance is always
+  // "original principal less all payments made up to today".
+  const applyLoanPayments = async (a: any, fromOrigin = true) => {
     const start = a.loan_start_date ? new Date(a.loan_start_date) : null;
     if (!start) return toast.error('Set a loan start date first');
 
@@ -596,7 +599,27 @@ function LoanDetailRow({
               className="h-7 text-xs"
             />
           </Field>
+          <Field label="Payment Day (1–31)">
+            <Input
+              type="number"
+              min={1}
+              max={31}
+              defaultValue={a.payment_day ?? ''}
+              placeholder="e.g. 1"
+              onBlur={(e) => {
+                const raw = e.target.value === '' ? null : parseInt(e.target.value, 10);
+                const v = raw == null ? null : Math.min(31, Math.max(1, raw));
+                if (v !== a.payment_day) update(a.id, { payment_day: v });
+              }}
+              className="h-7 text-xs tabular-nums"
+            />
+          </Field>
         </div>
+        <p className="mt-2 text-[10px] text-muted-foreground">
+          The Payment Day is also the recurring date used in Cash Flow projections for this loan.
+          Use <strong>Apply to Date</strong> to recompute the current balance from the original
+          principal less every monthly payment based on the rate term active each month.
+        </p>
 
         {/* Rate Schedule */}
         <div className="mt-4 border-t border-border/40 pt-3">
