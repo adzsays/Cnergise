@@ -14,6 +14,7 @@ import { InlineTransactionsTable } from './InlineTransactionsTable';
 import { ImportDialog } from './ImportDialog';
 import { Upload } from 'lucide-react';
 import { useUserCurrency } from '@/hooks/useUserCurrency';
+import { CurrencyInput } from './CurrencyInput';
 
 const ASSET_CATEGORIES = ['Bank', 'Savings', 'Investment', 'Pension', 'Crypto', 'Cash', 'Other'];
 const LIABILITY_CATEGORIES = ['Credit Card', 'Loan', 'Mortgage', 'Overdraft', 'Other'];
@@ -243,35 +244,26 @@ export function BalancesView() {
             </Select>
           </td>
           <td className="py-1 px-2">
-            <div className="relative">
-              <span className="absolute left-1 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">{currencySymbol}</span>
-              <Input
-                type="number"
-                defaultValue={a.balance}
-                onBlur={(e) => {
-                  const v = parseFloat(e.target.value) || 0;
-                  if (v !== Number(a.balance)) update(a.id, { balance: v });
-                }}
-                className="h-7 border-0 bg-transparent pl-4 pr-1 text-right tabular-nums focus-visible:ring-1"
-              />
-            </div>
+            <CurrencyInput
+              value={a.balance}
+              onCommit={(v) => {
+                const nv = v ?? 0;
+                if (nv !== Number(a.balance)) update(a.id, { balance: nv });
+              }}
+              className="h-7 border-0 bg-transparent px-1 focus-visible:ring-1"
+            />
           </td>
           {showLimit && (
             <>
               <td className="py-1 px-2">
-                <div className="relative">
-                  <span className="absolute left-1 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">{currencySymbol}</span>
-                  <Input
-                    type="number"
-                    defaultValue={a.credit_limit ?? ''}
-                    placeholder="—"
-                    onBlur={(e) => {
-                      const v = e.target.value === '' ? null : parseFloat(e.target.value) || 0;
-                      if (v !== a.credit_limit) update(a.id, { credit_limit: v });
-                    }}
-                    className="h-7 border-0 bg-transparent pl-4 pr-1 text-right tabular-nums focus-visible:ring-1"
-                  />
-                </div>
+                <CurrencyInput
+                  value={a.credit_limit ?? null}
+                  allowNull
+                  onCommit={(v) => {
+                    if (v !== a.credit_limit) update(a.id, { credit_limit: v });
+                  }}
+                  className="h-7 border-0 bg-transparent px-1 focus-visible:ring-1"
+                />
               </td>
               <td className="py-1 px-2 min-w-[140px]">
                 {limit > 0 ? (

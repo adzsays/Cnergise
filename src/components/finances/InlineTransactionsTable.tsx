@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useUserCurrency } from '@/hooks/useUserCurrency';
+import { CurrencyInput } from './CurrencyInput';
 
 const FREQUENCIES = ['daily', 'weekly', 'monthly', 'quarterly', 'yearly'];
 const DEFAULT_COST_CENTRES = ['Personal', 'Home', 'Work', 'Side Hustle', 'Investment', 'Other'];
@@ -301,21 +302,15 @@ export function InlineTransactionsTable() {
                     />
                   </td>
                   <td className="py-1 px-2">
-                    <div className="relative">
-                      <span className="pointer-events-none absolute left-1 top-1/2 -translate-y-1/2 text-muted-foreground text-xs tabular-nums">
-                        {currencySymbol}
-                      </span>
-                      <Input
-                        type="number"
-                        defaultValue={t.monthly}
-                        onBlur={(e) => {
-                          const v = parseFloat(e.target.value) || 0;
-                          if (v !== t.monthly)
-                            updateField(t.id, { monthly: v, daily: v / 30, amount: v, projections: Array(12).fill(v) });
-                        }}
-                        className="h-7 border-0 bg-transparent pl-5 pr-1 text-right tabular-nums focus-visible:ring-1"
-                      />
-                    </div>
+                    <CurrencyInput
+                      value={t.monthly}
+                      onCommit={(val) => {
+                        const v = val ?? 0;
+                        if (v !== t.monthly)
+                          updateField(t.id, { monthly: v, daily: v / 30, amount: v, projections: Array(12).fill(v) });
+                      }}
+                      className="h-7 border-0 bg-transparent px-1 focus-visible:ring-1"
+                    />
                   </td>
                   <td className="py-1 px-2">
                     <Input
