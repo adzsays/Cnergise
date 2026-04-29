@@ -24,18 +24,24 @@ export default function Profile() {
   const { profile, roles, isLoading, updateProfile, uploadAvatar } = useProfile();
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
+  const [currency, setCurrency] = useState("GBP");
   const [activeTab, setActiveTab] = useState("profile");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (profile) {
       setName(profile.name || "");
       setBio(profile.bio || "");
+      setCurrency((profile as any).currency || "GBP");
     }
   }, [profile]);
 
   const handleSave = () => {
-    updateProfile.mutate({ name, bio });
+    updateProfile.mutate(
+      { name, bio, currency } as any,
+      { onSuccess: () => queryClient.invalidateQueries({ queryKey: ["user-currency"] }) }
+    );
   };
 
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
