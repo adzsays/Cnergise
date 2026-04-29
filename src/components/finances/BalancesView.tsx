@@ -243,15 +243,18 @@ export function BalancesView() {
             </Select>
           </td>
           <td className="py-1 px-2">
-            <Input
-              type="number"
-              defaultValue={a.balance}
-              onBlur={(e) => {
-                const v = parseFloat(e.target.value) || 0;
-                if (v !== Number(a.balance)) update(a.id, { balance: v });
-              }}
-              className="h-7 border-0 bg-transparent px-1 text-right tabular-nums focus-visible:ring-1"
-            />
+            <div className="relative">
+              <span className="absolute left-1 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">{currencySymbol}</span>
+              <Input
+                type="number"
+                defaultValue={a.balance}
+                onBlur={(e) => {
+                  const v = parseFloat(e.target.value) || 0;
+                  if (v !== Number(a.balance)) update(a.id, { balance: v });
+                }}
+                className="h-7 border-0 bg-transparent pl-4 pr-1 text-right tabular-nums focus-visible:ring-1"
+              />
+            </div>
           </td>
           {showLimit && (
             <>
