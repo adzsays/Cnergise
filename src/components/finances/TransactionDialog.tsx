@@ -89,6 +89,8 @@ export const TransactionDialog = ({ open, onOpenChange, transaction }: Transacti
     percentage: transaction?.percentage || 0,
     cost_centre: transaction?.cost_centre || 'General',
     frequency: initialFrequency,
+    start_date: transaction?.start_date || '',
+    end_date: transaction?.end_date || '',
   });
 
   const isRecurring = formData.frequency !== 'one-time' && formData.frequency !== 'daily';
