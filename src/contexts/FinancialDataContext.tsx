@@ -160,6 +160,7 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
   const [transactions, setTransactions] = useState<FinancialTransaction[]>([]);
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
   const [physicalAssets, setPhysicalAssets] = useState<PhysicalAssetRow[]>([]);
+  const [rateTerms, setRateTerms] = useState<RateTerm[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'type' | 'costcentre'>('costcentre');
   const [group, setGroup] = useState<'all' | 'personal' | 'corential'>('all');
