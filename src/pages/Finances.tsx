@@ -11,8 +11,9 @@ import { AccountBalancesView } from "@/components/finances/AccountBalancesView";
 import { CreditScoreView } from "@/components/finances/CreditScoreView";
 import { BudgetView } from "@/components/finances/BudgetView";
 import { TrialBalanceView } from "@/components/finances/TrialBalanceView";
+import { BalancesView } from "@/components/finances/BalancesView";
 
-import { LayoutDashboard, Wallet, TrendingUp, PieChart, CreditCard, PiggyBank, FileSpreadsheet } from "lucide-react";
+import { LayoutDashboard, Wallet, TrendingUp, PieChart, CreditCard, PiggyBank, FileSpreadsheet, Scale } from "lucide-react";
 
 const Finances = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -45,6 +46,10 @@ const Finances = () => {
                         <TrendingUp className="h-3.5 w-3.5 md:h-4 md:w-4 md:mr-2" />
                         <span className="hidden md:inline">Cash Flow</span>
                       </TabsTrigger>
+                      <TabsTrigger value="balances" className="text-xs md:text-sm rounded-md md:rounded-lg px-2 md:px-3 py-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                        <Scale className="h-3.5 w-3.5 md:h-4 md:w-4 md:mr-2" />
+                        <span className="hidden md:inline">Balances</span>
+                      </TabsTrigger>
                       <TabsTrigger value="balance" className="text-xs md:text-sm rounded-md md:rounded-lg px-2 md:px-3 py-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm">
                         <PieChart className="h-3.5 w-3.5 md:h-4 md:w-4 md:mr-2" />
                         <span className="hidden md:inline">Balance Sheet</span>
@@ -74,6 +79,10 @@ const Finances = () => {
 
                   <TabsContent value="cashflow" className="mt-0">
                     <CashFlowView />
+                  </TabsContent>
+
+                  <TabsContent value="balances" className="mt-0">
+                    <BalancesView />
                   </TabsContent>
 
                   <TabsContent value="balance" className="mt-0">
