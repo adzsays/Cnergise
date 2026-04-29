@@ -87,18 +87,33 @@ export function BalancesView() {
   const addRow = async (type: 'asset' | 'liability', category: string) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return toast.error('Sign in required');
+
+    // Map our UI "asset / liability" intent to the DB-allowed `type` values
+    // (bank | pension | investment | liability) and set `account_class` for accounting.
+    const dbType =
+      type === 'liability'
+        ? 'liability'
+        : category === 'Pension'
+          ? 'pension'
+          : category === 'Investment' || category === 'Crypto'
+            ? 'investment'
+            : 'bank';
+
     const { error } = await supabase.from('financial_accounts').insert({
       user_id: user.id,
       name: 'New ' + category,
-      type,
+      type: dbType,
+      account_class: type, // 'asset' | 'liability'
       category,
       balance: 0,
       currency: 'GBP',
       group_name: 'Personal',
       credit_limit: category === 'Credit Card' ? 0 : null,
     });
-    if (error) toast.error('Add failed');
-    else refreshData();
+    if (error) {
+      console.error('Add account failed:', error);
+      toast.error(error.message || 'Add failed');
+    } else refreshData();
   };
 
   // Auto-amortize using the multi-term rate schedule (falls back to single rate if none defined).
