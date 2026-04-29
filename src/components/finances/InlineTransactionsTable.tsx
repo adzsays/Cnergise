@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectSeparator } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Trash2, Settings2, ArrowDownCircle, ArrowUpCircle, X } from 'lucide-react';
+import { Plus, Trash2, Settings2, ArrowDownCircle, ArrowUpCircle, X, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { useFinancialData } from '@/contexts/FinancialDataContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
