@@ -343,7 +343,7 @@ export function CashFlowView() {
     }
 
     return rows;
-  }, [transactions, balanceSheet, costCentre, period]);
+  }, [transactions, liquidBankAccounts, creditCards, totalCcPaymentMonthly, costCentre, period]);
 
   const kpis = useMemo(() => {
     const incomeTotal = chartData.reduce((s, r) => s + r.income, 0);
