@@ -147,6 +147,21 @@ export default function Profile() {
                               />
                             </div>
 
+                            <div className="space-y-2">
+                              <Label htmlFor="currency" className="text-sm">Preferred Currency</Label>
+                              <Select value={currency} onValueChange={setCurrency}>
+                                <SelectTrigger id="currency" className="h-10">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {SUPPORTED_CURRENCIES.map((c) => (
+                                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <p className="text-xs text-muted-foreground">Used to format amounts across Finances.</p>
+                            </div>
+
                             {roles && roles.length > 0 && (
                               <div className="space-y-2">
                                 <Label className="text-sm">Roles</Label>
