@@ -260,7 +260,14 @@ export function BalancesView() {
             </Button>
           </td>
         </tr>
-        {loan && expanded && <LoanDetailRow a={a} update={update} apply={() => applyLoanPayments(a)} />}
+        {loan && expanded && (
+          <LoanDetailRow
+            a={a}
+            update={update}
+            apply={() => applyLoanPayments(a)}
+            schedule={schedules[a.id] || []}
+          />
+        )}
       </>
     );
   };
