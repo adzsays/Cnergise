@@ -10,6 +10,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { applyHistoricalPayments, projectAmortization, RateTerm } from '@/utils/loanAmortization';
+import { InlineTransactionsTable } from './InlineTransactionsTable';
+import { ImportDialog } from './ImportDialog';
+import { Upload } from 'lucide-react';
 
 const fmtGBP = (n: number) =>
   new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 }).format(n);
@@ -33,6 +36,7 @@ export function BalancesView() {
   const [savingId, setSavingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [schedules, setSchedules] = useState<Record<string, RateTerm[]>>({});
+  const [importOpen, setImportOpen] = useState(false);
 
   const loadSchedules = async () => {
     const { data, error } = await supabase
@@ -405,6 +409,24 @@ export function BalancesView() {
           </table>
         </div>
       </Card>
+
+      {/* Cash Flow Inputs (moved from Cash Flow tab) */}
+      <Card className="p-3">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h3 className="text-sm font-semibold uppercase tracking-wide">Cash Flow Inputs</h3>
+            <p className="text-[10px] text-muted-foreground">
+              Add and edit income & expense entries — these feed the Cash Flow projections
+            </p>
+          </div>
+          <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
+            <Upload className="h-3.5 w-3.5 mr-1" /> Import CSV/Excel
+          </Button>
+        </div>
+        <InlineTransactionsTable />
+      </Card>
+
+      <ImportDialog open={importOpen} onOpenChange={setImportOpen} />
     </div>
   );
 }
