@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -16,13 +16,41 @@ type Period = 'daily' | 'weekly' | 'monthly' | 'yearly';
 const PERIOD_DIVISOR: Record<Period, number> = { daily: 30, weekly: 30 / 7, monthly: 1, yearly: 1 / 12 };
 const PERIOD_LABEL: Record<Period, string> = { daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly', yearly: 'Yearly' };
 
+const COST_CENTRE_KEY = 'finance.costCentres.v1';
+const DEFAULT_COST_CENTRES = ['Personal', 'Home', 'Work', 'Side Hustle', 'Investment', 'Other'];
+const loadCostCentres = (): string[] => {
+  try {
+    const raw = localStorage.getItem(COST_CENTRE_KEY);
+    if (!raw) return DEFAULT_COST_CENTRES;
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) && arr.length ? arr : DEFAULT_COST_CENTRES;
+  } catch {
+    return DEFAULT_COST_CENTRES;
+  }
+};
+
 const fmt = (n: number) =>
   new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 }).format(n);
 
 export function CashFlowView() {
-  const { transactions, balanceSheet, group, setGroup } = useFinancialData();
+  const { transactions, balanceSheet } = useFinancialData();
   const [period, setPeriod] = useState<Period>('monthly');
   const [importOpen, setImportOpen] = useState(false);
+  const [costCentre, setCostCentre] = useState<string>('all');
+  const [costCentres, setCostCentres] = useState<string[]>(loadCostCentres());
+
+  useEffect(() => {
+    const handler = () => setCostCentres(loadCostCentres());
+    window.addEventListener('cost-centres-changed', handler);
+    return () => window.removeEventListener('cost-centres-changed', handler);
+  }, []);
+
+  // Include any cost centres present in the data but missing from the managed list
+  const allCostCentres = useMemo(() => {
+    const set = new Set<string>(costCentres);
+    transactions.forEach((t: any) => t.cost_centre && set.add(t.cost_centre));
+    return Array.from(set);
+  }, [costCentres, transactions]);
 
   const monthLabels = useMemo(() => {
     const names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
