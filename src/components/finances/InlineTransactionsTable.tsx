@@ -40,7 +40,7 @@ const toDateInput = (ms: number | null | undefined) => {
 const fromDateInput = (s: string) => (s ? new Date(s).getTime() : null);
 
 export function InlineTransactionsTable() {
-  const { transactions, accounts, addTransaction, deleteTransaction, refreshData } = useFinancialData() as any;
+  const { transactions, accounts, addTransaction, deleteTransaction, refreshData, updateTransaction } = useFinancialData() as any;
   const { currency } = useUserCurrency();
   const currencySymbol = (() => {
     try {
