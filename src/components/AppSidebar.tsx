@@ -72,31 +72,45 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r bg-sidebar">
-      <SidebarHeader className="p-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img 
-              src={cnergiseLogo} 
-              alt="Cnergise" 
-              className="h-12 w-12 object-contain shrink-0"
+      <SidebarHeader className={cn("p-2", !isCollapsed && "p-3")}>
+        {isCollapsed ? (
+          <div className="flex flex-col items-center gap-1">
+            <img
+              src={cnergiseLogo}
+              alt="Cnergise"
+              className="h-8 w-8 object-contain shrink-0"
             />
-            {!isCollapsed && (
-              <span className="font-semibold text-base">Cnergise</span>
-            )}
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleSidebar}
-            className="h-7 w-7 shrink-0"
-          >
-            {isCollapsed ? (
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={toggleSidebar}
+              className="h-7 w-7 shrink-0 border-border bg-background shadow-sm hover:bg-accent hover:text-accent-foreground"
+              aria-label="Expand sidebar"
+            >
               <ChevronRight className="h-4 w-4" />
-            ) : (
+            </Button>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <img
+                src={cnergiseLogo}
+                alt="Cnergise"
+                className="h-10 w-10 object-contain shrink-0"
+              />
+              <span className="font-semibold text-base truncate">Cnergise</span>
+            </div>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={toggleSidebar}
+              className="h-7 w-7 shrink-0 border-border bg-background shadow-sm hover:bg-accent hover:text-accent-foreground"
+              aria-label="Collapse sidebar"
+            >
               <ChevronLeft className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
+            </Button>
+          </div>
+        )}
       </SidebarHeader>
 
       <SidebarContent className="px-2">
