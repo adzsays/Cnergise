@@ -6,6 +6,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useFinancialData } from '@/contexts/FinancialDataContext';
 import { cn } from '@/lib/utils';
+import { useUserCurrency } from '@/hooks/useUserCurrency';
 
 type Period = 'daily' | 'weekly' | 'monthly' | 'yearly';
 
@@ -25,11 +26,9 @@ const loadCostCentres = (): string[] => {
   }
 };
 
-const fmt = (n: number) =>
-  new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 }).format(n);
-
 export function CashFlowView() {
   const { transactions, balanceSheet } = useFinancialData();
+  const { formatWhole: fmt } = useUserCurrency();
   const [period, setPeriod] = useState<Period>('monthly');
   const [costCentre, setCostCentre] = useState<string>('all');
   const [costCentres, setCostCentres] = useState<string[]>(loadCostCentres());
