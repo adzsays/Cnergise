@@ -11,8 +11,9 @@ import { AccountBalancesView } from "@/components/finances/AccountBalancesView";
 import { CreditScoreView } from "@/components/finances/CreditScoreView";
 import { BudgetView } from "@/components/finances/BudgetView";
 import { TrialBalanceView } from "@/components/finances/TrialBalanceView";
+import { BalancesView } from "@/components/finances/BalancesView";
 
-import { LayoutDashboard, Wallet, TrendingUp, PieChart, CreditCard, PiggyBank, FileSpreadsheet } from "lucide-react";
+import { LayoutDashboard, Wallet, TrendingUp, PieChart, CreditCard, PiggyBank, FileSpreadsheet, Scale } from "lucide-react";
 
 const Finances = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
