@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useUserCurrency } from '@/hooks/useUserCurrency';
+import { CurrencyInput } from './CurrencyInput';
 
 const FREQUENCIES = ['daily', 'weekly', 'monthly', 'quarterly', 'yearly'];
 const DEFAULT_COST_CENTRES = ['Personal', 'Home', 'Work', 'Side Hustle', 'Investment', 'Other'];
