@@ -337,7 +337,8 @@ function CostCentreCell({
     if (value && value !== local) setLocal(value);
   }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const showLegacy = local && !costCentres.includes(local);
+  // Ensure the current value is always selectable, even if not yet in the managed list
+  const optionList = local && !costCentres.includes(local) ? [local, ...costCentres] : costCentres;
 
   return (
     <Select
@@ -355,14 +356,11 @@ function CostCentreCell({
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
-        {costCentres.map((c) => (
+        {optionList.map((c) => (
           <SelectItem key={c} value={c}>
             {c}
           </SelectItem>
         ))}
-        {showLegacy && (
-          <SelectItem value={local}>{local} (legacy)</SelectItem>
-        )}
         <SelectSeparator />
         <SelectItem value="__manage__" className="text-primary">
           <span className="flex items-center gap-1.5">
