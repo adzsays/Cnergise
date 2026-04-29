@@ -98,8 +98,11 @@ export function BalancesView() {
   };
 
   // Auto-amortize using the multi-term rate schedule (falls back to single rate if none defined).
-  // fromOrigin=true rebuilds the balance from the original principal at loan start (full history).
-  const applyLoanPayments = async (a: any, fromOrigin = false) => {
+  // fromOrigin=true (default when origin data exists) rebuilds the current balance from the
+  // original principal at loan start, applying every historical monthly payment using the
+  // rate term active at each month — so the displayed balance is always
+  // "original principal less all payments made up to today".
+  const applyLoanPayments = async (a: any, fromOrigin = true) => {
     const start = a.loan_start_date ? new Date(a.loan_start_date) : null;
     if (!start) return toast.error('Set a loan start date first');
 
