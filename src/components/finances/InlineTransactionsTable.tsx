@@ -156,6 +156,9 @@ export function InlineTransactionsTable() {
       if (error) {
         toast.error('Save failed');
         console.error(error);
+      } else {
+        await refreshData?.();
+        toast.success('Cost centre saved');
       }
       return;
     }

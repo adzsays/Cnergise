@@ -47,6 +47,7 @@ interface FinancialAccount {
   original_principal?: number | null;
   last_payment_applied_date?: string | null;
   payment_day?: number | null;
+  cost_centre?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -698,7 +699,7 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
         daily: monthly / 30,
         monthly,
         projections,
-        cost_centre: (a as any).cost_centre || a.name || 'Debt Service',
+        cost_centre: a.cost_centre?.trim() || a.name || 'Debt Service',
         frequency: 'monthly',
         created_at: a.created_at,
         updated_at: a.updated_at,
