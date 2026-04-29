@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
-import { Plus, Trash2, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
+import { Plus, Trash2, TrendingUp, TrendingDown, Wallet, ChevronDown, ChevronRight, Calculator } from 'lucide-react';
 import { useFinancialData } from '@/contexts/FinancialDataContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -16,13 +16,23 @@ const fmtGBP = (n: number) =>
 const ASSET_CATEGORIES = ['Bank', 'Savings', 'Investment', 'Pension', 'Crypto', 'Cash', 'Other'];
 const LIABILITY_CATEGORIES = ['Credit Card', 'Loan', 'Mortgage', 'Overdraft', 'Other'];
 
+// Returns whole months elapsed from `from` to `to` (Date objects)
+const monthsBetween = (from: Date, to: Date) => {
+  if (to <= from) return 0;
+  return (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth());
+};
+
+const isLoanLike = (cat?: string | null) => {
+  const c = (cat || '').toLowerCase();
+  return c.includes('loan') || c.includes('mortgage');
+};
+
 export function BalancesView() {
   const { accounts, refreshData } = useFinancialData();
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const update = async (id: string, patch: Partial<{
-    name: string; category: string; balance: number; credit_limit: number | null;
-  }>) => {
+  const update = async (id: string, patch: Record<string, any>) => {
     setSavingId(id);
     const { error } = await supabase.from('financial_accounts').update(patch as any).eq('id', id);
     setSavingId(null);
@@ -57,107 +67,167 @@ export function BalancesView() {
     else refreshData();
   };
 
-  const { assets, liabilities, creditCards, totals } = useMemo(() => {
+  // Auto-amortize: applies elapsed monthly payments since last application, reducing balance.
+  const applyLoanPayments = async (a: any) => {
+    const rate = Number(a.interest_rate) || 0;
+    const payment = Number(a.monthly_payment) || 0;
+    const start = a.loan_start_date ? new Date(a.loan_start_date) : null;
+    if (!start) return toast.error('Set a loan start date first');
+    if (payment <= 0) return toast.error('Set a monthly payment first');
+
+    const lastApplied = a.last_payment_applied_date ? new Date(a.last_payment_applied_date) : start;
+    const today = new Date();
+    const monthsToApply = monthsBetween(lastApplied, today);
+    if (monthsToApply <= 0) return toast.info('No new monthly payments to apply');
+
+    let balance = Math.abs(Number(a.balance) || 0);
+    const monthlyRate = rate / 100 / 12;
+    let totalInterest = 0;
+    let totalPrincipal = 0;
+
+    for (let i = 0; i < monthsToApply && balance > 0; i++) {
+      const interest = balance * monthlyRate;
+      const principal = Math.min(balance, payment - interest);
+      if (principal <= 0) break; // payment doesn't cover interest
+      balance -= principal;
+      totalInterest += interest;
+      totalPrincipal += principal;
+    }
+
+    // Liability balances are stored as negative numbers in the schema
+    const newBalance = -Math.abs(balance);
+    const newLastApplied = new Date(lastApplied);
+    newLastApplied.setMonth(newLastApplied.getMonth() + monthsToApply);
+
+    await update(a.id, {
+      balance: newBalance,
+      last_payment_applied_date: newLastApplied.toISOString().slice(0, 10),
+    });
+    toast.success(
+      `Applied ${monthsToApply} payment${monthsToApply > 1 ? 's' : ''} · Principal ${fmtGBP(totalPrincipal)} · Interest ${fmtGBP(totalInterest)}`
+    );
+  };
+
+  const { assets, liabilities, totals } = useMemo(() => {
     const a = accounts.filter((x) => x.type === 'asset');
     const l = accounts.filter((x) => x.type === 'liability');
-    const cc = l.filter((x) => (x.category || '').toLowerCase().includes('credit') || x.credit_limit);
     const tA = a.reduce((s, x) => s + Number(x.balance), 0);
     const tL = l.reduce((s, x) => s + Math.abs(Number(x.balance)), 0);
-    return { assets: a, liabilities: l, creditCards: cc, totals: { tA, tL, net: tA - tL } };
+    return { assets: a, liabilities: l, totals: { tA, tL, net: tA - tL } };
   }, [accounts]);
 
   const Row = ({
     a,
     showLimit,
     categoryOptions,
+    isLiability,
   }: {
     a: any;
     showLimit?: boolean;
     categoryOptions: string[];
+    isLiability?: boolean;
   }) => {
     const used = Math.abs(Number(a.balance));
     const limit = Number(a.credit_limit || 0);
     const utilisation = limit > 0 ? Math.min(100, (used / limit) * 100) : 0;
+    const loan = isLiability && isLoanLike(a.category);
+    const expanded = expandedId === a.id;
+
     return (
-      <tr className={cn('border-b border-border/40 hover:bg-muted/30', savingId === a.id && 'opacity-60')}>
-        <td className="py-1 px-2">
-          <Input
-            defaultValue={a.name}
-            onBlur={(e) => e.target.value !== a.name && update(a.id, { name: e.target.value })}
-            className="h-7 border-0 bg-transparent px-1 focus-visible:ring-1"
-          />
-        </td>
-        <td className="py-1 px-2">
-          <Select defaultValue={a.category || categoryOptions[0]} onValueChange={(v) => update(a.id, { category: v })}>
-            <SelectTrigger className="h-7 border-0 bg-transparent px-1 focus:ring-1">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {categoryOptions.map((c) => (
-                <SelectItem key={c} value={c}>
-                  {c}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </td>
-        <td className="py-1 px-2">
-          <Input
-            type="number"
-            defaultValue={a.balance}
-            onBlur={(e) => {
-              const v = parseFloat(e.target.value) || 0;
-              if (v !== Number(a.balance)) update(a.id, { balance: v });
-            }}
-            className="h-7 border-0 bg-transparent px-1 text-right tabular-nums focus-visible:ring-1"
-          />
-        </td>
-        {showLimit && (
-          <>
-            <td className="py-1 px-2">
-              <Input
-                type="number"
-                defaultValue={a.credit_limit ?? ''}
-                placeholder="—"
-                onBlur={(e) => {
-                  const v = e.target.value === '' ? null : parseFloat(e.target.value) || 0;
-                  if (v !== a.credit_limit) update(a.id, { credit_limit: v });
-                }}
-                className="h-7 border-0 bg-transparent px-1 text-right tabular-nums focus-visible:ring-1"
-              />
-            </td>
-            <td className="py-1 px-2 min-w-[140px]">
-              {limit > 0 ? (
-                <div className="flex items-center gap-2">
-                  <Progress
-                    value={utilisation}
-                    className={cn(
-                      'h-1.5 flex-1',
-                      utilisation > 80 && '[&>div]:bg-destructive',
-                      utilisation > 50 && utilisation <= 80 && '[&>div]:bg-orange-500'
-                    )}
-                  />
-                  <span className="text-[10px] tabular-nums text-muted-foreground w-9 text-right">
-                    {utilisation.toFixed(0)}%
-                  </span>
-                </div>
-              ) : (
-                <span className="text-[10px] text-muted-foreground">—</span>
-              )}
-            </td>
-          </>
-        )}
-        <td className="py-1 px-1">
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-6 w-6 text-destructive hover:text-destructive"
-            onClick={() => remove(a.id)}
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </Button>
-        </td>
-      </tr>
+      <>
+        <tr className={cn('border-b border-border/40 hover:bg-muted/30', savingId === a.id && 'opacity-60')}>
+          <td className="py-1 px-1 w-6">
+            {loan && (
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-6 w-6"
+                onClick={() => setExpandedId(expanded ? null : a.id)}
+              >
+                {expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+              </Button>
+            )}
+          </td>
+          <td className="py-1 px-2">
+            <Input
+              defaultValue={a.name}
+              onBlur={(e) => e.target.value !== a.name && update(a.id, { name: e.target.value })}
+              className="h-7 border-0 bg-transparent px-1 focus-visible:ring-1"
+            />
+          </td>
+          <td className="py-1 px-2">
+            <Select defaultValue={a.category || categoryOptions[0]} onValueChange={(v) => update(a.id, { category: v })}>
+              <SelectTrigger className="h-7 border-0 bg-transparent px-1 focus:ring-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {categoryOptions.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </td>
+          <td className="py-1 px-2">
+            <Input
+              type="number"
+              defaultValue={a.balance}
+              onBlur={(e) => {
+                const v = parseFloat(e.target.value) || 0;
+                if (v !== Number(a.balance)) update(a.id, { balance: v });
+              }}
+              className="h-7 border-0 bg-transparent px-1 text-right tabular-nums focus-visible:ring-1"
+            />
+          </td>
+          {showLimit && (
+            <>
+              <td className="py-1 px-2">
+                <Input
+                  type="number"
+                  defaultValue={a.credit_limit ?? ''}
+                  placeholder="—"
+                  onBlur={(e) => {
+                    const v = e.target.value === '' ? null : parseFloat(e.target.value) || 0;
+                    if (v !== a.credit_limit) update(a.id, { credit_limit: v });
+                  }}
+                  className="h-7 border-0 bg-transparent px-1 text-right tabular-nums focus-visible:ring-1"
+                />
+              </td>
+              <td className="py-1 px-2 min-w-[140px]">
+                {limit > 0 ? (
+                  <div className="flex items-center gap-2">
+                    <Progress
+                      value={utilisation}
+                      className={cn(
+                        'h-1.5 flex-1',
+                        utilisation > 80 && '[&>div]:bg-destructive',
+                        utilisation > 50 && utilisation <= 80 && '[&>div]:bg-orange-500'
+                      )}
+                    />
+                    <span className="text-[10px] tabular-nums text-muted-foreground w-9 text-right">
+                      {utilisation.toFixed(0)}%
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-[10px] text-muted-foreground">—</span>
+                )}
+              </td>
+            </>
+          )}
+          <td className="py-1 px-1">
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-6 w-6 text-destructive hover:text-destructive"
+              onClick={() => remove(a.id)}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </td>
+        </tr>
+        {loan && expanded && <LoanDetailRow a={a} update={update} apply={() => applyLoanPayments(a)} />}
+      </>
     );
   };
 
@@ -208,6 +278,7 @@ export function BalancesView() {
           <table className="w-full text-xs">
             <thead>
               <tr className="text-muted-foreground uppercase text-[10px] tracking-wider border-b">
+                <th className="w-6"></th>
                 <th className="text-left py-2 px-2 font-medium">Name</th>
                 <th className="text-left py-2 px-2 font-medium">Category</th>
                 <th className="text-right py-2 px-2 font-medium">Balance</th>
@@ -217,7 +288,7 @@ export function BalancesView() {
             <tbody>
               {assets.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="text-center py-4 text-muted-foreground">
+                  <td colSpan={5} className="text-center py-4 text-muted-foreground">
                     No assets yet.
                   </td>
                 </tr>
@@ -229,12 +300,14 @@ export function BalancesView() {
         </div>
       </Card>
 
-      {/* Liabilities (incl. credit cards w/ utilisation) */}
+      {/* Liabilities (incl. credit cards w/ utilisation, loans w/ amortization) */}
       <Card className="p-3">
         <div className="flex items-center justify-between mb-3">
           <div>
             <h3 className="text-sm font-semibold uppercase tracking-wide">Liabilities</h3>
-            <p className="text-[10px] text-muted-foreground">Credit cards show utilisation against their limit</p>
+            <p className="text-[10px] text-muted-foreground">
+              Credit cards show utilisation · Loans/mortgages expand for interest, term, and auto-amortization
+            </p>
           </div>
           <div className="flex gap-2">
             <Button size="sm" variant="outline" onClick={() => addRow('liability', 'Credit Card')}>
@@ -243,12 +316,16 @@ export function BalancesView() {
             <Button size="sm" variant="outline" onClick={() => addRow('liability', 'Loan')}>
               <Plus className="h-3.5 w-3.5 mr-1" /> Loan
             </Button>
+            <Button size="sm" variant="outline" onClick={() => addRow('liability', 'Mortgage')}>
+              <Plus className="h-3.5 w-3.5 mr-1" /> Mortgage
+            </Button>
           </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
               <tr className="text-muted-foreground uppercase text-[10px] tracking-wider border-b">
+                <th className="w-6"></th>
                 <th className="text-left py-2 px-2 font-medium">Name</th>
                 <th className="text-left py-2 px-2 font-medium">Category</th>
                 <th className="text-right py-2 px-2 font-medium">Balance</th>
@@ -260,17 +337,157 @@ export function BalancesView() {
             <tbody>
               {liabilities.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-4 text-muted-foreground">
+                  <td colSpan={7} className="text-center py-4 text-muted-foreground">
                     No liabilities yet.
                   </td>
                 </tr>
               ) : (
-                liabilities.map((a) => <Row key={a.id} a={a} showLimit categoryOptions={LIABILITY_CATEGORIES} />)
+                liabilities.map((a) => (
+                  <Row key={a.id} a={a} showLimit isLiability categoryOptions={LIABILITY_CATEGORIES} />
+                ))
               )}
             </tbody>
           </table>
         </div>
       </Card>
     </div>
+  );
+}
+
+// Inline expandable loan editor with amortization preview
+function LoanDetailRow({
+  a,
+  update,
+  apply,
+}: {
+  a: any;
+  update: (id: string, patch: Record<string, any>) => Promise<void>;
+  apply: () => void;
+}) {
+  const rate = Number(a.interest_rate) || 0;
+  const term = Number(a.term_months) || 0;
+  const payment = Number(a.monthly_payment) || 0;
+  const balance = Math.abs(Number(a.balance) || 0);
+  const monthlyRate = rate / 100 / 12;
+  const monthlyInterest = balance * monthlyRate;
+  const monthlyPrincipal = Math.max(0, payment - monthlyInterest);
+
+  // Suggest payment from principal + rate + term (amortization formula)
+  const principal = Number(a.original_principal) || balance;
+  const suggested =
+    monthlyRate > 0 && term > 0
+      ? (principal * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -term))
+      : term > 0
+      ? principal / term
+      : 0;
+
+  const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
+    <div className="flex flex-col gap-1">
+      <label className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</label>
+      {children}
+    </div>
+  );
+
+  return (
+    <tr className="bg-muted/20 border-b border-border/40">
+      <td colSpan={7} className="px-4 py-3">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+          <Field label="Original Principal">
+            <Input
+              type="number"
+              defaultValue={a.original_principal ?? ''}
+              placeholder="0"
+              onBlur={(e) => {
+                const v = e.target.value === '' ? null : parseFloat(e.target.value) || 0;
+                if (v !== a.original_principal) update(a.id, { original_principal: v });
+              }}
+              className="h-7 text-xs tabular-nums"
+            />
+          </Field>
+          <Field label="Interest Rate (% APR)">
+            <Input
+              type="number"
+              step="0.01"
+              defaultValue={a.interest_rate ?? ''}
+              placeholder="0.0"
+              onBlur={(e) => {
+                const v = e.target.value === '' ? null : parseFloat(e.target.value) || 0;
+                if (v !== a.interest_rate) update(a.id, { interest_rate: v });
+              }}
+              className="h-7 text-xs tabular-nums"
+            />
+          </Field>
+          <Field label="Term (months)">
+            <Input
+              type="number"
+              defaultValue={a.term_months ?? ''}
+              placeholder="0"
+              onBlur={(e) => {
+                const v = e.target.value === '' ? null : parseInt(e.target.value, 10) || 0;
+                if (v !== a.term_months) update(a.id, { term_months: v });
+              }}
+              className="h-7 text-xs tabular-nums"
+            />
+          </Field>
+          <Field label="Monthly Payment">
+            <Input
+              type="number"
+              step="0.01"
+              defaultValue={a.monthly_payment ?? ''}
+              placeholder={suggested ? suggested.toFixed(2) : '0.00'}
+              onBlur={(e) => {
+                const v = e.target.value === '' ? null : parseFloat(e.target.value) || 0;
+                if (v !== a.monthly_payment) update(a.id, { monthly_payment: v });
+              }}
+              className="h-7 text-xs tabular-nums"
+            />
+          </Field>
+          <Field label="Loan Start Date">
+            <Input
+              type="date"
+              defaultValue={a.loan_start_date ?? ''}
+              onBlur={(e) => {
+                const v = e.target.value || null;
+                if (v !== a.loan_start_date) update(a.id, { loan_start_date: v });
+              }}
+              className="h-7 text-xs"
+            />
+          </Field>
+          <Field label="Last Payment Applied">
+            <Input
+              type="date"
+              defaultValue={a.last_payment_applied_date ?? ''}
+              onBlur={(e) => {
+                const v = e.target.value || null;
+                if (v !== a.last_payment_applied_date) update(a.id, { last_payment_applied_date: v });
+              }}
+              className="h-7 text-xs"
+            />
+          </Field>
+        </div>
+
+        <div className="mt-3 grid grid-cols-2 md:grid-cols-5 gap-3 items-end">
+          <div>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Next Interest</p>
+            <p className="text-sm font-semibold text-destructive tabular-nums">{fmtGBP(monthlyInterest)}</p>
+          </div>
+          <div>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Next Principal</p>
+            <p className="text-sm font-semibold text-success tabular-nums">{fmtGBP(monthlyPrincipal)}</p>
+          </div>
+          <div>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Suggested Payment</p>
+            <p className="text-sm font-semibold tabular-nums">{suggested ? fmtGBP(suggested) : '—'}</p>
+          </div>
+          <div>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Outstanding</p>
+            <p className="text-sm font-semibold tabular-nums">{fmtGBP(balance)}</p>
+          </div>
+          <Button size="sm" onClick={apply} className="h-8">
+            <Calculator className="h-3.5 w-3.5 mr-1" /> Apply Payments to Date
+          </Button>
+        </div>
+      </td>
+    </tr>
   );
 }
