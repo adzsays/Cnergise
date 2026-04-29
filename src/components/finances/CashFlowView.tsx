@@ -241,6 +241,21 @@ export function CashFlowView() {
 
     filtered.forEach(addOccurrences);
 
+    // Place credit-card payments on the 1st of each month within the horizon,
+    // capped to the remaining outstanding balance so payments stop once paid off.
+    {
+      let ccRemaining = creditCards.reduce((s, c) => s + c.owed, 0);
+      const monthsCount = 12;
+      for (let m = 0; m < monthsCount && ccRemaining > 0; m++) {
+        const payDate = new Date(horizonStart.getFullYear(), horizonStart.getMonth() + m, 1);
+        const idx = dayIndex(payDate);
+        if (idx < 0 || idx >= days.length) continue;
+        const pay = Math.min(ccRemaining, totalCcPaymentMonthly);
+        days[idx].expense += pay;
+        ccRemaining -= pay;
+      }
+    }
+
     // Aggregate based on selected period
     type Row = { label: string; income: number; expense: number; net: number; balance: number };
     const rows: Row[] = [];
