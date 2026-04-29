@@ -80,6 +80,29 @@ export const ImportDialog = ({ open, onOpenChange }: ImportDialogProps) => {
     return Date.now();
   };
 
+  const pick = (row: any, ...keys: string[]) => {
+    for (const k of keys) {
+      if (row[k] !== undefined && row[k] !== null && row[k] !== '') return row[k];
+    }
+    return undefined;
+  };
+
+  const parseFrequency = (val: any): string => {
+    const v = (val ?? '').toString().trim().toLowerCase();
+    if (['daily', 'weekly', 'monthly', 'quarterly', 'yearly'].includes(v)) return v;
+    return 'monthly';
+  };
+
+  const monthlyFromFrequency = (amount: number, freq: string): number => {
+    switch (freq) {
+      case 'daily': return amount * 30;
+      case 'weekly': return amount * 4.345;
+      case 'quarterly': return amount / 3;
+      case 'yearly': return amount / 12;
+      default: return amount;
+    }
+  };
+
   const importTransactions = async (data: any[]) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -88,25 +111,43 @@ export const ImportDialog = ({ open, onOpenChange }: ImportDialogProps) => {
     }
 
     const transactions = data.map((row) => {
-      const amount = parseFloat(row.amount || row.Amount || '0');
-      const monthly = parseFloat(row.monthly || row.Monthly || amount.toString());
-      const daily = parseFloat(row.daily || row.Daily || (amount / 30).toString());
-      const spaceName = row.space || row.Space || row.group_name || row['Group Name'] || row.group;
+      const type = (pick(row, 'type', 'Type', 'Type ') || 'expense').toString().toLowerCase();
+      const description = pick(row, 'description', 'Description', 'subcategory', 'Subcategory') || '';
+      const amount = parseFloat(pick(row, 'amount', 'Amount') ?? '0');
+      const recurringRaw = pick(row, 'recurring', 'Recurring');
+      const recurring = recurringRaw === undefined
+        ? true
+        : ['true', 'yes', '1', 'y'].includes(recurringRaw.toString().toLowerCase());
+      const date = parseTransactionDate(pick(row, 'date', 'Date'));
+      const costCentre = pick(row, 'cost centre', 'Cost Centre', 'cost_centre', 'costCentre', 'Cost Center', 'cost center') || 'Personal';
+      const frequency = parseFrequency(pick(row, 'frequency', 'Frequency'));
+      const endDateRaw = pick(row, 'end date', 'End Date', 'end_date', 'endDate');
+      const endDate = endDateRaw ? new Date(parseTransactionDate(endDateRaw)).toISOString().slice(0, 10) : null;
+      const accountName = pick(row, 'account', 'Account');
+
+      const monthly = monthlyFromFrequency(amount, frequency);
+      const daily = monthly / 30;
+
+      const spaceName = pick(row, 'space', 'Space', 'group_name', 'Group Name', 'group');
       const spaceId = findSpaceIdByName(spaceName);
       const spaceForGroupName = spaces.find(s => s.id === spaceId);
-      
+
       return {
         user_id: user.id,
-        date: parseTransactionDate(row.date || row.Date),
-        type: (row.type || row.Type || 'expense').toLowerCase(),
-        category: row.category || row.Category || 'Other',
-        subcategory: row.subcategory || row.Subcategory || '',
+        date,
+        type: type === 'income' ? 'income' : 'expense',
+        category: accountName || costCentre || 'Other',
+        subcategory: description,
         space_id: spaceId,
         group_name: spaceForGroupName?.name || 'General',
         amount,
-        percentage: parseFloat(row.percentage || row.Percentage || '0'),
+        percentage: 0,
         daily,
         monthly,
+        cost_centre: costCentre,
+        frequency,
+        end_date: endDate,
+        recurring,
         projections: [],
       };
     });
