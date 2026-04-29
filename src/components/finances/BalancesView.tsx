@@ -274,7 +274,9 @@ export function BalancesView() {
             a={a}
             update={update}
             apply={() => applyLoanPayments(a)}
+            applyFromOrigin={() => applyLoanPayments(a, true)}
             schedule={schedules[a.id] || []}
+            reloadSchedules={loadSchedules}
           />
         )}
       </>
