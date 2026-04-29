@@ -409,6 +409,24 @@ export function BalancesView() {
           </table>
         </div>
       </Card>
+
+      {/* Cash Flow Inputs (moved from Cash Flow tab) */}
+      <Card className="p-3">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h3 className="text-sm font-semibold uppercase tracking-wide">Cash Flow Inputs</h3>
+            <p className="text-[10px] text-muted-foreground">
+              Add and edit income & expense entries — these feed the Cash Flow projections
+            </p>
+          </div>
+          <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
+            <Upload className="h-3.5 w-3.5 mr-1" /> Import CSV/Excel
+          </Button>
+        </div>
+        <InlineTransactionsTable />
+      </Card>
+
+      <ImportDialog open={importOpen} onOpenChange={setImportOpen} />
     </div>
   );
 }
