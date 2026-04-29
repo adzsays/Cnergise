@@ -105,7 +105,7 @@ export function BalancesView() {
       account_class: type, // 'asset' | 'liability'
       category,
       balance: 0,
-      currency: 'GBP',
+      currency: userCurrency,
       group_name: 'Personal',
       credit_limit: category === 'Credit Card' ? 0 : null,
     });
