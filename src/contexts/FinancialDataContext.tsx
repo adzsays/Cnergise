@@ -233,16 +233,30 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
     return (data || []) as PhysicalAssetRow[];
   };
 
+  const fetchRateTerms = async (): Promise<RateTerm[]> => {
+    const { data, error } = await supabase
+      .from('loan_rate_terms' as any)
+      .select('*')
+      .order('sequence', { ascending: true });
+    if (error) {
+      console.error('Error fetching loan rate terms:', error);
+      return [];
+    }
+    return (data || []) as unknown as RateTerm[];
+  };
+
   const refreshData = async () => {
     setLoading(true);
-    const [transactionsData, accountsData, physicalData] = await Promise.all([
+    const [transactionsData, accountsData, physicalData, rateTermsData] = await Promise.all([
       fetchTransactions(),
       fetchAccounts(),
       fetchPhysicalAssets(),
+      fetchRateTerms(),
     ]);
     setTransactions(transactionsData);
     setAccounts(accountsData);
     setPhysicalAssets(physicalData);
+    setRateTerms(rateTermsData);
 
     // Discover any extra groups already in the data so the selector shows them.
     const groupSet = new Set<string>(['Personal', 'Corential']);
