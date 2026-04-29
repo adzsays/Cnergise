@@ -265,6 +265,20 @@ export function BalancesView() {
                   className="h-7 border-0 bg-transparent px-1 focus-visible:ring-1"
                 />
               </td>
+              <td className="py-1 px-2">
+                {(a.category || '').toLowerCase() === 'credit card' ? (
+                  <CurrencyInput
+                    value={a.monthly_payment ?? null}
+                    allowNull
+                    onCommit={(v) => {
+                      if (v !== a.monthly_payment) update(a.id, { monthly_payment: v });
+                    }}
+                    className="h-7 border-0 bg-transparent px-1 focus-visible:ring-1"
+                  />
+                ) : (
+                  <span className="text-[10px] text-muted-foreground">—</span>
+                )}
+              </td>
               <td className="py-1 px-2 min-w-[140px]">
                 {limit > 0 ? (
                   <div className="flex items-center gap-2">
