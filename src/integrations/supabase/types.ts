@@ -511,6 +511,7 @@ export type Database = {
           created_at: string
           daily: number
           date: number
+          end_date: string | null
           frequency: string | null
           group_name: string
           id: string
@@ -518,6 +519,7 @@ export type Database = {
           percentage: number
           projections: Json
           space_id: string | null
+          start_date: string | null
           subcategory: string
           type: string
           updated_at: string
@@ -530,6 +532,7 @@ export type Database = {
           created_at?: string
           daily?: number
           date: number
+          end_date?: string | null
           frequency?: string | null
           group_name: string
           id?: string
@@ -537,6 +540,7 @@ export type Database = {
           percentage?: number
           projections?: Json
           space_id?: string | null
+          start_date?: string | null
           subcategory: string
           type: string
           updated_at?: string
@@ -549,6 +553,7 @@ export type Database = {
           created_at?: string
           daily?: number
           date?: number
+          end_date?: string | null
           frequency?: string | null
           group_name?: string
           id?: string
@@ -556,6 +561,7 @@ export type Database = {
           percentage?: number
           projections?: Json
           space_id?: string | null
+          start_date?: string | null
           subcategory?: string
           type?: string
           updated_at?: string
