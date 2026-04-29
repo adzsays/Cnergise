@@ -16,6 +16,9 @@ import { SubscriptionSettings } from "@/components/settings/SubscriptionSettings
 import { SecuritySettings } from "@/components/settings/SecuritySettings";
 import { Upload, Save, User, Key, CreditCard, ShieldCheck } from "lucide-react";
 import { SkeletonCard } from "@/components/ui/DashboardWidget";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SUPPORTED_CURRENCIES } from "@/hooks/useUserCurrency";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function Profile() {
   const { profile, roles, isLoading, updateProfile, uploadAvatar } = useProfile();
