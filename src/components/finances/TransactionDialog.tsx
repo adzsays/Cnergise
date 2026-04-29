@@ -166,6 +166,8 @@ export const TransactionDialog = ({ open, onOpenChange, transaction }: Transacti
       projections: [],
       cost_centre: formData.cost_centre,
       frequency: formData.frequency,
+      start_date: formData.start_date || null,
+      end_date: formData.end_date || null,
     };
 
     const { error } = transaction?.id
