@@ -40,7 +40,7 @@ const toDateInput = (ms: number | null | undefined) => {
 const fromDateInput = (s: string) => (s ? new Date(s).getTime() : null);
 
 export function InlineTransactionsTable() {
-  const { transactions, accounts, addTransaction, deleteTransaction, refreshData } = useFinancialData() as any;
+  const { transactions, accounts, addTransaction, deleteTransaction, refreshData, updateTransaction } = useFinancialData() as any;
   const { currency } = useUserCurrency();
   const currencySymbol = (() => {
     try {
@@ -306,8 +306,7 @@ export function InlineTransactionsTable() {
                       value={t.monthly}
                       onCommit={(val) => {
                         const v = val ?? 0;
-                        if (v !== t.monthly)
-                          updateField(t.id, { monthly: v, daily: v / 30, amount: v, projections: Array(12).fill(v) });
+                        if (v !== t.monthly) updateTransaction(t.id, v);
                       }}
                       className="h-7 border-0 bg-transparent px-1 focus-visible:ring-1"
                     />
