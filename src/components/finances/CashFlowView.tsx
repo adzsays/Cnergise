@@ -119,7 +119,15 @@ export function CashFlowView() {
             </SelectContent>
           </Select>
         </div>
+        <div className="ml-auto">
+          <Button variant="outline" size="sm" onClick={() => setImportOpen(true)} className="h-8">
+            <Upload className="h-4 w-4 mr-2" />
+            Import CSV/Excel
+          </Button>
+        </div>
       </div>
+
+      <ImportDialog open={importOpen} onOpenChange={setImportOpen} />
 
       {/* KPI strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
