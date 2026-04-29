@@ -821,6 +821,59 @@ export type Database = {
           },
         ]
       }
+      loan_rate_terms: {
+        Row: {
+          account_id: string
+          created_at: string
+          id: string
+          interest_rate: number
+          notes: string | null
+          payment_override: number | null
+          rate_type: string
+          sequence: number
+          start_date: string
+          term_months: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_id: string
+          created_at?: string
+          id?: string
+          interest_rate?: number
+          notes?: string | null
+          payment_override?: number | null
+          rate_type?: string
+          sequence?: number
+          start_date: string
+          term_months?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string
+          created_at?: string
+          id?: string
+          interest_rate?: number
+          notes?: string | null
+          payment_override?: number | null
+          rate_type?: string
+          sequence?: number
+          start_date?: string
+          term_months?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_rate_terms_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       performance_metrics: {
         Row: {
           created_at: string
