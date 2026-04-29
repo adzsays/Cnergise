@@ -726,9 +726,21 @@ function LoanDetailRow({
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Outstanding</p>
             <p className="text-sm font-semibold tabular-nums">{fmtGBP(balance)}</p>
           </div>
-          <Button size="sm" onClick={apply} className="h-8">
-            <Calculator className="h-3.5 w-3.5 mr-1" /> Apply Payments to Date
-          </Button>
+          <div className="flex flex-col gap-1">
+            <Button size="sm" onClick={apply} className="h-7 text-[11px]">
+              <Calculator className="h-3.5 w-3.5 mr-1" /> Apply to Date
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={applyFromOrigin}
+              className="h-7 text-[11px]"
+              disabled={!a.original_principal || !a.loan_start_date}
+              title="Rebuilds the current balance from the original principal at loan start"
+            >
+              From Loan Start
+            </Button>
+          </div>
         </div>
 
         {/* 12-month payment schedule preview (drives cash flow) */}
