@@ -276,9 +276,9 @@ export const ImportDialog = ({ open, onOpenChange }: ImportDialogProps) => {
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                <strong>Required columns:</strong> Type, Description, Amount, Date
+                <strong>Required:</strong> Type, Description, (Amount or Monthly), (Date or Recurring Date)
                 <br />
-                <strong>Optional:</strong> Recurring, Cost Centre, Frequency, End Date, Account, Space
+                <strong>Optional:</strong> Cost Centre, Frequency, End Date, Account
               </AlertDescription>
             </Alert>
 
