@@ -107,33 +107,100 @@ export function CashFlowView() {
     const today = new Date();
     const startMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
-    // Build a flat array of daily { date, income, expense } across the next 12 months
+    // Build a flat array of daily { date, income, expense } across the next 12 months,
+    // placing each transaction's amount on its actual occurrence dates based on frequency.
     type Day = { date: Date; income: number; expense: number };
+    const horizonStart = startMonth;
+    const horizonEnd = new Date(startMonth.getFullYear(), startMonth.getMonth() + 12, 0); // last day of month +11
+    const totalDays =
+      Math.floor((horizonEnd.getTime() - horizonStart.getTime()) / 86400000) + 1;
     const days: Day[] = [];
-    for (let i = 0; i < 12; i++) {
-      const monthDate = new Date(startMonth.getFullYear(), startMonth.getMonth() + i, 1);
-      const daysInMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0).getDate();
-
-      const monthIncome = filtered
-        .filter((t) => t.type === 'income')
-        .reduce((s, t) => s + (t.projections?.[i] || 0), 0);
-      const monthExpense = Math.abs(
-        filtered
-          .filter((t) => t.type === 'expense')
-          .reduce((s, t) => s + (t.projections?.[i] || 0), 0)
+    for (let i = 0; i < totalDays; i++) {
+      const d = new Date(horizonStart);
+      d.setDate(d.getDate() + i);
+      days.push({ date: d, income: 0, expense: 0 });
+    }
+    const dayIndex = (d: Date) =>
+      Math.floor(
+        (new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() -
+          horizonStart.getTime()) /
+          86400000
       );
 
-      const dailyIncome = monthIncome / daysInMonth;
-      const dailyExpense = monthExpense / daysInMonth;
+    // Generate occurrence dates per transaction respecting frequency + start/end bounds
+    const addOccurrences = (t: any) => {
+      const freq = (t.frequency || 'monthly').toLowerCase();
+      const amount = Math.abs(Number(t.amount) || Number(t.monthly) || 0);
+      if (!amount) return;
 
-      for (let d = 1; d <= daysInMonth; d++) {
-        days.push({
-          date: new Date(monthDate.getFullYear(), monthDate.getMonth(), d),
-          income: dailyIncome,
-          expense: dailyExpense,
-        });
+      const baseDate = t.date ? new Date(Number(t.date)) : new Date();
+      const startBound = t.start_date ? new Date(t.start_date) : null;
+      const endBound = t.end_date ? new Date(t.end_date) : null;
+
+      const place = (d: Date) => {
+        if (d < horizonStart || d > horizonEnd) return;
+        if (startBound && d < startBound) return;
+        if (endBound && d > endBound) return;
+        const idx = dayIndex(d);
+        if (idx < 0 || idx >= days.length) return;
+        if (t.type === 'income') days[idx].income += amount;
+        else days[idx].expense += amount;
+      };
+
+      if (freq === 'one-time' || freq === 'once') {
+        place(baseDate);
+        return;
       }
-    }
+
+      // Determine step in days/months for recurring frequencies
+      const stepConfig: { months?: number; days?: number } = (() => {
+        switch (freq) {
+          case 'daily':
+            return { days: 1 };
+          case 'weekly':
+            return { days: 7 };
+          case 'fortnightly':
+          case 'bi-weekly':
+          case 'biweekly':
+            return { days: 14 };
+          case 'monthly':
+            return { months: 1 };
+          case 'quarterly':
+            return { months: 3 };
+          case 'half-yearly':
+          case 'semi-annually':
+            return { months: 6 };
+          case 'yearly':
+          case 'annually':
+            return { months: 12 };
+          default:
+            return { months: 1 };
+        }
+      })();
+
+      // Walk forward from baseDate, but also catch occurrences that fall in horizon
+      // even if baseDate is in the past — by stepping forward until we reach horizonStart.
+      let cursor = new Date(baseDate);
+      // Fast-forward into horizon
+      while (cursor < horizonStart) {
+        if (stepConfig.months) cursor.setMonth(cursor.getMonth() + stepConfig.months);
+        else if (stepConfig.days) cursor.setDate(cursor.getDate() + stepConfig.days);
+        else break;
+      }
+      // Walk through horizon
+      let safety = 0;
+      while (cursor <= horizonEnd && safety < 2000) {
+        place(cursor);
+        const next = new Date(cursor);
+        if (stepConfig.months) next.setMonth(next.getMonth() + stepConfig.months);
+        else if (stepConfig.days) next.setDate(next.getDate() + stepConfig.days);
+        else break;
+        cursor = next;
+        safety++;
+      }
+    };
+
+    filtered.forEach(addOccurrences);
 
     // Aggregate based on selected period
     type Row = { label: string; income: number; expense: number; net: number; balance: number };
@@ -186,25 +253,27 @@ export function CashFlowView() {
       }
     } else if (period === 'monthly') {
       const names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      for (let i = 0; i < 12; i++) {
-        const monthDate = new Date(startMonth.getFullYear(), startMonth.getMonth() + i, 1);
-        const monthIncome = filtered
-          .filter((t) => t.type === 'income')
-          .reduce((s, t) => s + (t.projections?.[i] || 0), 0);
-        const monthExpense = Math.abs(
-          filtered
-            .filter((t) => t.type === 'expense')
-            .reduce((s, t) => s + (t.projections?.[i] || 0), 0)
-        );
-        running += monthIncome - monthExpense;
-        rows.push({
-          label: `${names[monthDate.getMonth()]} ${monthDate.getFullYear()}`,
-          income: monthIncome,
-          expense: monthExpense,
-          net: monthIncome - monthExpense,
-          balance: running,
+      // Aggregate the daily occurrences by calendar month
+      const monthBuckets: Record<string, { inc: number; exp: number; date: Date }> = {};
+      days.forEach((d) => {
+        const key = `${d.date.getFullYear()}-${d.date.getMonth()}`;
+        if (!monthBuckets[key])
+          monthBuckets[key] = { inc: 0, exp: 0, date: new Date(d.date.getFullYear(), d.date.getMonth(), 1) };
+        monthBuckets[key].inc += d.income;
+        monthBuckets[key].exp += d.expense;
+      });
+      Object.values(monthBuckets)
+        .sort((a, b) => a.date.getTime() - b.date.getTime())
+        .forEach((b) => {
+          running += b.inc - b.exp;
+          rows.push({
+            label: `${names[b.date.getMonth()]} ${b.date.getFullYear()}`,
+            income: b.inc,
+            expense: b.exp,
+            net: b.inc - b.exp,
+            balance: running,
+          });
         });
-      }
     } else {
       // yearly — single bucket sum across 12 months
       const totalIncome = days.reduce((s, d) => s + d.income, 0);
