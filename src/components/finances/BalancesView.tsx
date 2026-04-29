@@ -32,6 +32,35 @@ export function BalancesView() {
   const { accounts, refreshData } = useFinancialData();
   const [savingId, setSavingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [schedules, setSchedules] = useState<Record<string, RateTerm[]>>({});
+
+  const loadSchedules = async () => {
+    const { data, error } = await supabase
+      .from('loan_rate_terms' as any)
+      .select('*')
+      .order('sequence', { ascending: true });
+    if (error) {
+      console.error(error);
+      return;
+    }
+    const grouped: Record<string, RateTerm[]> = {};
+    (data || []).forEach((r: any) => {
+      grouped[r.account_id] = grouped[r.account_id] || [];
+      grouped[r.account_id].push(r);
+    });
+    setSchedules(grouped);
+  };
+
+  useEffect(() => {
+    loadSchedules();
+    const ch = supabase
+      .channel('loan-rate-terms')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'loan_rate_terms' }, () => loadSchedules())
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, []);
 
   const update = async (id: string, patch: Record<string, any>) => {
     setSavingId(id);
@@ -68,46 +97,50 @@ export function BalancesView() {
     else refreshData();
   };
 
-  // Auto-amortize: applies elapsed monthly payments since last application, reducing balance.
+  // Auto-amortize using the multi-term rate schedule (falls back to single rate if none defined).
   const applyLoanPayments = async (a: any) => {
-    const rate = Number(a.interest_rate) || 0;
-    const payment = Number(a.monthly_payment) || 0;
     const start = a.loan_start_date ? new Date(a.loan_start_date) : null;
     if (!start) return toast.error('Set a loan start date first');
-    if (payment <= 0) return toast.error('Set a monthly payment first');
 
     const lastApplied = a.last_payment_applied_date ? new Date(a.last_payment_applied_date) : start;
     const today = new Date();
-    const monthsToApply = monthsBetween(lastApplied, today);
-    if (monthsToApply <= 0) return toast.info('No new monthly payments to apply');
 
-    let balance = Math.abs(Number(a.balance) || 0);
-    const monthlyRate = rate / 100 / 12;
-    let totalInterest = 0;
-    let totalPrincipal = 0;
-
-    for (let i = 0; i < monthsToApply && balance > 0; i++) {
-      const interest = balance * monthlyRate;
-      const principal = Math.min(balance, payment - interest);
-      if (principal <= 0) break; // payment doesn't cover interest
-      balance -= principal;
-      totalInterest += interest;
-      totalPrincipal += principal;
+    const schedule = (schedules[a.id] || []).slice().sort((x, y) => x.sequence - y.sequence);
+    const fallbackPayment = Number(a.monthly_payment) || 0;
+    const fallbackRate = Number(a.interest_rate) || 0;
+    if (schedule.length === 0 && fallbackPayment <= 0) {
+      return toast.error('Add a rate term or set a monthly payment');
     }
 
-    // Liability balances are stored as negative numbers in the schema
-    const newBalance = -Math.abs(balance);
+    const result = applyHistoricalPayments(
+      {
+        startingBalance: Math.abs(Number(a.balance) || 0),
+        loanStartDate: start,
+        totalTermMonths: a.term_months || null,
+        fallbackRate,
+        fallbackPayment,
+        schedule,
+      },
+      lastApplied,
+      today
+    );
+
+    if (result.monthsApplied <= 0) return toast.info('No new monthly payments to apply');
+
     const newLastApplied = new Date(lastApplied);
-    newLastApplied.setMonth(newLastApplied.getMonth() + monthsToApply);
+    newLastApplied.setMonth(newLastApplied.getMonth() + result.monthsApplied);
 
     await update(a.id, {
-      balance: newBalance,
+      balance: -Math.abs(result.balance),
       last_payment_applied_date: newLastApplied.toISOString().slice(0, 10),
     });
     toast.success(
-      `Applied ${monthsToApply} payment${monthsToApply > 1 ? 's' : ''} · Principal ${fmtGBP(totalPrincipal)} · Interest ${fmtGBP(totalInterest)}`
+      `Applied ${result.monthsApplied} payment${result.monthsApplied > 1 ? 's' : ''} · Principal ${fmtGBP(
+        result.totalPrincipal
+      )} · Interest ${fmtGBP(result.totalInterest)}`
     );
   };
+
 
   const { assets, liabilities, totals } = useMemo(() => {
     const a = accounts.filter((x) => x.type === 'asset');
