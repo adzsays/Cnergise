@@ -246,6 +246,7 @@ export const ImportDialog = ({ open, onOpenChange }: ImportDialogProps) => {
       onOpenChange(false);
       setFile(null);
       setPreview([]);
+      setAllRows([]);
     } catch (error) {
       console.error('Import error:', error);
       toast.error('Import failed. Check console for details.');
