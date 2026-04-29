@@ -507,6 +507,97 @@ export function CashFlowView() {
         </div>
       </Card>
 
+      {/* Monthly summary with weekly & daily breakdowns. Hover for category split. */}
+      <Card className="p-4">
+        <div className="mb-3">
+          <h3 className="text-sm font-semibold uppercase tracking-wide">Monthly Summary</h3>
+          <p className="text-[10px] text-muted-foreground">
+            Hover Income or Expenses to see the breakdown {costCentre !== 'all' && `· ${costCentre}`}
+          </p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* Income column */}
+          <div className="rounded-lg border border-border/50 p-3">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">Income</p>
+            <div className="grid grid-cols-3 gap-2">
+              {([
+                { label: 'Monthly', value: monthlySummary.monthlyIncome },
+                { label: 'Weekly', value: monthlySummary.weeklyIncome },
+                { label: 'Daily', value: monthlySummary.dailyIncome },
+              ]).map((cell) => (
+                <HoverCard key={cell.label} openDelay={100}>
+                  <HoverCardTrigger asChild>
+                    <button className="text-left rounded-md p-2 hover:bg-muted/40 transition-colors cursor-help">
+                      <p className="text-[10px] text-muted-foreground">{cell.label}</p>
+                      <p className="text-sm font-semibold text-income tabular-nums">{fmt(cell.value)}</p>
+                    </button>
+                  </HoverCardTrigger>
+                  <HoverCardContent className="w-72" align="start">
+                    <p className="text-xs font-semibold mb-2">Income breakdown · {cell.label}</p>
+                    {monthlySummary.incomeBreakdown.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">No income recorded.</p>
+                    ) : (
+                      <div className="space-y-1 max-h-64 overflow-y-auto">
+                        {monthlySummary.incomeBreakdown.map((b) => {
+                          const v =
+                            cell.label === 'Monthly' ? b.value : cell.label === 'Weekly' ? (b.value * 12) / 52 : b.value / 30;
+                          return (
+                            <div key={b.name} className="flex items-center justify-between text-xs">
+                              <span className="truncate pr-2">{b.name}</span>
+                              <span className="tabular-nums text-income">{fmt(v)}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </HoverCardContent>
+                </HoverCard>
+              ))}
+            </div>
+          </div>
+
+          {/* Expense column */}
+          <div className="rounded-lg border border-border/50 p-3">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">Expenses</p>
+            <div className="grid grid-cols-3 gap-2">
+              {([
+                { label: 'Monthly', value: monthlySummary.monthlyExpense },
+                { label: 'Weekly', value: monthlySummary.weeklyExpense },
+                { label: 'Daily', value: monthlySummary.dailyExpense },
+              ]).map((cell) => (
+                <HoverCard key={cell.label} openDelay={100}>
+                  <HoverCardTrigger asChild>
+                    <button className="text-left rounded-md p-2 hover:bg-muted/40 transition-colors cursor-help">
+                      <p className="text-[10px] text-muted-foreground">{cell.label}</p>
+                      <p className="text-sm font-semibold text-expense tabular-nums">{fmt(cell.value)}</p>
+                    </button>
+                  </HoverCardTrigger>
+                  <HoverCardContent className="w-72" align="start">
+                    <p className="text-xs font-semibold mb-2">Expense breakdown · {cell.label}</p>
+                    {monthlySummary.expenseBreakdown.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">No expenses recorded.</p>
+                    ) : (
+                      <div className="space-y-1 max-h-64 overflow-y-auto">
+                        {monthlySummary.expenseBreakdown.map((b) => {
+                          const v =
+                            cell.label === 'Monthly' ? b.value : cell.label === 'Weekly' ? (b.value * 12) / 52 : b.value / 30;
+                          return (
+                            <div key={b.name} className="flex items-center justify-between text-xs">
+                              <span className="truncate pr-2">{b.name}</span>
+                              <span className="tabular-nums text-expense">{fmt(v)}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </HoverCardContent>
+                </HoverCard>
+              ))}
+            </div>
+          </div>
+        </div>
+      </Card>
+
       {/* Running balance table — daily / weekly / monthly / yearly */}
       <Card className="p-3">
         <div className="flex items-center justify-between mb-3">
