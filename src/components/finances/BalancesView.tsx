@@ -14,6 +14,7 @@ import { InlineTransactionsTable } from './InlineTransactionsTable';
 import { ImportDialog } from './ImportDialog';
 import { Upload } from 'lucide-react';
 import { useUserCurrency } from '@/hooks/useUserCurrency';
+import { CurrencyInput } from './CurrencyInput';
 
 const ASSET_CATEGORIES = ['Bank', 'Savings', 'Investment', 'Pension', 'Crypto', 'Cash', 'Other'];
 const LIABILITY_CATEGORIES = ['Credit Card', 'Loan', 'Mortgage', 'Overdraft', 'Other'];
