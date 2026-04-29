@@ -411,12 +411,16 @@ function LoanDetailRow({
   a,
   update,
   apply,
+  applyFromOrigin,
   schedule,
+  reloadSchedules,
 }: {
   a: any;
   update: (id: string, patch: Record<string, any>) => Promise<void>;
   apply: () => void;
+  applyFromOrigin: () => void;
   schedule: RateTerm[];
+  reloadSchedules: () => Promise<void>;
 }) {
   const balance = Math.abs(Number(a.balance) || 0);
   const start = a.loan_start_date ? new Date(a.loan_start_date) : new Date();
