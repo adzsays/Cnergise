@@ -246,7 +246,7 @@ export function InlineTransactionsTable() {
                     <CostCentreCell
                       transactionId={t.id}
                       value={t.cost_centre}
-                      costCentres={costCentres}
+                      costCentres={allCostCentres}
                       onChange={(v) => updateField(t.id, { cost_centre: v })}
                       onManage={() => setManageOpen(true)}
                     />
