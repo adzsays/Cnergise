@@ -135,15 +135,16 @@ export function CashFlowView() {
           </ToggleGroup>
         </div>
         <div className="flex flex-col gap-1">
-          <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Group</Label>
-          <Select value={group} onValueChange={(v: 'all' | 'personal' | 'corential') => setGroup(v)}>
-            <SelectTrigger className="w-[140px] h-8 text-xs">
+          <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Cost Centre</Label>
+          <Select value={costCentre} onValueChange={setCostCentre}>
+            <SelectTrigger className="w-[180px] h-8 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Groups</SelectItem>
-              <SelectItem value="personal">Personal</SelectItem>
-              <SelectItem value="corential">Corential</SelectItem>
+              <SelectItem value="all">All Cost Centres</SelectItem>
+              {allCostCentres.map((c) => (
+                <SelectItem key={c} value={c}>{c}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
