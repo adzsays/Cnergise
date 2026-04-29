@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectSeparator } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Trash2, Settings2, ArrowDownCircle, ArrowUpCircle, X } from 'lucide-react';
+import { Plus, Trash2, Settings2, ArrowDownCircle, ArrowUpCircle, X, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { useFinancialData } from '@/contexts/FinancialDataContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -73,14 +73,64 @@ export function InlineTransactionsTable() {
 
   const accountNames = useMemo(() => accounts.map((a) => a.name), [accounts]);
 
-  const sorted = useMemo(
-    () =>
-      [...transactions].sort((a, b) => {
+  type SortKey = 'type' | 'subcategory' | 'monthly' | 'date' | 'cost_centre' | 'frequency' | 'end_date' | 'category';
+  const [sortKey, setSortKey] = useState<SortKey | null>(null);
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  };
+
+  const sorted = useMemo(() => {
+    const arr = [...transactions];
+    if (!sortKey) {
+      return arr.sort((a, b) => {
         if (a.type !== b.type) return a.type === 'income' ? -1 : 1;
         return (a.subcategory || '').localeCompare(b.subcategory || '');
-      }),
-    [transactions]
-  );
+      });
+    }
+    const dir = sortDir === 'asc' ? 1 : -1;
+    return arr.sort((a, b) => {
+      const av = a[sortKey];
+      const bv = b[sortKey];
+      // numeric
+      if (sortKey === 'monthly' || sortKey === 'date') {
+        return ((Number(av) || 0) - (Number(bv) || 0)) * dir;
+      }
+      // dates as strings (end_date) or generic strings
+      const as = (av ?? '').toString().toLowerCase();
+      const bs = (bv ?? '').toString().toLowerCase();
+      if (as < bs) return -1 * dir;
+      if (as > bs) return 1 * dir;
+      return 0;
+    });
+  }, [transactions, sortKey, sortDir]);
+
+  const SortHeader = ({ k, label, align = 'left', className = '' }: { k: SortKey; label: string; align?: 'left' | 'right'; className?: string }) => {
+    const active = sortKey === k;
+    const Icon = active ? (sortDir === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown;
+    return (
+      <th className={cn(`text-${align} py-2 px-2 font-medium`, className)}>
+        <button
+          type="button"
+          onClick={() => toggleSort(k)}
+          className={cn(
+            'inline-flex items-center gap-1 hover:text-foreground transition-colors',
+            align === 'right' && 'flex-row-reverse',
+            active && 'text-foreground'
+          )}
+        >
+          {label}
+          <Icon className="h-3 w-3 opacity-60" />
+        </button>
+      </th>
+    );
+  };
 
   const updateField = async (id: string, patch: Partial<{
     subcategory: string; category: string; monthly: number; daily: number; amount: number;
@@ -160,14 +210,14 @@ export function InlineTransactionsTable() {
         <table className="w-full text-xs">
           <thead>
             <tr className="text-muted-foreground uppercase text-[10px] tracking-wider border-b">
-              <th className="text-left py-2 px-2 font-medium w-24">Type</th>
-              <th className="text-left py-2 px-2 font-medium">Description</th>
-              <th className="text-right py-2 px-2 font-medium">Amount</th>
-              <th className="text-left py-2 px-2 font-medium">Recurring Date</th>
-              <th className="text-left py-2 px-2 font-medium">Cost Centre</th>
-              <th className="text-left py-2 px-2 font-medium">Frequency</th>
-              <th className="text-left py-2 px-2 font-medium">End Date</th>
-              <th className="text-left py-2 px-2 font-medium">Account</th>
+              <SortHeader k="type" label="Type" className="w-24" />
+              <SortHeader k="subcategory" label="Description" />
+              <SortHeader k="monthly" label="Amount" align="right" />
+              <SortHeader k="date" label="Recurring Date" />
+              <SortHeader k="cost_centre" label="Cost Centre" />
+              <SortHeader k="frequency" label="Frequency" />
+              <SortHeader k="end_date" label="End Date" />
+              <SortHeader k="category" label="Account" />
               <th className="w-8"></th>
             </tr>
           </thead>
