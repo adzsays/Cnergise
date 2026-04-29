@@ -424,6 +424,7 @@ export function BalancesView() {
                 <th className="text-left py-2 px-2 font-medium">Category</th>
                 <th className="text-right py-2 px-2 font-medium">Balance</th>
                 <th className="text-right py-2 px-2 font-medium">Limit</th>
+                <th className="text-right py-2 px-2 font-medium">Monthly Payment</th>
                 <th className="text-left py-2 px-2 font-medium">Utilisation</th>
                 <th className="w-8"></th>
               </tr>
@@ -431,7 +432,7 @@ export function BalancesView() {
             <tbody>
               {liabilities.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-4 text-muted-foreground">
+                  <td colSpan={8} className="text-center py-4 text-muted-foreground">
                     No liabilities yet.
                   </td>
                 </tr>
