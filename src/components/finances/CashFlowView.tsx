@@ -102,11 +102,15 @@ export function CashFlowView() {
       const inc = transactions
         .filter((t) => t.type === 'income' && groupFilter(t))
         .reduce((s, t) => s + (t.projections?.reduce((a: number, b: number) => a + (b || 0), 0) || 0), 0);
-      const exp = Math.abs(
+      const baseExp = Math.abs(
         transactions
           .filter((t) => t.type === 'expense' && groupFilter(t))
           .reduce((s, t) => s + (t.projections?.reduce((a: number, b: number) => a + (b || 0), 0) || 0), 0)
       );
+      // Total CC payments over 12 months, capped to total owed
+      const totalCcOwed = creditCards.reduce((s, c) => s + c.owed, 0);
+      const ccTotal = Math.min(totalCcOwed, totalCcPaymentMonthly * 12);
+      const exp = baseExp + ccTotal;
       const yr = new Date().getFullYear();
       rows.push({ label: String(yr), income: inc, expense: exp, net: inc - exp, cash: initialCash + inc - exp });
     } else {
@@ -114,17 +118,22 @@ export function CashFlowView() {
         const inc = transactions
           .filter((t) => t.type === 'income' && groupFilter(t))
           .reduce((s, t) => s + (t.projections[i] || 0), 0) / div;
-        const exp = Math.abs(
+        const baseExp = Math.abs(
           transactions
             .filter((t) => t.type === 'expense' && groupFilter(t))
             .reduce((s, t) => s + (t.projections[i] || 0), 0)
         ) / div;
+        // Credit card payment for this month, capped to remaining balance, scaled to period
+        const ccPaymentThisMonth = Math.min(ccRemaining, totalCcPaymentMonthly);
+        ccRemaining = Math.max(0, ccRemaining - ccPaymentThisMonth);
+        const ccExp = ccPaymentThisMonth / div;
+        const exp = baseExp + ccExp;
         running += (inc - exp) * div;
         rows.push({ label, income: inc, expense: exp, net: inc - exp, cash: running });
       });
     }
     return rows;
-  }, [transactions, balanceSheet, costCentre, period, monthLabels]);
+  }, [transactions, liquidBankAccounts, creditCards, totalCcPaymentMonthly, costCentre, period, monthLabels]);
 
   // Daily-level running balance projected over the next 12 months,
   // then aggregated into the chosen period (daily/weekly/monthly/yearly).
