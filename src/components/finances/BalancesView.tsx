@@ -31,6 +31,7 @@ const isLoanLike = (cat?: string | null) => {
 
 export function BalancesView() {
   const { accounts, refreshData } = useFinancialData();
+  const { currency: userCurrency, formatWhole: fmtGBP } = useUserCurrency();
   const [savingId, setSavingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [schedules, setSchedules] = useState<Record<string, RateTerm[]>>({});
