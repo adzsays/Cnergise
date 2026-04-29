@@ -395,32 +395,56 @@ export function BalancesView() {
   );
 }
 
-// Inline expandable loan editor with amortization preview
+// Inline expandable loan editor with multi-term rate schedule + amortization preview
 function LoanDetailRow({
   a,
   update,
   apply,
+  schedule,
 }: {
   a: any;
   update: (id: string, patch: Record<string, any>) => Promise<void>;
   apply: () => void;
+  schedule: RateTerm[];
 }) {
-  const rate = Number(a.interest_rate) || 0;
-  const term = Number(a.term_months) || 0;
-  const payment = Number(a.monthly_payment) || 0;
   const balance = Math.abs(Number(a.balance) || 0);
-  const monthlyRate = rate / 100 / 12;
-  const monthlyInterest = balance * monthlyRate;
-  const monthlyPrincipal = Math.max(0, payment - monthlyInterest);
+  const start = a.loan_start_date ? new Date(a.loan_start_date) : new Date();
+  const fallbackRate = Number(a.interest_rate) || 0;
+  const fallbackPayment = Number(a.monthly_payment) || 0;
+  const term = Number(a.term_months) || 0;
+  const sortedSchedule = useMemo(
+    () => schedule.slice().sort((x, y) => x.sequence - y.sequence),
+    [schedule]
+  );
 
-  // Suggest payment from principal + rate + term (amortization formula)
+  // 12-month projection using the schedule
+  const projection = useMemo(() => {
+    const today = new Date();
+    return projectAmortization(
+      {
+        startingBalance: balance,
+        loanStartDate: start,
+        totalTermMonths: term || null,
+        fallbackRate,
+        fallbackPayment,
+        schedule: sortedSchedule,
+      },
+      new Date(today.getFullYear(), today.getMonth(), 1),
+      12
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [balance, fallbackRate, fallbackPayment, term, sortedSchedule, a.loan_start_date]);
+
+  const next = projection[0];
+  const monthlyInterest = next?.interest ?? 0;
+  const monthlyPrincipal = next?.principal ?? 0;
+  const monthlyPayment = next?.payment ?? fallbackPayment;
   const principal = Number(a.original_principal) || balance;
-  const suggested =
-    monthlyRate > 0 && term > 0
-      ? (principal * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -term))
-      : term > 0
-      ? principal / term
-      : 0;
+  const suggested = (() => {
+    const r = fallbackRate / 100 / 12;
+    if (r > 0 && term > 0) return (principal * r) / (1 - Math.pow(1 + r, -term));
+    return term > 0 ? principal / term : 0;
+  })();
 
   const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
     <div className="flex flex-col gap-1">
@@ -428,6 +452,39 @@ function LoanDetailRow({
       {children}
     </div>
   );
+
+  const addTerm = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const lastSeq = sortedSchedule.length ? sortedSchedule[sortedSchedule.length - 1].sequence : -1;
+    const lastEnd = (() => {
+      if (!sortedSchedule.length) return a.loan_start_date || new Date().toISOString().slice(0, 10);
+      const last = sortedSchedule[sortedSchedule.length - 1];
+      const ls = new Date(last.start_date);
+      ls.setMonth(ls.getMonth() + (last.term_months || 0));
+      return ls.toISOString().slice(0, 10);
+    })();
+    const { error } = await supabase.from('loan_rate_terms' as any).insert({
+      user_id: user.id,
+      account_id: a.id,
+      sequence: lastSeq + 1,
+      start_date: lastEnd,
+      term_months: 24,
+      rate_type: 'fixed',
+      interest_rate: fallbackRate || 5,
+    });
+    if (error) toast.error('Could not add term');
+  };
+
+  const updateTerm = async (id: string, patch: Record<string, any>) => {
+    const { error } = await supabase.from('loan_rate_terms' as any).update(patch).eq('id', id);
+    if (error) toast.error('Save failed');
+  };
+
+  const removeTerm = async (id: string) => {
+    const { error } = await supabase.from('loan_rate_terms' as any).delete().eq('id', id);
+    if (error) toast.error('Delete failed');
+  };
 
   return (
     <tr className="bg-muted/20 border-b border-border/40">
@@ -445,7 +502,7 @@ function LoanDetailRow({
               className="h-7 text-xs tabular-nums"
             />
           </Field>
-          <Field label="Interest Rate (% APR)">
+          <Field label="Default Rate (% APR)">
             <Input
               type="number"
               step="0.01"
@@ -458,7 +515,7 @@ function LoanDetailRow({
               className="h-7 text-xs tabular-nums"
             />
           </Field>
-          <Field label="Term (months)">
+          <Field label="Total Term (months)">
             <Input
               type="number"
               defaultValue={a.term_months ?? ''}
@@ -470,7 +527,7 @@ function LoanDetailRow({
               className="h-7 text-xs tabular-nums"
             />
           </Field>
-          <Field label="Monthly Payment">
+          <Field label="Default Payment">
             <Input
               type="number"
               step="0.01"
@@ -507,7 +564,122 @@ function LoanDetailRow({
           </Field>
         </div>
 
+        {/* Rate Schedule */}
+        <div className="mt-4 border-t border-border/40 pt-3">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide">Rate Schedule</p>
+              <p className="text-[10px] text-muted-foreground">
+                Add each fixed period in sequence. The final period can be variable (open-ended). Payment recalculates at each
+                term boundary so the loan amortises across the remaining life.
+              </p>
+            </div>
+            <Button size="sm" variant="outline" className="h-7" onClick={addTerm}>
+              <Plus className="h-3 w-3 mr-1" /> Add Term
+            </Button>
+          </div>
+          {sortedSchedule.length === 0 ? (
+            <p className="text-[11px] text-muted-foreground italic">
+              No terms defined — using the default rate &amp; payment above for all months.
+            </p>
+          ) : (
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="text-muted-foreground uppercase text-[10px] tracking-wider border-b">
+                  <th className="text-left py-1 px-1 font-medium">#</th>
+                  <th className="text-left py-1 px-1 font-medium">Start</th>
+                  <th className="text-left py-1 px-1 font-medium">Type</th>
+                  <th className="text-right py-1 px-1 font-medium">Rate %</th>
+                  <th className="text-right py-1 px-1 font-medium">Months</th>
+                  <th className="text-right py-1 px-1 font-medium">Payment Override</th>
+                  <th className="w-8"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedSchedule.map((t, i) => (
+                  <tr key={t.id} className="border-b border-border/30">
+                    <td className="py-1 px-1 text-muted-foreground">{i + 1}</td>
+                    <td className="py-1 px-1">
+                      <Input
+                        type="date"
+                        defaultValue={t.start_date}
+                        onBlur={(e) => e.target.value !== t.start_date && updateTerm(t.id!, { start_date: e.target.value })}
+                        className="h-6 text-[11px] px-1"
+                      />
+                    </td>
+                    <td className="py-1 px-1">
+                      <Select
+                        defaultValue={t.rate_type}
+                        onValueChange={(v) => updateTerm(t.id!, { rate_type: v })}
+                      >
+                        <SelectTrigger className="h-6 text-[11px] px-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="fixed">Fixed</SelectItem>
+                          <SelectItem value="variable">Variable</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </td>
+                    <td className="py-1 px-1">
+                      <Input
+                        type="number"
+                        step="0.01"
+                        defaultValue={t.interest_rate}
+                        onBlur={(e) => {
+                          const v = parseFloat(e.target.value) || 0;
+                          if (v !== t.interest_rate) updateTerm(t.id!, { interest_rate: v });
+                        }}
+                        className="h-6 text-[11px] px-1 text-right tabular-nums"
+                      />
+                    </td>
+                    <td className="py-1 px-1">
+                      <Input
+                        type="number"
+                        defaultValue={t.term_months ?? ''}
+                        placeholder="—"
+                        onBlur={(e) => {
+                          const v = e.target.value === '' ? null : parseInt(e.target.value, 10) || 0;
+                          if (v !== t.term_months) updateTerm(t.id!, { term_months: v });
+                        }}
+                        className="h-6 text-[11px] px-1 text-right tabular-nums"
+                      />
+                    </td>
+                    <td className="py-1 px-1">
+                      <Input
+                        type="number"
+                        step="0.01"
+                        defaultValue={t.payment_override ?? ''}
+                        placeholder="auto"
+                        onBlur={(e) => {
+                          const v = e.target.value === '' ? null : parseFloat(e.target.value) || 0;
+                          if (v !== t.payment_override) updateTerm(t.id!, { payment_override: v });
+                        }}
+                        className="h-6 text-[11px] px-1 text-right tabular-nums"
+                      />
+                    </td>
+                    <td className="py-1 px-1">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-6 w-6 text-destructive"
+                        onClick={() => removeTerm(t.id!)}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+
         <div className="mt-3 grid grid-cols-2 md:grid-cols-5 gap-3 items-end">
+          <div>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Next Payment</p>
+            <p className="text-sm font-semibold tabular-nums">{fmtGBP(monthlyPayment)}</p>
+          </div>
           <div>
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Next Interest</p>
             <p className="text-sm font-semibold text-destructive tabular-nums">{fmtGBP(monthlyInterest)}</p>
@@ -517,10 +689,6 @@ function LoanDetailRow({
             <p className="text-sm font-semibold text-success tabular-nums">{fmtGBP(monthlyPrincipal)}</p>
           </div>
           <div>
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Suggested Payment</p>
-            <p className="text-sm font-semibold tabular-nums">{suggested ? fmtGBP(suggested) : '—'}</p>
-          </div>
-          <div>
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Outstanding</p>
             <p className="text-sm font-semibold tabular-nums">{fmtGBP(balance)}</p>
           </div>
@@ -528,7 +696,45 @@ function LoanDetailRow({
             <Calculator className="h-3.5 w-3.5 mr-1" /> Apply Payments to Date
           </Button>
         </div>
+
+        {/* 12-month payment schedule preview (drives cash flow) */}
+        {projection.length > 0 && (
+          <div className="mt-3">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+              Next 12 Months · Payment / Interest / Principal
+            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-[11px]">
+                <thead>
+                  <tr className="text-muted-foreground border-b">
+                    <th className="text-left py-1 px-1 font-medium">Month</th>
+                    <th className="text-right py-1 px-1 font-medium">Rate</th>
+                    <th className="text-right py-1 px-1 font-medium">Payment</th>
+                    <th className="text-right py-1 px-1 font-medium">Interest</th>
+                    <th className="text-right py-1 px-1 font-medium">Principal</th>
+                    <th className="text-right py-1 px-1 font-medium">Balance</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {projection.map((m) => (
+                    <tr key={m.index} className="border-b border-border/20">
+                      <td className="py-0.5 px-1">
+                        {m.date.toLocaleDateString('en-GB', { month: 'short', year: '2-digit' })}
+                      </td>
+                      <td className="py-0.5 px-1 text-right tabular-nums">{m.rate.toFixed(2)}%</td>
+                      <td className="py-0.5 px-1 text-right tabular-nums">{fmtGBP(m.payment)}</td>
+                      <td className="py-0.5 px-1 text-right tabular-nums text-destructive">{fmtGBP(m.interest)}</td>
+                      <td className="py-0.5 px-1 text-right tabular-nums text-success">{fmtGBP(m.principal)}</td>
+                      <td className="py-0.5 px-1 text-right tabular-nums">{fmtGBP(m.balanceAfter)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </td>
     </tr>
   );
 }
+
