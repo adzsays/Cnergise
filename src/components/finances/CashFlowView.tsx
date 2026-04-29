@@ -253,25 +253,27 @@ export function CashFlowView() {
       }
     } else if (period === 'monthly') {
       const names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      for (let i = 0; i < 12; i++) {
-        const monthDate = new Date(startMonth.getFullYear(), startMonth.getMonth() + i, 1);
-        const monthIncome = filtered
-          .filter((t) => t.type === 'income')
-          .reduce((s, t) => s + (t.projections?.[i] || 0), 0);
-        const monthExpense = Math.abs(
-          filtered
-            .filter((t) => t.type === 'expense')
-            .reduce((s, t) => s + (t.projections?.[i] || 0), 0)
-        );
-        running += monthIncome - monthExpense;
-        rows.push({
-          label: `${names[monthDate.getMonth()]} ${monthDate.getFullYear()}`,
-          income: monthIncome,
-          expense: monthExpense,
-          net: monthIncome - monthExpense,
-          balance: running,
+      // Aggregate the daily occurrences by calendar month
+      const monthBuckets: Record<string, { inc: number; exp: number; date: Date }> = {};
+      days.forEach((d) => {
+        const key = `${d.date.getFullYear()}-${d.date.getMonth()}`;
+        if (!monthBuckets[key])
+          monthBuckets[key] = { inc: 0, exp: 0, date: new Date(d.date.getFullYear(), d.date.getMonth(), 1) };
+        monthBuckets[key].inc += d.income;
+        monthBuckets[key].exp += d.expense;
+      });
+      Object.values(monthBuckets)
+        .sort((a, b) => a.date.getTime() - b.date.getTime())
+        .forEach((b) => {
+          running += b.inc - b.exp;
+          rows.push({
+            label: `${names[b.date.getMonth()]} ${b.date.getFullYear()}`,
+            income: b.inc,
+            expense: b.exp,
+            net: b.inc - b.exp,
+            balance: running,
+          });
         });
-      }
     } else {
       // yearly — single bucket sum across 12 months
       const totalIncome = days.reduce((s, d) => s + d.income, 0);
