@@ -681,10 +681,11 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
       });
       const monthly = projections.reduce((s, n) => s + n, 0) / 12;
 
+      const paymentDay = Math.min(31, Math.max(1, Number(a.payment_day) || 1));
       synthetic.push({
         id: `loan-projection-${a.id}`,
         user_id: a.user_id,
-        date: today.getTime(),
+        date: paymentDay,
         type: 'expense',
         category: 'Loan Payments',
         subcategory: a.name,
