@@ -379,6 +379,7 @@ export const ImportDialog = ({ open, onOpenChange }: ImportDialogProps) => {
               onOpenChange(false);
               setFile(null);
               setPreview([]);
+              setAllRows([]);
             }}
           >
             Cancel
