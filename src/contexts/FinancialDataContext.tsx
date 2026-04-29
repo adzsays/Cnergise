@@ -177,11 +177,33 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
       return [];
     }
 
-    return (data || []).map((t: any) => ({
-      ...t,
-      group: t.group_name,
-      projections: Array.isArray(t.projections) ? t.projections : Array(12).fill(t.monthly),
-    })) as FinancialTransaction[];
+    const now = new Date();
+    const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    return (data || []).map((t: any) => {
+      const monthly = Number(t.monthly) || 0;
+      const startDate = t.start_date ? new Date(t.start_date) : null;
+      const endDate = t.end_date ? new Date(t.end_date) : null;
+      // Build 12-month projections respecting start/end date bounds
+      const projections: number[] = [];
+      for (let i = 0; i < 12; i++) {
+        const monthStart = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + i, 1);
+        const monthEnd = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + i + 1, 0);
+        const beforeStart = startDate && monthEnd < startDate;
+        const afterEnd = endDate && monthStart > endDate;
+        if (beforeStart || afterEnd) {
+          projections.push(0);
+        } else if (Array.isArray(t.projections) && t.projections[i] != null) {
+          projections.push(Number(t.projections[i]) || 0);
+        } else {
+          projections.push(monthly);
+        }
+      }
+      return {
+        ...t,
+        group: t.group_name,
+        projections,
+      };
+    }) as FinancialTransaction[];
   };
 
   const fetchAccounts = async () => {
