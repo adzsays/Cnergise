@@ -34,7 +34,7 @@ export function BalancesView() {
 
   const update = async (id: string, patch: Record<string, any>) => {
     setSavingId(id);
-    const { error } = await supabase.from('financial_accounts').update(patch).eq('id', id);
+    const { error } = await supabase.from('financial_accounts').update(patch as any).eq('id', id);
     setSavingId(null);
     if (error) {
       toast.error('Save failed');
