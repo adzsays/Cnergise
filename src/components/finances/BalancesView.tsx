@@ -469,8 +469,11 @@ function LoanDetailRow({
   );
 
   const addTerm = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    const { data: { user }, error: authErr } = await supabase.auth.getUser();
+    if (authErr || !user) {
+      toast.error('Sign in required to add a term');
+      return;
+    }
     const lastSeq = sortedSchedule.length ? sortedSchedule[sortedSchedule.length - 1].sequence : -1;
     const lastEnd = (() => {
       if (!sortedSchedule.length) return a.loan_start_date || new Date().toISOString().slice(0, 10);
@@ -488,17 +491,33 @@ function LoanDetailRow({
       rate_type: 'fixed',
       interest_rate: fallbackRate || 5,
     });
-    if (error) toast.error('Could not add term');
+    if (error) {
+      console.error('addTerm failed', error);
+      toast.error(error.message || 'Could not add term');
+    } else {
+      toast.success('Term added');
+      await reloadSchedules();
+    }
   };
 
   const updateTerm = async (id: string, patch: Record<string, any>) => {
     const { error } = await supabase.from('loan_rate_terms' as any).update(patch).eq('id', id);
-    if (error) toast.error('Save failed');
+    if (error) {
+      console.error('updateTerm failed', error);
+      toast.error(error.message || 'Save failed');
+    } else {
+      await reloadSchedules();
+    }
   };
 
   const removeTerm = async (id: string) => {
     const { error } = await supabase.from('loan_rate_terms' as any).delete().eq('id', id);
-    if (error) toast.error('Delete failed');
+    if (error) {
+      console.error('removeTerm failed', error);
+      toast.error(error.message || 'Delete failed');
+    } else {
+      await reloadSchedules();
+    }
   };
 
   return (
