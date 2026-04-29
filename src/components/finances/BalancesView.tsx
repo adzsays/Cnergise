@@ -36,6 +36,7 @@ export function BalancesView() {
   const [savingId, setSavingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [schedules, setSchedules] = useState<Record<string, RateTerm[]>>({});
+  const [importOpen, setImportOpen] = useState(false);
 
   const loadSchedules = async () => {
     const { data, error } = await supabase
