@@ -381,29 +381,32 @@ function ManageCostCentresDialog({
   open: boolean;
   onOpenChange: (v: boolean) => void;
   list: string[];
-  onSave: (next: string[]) => void;
+  onSave: (next: string[], renames: { from: string; to: string }[]) => void;
 }) {
-  const [draft, setDraft] = useState<string[]>(list);
+  // Each row tracks its original name so renames can be detected and propagated
+  const [draft, setDraft] = useState<{ original: string; current: string }[]>(
+    list.map((c) => ({ original: c, current: c }))
+  );
   const [newItem, setNewItem] = useState('');
 
   useEffect(() => {
-    if (open) setDraft(list);
+    if (open) setDraft(list.map((c) => ({ original: c, current: c })));
   }, [open, list]);
 
   const add = () => {
     const v = newItem.trim();
     if (!v) return;
-    if (draft.some((d) => d.toLowerCase() === v.toLowerCase())) {
+    if (draft.some((d) => d.current.toLowerCase() === v.toLowerCase())) {
       toast.error('Already exists');
       return;
     }
-    setDraft([...draft, v]);
+    setDraft([...draft, { original: '', current: v }]);
     setNewItem('');
   };
 
   const rename = (i: number, v: string) => {
     const next = [...draft];
-    next[i] = v;
+    next[i] = { ...next[i], current: v };
     setDraft(next);
   };
 
@@ -416,13 +419,22 @@ function ManageCostCentresDialog({
   };
 
   const save = () => {
-    const cleaned = draft.map((d) => d.trim()).filter(Boolean);
+    const cleaned = draft
+      .map((d) => ({ original: d.original, current: d.current.trim() }))
+      .filter((d) => d.current);
     if (!cleaned.length) {
       toast.error('Add at least one cost centre');
       return;
     }
-    onSave(cleaned);
-    toast.success('Cost centres updated');
+    const renames = cleaned
+      .filter((d) => d.original && d.original !== d.current)
+      .map((d) => ({ from: d.original, to: d.current }));
+    onSave(cleaned.map((d) => d.current), renames);
+    if (renames.length > 0) {
+      toast.success(`Renamed ${renames.length} cost centre${renames.length > 1 ? 's' : ''}`);
+    } else {
+      toast.success('Cost centres updated');
+    }
     onOpenChange(false);
   };
 
