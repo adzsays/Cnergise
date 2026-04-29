@@ -27,7 +27,7 @@ const loadCostCentres = (): string[] => {
 };
 
 export function CashFlowView() {
-  const { transactions, balanceSheet } = useFinancialData();
+  const { transactions, balanceSheet, accounts } = useFinancialData();
   const { formatWhole: fmt } = useUserCurrency();
   const [period, setPeriod] = useState<Period>('monthly');
   const [costCentre, setCostCentre] = useState<string>('all');
