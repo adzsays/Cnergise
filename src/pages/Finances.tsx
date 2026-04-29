@@ -6,14 +6,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FinancialDataProvider } from "@/contexts/FinancialDataContext";
 import { FinanceDashboardView } from "@/components/finances/FinanceDashboardView";
 import { CashFlowView } from "@/components/finances/CashFlowView";
-import { BalanceSheetView } from "@/components/finances/BalanceSheetView";
-import { AccountBalancesView } from "@/components/finances/AccountBalancesView";
 import { CreditScoreView } from "@/components/finances/CreditScoreView";
-import { BudgetView } from "@/components/finances/BudgetView";
-import { TrialBalanceView } from "@/components/finances/TrialBalanceView";
 import { BalancesView } from "@/components/finances/BalancesView";
 
-import { LayoutDashboard, Wallet, TrendingUp, PieChart, CreditCard, PiggyBank, FileSpreadsheet, Scale } from "lucide-react";
+import { LayoutDashboard, TrendingUp, CreditCard, Scale } from "lucide-react";
 
 const Finances = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
