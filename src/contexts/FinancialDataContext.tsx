@@ -10,6 +10,8 @@ interface FinancialTransaction {
   category: string;
   subcategory: string;
   group_name: string;
+  /** Alias of group_name kept for compatibility with the ported Cash Flow views. */
+  group: string;
   space_id: string | null;
   amount: number;
   percentage: number;
@@ -49,6 +51,33 @@ interface BalanceSheetSummary {
   availableCredit: number;
 }
 
+/** Account shape expected by the ported Cash Flow Forecasting components. */
+export interface SourceAccount {
+  id: string;
+  name: string;
+  balance: number;
+  currency: string;
+  type: 'bank' | 'pension' | 'investment' | 'liability';
+  creditLimit?: number;
+  group: string;
+  category?: string;
+}
+
+/** BalanceSheet shape expected by the ported Cash Flow Forecasting components. */
+export interface SourceBalanceSheet {
+  netAsset: number;
+  availableCash: number;
+  availableCredit: number;
+  bankAccounts: SourceAccount[];
+  pensions: SourceAccount[];
+  investments: SourceAccount[];
+  liabilities: SourceAccount[];
+  carValue: number;
+  homeValue: number;
+  carGroup: string;
+  homeGroup: string;
+}
+
 interface FinancialDataContextType {
   transactions: FinancialTransaction[];
   accounts: FinancialAccount[];
@@ -57,19 +86,36 @@ interface FinancialDataContextType {
   // View mode and filters
   viewMode: 'type' | 'costcentre';
   setViewMode: (mode: 'type' | 'costcentre') => void;
-  group: 'all' | 'personal' | 'business';
-  setGroup: (group: 'all' | 'personal' | 'business') => void;
+  group: 'all' | 'personal' | 'corential';
+  setGroup: (group: 'all' | 'personal' | 'corential') => void;
   // Computed data
   balanceSheetSummary: BalanceSheetSummary;
+  /** Adapter shape consumed by the ported Cash Flow Forecasting views. */
+  balanceSheet: SourceBalanceSheet;
   monthLabels: string[];
   // Transaction operations
   updateTransaction: (transactionId: string, newMonthly: number) => Promise<void>;
-  addTransaction: (transaction: Omit<FinancialTransaction, 'id' | 'user_id' | 'percentage' | 'daily' | 'projections' | 'created_at' | 'updated_at'>) => Promise<void>;
+  addTransaction: (transaction: Partial<FinancialTransaction> & {
+    monthly: number;
+    type: string;
+    category: string;
+    subcategory: string;
+    group?: string;
+    group_name?: string;
+  }) => Promise<void>;
   updateTransactionName: (transactionId: string, newName: string) => Promise<void>;
   updateTransactionGroup: (transactionId: string, newGroup: string) => Promise<void>;
   updateTransactionDate: (transactionId: string, newDate: number) => Promise<void>;
   updateTransactionCategory: (transactionId: string, newCategory: string) => Promise<void>;
   deleteTransaction: (transactionId: string) => Promise<void>;
+  // Account operations (ported view API)
+  updateAccountBalance: (accountId: string, newBalance: number, type: 'bank' | 'pension' | 'investment' | 'liability' | 'home' | 'car') => Promise<void>;
+  updateAccountName: (accountId: string, newName: string, accountType: 'bank' | 'pension' | 'investment' | 'liability') => Promise<void>;
+  updateAccountGroup: (accountId: string, newGroup: string, accountType: 'bank' | 'pension' | 'investment' | 'liability') => Promise<void>;
+  updateAccountCategory: (accountId: string, newCategory: string, accountType: 'bank' | 'pension' | 'investment' | 'liability') => Promise<void>;
+  updateHomeValue: (newValue: number) => Promise<void>;
+  updateCarValue: (newValue: number) => Promise<void>;
+  updatePhysicalAssetGroup: (assetType: 'home' | 'car', newGroup: string) => Promise<void>;
   // Category operations
   updateCategory: (oldCategory: string, newCategory: string, type: 'income' | 'expense') => Promise<void>;
   availableGroups: string[];
@@ -83,22 +129,40 @@ const getMonthLabels = () => {
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const currentDate = new Date();
   const currentMonth = currentDate.getMonth();
+  const currentYear = currentDate.getFullYear();
   const labels: string[] = [];
-  
+
   for (let i = 0; i < 12; i++) {
     const monthIndex = (currentMonth + i) % 12;
-    labels.push(monthNames[monthIndex]);
+    const yearOffset = Math.floor((currentMonth + i) / 12);
+    labels.push(`${monthNames[monthIndex]} ${currentYear + yearOffset}`);
   }
   return labels;
+};
+
+interface PhysicalAssetRow {
+  id: string;
+  asset_type: string;
+  value: number;
+  group_name: string;
+}
+
+// Map an account into one of the source-view buckets based on category/account_class.
+const classifyAsset = (a: FinancialAccount): 'bank' | 'pension' | 'investment' => {
+  const cat = (a.category || '').toLowerCase();
+  if (cat.includes('pension')) return 'pension';
+  if (cat.includes('investment') || cat.includes('crypto') || cat.includes('broker')) return 'investment';
+  return 'bank';
 };
 
 export const FinancialDataProvider = ({ children }: { children: ReactNode }) => {
   const [transactions, setTransactions] = useState<FinancialTransaction[]>([]);
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
+  const [physicalAssets, setPhysicalAssets] = useState<PhysicalAssetRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'type' | 'costcentre'>('costcentre');
-  const [group, setGroup] = useState<'all' | 'personal' | 'business'>('all');
-  const [availableGroups, setAvailableGroups] = useState<string[]>(['Personal', 'Business']);
+  const [group, setGroup] = useState<'all' | 'personal' | 'corential'>('all');
+  const [availableGroups, setAvailableGroups] = useState<string[]>(['Personal', 'Corential']);
   const monthLabels = useMemo(() => getMonthLabels(), []);
 
   const fetchTransactions = async () => {
@@ -112,12 +176,12 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
       console.error('Error fetching transactions:', error);
       return [];
     }
-    
-    // Transform data to include projections array
-    return (data || []).map(t => ({
+
+    return (data || []).map((t: any) => ({
       ...t,
-      projections: Array.isArray(t.projections) ? t.projections : Array(12).fill(t.monthly)
-    }));
+      group: t.group_name,
+      projections: Array.isArray(t.projections) ? t.projections : Array(12).fill(t.monthly),
+    })) as FinancialTransaction[];
   };
 
   const fetchAccounts = async () => {
@@ -131,79 +195,151 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
       console.error('Error fetching accounts:', error);
       return [];
     }
-    return data || [];
+    return (data || []) as FinancialAccount[];
+  };
+
+  const fetchPhysicalAssets = async () => {
+    const { data, error } = await supabase
+      .from('physical_assets')
+      .select('id, asset_type, value, group_name');
+    if (error) {
+      console.error('Error fetching physical assets:', error);
+      return [];
+    }
+    return (data || []) as PhysicalAssetRow[];
   };
 
   const refreshData = async () => {
     setLoading(true);
-    const [transactionsData, accountsData] = await Promise.all([
+    const [transactionsData, accountsData, physicalData] = await Promise.all([
       fetchTransactions(),
       fetchAccounts(),
+      fetchPhysicalAssets(),
     ]);
     setTransactions(transactionsData);
     setAccounts(accountsData);
+    setPhysicalAssets(physicalData);
+
+    // Discover any extra groups already in the data so the selector shows them.
+    const groupSet = new Set<string>(['Personal', 'Corential']);
+    transactionsData.forEach((t) => t.group_name && groupSet.add(t.group_name));
+    accountsData.forEach((a) => a.group_name && groupSet.add(a.group_name));
+    setAvailableGroups(Array.from(groupSet));
+
     setLoading(false);
   };
 
-  // Calculate balance sheet summary
-  const balanceSheetSummary = useMemo((): BalanceSheetSummary => {
-    const assets = accounts
-      .filter(a => a.type === 'Asset')
-      .reduce((sum, a) => sum + a.balance, 0);
-    
-    const liabilities = accounts
-      .filter(a => a.type === 'Liability')
-      .reduce((sum, a) => sum + Math.abs(a.balance), 0);
-    
-    const availableCash = accounts
-      .filter(a => a.type === 'Asset' && (a.category === 'Bank Account' || a.category === 'Cash'))
-      .reduce((sum, a) => sum + a.balance, 0);
-    
-    const availableCredit = accounts
-      .filter(a => a.type === 'Liability' && a.credit_limit)
-      .reduce((sum, a) => sum + ((a.credit_limit || 0) - Math.abs(a.balance)), 0);
+  // ---- Adapter: build the SourceBalanceSheet shape from our existing tables.
+  const balanceSheet = useMemo<SourceBalanceSheet>(() => {
+    const toSource = (a: FinancialAccount, type: SourceAccount['type']): SourceAccount => ({
+      id: a.id,
+      name: a.name,
+      balance: type === 'liability' ? -Math.abs(a.balance) : a.balance,
+      currency: a.currency || 'GBP',
+      type,
+      creditLimit: a.credit_limit ?? undefined,
+      group: a.group_name || 'Personal',
+      category: a.category || (type === 'liability' ? 'Debt' : type === 'pension' ? 'Pension' : type === 'investment' ? 'Investment' : 'Bank Account'),
+    });
+
+    const isAsset = (a: FinancialAccount) =>
+      (a.account_class || '').toLowerCase() === 'asset' ||
+      (a.type || '').toLowerCase() === 'asset';
+    const isLiability = (a: FinancialAccount) =>
+      (a.account_class || '').toLowerCase() === 'liability' ||
+      (a.type || '').toLowerCase() === 'liability';
+
+    const assetAccounts = accounts.filter(isAsset);
+    const liabilityAccounts = accounts.filter(isLiability);
+
+    const bankAccounts: SourceAccount[] = [];
+    const pensions: SourceAccount[] = [];
+    const investments: SourceAccount[] = [];
+
+    assetAccounts.forEach((a) => {
+      const bucket = classifyAsset(a);
+      const item = toSource(a, bucket);
+      if (bucket === 'pension') pensions.push(item);
+      else if (bucket === 'investment') investments.push(item);
+      else bankAccounts.push(item);
+    });
+
+    const liabilities: SourceAccount[] = liabilityAccounts.map((a) => toSource(a, 'liability'));
+
+    const home = physicalAssets.find((p) => p.asset_type?.toLowerCase() === 'home');
+    const car = physicalAssets.find((p) => p.asset_type?.toLowerCase() === 'car');
+
+    const homeValue = home?.value ?? 0;
+    const carValue = car?.value ?? 0;
+    const homeGroup = home?.group_name || 'Personal';
+    const carGroup = car?.group_name || 'Personal';
+
+    const totalAssets =
+      bankAccounts.reduce((s, a) => s + a.balance, 0) +
+      pensions.reduce((s, a) => s + a.balance, 0) +
+      investments.reduce((s, a) => s + a.balance, 0) +
+      homeValue +
+      carValue;
+    const totalLiabilitiesAbs = Math.abs(liabilities.reduce((s, a) => s + a.balance, 0));
+
+    const availableCash = bankAccounts.reduce((s, a) => s + a.balance, 0);
+    const availableCredit = liabilities
+      .filter((l) => l.creditLimit)
+      .reduce((s, l) => s + Math.max(0, (l.creditLimit || 0) - Math.abs(l.balance)), 0);
 
     return {
-      totalAssets: assets,
-      totalLiabilities: liabilities,
-      netWorth: assets - liabilities,
+      bankAccounts,
+      pensions,
+      investments,
+      liabilities,
+      homeValue,
+      carValue,
+      homeGroup,
+      carGroup,
+      netAsset: totalAssets - totalLiabilitiesAbs,
       availableCash,
-      availableCredit: Math.max(0, availableCredit),
+      availableCredit,
     };
-  }, [accounts]);
+  }, [accounts, physicalAssets]);
 
-  // Transaction operations
+  // Calculate balance sheet summary (legacy consumers).
+  const balanceSheetSummary = useMemo((): BalanceSheetSummary => {
+    return {
+      totalAssets:
+        balanceSheet.bankAccounts.reduce((s, a) => s + a.balance, 0) +
+        balanceSheet.pensions.reduce((s, a) => s + a.balance, 0) +
+        balanceSheet.investments.reduce((s, a) => s + a.balance, 0) +
+        balanceSheet.homeValue +
+        balanceSheet.carValue,
+      totalLiabilities: Math.abs(balanceSheet.liabilities.reduce((s, l) => s + l.balance, 0)),
+      netWorth: balanceSheet.netAsset,
+      availableCash: balanceSheet.availableCash,
+      availableCredit: balanceSheet.availableCredit,
+    };
+  }, [balanceSheet]);
+
+  // ---- Transaction operations
   const updateTransaction = async (transactionId: string, newMonthly: number) => {
     try {
       const projections = Array(12).fill(newMonthly);
-      
       const { error } = await supabase
         .from('financial_transactions')
-        .update({ 
-          monthly: newMonthly,
-          daily: newMonthly / 30,
-          projections,
-        })
+        .update({ monthly: newMonthly, daily: newMonthly / 30, projections })
         .eq('id', transactionId);
-
       if (error) throw error;
 
-      setTransactions(prev => 
-        prev.map(t => 
-          t.id === transactionId 
-            ? { ...t, monthly: newMonthly, daily: newMonthly / 30, projections }
-            : t
+      setTransactions((prev) =>
+        prev.map((t) =>
+          t.id === transactionId ? { ...t, monthly: newMonthly, daily: newMonthly / 30, projections } : t
         )
       );
-      
-      toast.success('Transaction updated');
     } catch (error) {
       console.error('Error updating transaction:', error);
       toast.error('Failed to update transaction');
     }
   };
 
-  const addTransaction = async (transactionData: Omit<FinancialTransaction, 'id' | 'user_id' | 'percentage' | 'daily' | 'projections' | 'created_at' | 'updated_at'>) => {
+  const addTransaction: FinancialDataContextType['addTransaction'] = async (transactionData) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -211,25 +347,30 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
         return;
       }
 
-      const newTransaction = {
-        ...transactionData,
+      const groupName = transactionData.group_name || transactionData.group || 'Personal';
+      const monthly = transactionData.monthly;
+
+      const newRow = {
         user_id: user.id,
         date: transactionData.date || Date.now(),
+        type: transactionData.type,
+        category: transactionData.category,
+        subcategory: transactionData.subcategory,
+        group_name: groupName,
+        space_id: transactionData.space_id ?? null,
+        amount: transactionData.amount ?? monthly,
         percentage: 0,
-        daily: transactionData.monthly / 30,
-        projections: Array(12).fill(transactionData.monthly),
+        daily: monthly / 30,
+        monthly,
+        projections: Array(12).fill(monthly),
         cost_centre: transactionData.cost_centre || 'General',
-        frequency: transactionData.frequency || 'one-time',
+        frequency: transactionData.frequency || 'monthly',
       };
 
-      const { error } = await supabase
-        .from('financial_transactions')
-        .insert(newTransaction);
-
+      const { error } = await supabase.from('financial_transactions').insert(newRow);
       if (error) throw error;
 
       await refreshData();
-      toast.success('Transaction added');
     } catch (error) {
       console.error('Error adding transaction:', error);
       toast.error('Failed to add transaction');
@@ -242,12 +383,8 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
         .from('financial_transactions')
         .update({ subcategory: newName })
         .eq('id', transactionId);
-
       if (error) throw error;
-
-      setTransactions(prev =>
-        prev.map(t => t.id === transactionId ? { ...t, subcategory: newName } : t)
-      );
+      setTransactions((prev) => prev.map((t) => (t.id === transactionId ? { ...t, subcategory: newName } : t)));
     } catch (error) {
       console.error('Error updating transaction name:', error);
     }
@@ -259,11 +396,9 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
         .from('financial_transactions')
         .update({ group_name: newGroup })
         .eq('id', transactionId);
-
       if (error) throw error;
-
-      setTransactions(prev =>
-        prev.map(t => t.id === transactionId ? { ...t, group_name: newGroup } : t)
+      setTransactions((prev) =>
+        prev.map((t) => (t.id === transactionId ? { ...t, group_name: newGroup, group: newGroup } : t))
       );
     } catch (error) {
       console.error('Error updating transaction group:', error);
@@ -276,12 +411,8 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
         .from('financial_transactions')
         .update({ date: newDate })
         .eq('id', transactionId);
-
       if (error) throw error;
-
-      setTransactions(prev =>
-        prev.map(t => t.id === transactionId ? { ...t, date: newDate } : t)
-      );
+      setTransactions((prev) => prev.map((t) => (t.id === transactionId ? { ...t, date: newDate } : t)));
     } catch (error) {
       console.error('Error updating transaction date:', error);
     }
@@ -293,14 +424,8 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
         .from('financial_transactions')
         .update({ category: newCategory })
         .eq('id', transactionId);
-
       if (error) throw error;
-
-      setTransactions(prev =>
-        prev.map(t => t.id === transactionId ? { ...t, category: newCategory } : t)
-      );
-      
-      toast.success('Category updated');
+      setTransactions((prev) => prev.map((t) => (t.id === transactionId ? { ...t, category: newCategory } : t)));
     } catch (error) {
       console.error('Error updating transaction category:', error);
       toast.error('Failed to update category');
@@ -309,15 +434,9 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
 
   const deleteTransaction = async (transactionId: string) => {
     try {
-      const { error } = await supabase
-        .from('financial_transactions')
-        .delete()
-        .eq('id', transactionId);
-
+      const { error } = await supabase.from('financial_transactions').delete().eq('id', transactionId);
       if (error) throw error;
-
-      setTransactions(prev => prev.filter(t => t.id !== transactionId));
-      toast.success('Transaction deleted');
+      setTransactions((prev) => prev.filter((t) => t.id !== transactionId));
     } catch (error) {
       console.error('Error deleting transaction:', error);
       toast.error('Failed to delete transaction');
@@ -331,27 +450,127 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
         .update({ category: newCategory })
         .eq('category', oldCategory)
         .eq('type', type);
-
       if (error) throw error;
-
-      setTransactions(prev =>
-        prev.map(t =>
-          t.category === oldCategory && t.type === type
-            ? { ...t, category: newCategory }
-            : t
+      setTransactions((prev) =>
+        prev.map((t) =>
+          t.category === oldCategory && t.type === type ? { ...t, category: newCategory } : t
         )
       );
-
-      toast.success('Category updated');
     } catch (error) {
       console.error('Error updating category:', error);
       toast.error('Failed to update category');
     }
   };
 
+  // ---- Account operations
+  const updateAccountBalance: FinancialDataContextType['updateAccountBalance'] = async (
+    accountId,
+    newBalance,
+    type
+  ) => {
+    try {
+      if (type === 'home' || type === 'car') {
+        await supabase.from('physical_assets').update({ value: newBalance }).eq('id', accountId);
+        setPhysicalAssets((prev) => prev.map((p) => (p.id === accountId ? { ...p, value: newBalance } : p)));
+        return;
+      }
+      const value = type === 'liability' ? -Math.abs(newBalance) : Math.abs(newBalance);
+      const { error } = await supabase
+        .from('financial_accounts')
+        .update({ balance: value })
+        .eq('id', accountId);
+      if (error) throw error;
+      setAccounts((prev) => prev.map((a) => (a.id === accountId ? { ...a, balance: value } : a)));
+    } catch (error) {
+      console.error('Error updating account balance:', error);
+      toast.error('Failed to update balance');
+    }
+  };
+
+  const updateAccountName: FinancialDataContextType['updateAccountName'] = async (accountId, newName) => {
+    try {
+      const { error } = await supabase.from('financial_accounts').update({ name: newName }).eq('id', accountId);
+      if (error) throw error;
+      setAccounts((prev) => prev.map((a) => (a.id === accountId ? { ...a, name: newName } : a)));
+    } catch (error) {
+      console.error('Error updating account name:', error);
+    }
+  };
+
+  const updateAccountGroup: FinancialDataContextType['updateAccountGroup'] = async (accountId, newGroup) => {
+    try {
+      const { error } = await supabase
+        .from('financial_accounts')
+        .update({ group_name: newGroup })
+        .eq('id', accountId);
+      if (error) throw error;
+      setAccounts((prev) => prev.map((a) => (a.id === accountId ? { ...a, group_name: newGroup } : a)));
+    } catch (error) {
+      console.error('Error updating account group:', error);
+    }
+  };
+
+  const updateAccountCategory: FinancialDataContextType['updateAccountCategory'] = async (accountId, newCategory) => {
+    try {
+      const { error } = await supabase
+        .from('financial_accounts')
+        .update({ category: newCategory })
+        .eq('id', accountId);
+      if (error) throw error;
+      setAccounts((prev) => prev.map((a) => (a.id === accountId ? { ...a, category: newCategory } : a)));
+    } catch (error) {
+      console.error('Error updating account category:', error);
+    }
+  };
+
+  const upsertPhysicalAsset = async (assetType: 'home' | 'car', value: number, groupName?: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const existing = physicalAssets.find((p) => p.asset_type?.toLowerCase() === assetType);
+    if (existing) {
+      const patch: any = { value };
+      if (groupName) patch.group_name = groupName;
+      await supabase.from('physical_assets').update(patch).eq('id', existing.id);
+    } else {
+      await supabase.from('physical_assets').insert({
+        user_id: user.id,
+        asset_type: assetType === 'home' ? 'Home' : 'Car',
+        value,
+        group_name: groupName || 'Personal',
+      });
+    }
+    const physicalData = await fetchPhysicalAssets();
+    setPhysicalAssets(physicalData);
+  };
+
+  const updateHomeValue = async (newValue: number) => {
+    try { await upsertPhysicalAsset('home', newValue); }
+    catch (e) { console.error(e); toast.error('Failed to update home value'); }
+  };
+
+  const updateCarValue = async (newValue: number) => {
+    try { await upsertPhysicalAsset('car', newValue); }
+    catch (e) { console.error(e); toast.error('Failed to update car value'); }
+  };
+
+  const updatePhysicalAssetGroup = async (assetType: 'home' | 'car', newGroup: string) => {
+    try {
+      const existing = physicalAssets.find((p) => p.asset_type?.toLowerCase() === assetType);
+      if (!existing) {
+        await upsertPhysicalAsset(assetType, 0, newGroup);
+        return;
+      }
+      await supabase.from('physical_assets').update({ group_name: newGroup }).eq('id', existing.id);
+      setPhysicalAssets((prev) => prev.map((p) => (p.id === existing.id ? { ...p, group_name: newGroup } : p)));
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to update group');
+    }
+  };
+
   const addGroup = (groupName: string) => {
     if (!availableGroups.includes(groupName)) {
-      setAvailableGroups(prev => [...prev, groupName]);
+      setAvailableGroups((prev) => [...prev, groupName]);
     }
   };
 
@@ -360,54 +579,50 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
 
     const channel = supabase
       .channel('financial-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'financial_transactions',
-        },
-        () => refreshData()
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'financial_accounts',
-        },
-        () => refreshData()
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'financial_transactions' }, () => refreshData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'financial_accounts' }, () => refreshData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'physical_assets' }, () => refreshData())
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <FinancialDataContext.Provider value={{ 
-      transactions, 
-      accounts, 
-      loading, 
-      refreshData,
-      viewMode,
-      setViewMode,
-      group,
-      setGroup,
-      balanceSheetSummary,
-      monthLabels,
-      updateTransaction,
-      addTransaction,
-      updateTransactionName,
-      updateTransactionGroup,
-      updateTransactionDate,
-      updateTransactionCategory,
-      deleteTransaction,
-      updateCategory,
-      availableGroups,
-      addGroup,
-    }}>
+    <FinancialDataContext.Provider
+      value={{
+        transactions,
+        accounts,
+        loading,
+        refreshData,
+        viewMode,
+        setViewMode,
+        group,
+        setGroup,
+        balanceSheetSummary,
+        balanceSheet,
+        monthLabels,
+        updateTransaction,
+        addTransaction,
+        updateTransactionName,
+        updateTransactionGroup,
+        updateTransactionDate,
+        updateTransactionCategory,
+        deleteTransaction,
+        updateAccountBalance,
+        updateAccountName,
+        updateAccountGroup,
+        updateAccountCategory,
+        updateHomeValue,
+        updateCarValue,
+        updatePhysicalAssetGroup,
+        updateCategory,
+        availableGroups,
+        addGroup,
+      }}
+    >
       {children}
     </FinancialDataContext.Provider>
   );
