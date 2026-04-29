@@ -13,9 +13,7 @@ import { applyHistoricalPayments, projectAmortization, RateTerm } from '@/utils/
 import { InlineTransactionsTable } from './InlineTransactionsTable';
 import { ImportDialog } from './ImportDialog';
 import { Upload } from 'lucide-react';
-
-const fmtGBP = (n: number) =>
-  new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 }).format(n);
+import { useUserCurrency } from '@/hooks/useUserCurrency';
 
 const ASSET_CATEGORIES = ['Bank', 'Savings', 'Investment', 'Pension', 'Crypto', 'Cash', 'Other'];
 const LIABILITY_CATEGORIES = ['Credit Card', 'Loan', 'Mortgage', 'Overdraft', 'Other'];
