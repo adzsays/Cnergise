@@ -6,6 +6,9 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useFinancialData } from '@/contexts/FinancialDataContext';
 import { InlineTransactionsTable } from './InlineTransactionsTable';
+import { ImportDialog } from './ImportDialog';
+import { Button } from '@/components/ui/button';
+import { Upload } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type Period = 'daily' | 'weekly' | 'monthly' | 'yearly';
@@ -19,6 +22,7 @@ const fmt = (n: number) =>
 export function CashFlowView() {
   const { transactions, balanceSheet, group, setGroup } = useFinancialData();
   const [period, setPeriod] = useState<Period>('monthly');
+  const [importOpen, setImportOpen] = useState(false);
 
   const monthLabels = useMemo(() => {
     const names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -115,7 +119,15 @@ export function CashFlowView() {
             </SelectContent>
           </Select>
         </div>
+        <div className="ml-auto">
+          <Button variant="outline" size="sm" onClick={() => setImportOpen(true)} className="h-8">
+            <Upload className="h-4 w-4 mr-2" />
+            Import CSV/Excel
+          </Button>
+        </div>
       </div>
+
+      <ImportDialog open={importOpen} onOpenChange={setImportOpen} />
 
       {/* KPI strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
