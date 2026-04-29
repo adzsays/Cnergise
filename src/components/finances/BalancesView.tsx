@@ -98,23 +98,32 @@ export function BalancesView() {
   };
 
   // Auto-amortize using the multi-term rate schedule (falls back to single rate if none defined).
-  const applyLoanPayments = async (a: any) => {
+  // fromOrigin=true rebuilds the balance from the original principal at loan start (full history).
+  const applyLoanPayments = async (a: any, fromOrigin = false) => {
     const start = a.loan_start_date ? new Date(a.loan_start_date) : null;
     if (!start) return toast.error('Set a loan start date first');
 
-    const lastApplied = a.last_payment_applied_date ? new Date(a.last_payment_applied_date) : start;
+    const useOrigin = fromOrigin && a.original_principal && Number(a.original_principal) > 0;
+    const startingBalance = useOrigin
+      ? Number(a.original_principal)
+      : Math.abs(Number(a.balance) || 0);
+    const lastApplied = useOrigin
+      ? start
+      : a.last_payment_applied_date
+        ? new Date(a.last_payment_applied_date)
+        : start;
     const today = new Date();
 
     const schedule = (schedules[a.id] || []).slice().sort((x, y) => x.sequence - y.sequence);
     const fallbackPayment = Number(a.monthly_payment) || 0;
     const fallbackRate = Number(a.interest_rate) || 0;
-    if (schedule.length === 0 && fallbackPayment <= 0) {
-      return toast.error('Add a rate term or set a monthly payment');
+    if (schedule.length === 0 && fallbackPayment <= 0 && fallbackRate <= 0) {
+      return toast.error('Add a rate term or set a monthly payment / rate');
     }
 
     const result = applyHistoricalPayments(
       {
-        startingBalance: Math.abs(Number(a.balance) || 0),
+        startingBalance,
         loanStartDate: start,
         totalTermMonths: a.term_months || null,
         fallbackRate,
