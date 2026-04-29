@@ -32,6 +32,11 @@ const isLoanLike = (cat?: string | null) => {
 export function BalancesView() {
   const { accounts, refreshData } = useFinancialData();
   const { currency: userCurrency, formatWhole: fmtGBP } = useUserCurrency();
+  const currencySymbol = (() => {
+    try {
+      return (0).toLocaleString(undefined, { style: 'currency', currency: userCurrency, maximumFractionDigits: 0 }).replace(/[\d\s.,]/g, '') || '£';
+    } catch { return '£'; }
+  })();
   const [savingId, setSavingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [schedules, setSchedules] = useState<Record<string, RateTerm[]>>({});
@@ -238,29 +243,35 @@ export function BalancesView() {
             </Select>
           </td>
           <td className="py-1 px-2">
-            <Input
-              type="number"
-              defaultValue={a.balance}
-              onBlur={(e) => {
-                const v = parseFloat(e.target.value) || 0;
-                if (v !== Number(a.balance)) update(a.id, { balance: v });
-              }}
-              className="h-7 border-0 bg-transparent px-1 text-right tabular-nums focus-visible:ring-1"
-            />
+            <div className="relative">
+              <span className="absolute left-1 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">{currencySymbol}</span>
+              <Input
+                type="number"
+                defaultValue={a.balance}
+                onBlur={(e) => {
+                  const v = parseFloat(e.target.value) || 0;
+                  if (v !== Number(a.balance)) update(a.id, { balance: v });
+                }}
+                className="h-7 border-0 bg-transparent pl-4 pr-1 text-right tabular-nums focus-visible:ring-1"
+              />
+            </div>
           </td>
           {showLimit && (
             <>
               <td className="py-1 px-2">
-                <Input
-                  type="number"
-                  defaultValue={a.credit_limit ?? ''}
-                  placeholder="—"
-                  onBlur={(e) => {
-                    const v = e.target.value === '' ? null : parseFloat(e.target.value) || 0;
-                    if (v !== a.credit_limit) update(a.id, { credit_limit: v });
-                  }}
-                  className="h-7 border-0 bg-transparent px-1 text-right tabular-nums focus-visible:ring-1"
-                />
+                <div className="relative">
+                  <span className="absolute left-1 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">{currencySymbol}</span>
+                  <Input
+                    type="number"
+                    defaultValue={a.credit_limit ?? ''}
+                    placeholder="—"
+                    onBlur={(e) => {
+                      const v = e.target.value === '' ? null : parseFloat(e.target.value) || 0;
+                      if (v !== a.credit_limit) update(a.id, { credit_limit: v });
+                    }}
+                    className="h-7 border-0 bg-transparent pl-4 pr-1 text-right tabular-nums focus-visible:ring-1"
+                  />
+                </div>
               </td>
               <td className="py-1 px-2 min-w-[140px]">
                 {limit > 0 ? (
