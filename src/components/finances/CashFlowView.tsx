@@ -5,10 +5,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useFinancialData } from '@/contexts/FinancialDataContext';
-import { InlineTransactionsTable } from './InlineTransactionsTable';
-import { ImportDialog } from './ImportDialog';
-import { Button } from '@/components/ui/button';
-import { Upload } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type Period = 'daily' | 'weekly' | 'monthly' | 'yearly';
