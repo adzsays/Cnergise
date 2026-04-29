@@ -1,672 +1,229 @@
-import React, { useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Plus, Filter, Upload, ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown, Edit2, Trash2, Building2, User } from 'lucide-react';
+import { useState } from 'react';
+import { Card } from '@/components/ui/card';
+import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Treemap } from 'recharts';
 import { useFinancialData } from '@/contexts/FinancialDataContext';
-import { useSpaceFilter } from '@/hooks/useSpaceFilter';
-import { TransactionDialog } from './TransactionDialog';
-import { TransactionTable } from './TransactionTable';
-import { CashFlowChart } from './CashFlowChart';
-import { CategoryFilter } from './CategoryFilter';
-import { ImportDialog } from './ImportDialog';
-import { Switch } from '@/components/ui/switch';
-import { Input } from '@/components/ui/input';
-import { 
-  getDayOfPeriodLabel, 
-  getMaxDayOfPeriod, 
-  getWeekdayOptions,
-  getNextBusinessDay 
-} from '@/utils/businessDays';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Building2, User } from 'lucide-react';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { TableView } from './TableView';
 
-export const CashFlowView = () => {
-  const { 
-    transactions, 
-    accounts,
-    loading, 
-    monthLabels,
-    updateTransaction, 
-    updateTransactionName, 
-    updateTransactionDate, 
-    updateTransactionCategory,
-    deleteTransaction,
-    addTransaction, 
-    viewMode, 
-    setViewMode, 
-    group, 
-    setGroup 
-  } = useFinancialData();
-  const { spaces, getDefaultSpaceId, currentSpaceId } = useSpaceFilter();
-  
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isImportOpen, setIsImportOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedType, setSelectedType] = useState<string>('all');
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editValue, setEditValue] = useState({ name: '', amount: '', date: 1, category: '' });
-  const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [newTransactionData, setNewTransactionData] = useState({
-    type: 'expense' as 'expense' | 'income',
-    category: '',
-    subcategory: '',
-    amount: '',
-    oneTimeDate: new Date().toISOString().split('T')[0],
-    dayOfPeriod: new Date().getDate(),
-    space_id: getDefaultSpaceId() || '',
-    frequency: 'monthly',
-    cost_centre: 'General'
-  });
+export function CashFlowView() {
+  const { transactions, balanceSheet, viewMode, setViewMode, group, setGroup } = useFinancialData();
+  const [timeframe, setTimeframe] = useState<'daily' | 'monthly' | 'business'>('monthly');
+  const [selectedMonthIndex, setSelectedMonthIndex] = useState(0);
 
-  const weekdayOptions = useMemo(() => getWeekdayOptions(), []);
-
-  const today = useMemo(() => {
+  const monthLabels = (() => {
+    const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    return d;
-  }, []);
-
-  const getRecurringDay = (timestamp: number) => new Date(timestamp).getDate();
-
-  const getTransactionDateInCurrentMonth = (dayOfMonth: number) => {
-    const date = new Date(today.getFullYear(), today.getMonth(), dayOfMonth);
-    date.setHours(0, 0, 0, 0);
-    return date;
-  };
-
-  const filteredTransactions = useMemo(() => {
-    return transactions.filter((t) => {
-      const categoryMatch = selectedCategory === 'all' || t.category === selectedCategory;
-      const typeMatch = selectedType === 'all' || t.type === selectedType;
-      // Filter by current space if one is selected
-      const spaceMatch = !currentSpaceId || t.space_id === currentSpaceId;
-      return categoryMatch && typeMatch && spaceMatch;
-    });
-  }, [transactions, selectedCategory, selectedType, currentSpaceId]);
-
-  const categories = useMemo(() => {
-    const cats = new Set(transactions.map((t) => t.category));
-    return ['all', ...Array.from(cats)];
-  }, [transactions]);
-
-  const groupedByCategory = useMemo(() => {
-    return filteredTransactions.reduce((acc, transaction) => {
-      if (!acc[transaction.category]) {
-        acc[transaction.category] = [];
-      }
-      acc[transaction.category].push(transaction);
-      return acc;
-    }, {} as Record<string, typeof transactions>);
-  }, [filteredTransactions]);
-
-  const groupedByType = useMemo(() => {
-    return filteredTransactions.reduce((acc, transaction) => {
-      const type = transaction.type === 'income' ? 'Income' : 'Expenses';
-      if (!acc[type]) {
-        acc[type] = [];
-      }
-      acc[type].push(transaction);
-      return acc;
-    }, {} as Record<string, typeof transactions>);
-  }, [filteredTransactions]);
-
-  const displayGroups = viewMode === 'costcentre' ? groupedByCategory : groupedByType;
-  const categoryKeys = Object.keys(displayGroups);
-
-  const toggleCategory = (category: string) => {
-    const newExpanded = new Set(expandedCategories);
-    if (newExpanded.has(category)) {
-      newExpanded.delete(category);
-    } else {
-      newExpanded.add(category);
+    const cm = d.getMonth(); const cy = d.getFullYear();
+    const labels: string[] = [];
+    for (let i = 0; i < 12; i++) {
+      const mi = (cm + i) % 12;
+      const yo = Math.floor((cm + i) / 12);
+      labels.push(`${names[mi]} ${cy + yo}`);
     }
-    setExpandedCategories(newExpanded);
-  };
+    return labels;
+  })();
 
-  const expandAll = () => setExpandedCategories(new Set(categoryKeys));
-  const collapseAll = () => setExpandedCategories(new Set());
-
-  const startEdit = (transactionId: string, currentName: string, currentMonthly: number, currentDate: number, currentCategory: string) => {
-    setEditingId(transactionId);
-    setEditValue({ 
-      name: currentName, 
-      amount: Math.abs(currentMonthly).toString(),
-      date: getRecurringDay(currentDate),
-      category: currentCategory
+  const getChartData = () => {
+    const initial = balanceSheet.bankAccounts.reduce((s, a) => s + a.balance, 0)
+                  + balanceSheet.investments.reduce((s, a) => s + a.balance, 0);
+    const data: any[] = [];
+    const divisor = timeframe === 'daily' ? 30 : timeframe === 'business' ? 20 : 1;
+    const today = new Date(); const day = today.getDate();
+    monthLabels.forEach((month, index) => {
+      const filter = (list: typeof transactions) => index === 0
+        ? list.filter((t) => new Date(t.date).getDate() <= day)
+        : list;
+      const ft = filter(transactions);
+      const sumBy = (type: string, g: string) => ft
+        .filter((t) => t.type === type && (t.group || '').toLowerCase() === g)
+        .reduce((s, t) => s + (t.projections[index] || 0), 0) / divisor;
+      const personalIncome = sumBy('income', 'personal');
+      const personalExpense = Math.abs(sumBy('expense', 'personal'));
+      const corentialIncome = sumBy('income', 'corential');
+      const corentialExpense = Math.abs(sumBy('expense', 'corential'));
+      const totalNet = personalIncome + corentialIncome - personalExpense - corentialExpense;
+      const cashBalance = index === 0 ? initial + totalNet * divisor : data[index - 1].cashBalance + totalNet * divisor;
+      data.push({
+        month,
+        personalIncome, personalExpense, personalNet: personalIncome - personalExpense,
+        corentialIncome, corentialExpense, corentialNet: corentialIncome - corentialExpense,
+        totalIncome: personalIncome + corentialIncome,
+        totalExpense: personalExpense + corentialExpense,
+        totalNet, cashBalance,
+      });
     });
+    return data;
   };
 
-  const saveEdit = async (transactionId: string, transactionType: 'income' | 'expense', currentCategory: string) => {
-    if (!editValue.name.trim() || !editValue.category.trim()) return;
+  const chartData = getChartData();
+  const selectedMonth = chartData[selectedMonthIndex];
+  const totalIncome = selectedMonth?.totalIncome || 0;
+  const totalExpenses = selectedMonth?.totalExpense || 0;
+  const personalIncome = selectedMonth?.personalIncome || 0;
+  const personalExpenses = selectedMonth?.personalExpense || 0;
+  const corentialIncome = selectedMonth?.corentialIncome || 0;
+  const corentialExpenses = selectedMonth?.corentialExpense || 0;
 
-    const newMonthly = parseFloat(editValue.amount);
-    if (isNaN(newMonthly) || newMonthly < 0) return;
+  const totalAssets =
+    balanceSheet.bankAccounts.reduce((s, a) => s + a.balance, 0) +
+    balanceSheet.investments.reduce((s, a) => s + a.balance, 0) +
+    balanceSheet.pensions.reduce((s, a) => s + a.balance, 0) +
+    balanceSheet.homeValue + balanceSheet.carValue;
+  const totalLiabilities = Math.abs(balanceSheet.liabilities.reduce((s, a) => s + a.balance, 0));
+  const netAssets = totalAssets - totalLiabilities;
+  const firstNeg = chartData.find((m) => m.cashBalance < 0);
+  const negDate = firstNeg ? firstNeg.month : 'Never';
+  const divisor = timeframe === 'daily' ? 30 : timeframe === 'business' ? 20 : 1;
 
-    const finalValue = transactionType === 'expense' ? -Math.abs(newMonthly) : Math.abs(newMonthly);
-    
-    await Promise.all([
-      updateTransactionName(transactionId, editValue.name.trim()),
-      updateTransaction(transactionId, finalValue),
-      updateTransactionDate(transactionId, new Date(2024, 0, editValue.date).getTime()),
-      editValue.category.trim() !== currentCategory && updateTransactionCategory(transactionId, editValue.category.trim())
-    ]);
-    
-    setEditingId(null);
-    setEditValue({ name: '', amount: '', date: 1, category: '' });
-  };
-
-  // Calculate timestamp from day of period or one-time date for new transactions
-  const calculateNewTransactionTimestamp = (): number => {
-    const freq = newTransactionData.frequency;
-    
-    if (freq === 'one-time') {
-      const date = new Date(newTransactionData.oneTimeDate);
-      return getNextBusinessDay(date).getTime();
+  const buildTreeData = (type: 'income' | 'expense') => {
+    const totals = new Map<string, number>();
+    transactions
+      .filter((t) => t.type === type && (group === 'all' || (t.group || '').toLowerCase() === group.toLowerCase()))
+      .forEach((t) => {
+        const v = Math.abs(t.projections[selectedMonthIndex] || 0) / divisor;
+        totals.set(t.subcategory, (totals.get(t.subcategory) || 0) + v);
+      });
+    const arr = Array.from(totals.entries()).map(([name, value]) => ({ name, value, size: value })).filter((i) => i.value > 0).sort((a, b) => b.value - a.value);
+    const total = arr.reduce((s, i) => s + i.value, 0);
+    const threshold = total * 0.01;
+    const main = arr.filter((i) => i.value >= threshold);
+    const other = arr.filter((i) => i.value < threshold);
+    if (other.length) {
+      const ot = other.reduce((s, i) => s + i.value, 0);
+      return [...main, { name: 'Other', value: ot, size: ot }];
     }
-    
-    if (freq === 'daily') {
-      return new Date().getTime();
-    }
-    
-    const now = new Date();
-    let referenceDate: Date;
-    
-    if (freq === 'weekly') {
-      const currentDay = now.getDay() || 7;
-      const targetDay = newTransactionData.dayOfPeriod;
-      const daysUntil = (targetDay - currentDay + 7) % 7 || 7;
-      referenceDate = new Date(now);
-      referenceDate.setDate(now.getDate() + daysUntil);
-    } else {
-      referenceDate = new Date(now.getFullYear(), now.getMonth(), newTransactionData.dayOfPeriod);
-    }
-    
-    return referenceDate.getTime();
+    return main;
   };
 
-  const handleAddTransaction = async () => {
-    if (!newTransactionData.subcategory || !newTransactionData.amount || !newTransactionData.category) return;
+  const expenseTree = buildTreeData('expense');
+  const incomeTree = buildTreeData('income');
 
-    const amount = parseFloat(newTransactionData.amount);
-    if (isNaN(amount) || amount <= 0) return;
-
-    const finalAmount = newTransactionData.type === 'expense' ? -Math.abs(amount) : Math.abs(amount);
-    const dateTimestamp = calculateNewTransactionTimestamp();
-
-    // Get space name for group_name field (backward compatibility)
-    const selectedSpace = spaces.find(s => s.id === newTransactionData.space_id);
-    const spaceName = selectedSpace?.name || 'General';
-
-    await addTransaction({
-      category: newTransactionData.category,
-      subcategory: newTransactionData.subcategory,
-      type: newTransactionData.type,
-      monthly: finalAmount,
-      amount: finalAmount,
-      group_name: spaceName,
-      space_id: newTransactionData.space_id || null,
-      date: dateTimestamp,
-      frequency: newTransactionData.frequency,
-      cost_centre: newTransactionData.cost_centre,
-    });
-
-    setAddDialogOpen(false);
-    setNewTransactionData({
-      type: 'expense',
-      category: '',
-      subcategory: '',
-      amount: '',
-      oneTimeDate: new Date().toISOString().split('T')[0],
-      dayOfPeriod: new Date().getDate(),
-      space_id: getDefaultSpaceId() || '',
-      frequency: 'monthly',
-      cost_centre: 'General'
-    });
+  const TreeContent = (props: any) => {
+    const { x, y, width, height, name, value, index = 0 } = props;
+    if (!name || !width || !height || width <= 0 || height <= 0) return null;
+    const colors = [['#3B82F6','#2563EB'],['#10B981','#059669'],['#8B5CF6','#7C3AED'],['#F59E0B','#D97706'],['#EF4444','#DC2626'],['#06B6D4','#0891B2'],['#EC4899','#DB2777'],['#6366F1','#4F46E5']];
+    const c = colors[index % colors.length];
+    const showText = width > 50 && height > 30;
+    return (
+      <g>
+        <defs>
+          <linearGradient id={`tg-${index}`} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor={c[0]} stopOpacity={0.9} />
+            <stop offset="100%" stopColor={c[1]} stopOpacity={0.95} />
+          </linearGradient>
+        </defs>
+        <rect x={x + 1} y={y + 1} width={Math.max(0, width - 2)} height={Math.max(0, height - 2)} rx={6} ry={6} style={{ fill: `url(#tg-${index})` }}>
+          <title>{`${name}: £${Math.round(value).toLocaleString()}`}</title>
+        </rect>
+        {showText && (
+          <text x={x + width / 2} y={y + height / 2} textAnchor="middle" dominantBaseline="middle" fill="white" fontSize={10} fontWeight="500">
+            {name.length > 12 ? name.slice(0, 10) + '…' : name}
+          </text>
+        )}
+      </g>
+    );
   };
-
-  const initialCashBalance = useMemo(() => {
-    return accounts
-      .filter(a => a.type === 'Asset')
-      .reduce((sum, acc) => sum + acc.balance, 0);
-  }, [accounts]);
-
-  const monthlyTotals = useMemo(() => {
-    return monthLabels.map((_, monthIndex) => {
-      return filteredTransactions.reduce((sum, t) => {
-        if (monthIndex === 0) {
-          const recurringDay = getRecurringDay(t.date);
-          const transactionDate = getTransactionDateInCurrentMonth(recurringDay);
-          if (transactionDate < today) return sum;
-        }
-        const projection = Array.isArray(t.projections) ? t.projections[monthIndex] : t.monthly;
-        return sum + (projection || 0);
-      }, 0);
-    });
-  }, [filteredTransactions, monthLabels, today]);
-
-  const rollingCashFlow = useMemo(() => {
-    return monthlyTotals.reduce((acc, monthTotal, index) => {
-      const previousBalance = index === 0 ? initialCashBalance : acc[index - 1];
-      acc.push(previousBalance + monthTotal);
-      return acc;
-    }, [] as number[]);
-  }, [monthlyTotals, initialCashBalance]);
-
-  const formatCurrency = (amount: number) => `£${Math.abs(amount).toLocaleString()}`;
 
   return (
-    <div className="space-y-4 md:space-y-6">
-      {/* Header Controls */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 md:gap-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1 md:py-1.5 rounded-lg bg-muted/50">
-            <span className={`text-[10px] md:text-xs ${viewMode === 'type' ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>Type</span>
-            <Switch checked={viewMode === 'costcentre'} onCheckedChange={(c) => setViewMode(c ? 'costcentre' : 'type')} className="scale-75 md:scale-90" />
-            <span className={`text-[10px] md:text-xs ${viewMode === 'costcentre' ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>Category</span>
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+        <div className="flex items-center gap-2">
+          <Label className="text-xs">View:</Label>
+          <Select value={group} onValueChange={(v: 'all' | 'personal' | 'corential') => setGroup(v)}>
+            <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Groups</SelectItem>
+              <SelectItem value="personal"><div className="flex items-center gap-2"><User className="h-4 w-4" />Personal</div></SelectItem>
+              <SelectItem value="corential"><div className="flex items-center gap-2"><Building2 className="h-4 w-4" />Corential</div></SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className={`text-xs ${viewMode === 'type' ? 'font-bold text-primary' : 'text-muted-foreground'}`}>By Type</span>
+          <Switch checked={viewMode === 'costcentre'} onCheckedChange={(c) => setViewMode(c ? 'costcentre' : 'type')} />
+          <span className={`text-xs ${viewMode === 'costcentre' ? 'font-bold text-primary' : 'text-muted-foreground'}`}>By Cost Centre</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <Label className="text-xs">Period:</Label>
+          <RadioGroup value={timeframe} onValueChange={(v) => setTimeframe(v as any)} className="flex gap-3">
+            <div className="flex items-center gap-1"><RadioGroupItem value="daily" id="d" /><Label htmlFor="d" className="text-xs">Daily</Label></div>
+            <div className="flex items-center gap-1"><RadioGroupItem value="business" id="b" /><Label htmlFor="b" className="text-xs">Business</Label></div>
+            <div className="flex items-center gap-1"><RadioGroupItem value="monthly" id="m" /><Label htmlFor="m" className="text-xs">Monthly</Label></div>
+          </RadioGroup>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {[
+          { label: `${monthLabels[selectedMonthIndex]} Income`, value: group === 'personal' ? personalIncome : group === 'corential' ? corentialIncome : totalIncome, color: 'text-income' },
+          { label: `${monthLabels[selectedMonthIndex]} Expenses`, value: group === 'personal' ? personalExpenses : group === 'corential' ? corentialExpenses : totalExpenses, color: 'text-expense' },
+          { label: 'Net Difference', value: (group === 'personal' ? personalIncome - personalExpenses : group === 'corential' ? corentialIncome - corentialExpenses : totalIncome - totalExpenses), color: 'text-primary' },
+          { label: 'Cash Balance', value: selectedMonth?.cashBalance || 0, color: 'text-primary' },
+          { label: 'Total Assets', value: totalAssets, color: 'text-success' },
+          { label: 'Total Liabilities', value: totalLiabilities, color: 'text-expense' },
+          { label: 'Net Assets', value: netAssets, color: 'text-primary' },
+          { label: 'First Negative', value: negDate, color: negDate === 'Never' ? 'text-success' : 'text-destructive', isText: true },
+        ].map((m, i) => (
+          <Card key={i} className="p-2">
+            <p className="text-[10px] text-muted-foreground leading-tight mb-0.5">{m.label}</p>
+            <p className={`text-sm font-bold ${m.color}`}>{m.isText ? m.value : `£${Math.round(Number(m.value)).toLocaleString()}`}</p>
+          </Card>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        <Card className="lg:col-span-2 p-4">
+          <div className="h-[320px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={chartData} margin={{ top: 20, right: 20, left: -10, bottom: 60 }}
+                onClick={(d) => { if (d && d.activeTooltipIndex !== undefined) setSelectedMonthIndex(d.activeTooltipIndex); }}>
+                <defs>
+                  <linearGradient id="ig" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="hsl(var(--income))" stopOpacity={0.4} /><stop offset="100%" stopColor="hsl(var(--income))" stopOpacity={0.02} /></linearGradient>
+                  <linearGradient id="eg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="hsl(var(--expense))" stopOpacity={0.4} /><stop offset="100%" stopColor="hsl(var(--expense))" stopOpacity={0.02} /></linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} vertical={false} />
+                <XAxis dataKey="month" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={60} interval={0} />
+                <YAxis yAxisId="left" tick={{ fontSize: 10 }} tickFormatter={(v) => `£${(v/1000).toFixed(0)}k`} />
+                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10, fill: 'hsl(var(--primary))' }} tickFormatter={(v) => `£${(v/1000).toFixed(0)}k`} />
+                <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: 'none', borderRadius: 12 }} formatter={(v: number) => `£${Math.round(v).toLocaleString()}`} />
+                <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" iconSize={8} />
+                <Area type="monotone" dataKey={group === 'personal' ? 'personalIncome' : group === 'corential' ? 'corentialIncome' : 'totalIncome'} fill="url(#ig)" stroke="hsl(var(--income))" name="Income" yAxisId="left" />
+                <Area type="monotone" dataKey={group === 'personal' ? 'personalExpense' : group === 'corential' ? 'corentialExpense' : 'totalExpense'} fill="url(#eg)" stroke="hsl(var(--expense))" name="Expenses" yAxisId="left" />
+                <Line type="monotone" dataKey="cashBalance" stroke="hsl(var(--primary))" strokeWidth={2.5} strokeDasharray="5 5" name="Cash Balance" dot={false} yAxisId="right" />
+              </ComposedChart>
+            </ResponsiveContainer>
           </div>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => setIsImportOpen(true)} className="h-8 text-xs md:text-sm">
-            <Upload className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1 md:mr-1.5" />
-            <span className="hidden sm:inline">Import</span>
-          </Button>
-          <Button size="sm" onClick={() => setAddDialogOpen(true)} className="h-8 text-xs md:text-sm">
-            <Plus className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1 md:mr-1.5" />
-            Add
-          </Button>
-        </div>
-      </div>
+        </Card>
 
-      {/* Cash Flow Chart */}
-      <CashFlowChart transactions={filteredTransactions} />
-
-      {/* Rolling Cash Flow Summary */}
-      <div className="rounded-lg md:rounded-xl border border-border/50 overflow-hidden">
-        <div className="flex items-center justify-between p-3 md:p-4 bg-muted/30">
-          <h3 className="text-xs md:text-sm font-semibold">12-Month Projection</h3>
-          <Button
-            onClick={() => expandedCategories.size === categoryKeys.length ? collapseAll() : expandAll()}
-            variant="ghost"
-            size="sm"
-            className="h-7 md:h-8 text-xs"
-          >
-            {expandedCategories.size === categoryKeys.length ? (
-              <><ChevronsUpDown className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1" />Collapse</>
-            ) : (
-              <><ChevronsDownUp className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1" />Expand</>
-            )}
-          </Button>
-        </div>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/20">
-                <TableHead className="text-[10px] md:text-xs font-medium py-2 px-2 md:px-3 min-w-[80px]">Balance</TableHead>
-                <TableHead className="text-right text-[10px] md:text-xs font-medium py-2 px-2 md:px-3 min-w-[60px]">Monthly</TableHead>
-                {monthLabels.map((month) => (
-                  <TableHead key={month} className="text-right text-[10px] md:text-xs font-medium py-2 px-1 md:px-3 min-w-[50px]">{month}</TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow className="bg-primary/5 font-semibold border-b-2 border-primary/20">
-                <TableCell colSpan={2} className="text-[10px] md:text-xs py-2 px-2 md:px-3">Rolling Cash Flow</TableCell>
-                {rollingCashFlow.map((balance, idx) => (
-                  <TableCell
-                    key={idx}
-                    className={`text-right text-[10px] md:text-xs py-2 px-1 md:px-3 ${balance >= 0 ? 'text-income' : 'text-expense'}`}
-                  >
-                    {formatCurrency(balance)}
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableBody>
-          </Table>
+        <div className="grid grid-cols-2 lg:grid-cols-1 gap-3">
+          <Card className="p-3">
+            <h3 className="text-xs font-semibold mb-2 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-expense" />Expenses</h3>
+            <div className="h-[140px]">
+              {expenseTree.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <Treemap data={expenseTree} dataKey="size" aspectRatio={4/3} stroke="transparent" content={<TreeContent />} isAnimationActive={false} />
+                </ResponsiveContainer>
+              ) : <div className="h-full flex items-center justify-center text-xs text-muted-foreground">No data</div>}
+            </div>
+          </Card>
+          <Card className="p-3">
+            <h3 className="text-xs font-semibold mb-2 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-income" />Income</h3>
+            <div className="h-[140px]">
+              {incomeTree.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <Treemap data={incomeTree} dataKey="size" aspectRatio={4/3} stroke="transparent" content={<TreeContent />} isAnimationActive={false} />
+                </ResponsiveContainer>
+              ) : <div className="h-full flex items-center justify-center text-xs text-muted-foreground">No data</div>}
+            </div>
+          </Card>
         </div>
       </div>
 
-      {/* Transactions by Category */}
-      <div className="rounded-lg md:rounded-xl border border-border/50 overflow-hidden">
-        <ScrollArea className="h-[300px] md:h-[400px]">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/20">
-                <TableHead className="text-[10px] md:text-xs font-medium py-2 px-2 md:px-3 min-w-[100px]">Item</TableHead>
-                <TableHead className="text-right text-[10px] md:text-xs font-medium py-2 px-2 md:px-3 min-w-[60px]">Monthly</TableHead>
-                {monthLabels.map((month) => (
-                  <TableHead key={month} className="text-right text-[10px] md:text-xs font-medium py-2 px-1 md:px-3 min-w-[50px]">{month}</TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {Object.entries(displayGroups).map(([groupName, groupTransactions]) => {
-                const isExpanded = expandedCategories.has(groupName);
-                
-                const groupMonthlyTotals = monthLabels.map((_, monthIndex) => {
-                  return groupTransactions.reduce((sum, t) => {
-                    if (monthIndex === 0) {
-                      const recurringDay = getRecurringDay(t.date);
-                      const transactionDate = getTransactionDateInCurrentMonth(recurringDay);
-                      if (transactionDate < today) return sum;
-                    }
-                    const projection = Array.isArray(t.projections) ? t.projections[monthIndex] : t.monthly;
-                    return sum + (projection || 0);
-                  }, 0);
-                });
-
-                const groupRecurringTotal = groupTransactions.reduce((sum, t) => sum + t.monthly, 0);
-                
-                return (
-                  <React.Fragment key={groupName}>
-                    <TableRow 
-                      className="bg-muted/30 hover:bg-muted/50 cursor-pointer transition-colors" 
-                      onClick={() => toggleCategory(groupName)}
-                    >
-                      <TableCell className="font-medium text-xs py-2 px-3">
-                        <div className="flex items-center gap-2">
-                          {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-                          {groupName}
-                        </div>
-                      </TableCell>
-                      <TableCell className={`text-right text-xs font-medium py-2 px-3 ${groupRecurringTotal >= 0 ? 'text-income' : 'text-expense'}`}>
-                        {formatCurrency(groupRecurringTotal)}
-                      </TableCell>
-                      {groupMonthlyTotals.map((total, idx) => (
-                        <TableCell key={idx} className={`text-right text-xs font-medium py-2 px-3 ${total >= 0 ? 'text-income' : 'text-expense'}`}>
-                          {formatCurrency(total)}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                    
-                    {isExpanded && groupTransactions.map((transaction) => {
-                      const isEditing = editingId === transaction.id;
-                      const projections = Array.isArray(transaction.projections) ? transaction.projections : Array(12).fill(transaction.monthly);
-                      
-                      return (
-                        <TableRow key={transaction.id} className="hover:bg-muted/10 transition-colors">
-                          <TableCell className="py-2 px-3">
-                            {isEditing ? (
-                              <div className="space-y-2 py-2">
-                                <Input
-                                  value={editValue.name}
-                                  onChange={(e) => setEditValue({ ...editValue, name: e.target.value })}
-                                  className="h-8 text-xs"
-                                  placeholder="Name"
-                                />
-                                <Input
-                                  value={editValue.category}
-                                  onChange={(e) => setEditValue({ ...editValue, category: e.target.value })}
-                                  className="h-8 text-xs"
-                                  placeholder="Category"
-                                />
-                                <div className="grid grid-cols-2 gap-2">
-                                  <Input
-                                    type="number"
-                                    value={editValue.amount}
-                                    onChange={(e) => setEditValue({ ...editValue, amount: e.target.value })}
-                                    className="h-8 text-xs"
-                                    placeholder="Amount"
-                                  />
-                                  <Input
-                                    type="number"
-                                    min="1"
-                                    max="31"
-                                    value={editValue.date}
-                                    onChange={(e) => setEditValue({ ...editValue, date: parseInt(e.target.value) || 1 })}
-                                    className="h-8 text-xs"
-                                    placeholder="Day"
-                                  />
-                                </div>
-                                <div className="flex gap-2">
-                                  <Button size="sm" onClick={() => saveEdit(transaction.id, transaction.type as 'income' | 'expense', transaction.category)} className="flex-1 h-7 text-xs">Save</Button>
-                                  <Button size="sm" variant="outline" onClick={() => setEditingId(null)} className="flex-1 h-7 text-xs">Cancel</Button>
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-2 pl-6">
-                                <span className="text-xs text-muted-foreground">{transaction.subcategory}</span>
-                                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-50 hover:opacity-100" onClick={(e) => {
-                                  e.stopPropagation();
-                                  startEdit(transaction.id, transaction.subcategory, transaction.monthly, transaction.date, transaction.category);
-                                }}>
-                                  <Edit2 className="h-3 w-3" />
-                                </Button>
-                                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-50 hover:opacity-100 text-destructive" onClick={(e) => {
-                                  e.stopPropagation();
-                                  deleteTransaction(transaction.id);
-                                }}>
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                                {transaction.group_name === 'Business' ? (
-                                  <Building2 className="h-3 w-3 text-primary" />
-                                ) : (
-                                  <User className="h-3 w-3 text-muted-foreground" />
-                                )}
-                              </div>
-                            )}
-                          </TableCell>
-                          <TableCell className={`text-right text-xs py-2 px-3 ${transaction.monthly >= 0 ? 'text-income' : 'text-expense'}`}>
-                            {formatCurrency(transaction.monthly)}
-                          </TableCell>
-                          {projections.map((proj, idx) => {
-                            let displayValue = proj;
-                            if (idx === 0) {
-                              const recurringDay = getRecurringDay(transaction.date);
-                              const transactionDate = getTransactionDateInCurrentMonth(recurringDay);
-                              if (transactionDate < today) displayValue = 0;
-                            }
-                            return (
-                              <TableCell key={idx} className={`text-right text-xs py-2 px-3 ${displayValue >= 0 ? 'text-income/70' : 'text-expense/70'}`}>
-                                {displayValue !== 0 ? formatCurrency(displayValue) : '-'}
-                              </TableCell>
-                            );
-                          })}
-                        </TableRow>
-                      );
-                    })}
-                  </React.Fragment>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </ScrollArea>
-      </div>
-
-      {/* Add Transaction Dialog */}
-      <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-        <DialogContent className="sm:max-w-[500px] max-h-[85vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle>Add Transaction</DialogTitle>
-            <DialogDescription>Add a new transaction with frequency and cost centre</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4 overflow-y-auto flex-1 pr-2">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Type</Label>
-                <Select value={newTransactionData.type} onValueChange={(v) => setNewTransactionData({ ...newTransactionData, type: v as 'income' | 'expense' })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent className="bg-background z-50">
-                    <SelectItem value="income">Income</SelectItem>
-                    <SelectItem value="expense">Expense</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Frequency</Label>
-                <Select value={newTransactionData.frequency} onValueChange={(v) => setNewTransactionData({ ...newTransactionData, frequency: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select frequency" /></SelectTrigger>
-                  <SelectContent className="bg-background z-50">
-                    <SelectItem value="one-time">One-time</SelectItem>
-                    <SelectItem value="daily">Daily</SelectItem>
-                    <SelectItem value="weekly">Weekly</SelectItem>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                    <SelectItem value="quarterly">Quarterly</SelectItem>
-                    <SelectItem value="yearly">Yearly</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Space</Label>
-                <Select value={newTransactionData.space_id} onValueChange={(v) => setNewTransactionData({ ...newTransactionData, space_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select space" /></SelectTrigger>
-                  <SelectContent className="bg-background z-50">
-                    {spaces.map((space) => (
-                      <SelectItem key={space.id} value={space.id}>
-                        {space.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Cost Centre</Label>
-                <Select value={newTransactionData.cost_centre} onValueChange={(v) => setNewTransactionData({ ...newTransactionData, cost_centre: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select cost centre" /></SelectTrigger>
-                  <SelectContent className="bg-background z-50">
-                    <SelectItem value="General">General</SelectItem>
-                    <SelectItem value="Operations">Operations</SelectItem>
-                    <SelectItem value="Marketing">Marketing</SelectItem>
-                    <SelectItem value="Sales">Sales</SelectItem>
-                    <SelectItem value="IT & Technology">IT & Technology</SelectItem>
-                    <SelectItem value="Human Resources">Human Resources</SelectItem>
-                    <SelectItem value="Finance">Finance</SelectItem>
-                    <SelectItem value="Research & Development">Research & Development</SelectItem>
-                    <SelectItem value="Customer Service">Customer Service</SelectItem>
-                    <SelectItem value="Administration">Administration</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div>
-              <Label>Category</Label>
-              <Input
-                value={newTransactionData.category}
-                onChange={(e) => setNewTransactionData({ ...newTransactionData, category: e.target.value })}
-                placeholder="e.g., Salary, Rent, Utilities"
-              />
-            </div>
-            <div>
-              <Label>Name</Label>
-              <Input
-                value={newTransactionData.subcategory}
-                onChange={(e) => setNewTransactionData({ ...newTransactionData, subcategory: e.target.value })}
-                placeholder="e.g., Monthly salary, Electric bill"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Amount (£)</Label>
-                <Input
-                  type="number"
-                  value={newTransactionData.amount}
-                  onChange={(e) => setNewTransactionData({ ...newTransactionData, amount: e.target.value })}
-                  placeholder="0"
-                />
-              </div>
-              {newTransactionData.frequency === 'one-time' ? (
-                <div>
-                  <Label>Transaction Date</Label>
-                  <Input
-                    type="date"
-                    value={newTransactionData.oneTimeDate}
-                    onChange={(e) => setNewTransactionData({ ...newTransactionData, oneTimeDate: e.target.value })}
-                  />
-                  <p className="text-[10px] text-muted-foreground mt-1">
-                    Adjusted to next business day if weekend/holiday
-                  </p>
-                </div>
-              ) : newTransactionData.frequency === 'daily' ? (
-                <div>
-                  <Label>Schedule</Label>
-                  <p className="text-sm text-muted-foreground py-2">
-                    Repeats every business day
-                  </p>
-                </div>
-              ) : newTransactionData.frequency === 'weekly' ? (
-                <div>
-                  <Label>{getDayOfPeriodLabel(newTransactionData.frequency)}</Label>
-                  <Select 
-                    value={newTransactionData.dayOfPeriod.toString()} 
-                    onValueChange={(v) => setNewTransactionData({ ...newTransactionData, dayOfPeriod: parseInt(v) })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select day" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background z-50">
-                      {weekdayOptions.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value.toString()}>
-                          {opt.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-[10px] text-muted-foreground mt-1">
-                    Moves to next business day if needed
-                  </p>
-                </div>
-              ) : (
-                <div>
-                  <Label>{getDayOfPeriodLabel(newTransactionData.frequency)}</Label>
-                  <Input
-                    type="number"
-                    min="1"
-                    max={getMaxDayOfPeriod(newTransactionData.frequency)}
-                    value={newTransactionData.dayOfPeriod}
-                    onChange={(e) => setNewTransactionData({ ...newTransactionData, dayOfPeriod: parseInt(e.target.value) || 1 })}
-                  />
-                  <p className="text-[10px] text-muted-foreground mt-1">
-                    {newTransactionData.frequency === 'monthly' && 'e.g., 15 = 15th of each month'}
-                    {newTransactionData.frequency === 'quarterly' && 'e.g., 45 = 45th day of quarter'}
-                    {newTransactionData.frequency === 'yearly' && 'e.g., 100 = 100th day of year'}
-                    {' '}• Adjusted to business day
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAddDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleAddTransaction}>Add Transaction</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <TransactionDialog
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-      />
-
-      <ImportDialog
-        open={isImportOpen}
-        onOpenChange={setIsImportOpen}
-      />
+      <TableView />
     </div>
   );
-};
+}
