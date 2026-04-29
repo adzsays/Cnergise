@@ -1,15 +1,33 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectSeparator } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Plus, Trash2, Settings2, ArrowDownCircle, ArrowUpCircle, X } from 'lucide-react';
 import { useFinancialData } from '@/contexts/FinancialDataContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 const FREQUENCIES = ['daily', 'weekly', 'monthly', 'quarterly', 'yearly'];
-const COST_CENTRES = ['Personal', 'Home', 'Work', 'Side Hustle', 'Investment', 'Other'];
+const DEFAULT_COST_CENTRES = ['Personal', 'Home', 'Work', 'Side Hustle', 'Investment', 'Other'];
+const COST_CENTRE_KEY = 'finance.costCentres.v1';
+
+const loadCostCentres = (): string[] => {
+  try {
+    const raw = localStorage.getItem(COST_CENTRE_KEY);
+    if (!raw) return DEFAULT_COST_CENTRES;
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) && arr.length ? arr : DEFAULT_COST_CENTRES;
+  } catch {
+    return DEFAULT_COST_CENTRES;
+  }
+};
+const saveCostCentres = (list: string[]) => {
+  localStorage.setItem(COST_CENTRE_KEY, JSON.stringify(list));
+  window.dispatchEvent(new CustomEvent('cost-centres-changed'));
+};
 
 const toDateInput = (ms: number | null | undefined) => {
   if (!ms) return '';
@@ -22,17 +40,30 @@ const fromDateInput = (s: string) => (s ? new Date(s).getTime() : null);
 export function InlineTransactionsTable() {
   const { transactions, accounts, addTransaction, deleteTransaction } = useFinancialData();
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [costCentres, setCostCentres] = useState<string[]>(loadCostCentres());
+  const [manageOpen, setManageOpen] = useState(false);
+
+  useEffect(() => {
+    const handler = () => setCostCentres(loadCostCentres());
+    window.addEventListener('cost-centres-changed', handler);
+    return () => window.removeEventListener('cost-centres-changed', handler);
+  }, []);
 
   const accountNames = useMemo(() => accounts.map((a) => a.name), [accounts]);
 
   const sorted = useMemo(
-    () => [...transactions].sort((a, b) => (a.subcategory || '').localeCompare(b.subcategory || '')),
+    () =>
+      [...transactions].sort((a, b) => {
+        if (a.type !== b.type) return a.type === 'income' ? -1 : 1;
+        return (a.subcategory || '').localeCompare(b.subcategory || '');
+      }),
     [transactions]
   );
 
   const updateField = async (id: string, patch: Partial<{
     subcategory: string; category: string; monthly: number; daily: number; amount: number;
     projections: number[]; date: number; cost_centre: string; frequency: string; end_date: string | null;
+    type: 'income' | 'expense';
   }>) => {
     setSavingId(id);
     const { error } = await supabase.from('financial_transactions').update(patch as any).eq('id', id);
@@ -43,13 +74,13 @@ export function InlineTransactionsTable() {
     }
   };
 
-  const handleAddRow = async () => {
+  const handleAddRow = async (type: 'income' | 'expense') => {
     await addTransaction({
-      type: 'expense',
+      type,
       category: 'Other',
-      subcategory: 'New entry',
+      subcategory: type === 'income' ? 'New income' : 'New expense',
       monthly: 0,
-      cost_centre: 'Personal',
+      cost_centre: costCentres[0] || 'Personal',
       frequency: 'monthly',
       date: Date.now(),
     });
@@ -57,20 +88,35 @@ export function InlineTransactionsTable() {
 
   return (
     <Card className="p-3">
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
         <div>
           <h3 className="text-sm font-semibold uppercase tracking-wide">Cash Flows</h3>
           <p className="text-xs text-muted-foreground">Edit any cell — changes save automatically</p>
         </div>
-        <Button size="sm" variant="outline" onClick={handleAddRow}>
-          <Plus className="h-3.5 w-3.5 mr-1" /> Add Row
-        </Button>
+        <div className="flex gap-2">
+          <ManageCostCentresDialog
+            open={manageOpen}
+            onOpenChange={setManageOpen}
+            list={costCentres}
+            onSave={(next) => {
+              saveCostCentres(next);
+              setCostCentres(next);
+            }}
+          />
+          <Button size="sm" variant="outline" onClick={() => handleAddRow('income')} className="text-success">
+            <ArrowDownCircle className="h-3.5 w-3.5 mr-1" /> Add Income
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => handleAddRow('expense')} className="text-destructive">
+            <ArrowUpCircle className="h-3.5 w-3.5 mr-1" /> Add Expense
+          </Button>
+        </div>
       </div>
 
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
           <thead>
             <tr className="text-muted-foreground uppercase text-[10px] tracking-wider border-b">
+              <th className="text-left py-2 px-2 font-medium w-24">Type</th>
               <th className="text-left py-2 px-2 font-medium">Description</th>
               <th className="text-right py-2 px-2 font-medium">Amount</th>
               <th className="text-left py-2 px-2 font-medium">Recurring Date</th>
@@ -84,16 +130,42 @@ export function InlineTransactionsTable() {
           <tbody>
             {sorted.length === 0 ? (
               <tr>
-                <td colSpan={8} className="text-center py-6 text-muted-foreground">
-                  No transactions yet — click "Add Row" to start.
+                <td colSpan={9} className="text-center py-6 text-muted-foreground">
+                  No transactions yet — click "Add Income" or "Add Expense" to start.
                 </td>
               </tr>
             ) : (
               sorted.map((t) => (
                 <tr
                   key={t.id}
-                  className={`border-b border-border/40 hover:bg-muted/30 ${savingId === t.id ? 'opacity-60' : ''}`}
+                  className={cn(
+                    'border-b border-border/40 hover:bg-muted/30',
+                    savingId === t.id && 'opacity-60'
+                  )}
                 >
+                  <td className="py-1 px-2">
+                    <Select
+                      defaultValue={t.type || 'expense'}
+                      onValueChange={(v) => updateField(t.id, { type: v as 'income' | 'expense' })}
+                    >
+                      <SelectTrigger
+                        className={cn(
+                          'h-7 border-0 bg-transparent px-1 focus:ring-1 font-medium',
+                          t.type === 'income' ? 'text-success' : 'text-destructive'
+                        )}
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="income">
+                          <span className="text-success">Income</span>
+                        </SelectItem>
+                        <SelectItem value="expense">
+                          <span className="text-destructive">Expense</span>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </td>
                   <td className="py-1 px-2">
                     <Input
                       defaultValue={t.subcategory || ''}
@@ -128,18 +200,34 @@ export function InlineTransactionsTable() {
                   </td>
                   <td className="py-1 px-2">
                     <Select
-                      defaultValue={t.cost_centre || 'Personal'}
-                      onValueChange={(v) => updateField(t.id, { cost_centre: v })}
+                      value={t.cost_centre || costCentres[0] || 'Personal'}
+                      onValueChange={(v) => {
+                        if (v === '__manage__') {
+                          setManageOpen(true);
+                          return;
+                        }
+                        updateField(t.id, { cost_centre: v });
+                      }}
                     >
                       <SelectTrigger className="h-7 border-0 bg-transparent px-1 focus:ring-1">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {COST_CENTRES.map((c) => (
+                        {costCentres.map((c) => (
                           <SelectItem key={c} value={c}>
                             {c}
                           </SelectItem>
                         ))}
+                        {/* If current value is not in the list (legacy), still show it */}
+                        {t.cost_centre && !costCentres.includes(t.cost_centre) && (
+                          <SelectItem value={t.cost_centre}>{t.cost_centre} (legacy)</SelectItem>
+                        )}
+                        <SelectSeparator />
+                        <SelectItem value="__manage__" className="text-primary">
+                          <span className="flex items-center gap-1.5">
+                            <Settings2 className="h-3 w-3" /> Manage cost centres…
+                          </span>
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </td>
@@ -206,5 +294,103 @@ export function InlineTransactionsTable() {
         </table>
       </div>
     </Card>
+  );
+}
+
+function ManageCostCentresDialog({
+  open,
+  onOpenChange,
+  list,
+  onSave,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  list: string[];
+  onSave: (next: string[]) => void;
+}) {
+  const [draft, setDraft] = useState<string[]>(list);
+  const [newItem, setNewItem] = useState('');
+
+  useEffect(() => {
+    if (open) setDraft(list);
+  }, [open, list]);
+
+  const add = () => {
+    const v = newItem.trim();
+    if (!v) return;
+    if (draft.some((d) => d.toLowerCase() === v.toLowerCase())) {
+      toast.error('Already exists');
+      return;
+    }
+    setDraft([...draft, v]);
+    setNewItem('');
+  };
+
+  const rename = (i: number, v: string) => {
+    const next = [...draft];
+    next[i] = v;
+    setDraft(next);
+  };
+
+  const remove = (i: number) => {
+    if (draft.length <= 1) {
+      toast.error('Keep at least one cost centre');
+      return;
+    }
+    setDraft(draft.filter((_, idx) => idx !== i));
+  };
+
+  const save = () => {
+    const cleaned = draft.map((d) => d.trim()).filter(Boolean);
+    if (!cleaned.length) {
+      toast.error('Add at least one cost centre');
+      return;
+    }
+    onSave(cleaned);
+    toast.success('Cost centres updated');
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline">
+          <Settings2 className="h-3.5 w-3.5 mr-1" /> Cost Centres
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Manage Cost Centres</DialogTitle>
+        </DialogHeader>
+        <div className="flex flex-col gap-2 max-h-[50vh] overflow-y-auto">
+          {draft.map((c, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <Input value={c} onChange={(e) => rename(i, e.target.value)} className="h-8" />
+              <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => remove(i)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-2 pt-2 border-t">
+          <Input
+            placeholder="Add new cost centre…"
+            value={newItem}
+            onChange={(e) => setNewItem(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && add()}
+            className="h-8"
+          />
+          <Button size="sm" onClick={add}>
+            <Plus className="h-3.5 w-3.5 mr-1" /> Add
+          </Button>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button onClick={save}>Save</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
