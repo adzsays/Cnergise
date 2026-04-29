@@ -3,6 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { HoverCard, HoverCardTrigger, HoverCardContent } from '@/components/ui/hover-card';
 import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useFinancialData } from '@/contexts/FinancialDataContext';
 import { cn } from '@/lib/utils';
@@ -358,6 +359,45 @@ export function CashFlowView() {
     return { avgIncome, avgExpense, net: avgIncome - avgExpense, firstNeg: firstNeg?.label || 'Never' };
   }, [chartData]);
 
+  // Monthly summary with weekly & daily breakdowns plus per-category split for tooltips.
+  const monthlySummary = useMemo(() => {
+    const groupFilter = (t: any) =>
+      costCentre === 'all' ? true : (t.cost_centre || '').toLowerCase() === costCentre.toLowerCase();
+    const incomes = transactions.filter((t) => t.type === 'income' && groupFilter(t));
+    const expenses = transactions.filter((t) => t.type === 'expense' && groupFilter(t));
+
+    const monthlyIncome = incomes.reduce((s, t) => s + Math.abs(Number(t.monthly) || 0), 0);
+    const baseMonthlyExpense = expenses.reduce((s, t) => s + Math.abs(Number(t.monthly) || 0), 0);
+    const monthlyExpense = baseMonthlyExpense + totalCcPaymentMonthly;
+
+    const breakdown = (txs: any[], extra?: { name: string; value: number }) => {
+      const map = new Map<string, number>();
+      txs.forEach((t) => {
+        const key = t.subcategory || t.category || 'Other';
+        map.set(key, (map.get(key) || 0) + Math.abs(Number(t.monthly) || 0));
+      });
+      if (extra && extra.value > 0) map.set(extra.name, (map.get(extra.name) || 0) + extra.value);
+      return Array.from(map.entries())
+        .map(([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value);
+    };
+
+    const incomeBreakdown = breakdown(incomes);
+    const expenseBreakdown = breakdown(expenses, { name: 'Credit Card Payments', value: totalCcPaymentMonthly });
+
+    return {
+      monthlyIncome,
+      monthlyExpense,
+      weeklyIncome: monthlyIncome * 12 / 52,
+      weeklyExpense: monthlyExpense * 12 / 52,
+      dailyIncome: monthlyIncome / 30,
+      dailyExpense: monthlyExpense / 30,
+      incomeBreakdown,
+      expenseBreakdown,
+    };
+  }, [transactions, costCentre, totalCcPaymentMonthly]);
+
+
   return (
     <div className="flex flex-col gap-4">
       {/* Controls */}
@@ -464,6 +504,97 @@ export function CashFlowView() {
               />
             </ComposedChart>
           </ResponsiveContainer>
+        </div>
+      </Card>
+
+      {/* Monthly summary with weekly & daily breakdowns. Hover for category split. */}
+      <Card className="p-4">
+        <div className="mb-3">
+          <h3 className="text-sm font-semibold uppercase tracking-wide">Monthly Summary</h3>
+          <p className="text-[10px] text-muted-foreground">
+            Hover Income or Expenses to see the breakdown {costCentre !== 'all' && `· ${costCentre}`}
+          </p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* Income column */}
+          <div className="rounded-lg border border-border/50 p-3">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">Income</p>
+            <div className="grid grid-cols-3 gap-2">
+              {([
+                { label: 'Monthly', value: monthlySummary.monthlyIncome },
+                { label: 'Weekly', value: monthlySummary.weeklyIncome },
+                { label: 'Daily', value: monthlySummary.dailyIncome },
+              ]).map((cell) => (
+                <HoverCard key={cell.label} openDelay={100}>
+                  <HoverCardTrigger asChild>
+                    <button className="text-left rounded-md p-2 hover:bg-muted/40 transition-colors cursor-help">
+                      <p className="text-[10px] text-muted-foreground">{cell.label}</p>
+                      <p className="text-sm font-semibold text-income tabular-nums">{fmt(cell.value)}</p>
+                    </button>
+                  </HoverCardTrigger>
+                  <HoverCardContent className="w-72" align="start">
+                    <p className="text-xs font-semibold mb-2">Income breakdown · {cell.label}</p>
+                    {monthlySummary.incomeBreakdown.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">No income recorded.</p>
+                    ) : (
+                      <div className="space-y-1 max-h-64 overflow-y-auto">
+                        {monthlySummary.incomeBreakdown.map((b) => {
+                          const v =
+                            cell.label === 'Monthly' ? b.value : cell.label === 'Weekly' ? (b.value * 12) / 52 : b.value / 30;
+                          return (
+                            <div key={b.name} className="flex items-center justify-between text-xs">
+                              <span className="truncate pr-2">{b.name}</span>
+                              <span className="tabular-nums text-income">{fmt(v)}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </HoverCardContent>
+                </HoverCard>
+              ))}
+            </div>
+          </div>
+
+          {/* Expense column */}
+          <div className="rounded-lg border border-border/50 p-3">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">Expenses</p>
+            <div className="grid grid-cols-3 gap-2">
+              {([
+                { label: 'Monthly', value: monthlySummary.monthlyExpense },
+                { label: 'Weekly', value: monthlySummary.weeklyExpense },
+                { label: 'Daily', value: monthlySummary.dailyExpense },
+              ]).map((cell) => (
+                <HoverCard key={cell.label} openDelay={100}>
+                  <HoverCardTrigger asChild>
+                    <button className="text-left rounded-md p-2 hover:bg-muted/40 transition-colors cursor-help">
+                      <p className="text-[10px] text-muted-foreground">{cell.label}</p>
+                      <p className="text-sm font-semibold text-expense tabular-nums">{fmt(cell.value)}</p>
+                    </button>
+                  </HoverCardTrigger>
+                  <HoverCardContent className="w-72" align="start">
+                    <p className="text-xs font-semibold mb-2">Expense breakdown · {cell.label}</p>
+                    {monthlySummary.expenseBreakdown.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">No expenses recorded.</p>
+                    ) : (
+                      <div className="space-y-1 max-h-64 overflow-y-auto">
+                        {monthlySummary.expenseBreakdown.map((b) => {
+                          const v =
+                            cell.label === 'Monthly' ? b.value : cell.label === 'Weekly' ? (b.value * 12) / 52 : b.value / 30;
+                          return (
+                            <div key={b.name} className="flex items-center justify-between text-xs">
+                              <span className="truncate pr-2">{b.name}</span>
+                              <span className="tabular-nums text-expense">{fmt(v)}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </HoverCardContent>
+                </HoverCard>
+              ))}
+            </div>
+          </div>
         </div>
       </Card>
 
