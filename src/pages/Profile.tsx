@@ -16,23 +16,32 @@ import { SubscriptionSettings } from "@/components/settings/SubscriptionSettings
 import { SecuritySettings } from "@/components/settings/SecuritySettings";
 import { Upload, Save, User, Key, CreditCard, ShieldCheck } from "lucide-react";
 import { SkeletonCard } from "@/components/ui/DashboardWidget";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SUPPORTED_CURRENCIES } from "@/hooks/useUserCurrency";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function Profile() {
   const { profile, roles, isLoading, updateProfile, uploadAvatar } = useProfile();
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
+  const [currency, setCurrency] = useState("GBP");
   const [activeTab, setActiveTab] = useState("profile");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (profile) {
       setName(profile.name || "");
       setBio(profile.bio || "");
+      setCurrency((profile as any).currency || "GBP");
     }
   }, [profile]);
 
   const handleSave = () => {
-    updateProfile.mutate({ name, bio });
+    updateProfile.mutate(
+      { name, bio, currency } as any,
+      { onSuccess: () => queryClient.invalidateQueries({ queryKey: ["user-currency"] }) }
+    );
   };
 
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -136,6 +145,21 @@ export default function Profile() {
                                 placeholder="Tell us about yourself"
                                 rows={4}
                               />
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor="currency" className="text-sm">Preferred Currency</Label>
+                              <Select value={currency} onValueChange={setCurrency}>
+                                <SelectTrigger id="currency" className="h-10">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {SUPPORTED_CURRENCIES.map((c) => (
+                                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <p className="text-xs text-muted-foreground">Used to format amounts across Finances.</p>
                             </div>
 
                             {roles && roles.length > 0 && (

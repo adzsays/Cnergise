@@ -13,9 +13,7 @@ import { applyHistoricalPayments, projectAmortization, RateTerm } from '@/utils/
 import { InlineTransactionsTable } from './InlineTransactionsTable';
 import { ImportDialog } from './ImportDialog';
 import { Upload } from 'lucide-react';
-
-const fmtGBP = (n: number) =>
-  new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 }).format(n);
+import { useUserCurrency } from '@/hooks/useUserCurrency';
 
 const ASSET_CATEGORIES = ['Bank', 'Savings', 'Investment', 'Pension', 'Crypto', 'Cash', 'Other'];
 const LIABILITY_CATEGORIES = ['Credit Card', 'Loan', 'Mortgage', 'Overdraft', 'Other'];
@@ -33,6 +31,7 @@ const isLoanLike = (cat?: string | null) => {
 
 export function BalancesView() {
   const { accounts, refreshData } = useFinancialData();
+  const { currency: userCurrency, formatWhole: fmtGBP } = useUserCurrency();
   const [savingId, setSavingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [schedules, setSchedules] = useState<Record<string, RateTerm[]>>({});
@@ -106,7 +105,7 @@ export function BalancesView() {
       account_class: type, // 'asset' | 'liability'
       category,
       balance: 0,
-      currency: 'GBP',
+      currency: userCurrency,
       group_name: 'Personal',
       credit_limit: category === 'Credit Card' ? 0 : null,
     });
@@ -466,6 +465,7 @@ function LoanDetailRow({
   schedule: RateTerm[];
   reloadSchedules: () => Promise<void>;
 }) {
+  const { formatWhole: fmtGBP } = useUserCurrency();
   const balance = Math.abs(Number(a.balance) || 0);
   const start = a.loan_start_date ? new Date(a.loan_start_date) : new Date();
   const fallbackRate = Number(a.interest_rate) || 0;

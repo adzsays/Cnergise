@@ -9,6 +9,7 @@ import { useFinancialData } from '@/contexts/FinancialDataContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { useUserCurrency } from '@/hooks/useUserCurrency';
 
 const FREQUENCIES = ['daily', 'weekly', 'monthly', 'quarterly', 'yearly'];
 const DEFAULT_COST_CENTRES = ['Personal', 'Home', 'Work', 'Side Hustle', 'Investment', 'Other'];
@@ -39,6 +40,12 @@ const fromDateInput = (s: string) => (s ? new Date(s).getTime() : null);
 
 export function InlineTransactionsTable() {
   const { transactions, accounts, addTransaction, deleteTransaction, refreshData } = useFinancialData() as any;
+  const { currency } = useUserCurrency();
+  const currencySymbol = (() => {
+    try {
+      return (0).toLocaleString(undefined, { style: 'currency', currency, maximumFractionDigits: 0 }).replace(/[\d\s.,]/g, '') || '£';
+    } catch { return '£'; }
+  })();
   const [savingId, setSavingId] = useState<string | null>(null);
   const [costCentres, setCostCentres] = useState<string[]>(loadCostCentres());
   const [manageOpen, setManageOpen] = useState(false);
@@ -294,16 +301,21 @@ export function InlineTransactionsTable() {
                     />
                   </td>
                   <td className="py-1 px-2">
-                    <Input
-                      type="number"
-                      defaultValue={t.monthly}
-                      onBlur={(e) => {
-                        const v = parseFloat(e.target.value) || 0;
-                        if (v !== t.monthly)
-                          updateField(t.id, { monthly: v, daily: v / 30, amount: v, projections: Array(12).fill(v) });
-                      }}
-                      className="h-7 border-0 bg-transparent px-1 text-right tabular-nums focus-visible:ring-1"
-                    />
+                    <div className="relative">
+                      <span className="pointer-events-none absolute left-1 top-1/2 -translate-y-1/2 text-muted-foreground text-xs tabular-nums">
+                        {currencySymbol}
+                      </span>
+                      <Input
+                        type="number"
+                        defaultValue={t.monthly}
+                        onBlur={(e) => {
+                          const v = parseFloat(e.target.value) || 0;
+                          if (v !== t.monthly)
+                            updateField(t.id, { monthly: v, daily: v / 30, amount: v, projections: Array(12).fill(v) });
+                        }}
+                        className="h-7 border-0 bg-transparent pl-5 pr-1 text-right tabular-nums focus-visible:ring-1"
+                      />
+                    </div>
                   </td>
                   <td className="py-1 px-2">
                     <Input
