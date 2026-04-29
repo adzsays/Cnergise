@@ -22,6 +22,7 @@ const fmt = (n: number) =>
 export function CashFlowView() {
   const { transactions, balanceSheet, group, setGroup } = useFinancialData();
   const [period, setPeriod] = useState<Period>('monthly');
+  const [importOpen, setImportOpen] = useState(false);
 
   const monthLabels = useMemo(() => {
     const names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
