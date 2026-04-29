@@ -151,7 +151,7 @@ export function InlineTransactionsTable() {
         toast.error("This row is auto-generated from a loan — only Cost Centre / Name can be edited here.");
         return;
       }
-      const { error } = await supabase.from('financial_accounts').update(accountPatch).eq('id', accountId);
+      const { error } = await supabase.from('financial_accounts').update(accountPatch as any).eq('id', accountId);
       setSavingId(null);
       if (error) {
         toast.error('Save failed');
