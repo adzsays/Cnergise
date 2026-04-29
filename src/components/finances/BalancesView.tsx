@@ -465,6 +465,7 @@ function LoanDetailRow({
   schedule: RateTerm[];
   reloadSchedules: () => Promise<void>;
 }) {
+  const { formatWhole: fmtGBP } = useUserCurrency();
   const balance = Math.abs(Number(a.balance) || 0);
   const start = a.loan_start_date ? new Date(a.loan_start_date) : new Date();
   const fallbackRate = Number(a.interest_rate) || 0;
