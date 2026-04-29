@@ -306,8 +306,7 @@ export function InlineTransactionsTable() {
                       value={t.monthly}
                       onCommit={(val) => {
                         const v = val ?? 0;
-                        if (v !== t.monthly)
-                          updateField(t.id, { monthly: v, daily: v / 30, amount: v, projections: Array(12).fill(v) });
+                        if (v !== t.monthly) updateTransaction(t.id, v);
                       }}
                       className="h-7 border-0 bg-transparent px-1 focus-visible:ring-1"
                     />
