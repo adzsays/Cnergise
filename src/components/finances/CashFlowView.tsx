@@ -66,55 +66,27 @@ export function CashFlowView() {
     [balanceSheet.bankAccounts]
   );
 
-  // Credit card liabilities — balance is stored negative on liabilities; absolute value is debt owed.
-  // Use the user-defined `monthly_payment` from the underlying financial_account when set;
-  // otherwise estimate the minimum payment as max(£25, 3% of outstanding balance).
-  const creditCards = useMemo(
-    () =>
-      balanceSheet.liabilities
-        .filter((l) => (l.category || '').toLowerCase() === 'credit card')
-        .map((l) => {
-          const owed = Math.abs(l.balance);
-          const underlying = accounts.find((acc) => acc.id === l.id);
-          const userPayment = Number(underlying?.monthly_payment) || 0;
-          const estimated = Math.max(25, owed * 0.03);
-          const payment = userPayment > 0 ? userPayment : estimated;
-          return { id: l.id, name: l.name, owed, payment };
-        })
-        .filter((c) => c.owed > 0),
-    [balanceSheet.liabilities, accounts]
-  );
+  // Credit-card payments are now auto-injected as synthetic expense
+  // transactions (one per card) by FinancialDataContext, mirroring loans.
 
-  // Total monthly credit card payment (capped to remaining owed each month, computed in projections).
-  const totalCcPaymentMonthly = useMemo(
-    () => creditCards.reduce((s, c) => s + c.payment, 0),
-    [creditCards]
-  );
 
   const chartData = useMemo(() => {
     const div = PERIOD_DIVISOR[period];
     const initialCash = liquidBankAccounts.reduce((s, a) => s + a.balance, 0);
     let running = initialCash;
-    // Track remaining credit card balance so payments stop when paid off
-    let ccRemaining = creditCards.reduce((s, c) => s + c.owed, 0);
     const rows: any[] = [];
     const groupFilter = (t: any) =>
       costCentre === 'all' ? true : (t.cost_centre || '').toLowerCase() === costCentre.toLowerCase();
 
     if (period === 'yearly') {
-      // Single yearly bucket (sum of 12 months)
       const inc = transactions
         .filter((t) => t.type === 'income' && groupFilter(t))
         .reduce((s, t) => s + (t.projections?.reduce((a: number, b: number) => a + (b || 0), 0) || 0), 0);
-      const baseExp = Math.abs(
+      const exp = Math.abs(
         transactions
           .filter((t) => t.type === 'expense' && groupFilter(t))
           .reduce((s, t) => s + (t.projections?.reduce((a: number, b: number) => a + (b || 0), 0) || 0), 0)
       );
-      // Total CC payments over 12 months, capped to total owed
-      const totalCcOwed = creditCards.reduce((s, c) => s + c.owed, 0);
-      const ccTotal = Math.min(totalCcOwed, totalCcPaymentMonthly * 12);
-      const exp = baseExp + ccTotal;
       const yr = new Date().getFullYear();
       rows.push({ label: String(yr), income: inc, expense: exp, net: inc - exp, cash: initialCash + inc - exp });
     } else {
@@ -122,22 +94,17 @@ export function CashFlowView() {
         const inc = transactions
           .filter((t) => t.type === 'income' && groupFilter(t))
           .reduce((s, t) => s + (t.projections[i] || 0), 0) / div;
-        const baseExp = Math.abs(
+        const exp = Math.abs(
           transactions
             .filter((t) => t.type === 'expense' && groupFilter(t))
             .reduce((s, t) => s + (t.projections[i] || 0), 0)
         ) / div;
-        // Credit card payment for this month, capped to remaining balance, scaled to period
-        const ccPaymentThisMonth = Math.min(ccRemaining, totalCcPaymentMonthly);
-        ccRemaining = Math.max(0, ccRemaining - ccPaymentThisMonth);
-        const ccExp = ccPaymentThisMonth / div;
-        const exp = baseExp + ccExp;
         running += (inc - exp) * div;
         rows.push({ label, income: inc, expense: exp, net: inc - exp, cash: running });
       });
     }
     return rows;
-  }, [transactions, liquidBankAccounts, creditCards, totalCcPaymentMonthly, costCentre, period, monthLabels]);
+  }, [transactions, liquidBankAccounts, costCentre, period, monthLabels]);
 
   // Daily-level running balance projected over the next 12 months,
   // then aggregated into the chosen period (daily/weekly/monthly/yearly).
@@ -245,20 +212,9 @@ export function CashFlowView() {
 
     filtered.forEach(addOccurrences);
 
-    // Place credit-card payments on the 1st of each month within the horizon,
-    // capped to the remaining outstanding balance so payments stop once paid off.
-    {
-      let ccRemaining = creditCards.reduce((s, c) => s + c.owed, 0);
-      const monthsCount = 12;
-      for (let m = 0; m < monthsCount && ccRemaining > 0; m++) {
-        const payDate = new Date(horizonStart.getFullYear(), horizonStart.getMonth() + m, 1);
-        const idx = dayIndex(payDate);
-        if (idx < 0 || idx >= days.length) continue;
-        const pay = Math.min(ccRemaining, totalCcPaymentMonthly);
-        days[idx].expense += pay;
-        ccRemaining -= pay;
-      }
-    }
+    // Note: credit-card payments are now auto-injected as synthetic expense
+    // transactions (one per card) by FinancialDataContext, so they're already
+    // included in `filtered` above — no extra overlay needed here.
 
     // Aggregate based on selected period
     type Row = { label: string; income: number; expense: number; net: number; balance: number };
@@ -347,7 +303,7 @@ export function CashFlowView() {
     }
 
     return rows;
-  }, [transactions, liquidBankAccounts, creditCards, totalCcPaymentMonthly, costCentre, period]);
+  }, [transactions, liquidBankAccounts, costCentre, period]);
 
   const kpis = useMemo(() => {
     const incomeTotal = chartData.reduce((s, r) => s + r.income, 0);
@@ -367,32 +323,23 @@ export function CashFlowView() {
     const expenses = transactions.filter((t) => t.type === 'expense' && groupFilter(t));
 
     const monthlyIncome = incomes.reduce((s, t) => s + Math.abs(Number(t.monthly) || 0), 0);
-    const baseMonthlyExpense = expenses.reduce((s, t) => s + Math.abs(Number(t.monthly) || 0), 0);
-    const monthlyExpense = baseMonthlyExpense + totalCcPaymentMonthly;
+    // Credit card payments are already represented as synthetic expense
+    // transactions (see FinancialDataContext) so they're naturally included.
+    const monthlyExpense = expenses.reduce((s, t) => s + Math.abs(Number(t.monthly) || 0), 0);
 
-    const breakdown = (txs: any[], extras?: { name: string; value: number }[]) => {
+    const breakdown = (txs: any[]) => {
       const map = new Map<string, number>();
       txs.forEach((t) => {
         const key = t.subcategory || t.category || 'Other';
         map.set(key, (map.get(key) || 0) + Math.abs(Number(t.monthly) || 0));
-      });
-      (extras || []).forEach((e) => {
-        if (e.value > 0) map.set(e.name, (map.get(e.name) || 0) + e.value);
       });
       return Array.from(map.entries())
         .map(([name, value]) => ({ name, value }))
         .sort((a, b) => b.value - a.value);
     };
 
-    // One expense line per credit card (mirrors how mortgages/loans show as their own
-    // expense items), instead of bundling into a single "Credit Card Payments" row.
-    const ccExtras = creditCards.map((c) => ({
-      name: `${c.name} payment`,
-      value: Math.min(c.payment, c.owed),
-    }));
-
     const incomeBreakdown = breakdown(incomes);
-    const expenseBreakdown = breakdown(expenses, ccExtras);
+    const expenseBreakdown = breakdown(expenses);
 
     return {
       monthlyIncome,
@@ -404,7 +351,7 @@ export function CashFlowView() {
       incomeBreakdown,
       expenseBreakdown,
     };
-  }, [transactions, costCentre, totalCcPaymentMonthly, creditCards]);
+  }, [transactions, costCentre]);
 
 
   return (
