@@ -131,7 +131,7 @@ export function InlineTransactionsTable() {
       // Tie-breaker: newest first
       return createdMs(b) - createdMs(a);
     });
-  }, [transactions, sortKey, sortDir]);
+  }, [transactions, sortKey, sortDir, filterCostCentre]);
 
   const SortHeader = ({ k, label, align = 'left', className = '' }: { k: SortKey; label: string; align?: 'left' | 'right'; className?: string }) => {
     const active = sortKey === k;
