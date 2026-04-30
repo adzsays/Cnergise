@@ -344,32 +344,23 @@ export function CashFlowView() {
     const expenses = transactions.filter((t) => t.type === 'expense' && groupFilter(t));
 
     const monthlyIncome = incomes.reduce((s, t) => s + Math.abs(Number(t.monthly) || 0), 0);
-    const baseMonthlyExpense = expenses.reduce((s, t) => s + Math.abs(Number(t.monthly) || 0), 0);
-    const monthlyExpense = baseMonthlyExpense + totalCcPaymentMonthly;
+    // Credit card payments are already represented as synthetic expense
+    // transactions (see FinancialDataContext) so they're naturally included.
+    const monthlyExpense = expenses.reduce((s, t) => s + Math.abs(Number(t.monthly) || 0), 0);
 
-    const breakdown = (txs: any[], extras?: { name: string; value: number }[]) => {
+    const breakdown = (txs: any[]) => {
       const map = new Map<string, number>();
       txs.forEach((t) => {
         const key = t.subcategory || t.category || 'Other';
         map.set(key, (map.get(key) || 0) + Math.abs(Number(t.monthly) || 0));
-      });
-      (extras || []).forEach((e) => {
-        if (e.value > 0) map.set(e.name, (map.get(e.name) || 0) + e.value);
       });
       return Array.from(map.entries())
         .map(([name, value]) => ({ name, value }))
         .sort((a, b) => b.value - a.value);
     };
 
-    // One expense line per credit card (mirrors how mortgages/loans show as their own
-    // expense items), instead of bundling into a single "Credit Card Payments" row.
-    const ccExtras = creditCards.map((c) => ({
-      name: `${c.name} payment`,
-      value: Math.min(c.payment, c.owed),
-    }));
-
     const incomeBreakdown = breakdown(incomes);
-    const expenseBreakdown = breakdown(expenses, ccExtras);
+    const expenseBreakdown = breakdown(expenses);
 
     return {
       monthlyIncome,
@@ -381,7 +372,7 @@ export function CashFlowView() {
       incomeBreakdown,
       expenseBreakdown,
     };
-  }, [transactions, costCentre, totalCcPaymentMonthly, creditCards]);
+  }, [transactions, costCentre]);
 
 
   return (
