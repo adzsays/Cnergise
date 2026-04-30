@@ -370,20 +370,29 @@ export function CashFlowView() {
     const baseMonthlyExpense = expenses.reduce((s, t) => s + Math.abs(Number(t.monthly) || 0), 0);
     const monthlyExpense = baseMonthlyExpense + totalCcPaymentMonthly;
 
-    const breakdown = (txs: any[], extra?: { name: string; value: number }) => {
+    const breakdown = (txs: any[], extras?: { name: string; value: number }[]) => {
       const map = new Map<string, number>();
       txs.forEach((t) => {
         const key = t.subcategory || t.category || 'Other';
         map.set(key, (map.get(key) || 0) + Math.abs(Number(t.monthly) || 0));
       });
-      if (extra && extra.value > 0) map.set(extra.name, (map.get(extra.name) || 0) + extra.value);
+      (extras || []).forEach((e) => {
+        if (e.value > 0) map.set(e.name, (map.get(e.name) || 0) + e.value);
+      });
       return Array.from(map.entries())
         .map(([name, value]) => ({ name, value }))
         .sort((a, b) => b.value - a.value);
     };
 
+    // One expense line per credit card (mirrors how mortgages/loans show as their own
+    // expense items), instead of bundling into a single "Credit Card Payments" row.
+    const ccExtras = creditCards.map((c) => ({
+      name: `${c.name} payment`,
+      value: Math.min(c.payment, c.owed),
+    }));
+
     const incomeBreakdown = breakdown(incomes);
-    const expenseBreakdown = breakdown(expenses, { name: 'Credit Card Payments', value: totalCcPaymentMonthly });
+    const expenseBreakdown = breakdown(expenses, ccExtras);
 
     return {
       monthlyIncome,
@@ -395,7 +404,7 @@ export function CashFlowView() {
       incomeBreakdown,
       expenseBreakdown,
     };
-  }, [transactions, costCentre, totalCcPaymentMonthly]);
+  }, [transactions, costCentre, totalCcPaymentMonthly, creditCards]);
 
 
   return (
