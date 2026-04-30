@@ -226,7 +226,19 @@ export function InlineTransactionsTable() {
           <h3 className="text-sm font-semibold uppercase tracking-wide">Cash Flows</h3>
           <p className="text-xs text-muted-foreground">Edit any cell — changes save automatically</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center flex-wrap">
+          <Select value={filterCostCentre} onValueChange={setFilterCostCentre}>
+            <SelectTrigger className="h-8 w-[180px] text-xs">
+              <SelectValue placeholder="Filter by cost centre" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Cost Centres</SelectItem>
+              <SelectSeparator />
+              {allCostCentres.map((c) => (
+                <SelectItem key={c} value={c}>{c}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <ManageCostCentresDialog
             open={manageOpen}
             onOpenChange={setManageOpen}
