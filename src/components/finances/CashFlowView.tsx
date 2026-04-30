@@ -402,6 +402,13 @@ export function CashFlowView() {
     };
     const toMonthly = (t: any) => {
       if (!isActiveThisMonth(t)) return 0;
+      // Prefer per-month projection for current month when it varies (e.g. loan
+      // payments crossing a fixed-rate boundary).
+      if (Array.isArray(t.projections) && t.projections.length > 0) {
+        const first = Number(t.projections[0]) || 0;
+        const varies = t.projections.some((p: any) => Math.abs((Number(p) || 0) - first) > 0.01);
+        if (varies) return Math.abs(first);
+      }
       const raw = Math.abs(Number(t.monthly) || Number(t.amount) || 0);
       const freq = (t.frequency || 'monthly').toLowerCase();
       const factor = FREQ_TO_MONTHLY[freq] ?? 1;
