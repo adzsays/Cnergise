@@ -87,30 +87,57 @@ export function CashFlowView() {
       'semi-annually': 1 / 6, 'yearly': 1 / 12, 'annually': 1 / 12,
       'one-time': 0, 'once': 0,
     };
-    const monthlyOf = (t: any) => {
+
+    // Returns the per-month contribution of a transaction for the calendar
+    // month containing `monthDate`. Honours `start_date`/`end_date` so future
+    // items (e.g. director's salary starting Apr 2027) don't inflate earlier
+    // months. `monthDate` may be null to mean "any month within horizon".
+    const monthlyOf = (t: any, monthDate?: Date | null) => {
       const raw = Math.abs(Number(t.monthly) || Number(t.amount) || 0);
       const freq = (t.frequency || 'monthly').toLowerCase();
       const factor = FREQ_TO_MONTHLY[freq] ?? 1;
+      if (!raw || !factor) return 0;
+
+      if (monthDate) {
+        const monthEnd = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
+        const monthStart = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+        if (t.start_date) {
+          const s = new Date(t.start_date);
+          if (s > monthEnd) return 0;
+        }
+        if (t.end_date) {
+          const e = new Date(t.end_date);
+          if (e < monthStart) return 0;
+        }
+      }
       return raw * factor;
     };
 
+    // Build a per-month date for each label so date bounds can be checked.
+    const today = new Date();
+    const monthDates = monthLabels.map((_, i) => new Date(today.getFullYear(), today.getMonth() + i, 1));
+
     if (period === 'yearly') {
-      const inc = transactions
-        .filter((t) => t.type === 'income' && groupFilter(t))
-        .reduce((s, t) => s + monthlyOf(t) * 12, 0);
-      const exp = transactions
-        .filter((t) => t.type === 'expense' && groupFilter(t))
-        .reduce((s, t) => s + monthlyOf(t) * 12, 0);
-      const yr = new Date().getFullYear();
+      // Sum each month's contribution across the 12-month horizon.
+      const sumYear = (type: 'income' | 'expense') =>
+        monthDates.reduce((sum, md) => {
+          return sum + transactions
+            .filter((t) => t.type === type && groupFilter(t))
+            .reduce((s, t) => s + monthlyOf(t, md), 0);
+        }, 0);
+      const inc = sumYear('income');
+      const exp = sumYear('expense');
+      const yr = today.getFullYear();
       rows.push({ label: String(yr), income: inc, expense: exp, net: inc - exp, cash: initialCash + inc - exp });
     } else {
       monthLabels.forEach((label, i) => {
+        const md = monthDates[i];
         const incMonthly = transactions
           .filter((t) => t.type === 'income' && groupFilter(t))
-          .reduce((s, t) => s + monthlyOf(t), 0);
+          .reduce((s, t) => s + monthlyOf(t, md), 0);
         const expMonthly = transactions
           .filter((t) => t.type === 'expense' && groupFilter(t))
-          .reduce((s, t) => s + monthlyOf(t), 0);
+          .reduce((s, t) => s + monthlyOf(t, md), 0);
         const inc = incMonthly / div;
         const exp = expMonthly / div;
         running += (inc - exp) * div;
