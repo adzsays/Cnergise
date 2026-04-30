@@ -94,28 +94,38 @@ export function InlineTransactionsTable() {
     }
   };
 
+  const createdMs = (t: any) => {
+    const v = t.created_at ? new Date(t.created_at).getTime() : 0;
+    return isNaN(v) ? 0 : v;
+  };
+
   const sorted = useMemo(() => {
     const arr = [...transactions];
+    // Always group by type (income first, then expense). Within each group,
+    // newly added rows appear on top by default so they're easy to edit.
     if (!sortKey) {
       return arr.sort((a, b) => {
         if (a.type !== b.type) return a.type === 'income' ? -1 : 1;
-        return (a.subcategory || '').localeCompare(b.subcategory || '');
+        return createdMs(b) - createdMs(a);
       });
     }
     const dir = sortDir === 'asc' ? 1 : -1;
     return arr.sort((a, b) => {
+      // Keep type grouping even when a column sort is active
+      if (a.type !== b.type) return a.type === 'income' ? -1 : 1;
       const av = a[sortKey];
       const bv = b[sortKey];
-      // numeric
       if (sortKey === 'monthly' || sortKey === 'date') {
-        return ((Number(av) || 0) - (Number(bv) || 0)) * dir;
+        const cmp = ((Number(av) || 0) - (Number(bv) || 0)) * dir;
+        if (cmp !== 0) return cmp;
+      } else {
+        const as = (av ?? '').toString().toLowerCase();
+        const bs = (bv ?? '').toString().toLowerCase();
+        if (as < bs) return -1 * dir;
+        if (as > bs) return 1 * dir;
       }
-      // dates as strings (end_date) or generic strings
-      const as = (av ?? '').toString().toLowerCase();
-      const bs = (bv ?? '').toString().toLowerCase();
-      if (as < bs) return -1 * dir;
-      if (as > bs) return 1 * dir;
-      return 0;
+      // Tie-breaker: newest first
+      return createdMs(b) - createdMs(a);
     });
   }, [transactions, sortKey, sortDir]);
 
