@@ -183,8 +183,13 @@ export function BalancesView() {
     // Everything else (bank, pension, investment, etc.) is treated as an asset.
     const isLiability = (x: any) =>
       (x as any).account_class === 'liability' || x.type === 'liability';
-    const a = accounts.filter((x) => !isLiability(x));
-    const l = accounts.filter((x) => isLiability(x));
+    const createdMs = (x: any) => {
+      const v = x.created_at ? new Date(x.created_at).getTime() : 0;
+      return isNaN(v) ? 0 : v;
+    };
+    // Newly added items appear on top
+    const a = accounts.filter((x) => !isLiability(x)).sort((x, y) => createdMs(y) - createdMs(x));
+    const l = accounts.filter((x) => isLiability(x)).sort((x, y) => createdMs(y) - createdMs(x));
     const tA = a.reduce((s, x) => s + Number(x.balance), 0);
     const tL = l.reduce((s, x) => s + Math.abs(Number(x.balance)), 0);
     return { assets: a, liabilities: l, totals: { tA, tL, net: tA - tL } };
