@@ -84,6 +84,7 @@ export function InlineTransactionsTable() {
   type SortKey = 'type' | 'subcategory' | 'monthly' | 'date' | 'cost_centre' | 'frequency' | 'end_date' | 'category';
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const [filterCostCentre, setFilterCostCentre] = useState<string>('all');
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -100,7 +101,10 @@ export function InlineTransactionsTable() {
   };
 
   const sorted = useMemo(() => {
-    const arr = [...transactions];
+    const filtered = filterCostCentre === 'all'
+      ? transactions
+      : transactions.filter((t: any) => (t.cost_centre || '').toLowerCase() === filterCostCentre.toLowerCase());
+    const arr = [...filtered];
     // Always group by type (income first, then expense). Within each group,
     // newly added rows appear on top by default so they're easy to edit.
     if (!sortKey) {
@@ -127,7 +131,7 @@ export function InlineTransactionsTable() {
       // Tie-breaker: newest first
       return createdMs(b) - createdMs(a);
     });
-  }, [transactions, sortKey, sortDir]);
+  }, [transactions, sortKey, sortDir, filterCostCentre]);
 
   const SortHeader = ({ k, label, align = 'left', className = '' }: { k: SortKey; label: string; align?: 'left' | 'right'; className?: string }) => {
     const active = sortKey === k;
@@ -222,7 +226,19 @@ export function InlineTransactionsTable() {
           <h3 className="text-sm font-semibold uppercase tracking-wide">Cash Flows</h3>
           <p className="text-xs text-muted-foreground">Edit any cell — changes save automatically</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center flex-wrap">
+          <Select value={filterCostCentre} onValueChange={setFilterCostCentre}>
+            <SelectTrigger className="h-8 w-[180px] text-xs">
+              <SelectValue placeholder="Filter by cost centre" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Cost Centres</SelectItem>
+              <SelectSeparator />
+              {allCostCentres.map((c) => (
+                <SelectItem key={c} value={c}>{c}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <ManageCostCentresDialog
             open={manageOpen}
             onOpenChange={setManageOpen}
