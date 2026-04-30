@@ -376,7 +376,18 @@ export function CashFlowView() {
       'one-time': 0,
       'once': 0,
     };
+    // Honour start_date / end_date so future-dated items don't inflate the
+    // current month's summary (e.g. director's salary starting Apr 2027).
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const isActiveThisMonth = (t: any) => {
+      if (t.start_date && new Date(t.start_date) > monthEnd) return false;
+      if (t.end_date && new Date(t.end_date) < monthStart) return false;
+      return true;
+    };
     const toMonthly = (t: any) => {
+      if (!isActiveThisMonth(t)) return 0;
       const raw = Math.abs(Number(t.monthly) || Number(t.amount) || 0);
       const freq = (t.frequency || 'monthly').toLowerCase();
       const factor = FREQ_TO_MONTHLY[freq] ?? 1;
