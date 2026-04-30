@@ -249,14 +249,49 @@ export function BalancesView() {
             </Select>
           </td>
           <td className="py-1 px-2">
-            <CurrencyInput
-              value={a.balance}
-              onCommit={(v) => {
-                const nv = v ?? 0;
-                if (nv !== Number(a.balance)) update(a.id, { balance: nv });
-              }}
-              className="h-7 border-0 bg-transparent px-1 focus-visible:ring-1"
-            />
+            <div className="flex items-center gap-2">
+              <CurrencyInput
+                value={a.balance}
+                onCommit={(v) => {
+                  const nv = v ?? 0;
+                  if (nv !== Number(a.balance)) update(a.id, { balance: nv });
+                }}
+                className="h-7 border-0 bg-transparent px-1 focus-visible:ring-1 flex-1"
+              />
+              {loan && a.original_principal && a.loan_start_date && (() => {
+                const principal = Number(a.original_principal) || 0;
+                const start = new Date(a.loan_start_date);
+                const today = new Date();
+                const sched = (schedules[a.id] || []).slice().sort((x, y) => x.sequence - y.sequence);
+                const fbRate = Number(a.interest_rate) || 0;
+                const fbPay = Number(a.monthly_payment) || 0;
+                if (principal <= 0 || (sched.length === 0 && fbPay <= 0 && fbRate <= 0)) return null;
+                const res = applyHistoricalPayments(
+                  {
+                    startingBalance: principal,
+                    loanStartDate: start,
+                    totalTermMonths: a.term_months || null,
+                    fallbackRate: fbRate,
+                    fallbackPayment: fbPay,
+                    schedule: sched,
+                  },
+                  start,
+                  today
+                );
+                const calc = res.balance;
+                const actual = Math.abs(Number(a.balance) || 0);
+                const diff = actual - calc;
+                const tone = Math.abs(diff) < 1 ? 'text-muted-foreground' : Math.abs(diff) < principal * 0.02 ? 'text-amber-600' : 'text-destructive';
+                return (
+                  <span
+                    className={cn('text-[10px] tabular-nums whitespace-nowrap', tone)}
+                    title={`Calculated from original principal ${fmtGBP(principal)} on ${a.loan_start_date}, applying ${res.monthsApplied} scheduled payment(s). Diff vs entered: ${diff >= 0 ? '+' : ''}${fmtGBP(diff)}`}
+                  >
+                    calc: {fmtGBP(calc)}
+                  </span>
+                );
+              })()}
+            </div>
           </td>
           {showLimit && (
             <>
