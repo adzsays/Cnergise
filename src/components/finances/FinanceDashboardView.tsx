@@ -41,12 +41,38 @@ export function FinanceDashboardView() {
 
   const { dailyData, monthlyIncome, monthlyExpense, dailyAvgIncome, dailyAvgExpense, topExpenses, topIncomes, daysInMonth } =
     useMemo(() => {
+      // Normalize each transaction's stored amount to a true per-month equivalent
+      // based on its frequency, so yearly items (e.g. director's salary) aren't
+      // counted in full every month. Keeps the dashboard consistent with the
+      // Cash Flow summary.
+      const FREQ_TO_MONTHLY: Record<string, number> = {
+        'daily': 30,
+        'weekly': 52 / 12,
+        'fortnightly': 26 / 12,
+        'bi-weekly': 26 / 12,
+        'biweekly': 26 / 12,
+        'monthly': 1,
+        'quarterly': 1 / 3,
+        'half-yearly': 1 / 6,
+        'semi-annually': 1 / 6,
+        'yearly': 1 / 12,
+        'annually': 1 / 12,
+        'one-time': 0,
+        'once': 0,
+      };
+      const toMonthly = (t: any) => {
+        const raw = Math.abs(Number(t.monthly) || Number(t.amount) || 0);
+        const freq = (t.frequency || 'monthly').toLowerCase();
+        const factor = FREQ_TO_MONTHLY[freq] ?? 1;
+        return raw * factor;
+      };
+
       const now = new Date();
       const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
       const incomes = filteredTx.filter((t) => t.type === 'income');
       const expenses = filteredTx.filter((t) => t.type === 'expense');
-      const monthlyIncome = incomes.reduce((s, t) => s + Math.abs(t.monthly), 0);
-      const monthlyExpense = expenses.reduce((s, t) => s + Math.abs(t.monthly), 0);
+      const monthlyIncome = incomes.reduce((s, t) => s + toMonthly(t), 0);
+      const monthlyExpense = expenses.reduce((s, t) => s + toMonthly(t), 0);
       const dailyAvgIncome = monthlyIncome / daysInMonth;
       const dailyAvgExpense = monthlyExpense / daysInMonth;
 
@@ -54,7 +80,7 @@ export function FinanceDashboardView() {
       // and spread items without an explicit day across the month evenly.
       const dailySeries: { income: number; expense: number }[] = Array.from({ length: daysInMonth }, () => ({ income: 0, expense: 0 }));
       const placeOrSpread = (t: any, bucket: 'income' | 'expense') => {
-        const amt = Math.abs(t.monthly);
+        const amt = toMonthly(t);
         if (!amt) return;
         const day = t.date ? new Date(Number(t.date)).getDate() : 0;
         if (day >= 1 && day <= daysInMonth) {
@@ -80,13 +106,13 @@ export function FinanceDashboardView() {
       });
 
       const topExpenses = [...expenses]
-        .sort((a, b) => Math.abs(b.monthly) - Math.abs(a.monthly))
-        .slice(0, 5)
-        .map((t) => ({ name: t.subcategory || t.category, value: Math.abs(t.monthly), daily: Math.abs(t.monthly) / daysInMonth }));
+        .map((t) => ({ name: t.subcategory || t.category, value: toMonthly(t), daily: toMonthly(t) / daysInMonth }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 5);
       const topIncomes = [...incomes]
-        .sort((a, b) => Math.abs(b.monthly) - Math.abs(a.monthly))
-        .slice(0, 5)
-        .map((t) => ({ name: t.subcategory || t.category, value: Math.abs(t.monthly), daily: Math.abs(t.monthly) / daysInMonth }));
+        .map((t) => ({ name: t.subcategory || t.category, value: toMonthly(t), daily: toMonthly(t) / daysInMonth }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 5);
 
       return { dailyData: series, monthlyIncome, monthlyExpense, dailyAvgIncome, dailyAvgExpense, topExpenses, topIncomes, daysInMonth };
     }, [filteredTx]);
