@@ -359,7 +359,7 @@ export function InlineTransactionsTable() {
                   <td className="py-1 px-2">
                     <Select
                       defaultValue={t.category || ''}
-                      onValueChange={(v) => updateField(t.id, { category: v })}
+                      onValueChange={(v) => updateTransactionCategory(t.id, v)}
                     >
                       <SelectTrigger className="h-7 border-0 bg-transparent px-1 focus:ring-1">
                         <SelectValue placeholder="—" />
