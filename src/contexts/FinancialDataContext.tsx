@@ -657,50 +657,12 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
 
     accounts.forEach((a) => {
       if (a.type !== 'liability') return;
-
-      const cat = (a.category || '').toLowerCase();
-      const isCreditCard = cat.includes('credit') || cat.includes('card');
       const balance = Math.abs(Number(a.balance) || 0);
 
-      // ── Credit cards: auto-populate a monthly expense line per card ──
-      if (isCreditCard) {
-        if (balance <= 0) return;
-        const userPayment = Number(a.monthly_payment) || 0;
-        // Fall back to min payment estimate (max £25 or 3% of balance) if not set
-        const monthly = userPayment > 0 ? userPayment : Math.max(25, balance * 0.03);
-        // Cap each month's projection to remaining balance
-        const projections = Array(12).fill(0);
-        let remaining = balance;
-        for (let i = 0; i < 12 && remaining > 0; i++) {
-          const pay = Math.min(remaining, monthly);
-          projections[i] = pay;
-          remaining -= pay;
-        }
-        const paymentDay = Math.min(31, Math.max(1, Number(a.payment_day) || 1));
-        synthetic.push({
-          id: `loan-projection-${a.id}`,
-          user_id: a.user_id,
-          date: paymentDay,
-          type: 'expense',
-          category: 'Credit Card Payments',
-          subcategory: a.name,
-          group_name: a.group_name || 'Personal',
-          group: a.group_name || 'Personal',
-          space_id: a.space_id ?? null,
-          amount: monthly,
-          percentage: 0,
-          daily: monthly / 30,
-          monthly,
-          projections,
-          cost_centre: a.cost_centre?.trim() || a.name || 'Debt Service',
-          frequency: 'monthly',
-          created_at: a.created_at,
-          updated_at: a.updated_at,
-        });
-        return;
-      }
+      // Credit card payments are entered manually as expense lines so they
+      // properly reduce the card balance. Only loans/mortgages are auto-projected.
 
-      // ── Loans/mortgages: amortization-based projection (existing behavior) ──
+      // ── Loans/mortgages: amortization-based projection ──
       const schedule = termsByAccount[a.id];
       if (!schedule || schedule.length === 0) return;
       const start = a.loan_start_date ? new Date(a.loan_start_date) : startMonth;
