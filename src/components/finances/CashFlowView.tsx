@@ -66,30 +66,9 @@ export function CashFlowView() {
     [balanceSheet.bankAccounts]
   );
 
-  // Credit card liabilities — balance is stored negative on liabilities; absolute value is debt owed.
-  // Use the user-defined `monthly_payment` from the underlying financial_account when set;
-  // otherwise estimate the minimum payment as max(£25, 3% of outstanding balance).
-  const creditCards = useMemo(
-    () =>
-      balanceSheet.liabilities
-        .filter((l) => (l.category || '').toLowerCase() === 'credit card')
-        .map((l) => {
-          const owed = Math.abs(l.balance);
-          const underlying = accounts.find((acc) => acc.id === l.id);
-          const userPayment = Number(underlying?.monthly_payment) || 0;
-          const estimated = Math.max(25, owed * 0.03);
-          const payment = userPayment > 0 ? userPayment : estimated;
-          return { id: l.id, name: l.name, owed, payment };
-        })
-        .filter((c) => c.owed > 0),
-    [balanceSheet.liabilities, accounts]
-  );
+  // Credit-card payments are now auto-injected as synthetic expense
+  // transactions (one per card) by FinancialDataContext, mirroring loans.
 
-  // Total monthly credit card payment (capped to remaining owed each month, computed in projections).
-  const totalCcPaymentMonthly = useMemo(
-    () => creditCards.reduce((s, c) => s + c.payment, 0),
-    [creditCards]
-  );
 
   const chartData = useMemo(() => {
     const div = PERIOD_DIVISOR[period];
