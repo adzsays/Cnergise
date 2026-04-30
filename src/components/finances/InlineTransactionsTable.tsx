@@ -84,6 +84,7 @@ export function InlineTransactionsTable() {
   type SortKey = 'type' | 'subcategory' | 'monthly' | 'date' | 'cost_centre' | 'frequency' | 'end_date' | 'category';
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const [filterCostCentre, setFilterCostCentre] = useState<string>('all');
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
