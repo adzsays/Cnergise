@@ -93,10 +93,8 @@ export function CashFlowView() {
     // items (e.g. director's salary starting Apr 2027) don't inflate earlier
     // months. `monthDate` may be null to mean "any month within horizon".
     const monthlyOf = (t: any, monthDate?: Date | null) => {
-      const raw = Math.abs(Number(t.monthly) || Number(t.amount) || 0);
       const freq = (t.frequency || 'monthly').toLowerCase();
       const factor = FREQ_TO_MONTHLY[freq] ?? 1;
-      if (!raw || !factor) return 0;
 
       if (monthDate) {
         const monthEnd = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
@@ -109,7 +107,23 @@ export function CashFlowView() {
           const e = new Date(t.end_date);
           if (e < monthStart) return 0;
         }
+        // Prefer per-month projection value when available (used by synthetic
+        // loan-projection rows where each month's payment may differ as fixed
+        // periods roll onto new rates). Index 0 = current calendar month.
+        if (Array.isArray(t.projections) && t.projections.length > 0) {
+          const idx = (monthDate.getFullYear() - today.getFullYear()) * 12 + (monthDate.getMonth() - today.getMonth());
+          if (idx >= 0 && idx < t.projections.length) {
+            const v = Math.abs(Number(t.projections[idx]) || 0);
+            // Only trust projections[] if it actually varies — otherwise it's
+            // the naive Array(12).fill(monthly) and we should fall back.
+            const first = Math.abs(Number(t.projections[0]) || 0);
+            const varies = t.projections.some((p: any) => Math.abs((Number(p) || 0) - (Number(t.projections[0]) || 0)) > 0.01);
+            if (varies) return v;
+          }
+        }
       }
+      const raw = Math.abs(Number(t.monthly) || Number(t.amount) || 0);
+      if (!raw || !factor) return 0;
       return raw * factor;
     };
 
@@ -388,6 +402,13 @@ export function CashFlowView() {
     };
     const toMonthly = (t: any) => {
       if (!isActiveThisMonth(t)) return 0;
+      // Prefer per-month projection for current month when it varies (e.g. loan
+      // payments crossing a fixed-rate boundary).
+      if (Array.isArray(t.projections) && t.projections.length > 0) {
+        const first = Number(t.projections[0]) || 0;
+        const varies = t.projections.some((p: any) => Math.abs((Number(p) || 0) - first) > 0.01);
+        if (varies) return Math.abs(first);
+      }
       const raw = Math.abs(Number(t.monthly) || Number(t.amount) || 0);
       const freq = (t.frequency || 'monthly').toLowerCase();
       const factor = FREQ_TO_MONTHLY[freq] ?? 1;
