@@ -60,15 +60,25 @@ export function FinanceDashboardView() {
         'one-time': 0,
         'once': 0,
       };
+      const now = new Date();
+      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      // Honour start_date / end_date so future-dated items (e.g. director's
+      // salary starting Apr 2027) don't inflate the current month.
+      const isActiveThisMonth = (t: any) => {
+        if (t.start_date && new Date(t.start_date) > monthEnd) return false;
+        if (t.end_date && new Date(t.end_date) < monthStart) return false;
+        return true;
+      };
       const toMonthly = (t: any) => {
+        if (!isActiveThisMonth(t)) return 0;
         const raw = Math.abs(Number(t.monthly) || Number(t.amount) || 0);
         const freq = (t.frequency || 'monthly').toLowerCase();
         const factor = FREQ_TO_MONTHLY[freq] ?? 1;
         return raw * factor;
       };
 
-      const now = new Date();
-      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
       const incomes = filteredTx.filter((t) => t.type === 'income');
       const expenses = filteredTx.filter((t) => t.type === 'expense');
       const monthlyIncome = incomes.reduce((s, t) => s + toMonthly(t), 0);
