@@ -78,27 +78,41 @@ export function CashFlowView() {
     const groupFilter = (t: any) =>
       costCentre === 'all' ? true : (t.cost_centre || '').toLowerCase() === costCentre.toLowerCase();
 
+    // Stored `projections[]` is naively `Array(12).fill(monthly)` regardless of
+    // frequency. Normalize each transaction to a true per-month equivalent so
+    // yearly items (e.g. director's salary) aren't counted every month.
+    const FREQ_TO_MONTHLY: Record<string, number> = {
+      'daily': 30, 'weekly': 52 / 12, 'fortnightly': 26 / 12, 'bi-weekly': 26 / 12,
+      'biweekly': 26 / 12, 'monthly': 1, 'quarterly': 1 / 3, 'half-yearly': 1 / 6,
+      'semi-annually': 1 / 6, 'yearly': 1 / 12, 'annually': 1 / 12,
+      'one-time': 0, 'once': 0,
+    };
+    const monthlyOf = (t: any) => {
+      const raw = Math.abs(Number(t.monthly) || Number(t.amount) || 0);
+      const freq = (t.frequency || 'monthly').toLowerCase();
+      const factor = FREQ_TO_MONTHLY[freq] ?? 1;
+      return raw * factor;
+    };
+
     if (period === 'yearly') {
       const inc = transactions
         .filter((t) => t.type === 'income' && groupFilter(t))
-        .reduce((s, t) => s + (t.projections?.reduce((a: number, b: number) => a + (b || 0), 0) || 0), 0);
-      const exp = Math.abs(
-        transactions
-          .filter((t) => t.type === 'expense' && groupFilter(t))
-          .reduce((s, t) => s + (t.projections?.reduce((a: number, b: number) => a + (b || 0), 0) || 0), 0)
-      );
+        .reduce((s, t) => s + monthlyOf(t) * 12, 0);
+      const exp = transactions
+        .filter((t) => t.type === 'expense' && groupFilter(t))
+        .reduce((s, t) => s + monthlyOf(t) * 12, 0);
       const yr = new Date().getFullYear();
       rows.push({ label: String(yr), income: inc, expense: exp, net: inc - exp, cash: initialCash + inc - exp });
     } else {
       monthLabels.forEach((label, i) => {
-        const inc = transactions
+        const incMonthly = transactions
           .filter((t) => t.type === 'income' && groupFilter(t))
-          .reduce((s, t) => s + (t.projections[i] || 0), 0) / div;
-        const exp = Math.abs(
-          transactions
-            .filter((t) => t.type === 'expense' && groupFilter(t))
-            .reduce((s, t) => s + (t.projections[i] || 0), 0)
-        ) / div;
+          .reduce((s, t) => s + monthlyOf(t), 0);
+        const expMonthly = transactions
+          .filter((t) => t.type === 'expense' && groupFilter(t))
+          .reduce((s, t) => s + monthlyOf(t), 0);
+        const inc = incMonthly / div;
+        const exp = expMonthly / div;
         running += (inc - exp) * div;
         rows.push({ label, income: inc, expense: exp, net: inc - exp, cash: running });
       });
