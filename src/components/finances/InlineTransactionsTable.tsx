@@ -101,7 +101,10 @@ export function InlineTransactionsTable() {
   };
 
   const sorted = useMemo(() => {
-    const arr = [...transactions];
+    const filtered = filterCostCentre === 'all'
+      ? transactions
+      : transactions.filter((t: any) => (t.cost_centre || '').toLowerCase() === filterCostCentre.toLowerCase());
+    const arr = [...filtered];
     // Always group by type (income first, then expense). Within each group,
     // newly added rows appear on top by default so they're easy to edit.
     if (!sortKey) {
