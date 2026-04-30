@@ -316,22 +316,47 @@ export function CashFlowView() {
   }, [chartData]);
 
   // Monthly summary with weekly & daily breakdowns plus per-category split for tooltips.
+  // IMPORTANT: `t.monthly` stores the entered amount as-is regardless of frequency.
+  // Normalize each transaction's amount to a true per-month equivalent based on its
+  // frequency so yearly items (e.g. director's salary) aren't counted every month.
   const monthlySummary = useMemo(() => {
+    const FREQ_TO_MONTHLY: Record<string, number> = {
+      'daily': 30,
+      'weekly': 52 / 12,
+      'fortnightly': 26 / 12,
+      'bi-weekly': 26 / 12,
+      'biweekly': 26 / 12,
+      'monthly': 1,
+      'quarterly': 1 / 3,
+      'half-yearly': 1 / 6,
+      'semi-annually': 1 / 6,
+      'yearly': 1 / 12,
+      'annually': 1 / 12,
+      'one-time': 0,
+      'once': 0,
+    };
+    const toMonthly = (t: any) => {
+      const raw = Math.abs(Number(t.monthly) || Number(t.amount) || 0);
+      const freq = (t.frequency || 'monthly').toLowerCase();
+      const factor = FREQ_TO_MONTHLY[freq] ?? 1;
+      return raw * factor;
+    };
+
     const groupFilter = (t: any) =>
       costCentre === 'all' ? true : (t.cost_centre || '').toLowerCase() === costCentre.toLowerCase();
     const incomes = transactions.filter((t) => t.type === 'income' && groupFilter(t));
     const expenses = transactions.filter((t) => t.type === 'expense' && groupFilter(t));
 
-    const monthlyIncome = incomes.reduce((s, t) => s + Math.abs(Number(t.monthly) || 0), 0);
+    const monthlyIncome = incomes.reduce((s, t) => s + toMonthly(t), 0);
     // Credit card payments are already represented as synthetic expense
     // transactions (see FinancialDataContext) so they're naturally included.
-    const monthlyExpense = expenses.reduce((s, t) => s + Math.abs(Number(t.monthly) || 0), 0);
+    const monthlyExpense = expenses.reduce((s, t) => s + toMonthly(t), 0);
 
     const breakdown = (txs: any[]) => {
       const map = new Map<string, number>();
       txs.forEach((t) => {
         const key = t.subcategory || t.category || 'Other';
-        map.set(key, (map.get(key) || 0) + Math.abs(Number(t.monthly) || 0));
+        map.set(key, (map.get(key) || 0) + toMonthly(t));
       });
       return Array.from(map.entries())
         .map(([name, value]) => ({ name, value }))
