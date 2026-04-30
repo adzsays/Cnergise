@@ -80,6 +80,15 @@ export const AccountBalancesView = () => {
       }
     });
 
+    // Sort each group by created_at desc so newly added accounts appear on top
+    const createdMs = (a: any) => {
+      const v = a.created_at ? new Date(a.created_at).getTime() : 0;
+      return isNaN(v) ? 0 : v;
+    };
+    Object.keys(groups).forEach((k) => {
+      groups[k] = [...groups[k]].sort((a, b) => createdMs(b) - createdMs(a));
+    });
+
     // Filter out empty groups
     return Object.entries(groups).filter(([_, accs]) => accs.length > 0);
   }, [accounts]);
