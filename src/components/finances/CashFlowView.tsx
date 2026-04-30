@@ -95,26 +95,19 @@ export function CashFlowView() {
     const div = PERIOD_DIVISOR[period];
     const initialCash = liquidBankAccounts.reduce((s, a) => s + a.balance, 0);
     let running = initialCash;
-    // Track remaining credit card balance so payments stop when paid off
-    let ccRemaining = creditCards.reduce((s, c) => s + c.owed, 0);
     const rows: any[] = [];
     const groupFilter = (t: any) =>
       costCentre === 'all' ? true : (t.cost_centre || '').toLowerCase() === costCentre.toLowerCase();
 
     if (period === 'yearly') {
-      // Single yearly bucket (sum of 12 months)
       const inc = transactions
         .filter((t) => t.type === 'income' && groupFilter(t))
         .reduce((s, t) => s + (t.projections?.reduce((a: number, b: number) => a + (b || 0), 0) || 0), 0);
-      const baseExp = Math.abs(
+      const exp = Math.abs(
         transactions
           .filter((t) => t.type === 'expense' && groupFilter(t))
           .reduce((s, t) => s + (t.projections?.reduce((a: number, b: number) => a + (b || 0), 0) || 0), 0)
       );
-      // Total CC payments over 12 months, capped to total owed
-      const totalCcOwed = creditCards.reduce((s, c) => s + c.owed, 0);
-      const ccTotal = Math.min(totalCcOwed, totalCcPaymentMonthly * 12);
-      const exp = baseExp + ccTotal;
       const yr = new Date().getFullYear();
       rows.push({ label: String(yr), income: inc, expense: exp, net: inc - exp, cash: initialCash + inc - exp });
     } else {
@@ -122,22 +115,17 @@ export function CashFlowView() {
         const inc = transactions
           .filter((t) => t.type === 'income' && groupFilter(t))
           .reduce((s, t) => s + (t.projections[i] || 0), 0) / div;
-        const baseExp = Math.abs(
+        const exp = Math.abs(
           transactions
             .filter((t) => t.type === 'expense' && groupFilter(t))
             .reduce((s, t) => s + (t.projections[i] || 0), 0)
         ) / div;
-        // Credit card payment for this month, capped to remaining balance, scaled to period
-        const ccPaymentThisMonth = Math.min(ccRemaining, totalCcPaymentMonthly);
-        ccRemaining = Math.max(0, ccRemaining - ccPaymentThisMonth);
-        const ccExp = ccPaymentThisMonth / div;
-        const exp = baseExp + ccExp;
         running += (inc - exp) * div;
         rows.push({ label, income: inc, expense: exp, net: inc - exp, cash: running });
       });
     }
     return rows;
-  }, [transactions, liquidBankAccounts, creditCards, totalCcPaymentMonthly, costCentre, period, monthLabels]);
+  }, [transactions, liquidBankAccounts, costCentre, period, monthLabels]);
 
   // Daily-level running balance projected over the next 12 months,
   // then aggregated into the chosen period (daily/weekly/monthly/yearly).
