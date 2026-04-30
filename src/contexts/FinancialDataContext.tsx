@@ -459,6 +459,9 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
       const { error } = await supabase.from('financial_transactions').insert(newRow);
       if (error) throw error;
 
+      // Apply impact onto linked account balance, if one is selected
+      await applyAccountDelta(transactionData.category, transactionData.type as any, Number(monthly) || 0);
+
       await refreshData();
     } catch (error) {
       console.error('Error adding transaction:', error);
