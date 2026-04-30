@@ -404,7 +404,7 @@ export function CashFlowView() {
       incomeBreakdown,
       expenseBreakdown,
     };
-  }, [transactions, costCentre, totalCcPaymentMonthly]);
+  }, [transactions, costCentre, totalCcPaymentMonthly, creditCards]);
 
 
   return (
