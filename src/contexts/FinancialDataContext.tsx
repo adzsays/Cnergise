@@ -405,13 +405,13 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
       const projections = Array(12).fill(newMonthly);
       const { error } = await supabase
         .from('financial_transactions')
-        .update({ monthly: newMonthly, daily: newMonthly / 30, projections })
+        .update({ monthly: newMonthly, amount: newMonthly, daily: newMonthly / 30, projections })
         .eq('id', transactionId);
       if (error) throw error;
 
       setTransactions((prev) =>
         prev.map((t) =>
-          t.id === transactionId ? { ...t, monthly: newMonthly, daily: newMonthly / 30, projections } : t
+          t.id === transactionId ? { ...t, monthly: newMonthly, amount: newMonthly, daily: newMonthly / 30, projections } : t
         )
       );
 
