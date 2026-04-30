@@ -303,7 +303,7 @@ export function CashFlowView() {
     }
 
     return rows;
-  }, [transactions, liquidBankAccounts, creditCards, totalCcPaymentMonthly, costCentre, period]);
+  }, [transactions, liquidBankAccounts, costCentre, period]);
 
   const kpis = useMemo(() => {
     const incomeTotal = chartData.reduce((s, r) => s + r.income, 0);
