@@ -365,8 +365,43 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
   }, [balanceSheet]);
 
   // ---- Transaction operations
+  // Apply (or reverse) a transaction's effect onto the linked account's stored balance.
+  // `category` on a transaction holds the linked account name.
+  // Stored balance convention: assets are positive, liabilities are negative.
+  // Direction:
+  //   - income to asset       -> balance += amount
+  //   - expense from asset    -> balance -= amount
+  //   - income on liability   -> balance -= amount (more debt)
+  //   - expense on liability  -> balance += amount (paying down debt)
+  const applyAccountDelta = async (
+    accountName: string | null | undefined,
+    type: 'income' | 'expense' | undefined,
+    amount: number
+  ) => {
+    if (!accountName || !type || !amount) return;
+    const account = accounts.find((a) => a.name === accountName);
+    if (!account) return;
+    const isLiability =
+      (account.account_class || '').toLowerCase() === 'liability' ||
+      (account.type || '').toLowerCase() === 'liability';
+    const sign = type === 'income' ? 1 : -1;
+    const delta = sign * amount * (isLiability ? -1 : 1);
+    const newBalance = Number(account.balance || 0) + delta;
+    try {
+      const { error } = await supabase
+        .from('financial_accounts')
+        .update({ balance: newBalance })
+        .eq('id', account.id);
+      if (error) throw error;
+      setAccounts((prev) => prev.map((a) => (a.id === account.id ? { ...a, balance: newBalance } : a)));
+    } catch (error) {
+      console.error('Error applying account delta:', error);
+    }
+  };
+
   const updateTransaction = async (transactionId: string, newMonthly: number) => {
     try {
+      const existing = transactions.find((t) => t.id === transactionId);
       const projections = Array(12).fill(newMonthly);
       const { error } = await supabase
         .from('financial_transactions')
@@ -379,6 +414,14 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
           t.id === transactionId ? { ...t, monthly: newMonthly, daily: newMonthly / 30, projections } : t
         )
       );
+
+      // Adjust linked account by the *difference* in amount
+      if (existing) {
+        const diff = newMonthly - Number(existing.monthly || 0);
+        if (diff !== 0) {
+          await applyAccountDelta(existing.category, existing.type as any, diff);
+        }
+      }
     } catch (error) {
       console.error('Error updating transaction:', error);
       toast.error('Failed to update transaction');
@@ -415,6 +458,9 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
 
       const { error } = await supabase.from('financial_transactions').insert(newRow);
       if (error) throw error;
+
+      // Apply impact onto linked account balance, if one is selected
+      await applyAccountDelta(transactionData.category, transactionData.type as any, Number(monthly) || 0);
 
       await refreshData();
     } catch (error) {
@@ -466,12 +512,23 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
 
   const updateTransactionCategory = async (transactionId: string, newCategory: string) => {
     try {
+      const existing = transactions.find((t) => t.id === transactionId);
       const { error } = await supabase
         .from('financial_transactions')
         .update({ category: newCategory })
         .eq('id', transactionId);
       if (error) throw error;
       setTransactions((prev) => prev.map((t) => (t.id === transactionId ? { ...t, category: newCategory } : t)));
+
+      // When the linked account changes, reverse impact on the old account
+      // and apply it to the new one (only if amount and type are present).
+      if (existing && existing.category !== newCategory) {
+        const amt = Number(existing.monthly || 0);
+        if (amt) {
+          await applyAccountDelta(existing.category, existing.type as any, -amt);
+          await applyAccountDelta(newCategory, existing.type as any, amt);
+        }
+      }
     } catch (error) {
       console.error('Error updating transaction category:', error);
       toast.error('Failed to update category');
@@ -480,9 +537,18 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
 
   const deleteTransaction = async (transactionId: string) => {
     try {
+      const existing = transactions.find((t) => t.id === transactionId);
       const { error } = await supabase.from('financial_transactions').delete().eq('id', transactionId);
       if (error) throw error;
       setTransactions((prev) => prev.filter((t) => t.id !== transactionId));
+
+      // Reverse the transaction's impact from the linked account
+      if (existing) {
+        const amt = Number(existing.monthly || 0);
+        if (amt) {
+          await applyAccountDelta(existing.category, existing.type as any, -amt);
+        }
+      }
     } catch (error) {
       console.error('Error deleting transaction:', error);
       toast.error('Failed to delete transaction');

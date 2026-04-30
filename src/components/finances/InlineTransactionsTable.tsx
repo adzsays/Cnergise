@@ -40,7 +40,7 @@ const toDateInput = (ms: number | null | undefined) => {
 const fromDateInput = (s: string) => (s ? new Date(s).getTime() : null);
 
 export function InlineTransactionsTable() {
-  const { transactions, accounts, addTransaction, deleteTransaction, refreshData, updateTransaction } = useFinancialData() as any;
+  const { transactions, accounts, addTransaction, deleteTransaction, refreshData, updateTransaction, updateTransactionCategory } = useFinancialData() as any;
   const { currency } = useUserCurrency();
   const currencySymbol = (() => {
     try {
@@ -359,7 +359,7 @@ export function InlineTransactionsTable() {
                   <td className="py-1 px-2">
                     <Select
                       defaultValue={t.category || ''}
-                      onValueChange={(v) => updateField(t.id, { category: v })}
+                      onValueChange={(v) => updateTransactionCategory(t.id, v)}
                     >
                       <SelectTrigger className="h-7 border-0 bg-transparent px-1 focus:ring-1">
                         <SelectValue placeholder="—" />
