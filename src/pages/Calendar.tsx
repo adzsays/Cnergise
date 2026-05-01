@@ -30,6 +30,11 @@ function addDays(d: Date, n: number) {
 export default function Calendar() {
   const [activeTab, setActiveTab] = useState("month");
   const [date, setDate] = useState<Date>(new Date());
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+
+  const openEvent = (e: CalendarEvent) => { setSelectedEvent(e); setDialogOpen(true); };
+  const openNew = () => { setSelectedEvent(null); setDialogOpen(true); };
 
   // Fetch a wide enough range to cover all views
   const { rangeStart, rangeEnd } = useMemo(() => {
