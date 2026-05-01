@@ -67,6 +67,7 @@ const App = () => (
               <Route path="/chat" element={<AuthGuard><FeatureGate featureKey="chat"><Chat /></FeatureGate></AuthGuard>} />
               <Route path="/monitoring" element={<AuthGuard><Monitoring /></AuthGuard>} />
               <Route path="/learning" element={<AuthGuard><FeatureGate featureKey="learning"><Learning /></FeatureGate></AuthGuard>} />
+              <Route path="/echo" element={<AuthGuard><FeatureGate featureKey="echo"><Echo /></FeatureGate></AuthGuard>} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
