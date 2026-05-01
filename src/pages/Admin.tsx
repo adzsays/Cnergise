@@ -23,6 +23,7 @@ import { useAllProfiles, useUserRoleManagement } from "@/hooks/useProfile";
 import { format } from "date-fns";
 import { useState } from "react";
 import { Shield, UserMinus } from "lucide-react";
+import { AllowlistManager } from "@/components/admin/AllowlistManager";
 
 export default function Admin() {
   const { data: profiles, isLoading } = useAllProfiles();
@@ -64,9 +65,9 @@ export default function Admin() {
               <p className="text-muted-foreground mt-2">Manage users and their roles</p>
             </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>User Management</CardTitle>
+            <AllowlistManager />
+
+
                 <CardDescription>View and manage all users in the system</CardDescription>
               </CardHeader>
               <CardContent>
