@@ -10,7 +10,9 @@ export type CalendarEvent = {
   end_time: string;
   all_day: boolean | null;
   google_calendar_id: string | null;
+  google_event_id?: string | null;
   sync_source: string | null;
+  meeting_url?: string | null;
 };
 
 export function useCalendarEvents(rangeStart?: Date, rangeEnd?: Date) {
