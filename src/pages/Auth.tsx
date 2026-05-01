@@ -101,7 +101,6 @@ const Auth = () => {
         setIsLoading(false);
         return;
       }
-    try {
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -131,7 +130,6 @@ const Auth = () => {
         setIsLoading(false);
         return;
       }
-    try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
