@@ -402,7 +402,7 @@ const Auth = () => {
           </div>
 
           {/* Biometric Login Option */}
-          {biometricAvailable && (
+          {loginAccess && biometricAvailable && (
             <div className="mb-8">
               <Button
                 size="lg"
