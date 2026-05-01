@@ -46,12 +46,31 @@ const Auth = () => {
   const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [biometricLoading, setBiometricLoading] = useState(false);
 
+  // Verify the email is on the invite allowlist; if not, sign out and toast.
+  const enforceAllowlist = async (email: string | null | undefined): Promise<boolean> => {
+    if (!email) return false;
+    const { data, error } = await supabase.rpc("is_email_allowed", { _email: email });
+    if (error) {
+      console.error("Allowlist check failed", error);
+      toast.error("Could not verify access. Please try again.");
+      await supabase.auth.signOut();
+      return false;
+    }
+    if (!data) {
+      toast.error("Access is invite-only. This email is not on the allowlist.");
+      await supabase.auth.signOut();
+      return false;
+    }
+    return true;
+  };
+
   useEffect(() => {
     // Check for existing session (e.g. after Google OAuth redirect)
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        navigate("/home");
+        const ok = await enforceAllowlist(session.user.email);
+        if (ok) navigate("/home");
       }
     };
     checkSession();
@@ -75,8 +94,13 @@ const Auth = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
     try {
+      const allowed = await supabase.rpc("is_email_allowed", { _email: email });
+      if (!allowed.data) {
+        toast.error("Access is invite-only. This email is not on the allowlist.");
+        setIsLoading(false);
+        return;
+      }
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -99,8 +123,13 @@ const Auth = () => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
     try {
+      const allowed = await supabase.rpc("is_email_allowed", { _email: email });
+      if (!allowed.data) {
+        toast.error("Access is invite-only. This email is not on the allowlist.");
+        setIsLoading(false);
+        return;
+      }
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,

@@ -85,6 +85,30 @@ export type Database = {
         }
         Relationships: []
       }
+      allowed_emails: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          email: string
+          id: string
+          note: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          email: string
+          id?: string
+          note?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          email?: string
+          id?: string
+          note?: string | null
+        }
+        Relationships: []
+      }
       calendar_events: {
         Row: {
           created_at: string | null
@@ -1469,6 +1493,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_email_allowed: { Args: { _email: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
