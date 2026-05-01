@@ -374,21 +374,31 @@ const Auth = () => {
             Let AI handle the complexity while you focus on what matters most.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
-            <Button 
-              size="lg" 
-              onClick={() => { setAuthTab("signup"); setShowAuthModal(true); }}
-              className="bg-primary hover:bg-primary/90 text-lg px-8 py-6"
-            >
-              Start Free Today
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
-            <Button 
-              size="lg" 
-              variant="outline"
-              className="text-lg px-8 py-6"
-            >
-              Watch Demo
-            </Button>
+            {loginAccess ? (
+              <>
+                <Button
+                  size="lg"
+                  onClick={() => { setAuthTab("signup"); setShowAuthModal(true); }}
+                  className="bg-primary hover:bg-primary/90 text-lg px-8 py-6"
+                >
+                  Start Free Today
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+                <Button size="lg" variant="outline" className="text-lg px-8 py-6">
+                  Watch Demo
+                </Button>
+              </>
+            ) : (
+              <div className="flex flex-col items-center gap-3">
+                <div className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-primary/10 text-primary text-base font-medium">
+                  <Sparkles className="w-5 h-5" />
+                  Coming Soon — Launching to invited users
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  We're putting the finishing touches on Cnergise. Stay tuned.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Biometric Login Option */}
