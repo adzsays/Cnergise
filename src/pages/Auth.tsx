@@ -94,7 +94,13 @@ const Auth = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+    try {
+      const allowed = await supabase.rpc("is_email_allowed", { _email: email });
+      if (!allowed.data) {
+        toast.error("Access is invite-only. This email is not on the allowlist.");
+        setIsLoading(false);
+        return;
+      }
     try {
       const { error } = await supabase.auth.signUp({
         email,
@@ -118,7 +124,13 @@ const Auth = () => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+    try {
+      const allowed = await supabase.rpc("is_email_allowed", { _email: email });
+      if (!allowed.data) {
+        toast.error("Access is invite-only. This email is not on the allowlist.");
+        setIsLoading(false);
+        return;
+      }
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
