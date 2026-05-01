@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 
+const GOOGLE_CALENDAR_CONNECTED_EVENT = "google-calendar-connected";
+
 export function useGoogleCalendar() {
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -23,14 +25,25 @@ export function useGoogleCalendar() {
 
   const connect = useMutation({
     mutationFn: async () => {
+      const oauthWindow = window.open("", "_blank", "width=560,height=720");
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/google-calendar-oauth-start?origin=${encodeURIComponent(window.location.origin)}`;
-      const session = (await supabase.auth.getSession()).data.session;
-      if (!session) throw new Error("Not signed in");
-      const res = await fetch(url, { headers: { Authorization: `Bearer ${session.access_token}` } });
-      const json = await res.json();
-      if (!res.ok || !json.url) throw new Error(json.error || "Failed to start OAuth");
-      window.location.href = json.url;
-      return null;
+      try {
+        const session = (await supabase.auth.getSession()).data.session;
+        if (!session) throw new Error("Not signed in");
+        const res = await fetch(url, { headers: { Authorization: `Bearer ${session.access_token}` } });
+        const json = await res.json();
+        if (!res.ok || !json.url) throw new Error(json.error || "Failed to start OAuth");
+
+        if (oauthWindow && !oauthWindow.closed) {
+          oauthWindow.location.assign(json.url);
+        } else {
+          window.location.assign(json.url);
+        }
+        return null;
+      } catch (error) {
+        oauthWindow?.close();
+        throw error;
+      }
     },
     onError: (e: Error) => toast({ title: "Connection failed", description: e.message, variant: "destructive" }),
   });
@@ -68,18 +81,35 @@ export function useGoogleCalendar() {
     },
   });
 
-  // Auto-handle OAuth callback redirect
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("gcal_callback") === "1" && params.get("status") === "success") {
+    const finishConnection = () => {
       toast({ title: "Google Calendar connected" });
-      // Kick off initial sync + watch
       sync.mutate();
       startWatch.mutate();
-      // Clean URL
-      window.history.replaceState({}, "", window.location.pathname);
       qc.invalidateQueries({ queryKey: ["gcal-connection"] });
+    };
+
+    const handleConnectedMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== GOOGLE_CALENDAR_CONNECTED_EVENT) return;
+      finishConnection();
+    };
+
+    window.addEventListener("message", handleConnectedMessage);
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("gcal_callback") === "1" && params.get("status") === "success") {
+      if (window.opener && !window.opener.closed) {
+        window.opener.postMessage({ type: GOOGLE_CALENDAR_CONNECTED_EVENT }, window.location.origin);
+        window.close();
+        return () => window.removeEventListener("message", handleConnectedMessage);
+      }
+
+      finishConnection();
+      window.history.replaceState({}, "", window.location.pathname);
     }
+
+    return () => window.removeEventListener("message", handleConnectedMessage);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
