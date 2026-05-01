@@ -119,7 +119,7 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-2 group-data-[collapsible=icon]:px-0">
-        <SidebarGroup>
+        <SidebarGroup className="group-data-[collapsible=icon]:px-0">
           <SidebarGroupContent>
             <SidebarMenu>
               {navItems.map((item) => {
