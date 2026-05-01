@@ -40,6 +40,8 @@ export function EventDialog({ open, onOpenChange, event, defaultDate }: Props) {
   const [allDay, setAllDay] = useState(false);
   const [startStr, setStartStr] = useState("");
   const [endStr, setEndStr] = useState("");
+  const [addMeet, setAddMeet] = useState(false);
+  const [meetingUrl, setMeetingUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
