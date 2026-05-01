@@ -35,7 +35,7 @@ async function getValidToken(admin: any, userId: string) {
   return conn;
 }
 
-function buildBody(event: any) {
+function buildBody(event: any, opts: { addMeet?: boolean } = {}) {
   const body: any = {
     summary: event.title,
     description: event.description ?? undefined,
@@ -48,7 +48,21 @@ function buildBody(event: any) {
     body.start = { dateTime: event.start_time };
     body.end = { dateTime: event.end_time };
   }
+  if (opts.addMeet) {
+    body.conferenceData = {
+      createRequest: {
+        requestId: `meet-${event.id ?? crypto.randomUUID()}-${Date.now()}`,
+        conferenceSolutionKey: { type: "hangoutsMeet" },
+      },
+    };
+  }
   return body;
+}
+
+function extractMeetLink(data: any): string | null {
+  if (data?.hangoutLink) return data.hangoutLink;
+  const ep = data?.conferenceData?.entryPoints?.find?.((e: any) => e.entryPointType === "video");
+  return ep?.uri ?? null;
 }
 
 Deno.serve(async (req) => {
@@ -70,32 +84,49 @@ Deno.serve(async (req) => {
     const base = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events`;
 
     if (action === "create") {
-      const res = await fetch(base, {
+      const addMeet = !!event.add_meet;
+      const url = addMeet ? `${base}?conferenceDataVersion=1` : base;
+      const res = await fetch(url, {
         method: "POST",
         headers: { Authorization: `Bearer ${conn.access_token}`, "Content-Type": "application/json" },
-        body: JSON.stringify(buildBody(event)),
+        body: JSON.stringify(buildBody(event, { addMeet })),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(JSON.stringify(data));
+      const meetLink = extractMeetLink(data);
       await admin.from("calendar_events").update({
         google_event_id: data.id, google_calendar_id: calId, etag: data.etag,
         sync_source: "synced", last_synced_at: new Date().toISOString(),
+        ...(meetLink ? { meeting_url: meetLink } : {}),
       }).eq("id", event.id).eq("user_id", user.id);
-      return new Response(JSON.stringify({ ok: true, id: data.id }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ ok: true, id: data.id, meeting_url: meetLink }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     if (action === "update") {
       if (!event.google_event_id) throw new Error("No google_event_id");
-      const res = await fetch(`${base}/${event.google_event_id}`, {
+      const addMeet = !!event.add_meet && !event.meeting_url;
+      const url = `${base}/${event.google_event_id}${addMeet ? "?conferenceDataVersion=1" : ""}`;
+      const res = await fetch(url, {
         method: "PATCH",
         headers: { Authorization: `Bearer ${conn.access_token}`, "Content-Type": "application/json" },
-        body: JSON.stringify(buildBody(event)),
+        body: JSON.stringify(buildBody(event, { addMeet })),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(JSON.stringify(data));
+      const meetLink = extractMeetLink(data);
       await admin.from("calendar_events").update({
         etag: data.etag, last_synced_at: new Date().toISOString(),
+        ...(meetLink ? { meeting_url: meetLink } : {}),
       }).eq("id", event.id).eq("user_id", user.id);
+      return new Response(JSON.stringify({ ok: true, meeting_url: meetLink }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (action === "delete") {
+      if (!event.google_event_id) return new Response(JSON.stringify({ ok: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      await fetch(`${base}/${event.google_event_id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${conn.access_token}` },
+      });
       return new Response(JSON.stringify({ ok: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
