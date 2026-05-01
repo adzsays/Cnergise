@@ -68,6 +68,8 @@ export default function Admin() {
 
             <AllowlistManager />
 
+            <ApprovalQueue />
+
             <Card>
               <CardHeader>
                 <CardTitle>User Management</CardTitle>
