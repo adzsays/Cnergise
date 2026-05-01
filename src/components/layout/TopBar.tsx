@@ -26,6 +26,9 @@ export function TopBar({ title = "Today" }: TopBarProps) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const navigate = useNavigate();
+  const { isAdmin, viewAs, toggle } = useAdminMode();
+  const { data: pendingCount = 0 } = usePendingApprovalsCount();
 
   return (
     <header className="sticky top-0 z-20 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
