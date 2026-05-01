@@ -161,11 +161,27 @@ export default function Onboarding() {
                 ))}
               </div>
             </ScrollArea>
-            <div className="flex justify-between">
+            {!allDisclaimersAccepted && (
+              <div className="rounded-md border border-amber-300 bg-amber-50/60 dark:bg-amber-950/20 p-3 text-xs text-amber-800 dark:text-amber-300">
+                {needsDisclaimerAcceptance.filter((f) => !acceptedDisclaimers.has(f.key)).length} disclaimer(s) still need acceptance:
+                <span className="font-medium"> {needsDisclaimerAcceptance.filter((f) => !acceptedDisclaimers.has(f.key)).map((f) => f.name).join(", ")}</span>
+              </div>
+            )}
+            <div className="flex justify-between items-center gap-2">
               <Button variant="outline" onClick={() => setStep(1)}><ArrowLeft className="h-4 w-4 mr-1" /> Back</Button>
-              <Button onClick={() => setStep(3)} disabled={!allDisclaimersAccepted}>
-                Continue <ArrowRight className="h-4 w-4 ml-1" />
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setAcceptedDisclaimers(new Set(needsDisclaimerAcceptance.map((f) => f.key)))}
+                  disabled={allDisclaimersAccepted}
+                >
+                  Accept all
+                </Button>
+                <Button onClick={() => setStep(3)} disabled={!allDisclaimersAccepted}>
+                  Continue <ArrowRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
             </div>
           </Card>
         )}
