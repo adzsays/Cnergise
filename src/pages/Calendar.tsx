@@ -177,17 +177,24 @@ export default function Calendar() {
                 </TabsContent>
 
                 <TabsContent value="week" className="mt-0">
-                  <WeekView date={date} events={events} />
+                  <WeekView date={date} events={events} onSelectEvent={openEvent} />
                 </TabsContent>
 
                 <TabsContent value="day" className="mt-0">
-                  <DayView date={date} events={events} />
+                  <DayView date={date} events={events} onSelectEvent={openEvent} />
                 </TabsContent>
 
                 <TabsContent value="schedule" className="mt-0">
-                  <ScheduleView events={events} />
+                  <ScheduleView events={events} onSelectEvent={openEvent} />
                 </TabsContent>
               </Tabs>
+
+              <EventDialog
+                open={dialogOpen}
+                onOpenChange={setDialogOpen}
+                event={selectedEvent}
+                defaultDate={date}
+              />
             </div>
           </div>
         </SidebarInset>
