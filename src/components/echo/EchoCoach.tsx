@@ -98,7 +98,7 @@ export default function EchoCoach({ entries, goals }: { entries: any[]; goals: a
                   <User className="w-3 h-3" />
                 </div>
               )}
-            </div>
+            </motion.div>
           ))}
         </AnimatePresence>
 
