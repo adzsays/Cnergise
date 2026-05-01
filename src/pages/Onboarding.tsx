@@ -143,7 +143,7 @@ export default function Onboarding() {
               <h2 className="font-semibold">Compliance disclaimers</h2>
               <p className="text-sm text-muted-foreground">Please read and accept the terms for each selected feature.</p>
             </div>
-            <ScrollArea className="max-h-[55vh] pr-3">
+            <ScrollArea className="h-[50vh] pr-3 border rounded-md p-2">
               <div className="space-y-3">
                 {needsDisclaimerAcceptance.map((f) => (
                   <div key={f.key} className={`rounded-md border p-3 ${f.is_regulated ? "border-amber-300 bg-amber-50/60 dark:bg-amber-950/20" : "bg-muted/30"}`}>
