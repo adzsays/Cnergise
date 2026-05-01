@@ -100,7 +100,7 @@ export function AppSidebar() {
         ) : (
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
-              <img src={cnergiseLogo} alt="Cnergise" className="h-10 w-10 object-contain shrink-0" />
+              <img src={cnergiseLogo} alt="Cnergise" className="h-15 w-15 object-contain shrink-0" style={{ height: '3.75rem', width: '3.75rem' }} />
               <span className="font-semibold text-base truncate">Cnergise</span>
             </div>
             <Button
