@@ -329,18 +329,27 @@ const Auth = () => {
               <span className="text-xl font-bold text-foreground">Cnergise</span>
             </div>
             <div className="flex items-center gap-3">
-              <Button 
-                variant="ghost" 
-                onClick={() => { setAuthTab("signin"); setShowAuthModal(true); }}
-              >
-                Sign In
-              </Button>
-              <Button 
-                onClick={() => { setAuthTab("signup"); setShowAuthModal(true); }}
-                className="bg-primary hover:bg-primary/90"
-              >
-                Get Started
-              </Button>
+              {loginAccess ? (
+                <>
+                  <Button
+                    variant="ghost"
+                    onClick={() => { setAuthTab("signin"); setShowAuthModal(true); }}
+                  >
+                    Sign In
+                  </Button>
+                  <Button
+                    onClick={() => { setAuthTab("signup"); setShowAuthModal(true); }}
+                    className="bg-primary hover:bg-primary/90"
+                  >
+                    Get Started
+                  </Button>
+                </>
+              ) : (
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium">
+                  <Sparkles className="w-4 h-4" />
+                  Coming Soon
+                </span>
+              )}
             </div>
           </div>
         </div>
