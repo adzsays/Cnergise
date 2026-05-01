@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { Search, Plus, User, Calendar, CheckSquare, FileText, Bookmark, X, Sparkles } from "lucide-react";
+import { Search, Plus, User, Calendar, CheckSquare, FileText, Bookmark, X, Sparkles, ShieldCheck, Eye, Bell } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,10 +12,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { SpaceSelector } from "@/components/layout/SpaceSelector";
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
 import { AISearchDialog } from "@/components/ai/AISearchDialog";
+import { useAdminMode, usePendingApprovalsCount } from "@/hooks/useAdminMode";
 
 interface TopBarProps {
   title?: string;
