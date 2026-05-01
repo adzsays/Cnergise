@@ -17,6 +17,8 @@ import { SpaceSelector } from "@/components/layout/SpaceSelector";
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
 import { AISearchDialog } from "@/components/ai/AISearchDialog";
 import { useAdminMode, usePendingApprovalsCount } from "@/hooks/useAdminMode";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface TopBarProps {
   title?: string;
@@ -29,6 +31,21 @@ export function TopBar({ title = "Today" }: TopBarProps) {
   const navigate = useNavigate();
   const { isAdmin, viewAs, toggle } = useAdminMode();
   const { data: pendingCount = 0 } = usePendingApprovalsCount();
+
+  const handleLogout = async () => {
+    try {
+      try { localStorage.removeItem("viewAs"); } catch {}
+      const { error } = await supabase.auth.signOut();
+      if (error && !/session/i.test(error.message)) {
+        throw error;
+      }
+      toast.success("Logged out");
+      navigate("/login", { replace: true });
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to log out");
+      navigate("/login", { replace: true });
+    }
+  };
 
   return (
     <header className="sticky top-0 z-20 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
@@ -162,7 +179,7 @@ export function TopBar({ title = "Today" }: TopBarProps) {
                 </>
               )}
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive">
+              <DropdownMenuItem className="text-destructive" onClick={handleLogout}>
                 Log out
               </DropdownMenuItem>
             </DropdownMenuContent>
