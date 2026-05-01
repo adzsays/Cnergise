@@ -101,7 +101,7 @@ export default function Calendar() {
               actions={
                 <div className="flex flex-wrap items-center gap-2">
                   <GoogleCalendarConnect compact />
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={openNew}>
                     <PlusCircle className="mr-2 h-4 w-4" />
                     New Event
                   </Button>
