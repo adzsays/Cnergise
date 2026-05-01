@@ -4,8 +4,32 @@ import { Badge } from "@/components/ui/badge";
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
 import { Calendar, RefreshCw, Link2, Unlink } from "lucide-react";
 
-export function GoogleCalendarConnect() {
+type GoogleCalendarConnectProps = {
+  compact?: boolean;
+};
+
+export function GoogleCalendarConnect({ compact = false }: GoogleCalendarConnectProps) {
   const { connection, isConnected, connect, sync, disconnect, isLoading } = useGoogleCalendar();
+
+  if (compact) {
+    if (isLoading) {
+      return (
+        <Button size="sm" variant="outline" disabled>
+          <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> Calendar
+        </Button>
+      );
+    }
+
+    return isConnected ? (
+      <Button size="sm" variant="outline" onClick={() => sync.mutate()} disabled={sync.isPending}>
+        <RefreshCw className={`mr-2 h-4 w-4 ${sync.isPending ? "animate-spin" : ""}`} /> Sync Gmail Calendar
+      </Button>
+    ) : (
+      <Button size="sm" onClick={() => connect.mutate()} disabled={connect.isPending}>
+        <Link2 className="mr-2 h-4 w-4" /> Connect Gmail Calendar
+      </Button>
+    );
+  }
 
   return (
     <Card>

@@ -72,10 +72,13 @@ export default function Calendar() {
                 { value: "schedule", label: "Schedule" }
               ]}
               actions={
-                <Button variant="outline" size="sm">
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  New Event
-                </Button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <GoogleCalendarConnect compact />
+                  <Button variant="outline" size="sm">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    New Event
+                  </Button>
+                </div>
               }
             />
             
