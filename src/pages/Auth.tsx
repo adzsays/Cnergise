@@ -325,8 +325,8 @@ const Auth = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-28">
             <div className="flex items-center gap-1">
-              <img src={cnergiseLogo} alt="Cnergise" className="w-26 h-26 object-contain" style={{ width: '6.5rem', height: '6.5rem' }} />
-              <span className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-primary to-foreground bg-clip-text text-transparent -ml-4">Cnergise</span>
+              <img src={cnergiseLogo} alt="Cnergise" className="object-contain" style={{ width: '16.25rem', height: '16.25rem' }} />
+              <span className="text-7xl font-extrabold tracking-tight bg-gradient-to-r from-primary to-foreground bg-clip-text text-transparent -ml-4">Cnergise</span>
             </div>
             <div className="flex items-center gap-3">
               {loginAccess ? (
@@ -569,8 +569,8 @@ const Auth = () => {
       <footer className="py-12 px-4 sm:px-6 lg:px-8 border-t border-border">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <img src={cnergiseLogo} alt="Cnergise" className="w-8 h-8 object-contain" />
-            <span className="font-semibold text-foreground">Cnergise</span>
+            <img src={cnergiseLogo} alt="Cnergise" className="w-20 h-20 object-contain" />
+            <span className="font-semibold text-foreground text-2xl">Cnergise</span>
           </div>
           <p className="text-sm text-muted-foreground">
             © 2025 Cnergise. All rights reserved.

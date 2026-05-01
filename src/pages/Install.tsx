@@ -80,8 +80,8 @@ const Install = () => {
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div className="flex items-center gap-3">
-            <img src={cnergiseLogo} alt="Cnergise" className="w-8 h-8" />
-            <span className="font-semibold text-foreground">Install Cnergise</span>
+            <img src={cnergiseLogo} alt="Cnergise" className="w-20 h-20" />
+            <span className="font-semibold text-foreground text-2xl">Install Cnergise</span>
           </div>
         </div>
       </header>
