@@ -175,36 +175,54 @@ export type Database = {
       calendar_events: {
         Row: {
           created_at: string | null
+          deleted_at: string | null
           description: string | null
           end_time: string
+          etag: string | null
+          google_calendar_id: string | null
+          google_event_id: string | null
           id: string
+          last_synced_at: string | null
           location: string | null
           space_id: string | null
           start_time: string
+          sync_source: string | null
           title: string
           updated_at: string | null
           user_id: string | null
         }
         Insert: {
           created_at?: string | null
+          deleted_at?: string | null
           description?: string | null
           end_time: string
+          etag?: string | null
+          google_calendar_id?: string | null
+          google_event_id?: string | null
           id?: string
+          last_synced_at?: string | null
           location?: string | null
           space_id?: string | null
           start_time: string
+          sync_source?: string | null
           title: string
           updated_at?: string | null
           user_id?: string | null
         }
         Update: {
           created_at?: string | null
+          deleted_at?: string | null
           description?: string | null
           end_time?: string
+          etag?: string | null
+          google_calendar_id?: string | null
+          google_event_id?: string | null
           id?: string
+          last_synced_at?: string | null
           location?: string | null
           space_id?: string | null
           start_time?: string
+          sync_source?: string | null
           title?: string
           updated_at?: string | null
           user_id?: string | null
@@ -890,6 +908,81 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      google_calendar_channels: {
+        Row: {
+          calendar_id: string
+          channel_id: string
+          created_at: string
+          expiration: string
+          id: string
+          resource_id: string
+          user_id: string
+        }
+        Insert: {
+          calendar_id?: string
+          channel_id: string
+          created_at?: string
+          expiration: string
+          id?: string
+          resource_id: string
+          user_id: string
+        }
+        Update: {
+          calendar_id?: string
+          channel_id?: string
+          created_at?: string
+          expiration?: string
+          id?: string
+          resource_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      google_calendar_connections: {
+        Row: {
+          access_token: string
+          created_at: string
+          google_email: string | null
+          id: string
+          last_sync_at: string | null
+          primary_calendar_id: string | null
+          refresh_token: string
+          scope: string | null
+          sync_token: string | null
+          token_expires_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string
+          google_email?: string | null
+          id?: string
+          last_sync_at?: string | null
+          primary_calendar_id?: string | null
+          refresh_token: string
+          scope?: string | null
+          sync_token?: string | null
+          token_expires_at: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          google_email?: string | null
+          id?: string
+          last_sync_at?: string | null
+          primary_calendar_id?: string | null
+          refresh_token?: string
+          scope?: string | null
+          sync_token?: string | null
+          token_expires_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       journal_entries: {
         Row: {
