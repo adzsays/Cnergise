@@ -73,7 +73,7 @@ async function syncCalendar(admin: any, userId: string, accessToken: string, cal
       const startTime = ev.start?.dateTime || ev.start?.date;
       const endTime = ev.end?.dateTime || ev.end?.date;
       if (!startTime || !endTime) continue;
-      await admin.from("calendar_events").upsert({
+      const eventPayload = {
         user_id: userId,
         title: ev.summary || "(no title)",
         description: ev.description || null,
@@ -87,7 +87,21 @@ async function syncCalendar(admin: any, userId: string, accessToken: string, cal
         sync_source: "google",
         last_synced_at: new Date().toISOString(),
         deleted_at: null,
-      }, { onConflict: "user_id,google_event_id" });
+      };
+
+      const { data: existingEvent, error: lookupError } = await admin
+        .from("calendar_events")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("google_calendar_id", calendarId)
+        .eq("google_event_id", ev.id)
+        .maybeSingle();
+      if (lookupError) throw lookupError;
+
+      const { error: saveError } = existingEvent?.id
+        ? await admin.from("calendar_events").update(eventPayload).eq("id", existingEvent.id)
+        : await admin.from("calendar_events").insert(eventPayload);
+      if (saveError) throw saveError;
       synced++;
     }
 
