@@ -24,7 +24,7 @@ export function useCalendarEvents(rangeStart?: Date, rangeEnd?: Date) {
 
       let q = supabase
         .from("calendar_events")
-        .select("id, title, description, location, start_time, end_time, all_day, google_calendar_id, sync_source")
+        .select("id, title, description, location, start_time, end_time, all_day, google_calendar_id, google_event_id, sync_source, meeting_url")
         .eq("user_id", user.id)
         .is("deleted_at", null)
         .order("start_time", { ascending: true });
