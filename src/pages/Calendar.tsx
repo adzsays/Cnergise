@@ -7,13 +7,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { GoogleCalendarConnect } from "@/components/calendar/GoogleCalendarConnect";
-import { useCalendarEvents } from "@/hooks/useCalendarEvents";
+import { useCalendarEvents, CalendarEvent } from "@/hooks/useCalendarEvents";
 import {
   MonthView,
   WeekView,
   DayView,
   ScheduleView,
 } from "@/components/calendar/CalendarViews";
+import { EventDialog } from "@/components/calendar/EventDialog";
 
 function startOfDay(d: Date) {
   const x = new Date(d);
@@ -29,6 +30,11 @@ function addDays(d: Date, n: number) {
 export default function Calendar() {
   const [activeTab, setActiveTab] = useState("month");
   const [date, setDate] = useState<Date>(new Date());
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+
+  const openEvent = (e: CalendarEvent) => { setSelectedEvent(e); setDialogOpen(true); };
+  const openNew = () => { setSelectedEvent(null); setDialogOpen(true); };
 
   // Fetch a wide enough range to cover all views
   const { rangeStart, rangeEnd } = useMemo(() => {
@@ -95,7 +101,7 @@ export default function Calendar() {
               actions={
                 <div className="flex flex-wrap items-center gap-2">
                   <GoogleCalendarConnect compact />
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={openNew}>
                     <PlusCircle className="mr-2 h-4 w-4" />
                     New Event
                   </Button>
@@ -128,7 +134,7 @@ export default function Calendar() {
                 <TabsContent value="month" className="mt-0">
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2">
-                      <MonthView date={date} events={events} onSelectDate={(d) => { setDate(d); setActiveTab("day"); }} />
+                      <MonthView date={date} events={events} onSelectEvent={openEvent} onSelectDate={(d) => { setDate(d); setActiveTab("day"); }} />
                     </div>
                     <div className="space-y-4">
                       <GoogleCalendarConnect />
@@ -140,7 +146,12 @@ export default function Calendar() {
                           {todayEvents.length > 0 ? (
                             <div className="space-y-3">
                               {todayEvents.map((event) => (
-                                <div key={event.id} className="border rounded-md p-3">
+                                <button
+                                  type="button"
+                                  key={event.id}
+                                  onClick={() => openEvent(event)}
+                                  className="w-full text-left border rounded-md p-3 hover:bg-accent/40"
+                                >
                                   <h3 className="font-medium text-sm">{event.title}</h3>
                                   <p className="text-xs text-muted-foreground">
                                     {event.all_day
@@ -150,7 +161,7 @@ export default function Calendar() {
                                   {event.location && (
                                     <p className="text-xs text-muted-foreground">{event.location}</p>
                                   )}
-                                </div>
+                                </button>
                               ))}
                             </div>
                           ) : (
@@ -166,17 +177,24 @@ export default function Calendar() {
                 </TabsContent>
 
                 <TabsContent value="week" className="mt-0">
-                  <WeekView date={date} events={events} />
+                  <WeekView date={date} events={events} onSelectEvent={openEvent} />
                 </TabsContent>
 
                 <TabsContent value="day" className="mt-0">
-                  <DayView date={date} events={events} />
+                  <DayView date={date} events={events} onSelectEvent={openEvent} />
                 </TabsContent>
 
                 <TabsContent value="schedule" className="mt-0">
-                  <ScheduleView events={events} />
+                  <ScheduleView events={events} onSelectEvent={openEvent} />
                 </TabsContent>
               </Tabs>
+
+              <EventDialog
+                open={dialogOpen}
+                onOpenChange={setDialogOpen}
+                event={selectedEvent}
+                defaultDate={date}
+              />
             </div>
           </div>
         </SidebarInset>
