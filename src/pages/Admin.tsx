@@ -67,7 +67,9 @@ export default function Admin() {
 
             <AllowlistManager />
 
-
+            <Card>
+              <CardHeader>
+                <CardTitle>User Management</CardTitle>
                 <CardDescription>View and manage all users in the system</CardDescription>
               </CardHeader>
               <CardContent>
