@@ -89,8 +89,8 @@ const Install = () => {
       <main className="max-w-2xl mx-auto px-4 py-8 space-y-8">
         {/* Hero Section */}
         <div className="text-center space-y-4">
-          <div className="w-20 h-20 mx-auto bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl flex items-center justify-center shadow-lg">
-            <img src={cnergiseLogo} alt="Cnergise" className="w-12 h-12" />
+          <div className="w-48 h-48 mx-auto bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl flex items-center justify-center shadow-lg">
+            <img src={cnergiseLogo} alt="Cnergise" className="w-32 h-32" />
           </div>
           <h1 className="text-3xl font-bold text-foreground">
             Install Cnergise
