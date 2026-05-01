@@ -326,7 +326,7 @@ const Auth = () => {
           <div className="flex items-center justify-between h-28">
             <div className="flex items-center gap-1">
               <img src={cnergiseLogo} alt="Cnergise" className="w-26 h-26 object-contain" style={{ width: '6.5rem', height: '6.5rem' }} />
-              <span className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-primary to-foreground bg-clip-text text-transparent -ml-1">Cnergise</span>
+              <span className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-primary to-foreground bg-clip-text text-transparent -ml-4">Cnergise</span>
             </div>
             <div className="flex items-center gap-3">
               {loginAccess ? (
