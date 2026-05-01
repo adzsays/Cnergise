@@ -185,6 +185,7 @@ export type Database = {
           id: string
           last_synced_at: string | null
           location: string | null
+          meeting_url: string | null
           space_id: string | null
           start_time: string
           sync_source: string | null
@@ -204,6 +205,7 @@ export type Database = {
           id?: string
           last_synced_at?: string | null
           location?: string | null
+          meeting_url?: string | null
           space_id?: string | null
           start_time: string
           sync_source?: string | null
@@ -223,6 +225,7 @@ export type Database = {
           id?: string
           last_synced_at?: string | null
           location?: string | null
+          meeting_url?: string | null
           space_id?: string | null
           start_time?: string
           sync_source?: string | null
