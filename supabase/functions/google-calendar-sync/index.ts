@@ -19,10 +19,7 @@ async function refreshAccessToken(refreshToken: string) {
   return res.json();
 }
 
-async function getValidToken(admin: any, userId: string) {
-  const { data: conn } = await admin.from("google_calendar_connections").select("*").eq("user_id", userId).maybeSingle();
-  if (!conn) throw new Error("No Google Calendar connection");
-
+async function ensureValidToken(admin: any, conn: any) {
   if (new Date(conn.token_expires_at).getTime() < Date.now() + 60_000) {
     const refreshed = await refreshAccessToken(conn.refresh_token);
     if (!refreshed.access_token) throw new Error("Token refresh failed");
@@ -30,13 +27,13 @@ async function getValidToken(admin: any, userId: string) {
     await admin.from("google_calendar_connections").update({
       access_token: refreshed.access_token,
       token_expires_at: newExpiry,
-    }).eq("user_id", userId);
+    }).eq("id", conn.id);
     return { ...conn, access_token: refreshed.access_token };
   }
   return conn;
 }
 
-async function syncCalendar(admin: any, userId: string, accessToken: string, calendarId: string, syncToken: string | null) {
+async function syncCalendar(admin: any, userId: string, accountId: string, accessToken: string, calendarId: string, syncToken: string | null) {
   const params = new URLSearchParams({ singleEvents: "true", maxResults: "250" });
   if (syncToken) params.set("syncToken", syncToken);
   else {
@@ -55,10 +52,7 @@ async function syncCalendar(admin: any, userId: string, accessToken: string, cal
     const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?${params}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
-    if (res.status === 410) {
-      resetSync = true;
-      break;
-    }
+    if (res.status === 410) { resetSync = true; break; }
     const data = await res.json();
     if (!res.ok) throw new Error(`${calendarId}: ${JSON.stringify(data)}`);
 
@@ -66,7 +60,9 @@ async function syncCalendar(admin: any, userId: string, accessToken: string, cal
       if (ev.status === "cancelled") {
         await admin.from("calendar_events")
           .update({ deleted_at: new Date().toISOString() })
-          .eq("user_id", userId).eq("google_event_id", ev.id);
+          .eq("user_id", userId)
+          .eq("google_calendar_id", calendarId)
+          .eq("google_event_id", ev.id);
         deleted++;
         continue;
       }
@@ -89,14 +85,13 @@ async function syncCalendar(admin: any, userId: string, accessToken: string, cal
         deleted_at: null,
       };
 
-      const { data: existingEvent, error: lookupError } = await admin
+      const { data: existingEvent } = await admin
         .from("calendar_events")
         .select("id")
         .eq("user_id", userId)
         .eq("google_calendar_id", calendarId)
         .eq("google_event_id", ev.id)
         .maybeSingle();
-      if (lookupError) throw lookupError;
 
       const { error: saveError } = existingEvent?.id
         ? await admin.from("calendar_events").update(eventPayload).eq("id", existingEvent.id)
@@ -125,74 +120,87 @@ Deno.serve(async (req) => {
     if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
 
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const conn = await getValidToken(admin, user.id);
 
-    // Get all enabled subscriptions; if none yet, default to the primary calendar
-    let { data: subs } = await admin
-      .from("google_calendar_subscriptions")
+    const { data: connections } = await admin
+      .from("google_calendar_connections")
       .select("*")
-      .eq("user_id", user.id)
-      .eq("enabled", true);
+      .eq("user_id", user.id);
 
-    if (!subs || subs.length === 0) {
-      const primaryId = conn.primary_calendar_id || "primary";
-      await admin.from("google_calendar_subscriptions").upsert({
-        user_id: user.id,
-        google_calendar_id: primaryId,
-        summary: conn.google_email || "Primary",
-        is_primary: true,
-        enabled: true,
-      }, { onConflict: "user_id,google_calendar_id" });
-      subs = [{ google_calendar_id: primaryId, sync_token: null }];
+    if (!connections || connections.length === 0) {
+      return new Response(JSON.stringify({ error: "No Google Calendar connection" }), { status: 400, headers: corsHeaders });
     }
 
     let totalSynced = 0, totalDeleted = 0;
 
-    for (const sub of subs) {
+    for (const rawConn of connections) {
       try {
-        const { count: existingEventCount } = await admin
-          .from("calendar_events")
-          .select("id", { count: "exact", head: true })
+        const conn = await ensureValidToken(admin, rawConn);
+
+        let { data: subs } = await admin
+          .from("google_calendar_subscriptions")
+          .select("*")
           .eq("user_id", user.id)
-          .eq("google_calendar_id", sub.google_calendar_id)
-          .is("deleted_at", null);
+          .eq("account_id", conn.id)
+          .eq("enabled", true);
 
-        const effectiveSyncToken = existingEventCount && existingEventCount > 0 ? sub.sync_token : null;
-        const result = await syncCalendar(admin, user.id, conn.access_token, sub.google_calendar_id, effectiveSyncToken);
-        totalSynced += result.synced;
-        totalDeleted += result.deleted;
-
-        if (result.resetSync) {
-          await admin.from("google_calendar_subscriptions")
-            .update({ sync_token: null })
-            .eq("user_id", user.id)
-            .eq("google_calendar_id", sub.google_calendar_id);
-          // retry full sync
-          const retry = await syncCalendar(admin, user.id, conn.access_token, sub.google_calendar_id, null);
-          totalSynced += retry.synced;
-          totalDeleted += retry.deleted;
-          if (retry.nextSyncToken) {
-            await admin.from("google_calendar_subscriptions")
-              .update({ sync_token: retry.nextSyncToken, last_sync_at: new Date().toISOString() })
-              .eq("user_id", user.id)
-              .eq("google_calendar_id", sub.google_calendar_id);
-          }
-        } else if (result.nextSyncToken) {
-          await admin.from("google_calendar_subscriptions")
-            .update({ sync_token: result.nextSyncToken, last_sync_at: new Date().toISOString() })
-            .eq("user_id", user.id)
-            .eq("google_calendar_id", sub.google_calendar_id);
+        // Default to primary calendar if no subs yet for this account
+        if (!subs || subs.length === 0) {
+          const primaryId = "primary";
+          await admin.from("google_calendar_subscriptions").insert({
+            user_id: user.id,
+            account_id: conn.id,
+            google_calendar_id: primaryId,
+            summary: conn.google_email || "Primary",
+            is_primary: true,
+            enabled: true,
+          });
+          subs = [{ google_calendar_id: primaryId, sync_token: null, account_id: conn.id }];
         }
+
+        for (const sub of subs) {
+          try {
+            const { count } = await admin
+              .from("calendar_events")
+              .select("id", { count: "exact", head: true })
+              .eq("user_id", user.id)
+              .eq("google_calendar_id", sub.google_calendar_id)
+              .is("deleted_at", null);
+
+            const effectiveSyncToken = count && count > 0 ? sub.sync_token : null;
+            const result = await syncCalendar(admin, user.id, conn.id, conn.access_token, sub.google_calendar_id, effectiveSyncToken);
+            totalSynced += result.synced;
+            totalDeleted += result.deleted;
+
+            if (result.resetSync) {
+              const retry = await syncCalendar(admin, user.id, conn.id, conn.access_token, sub.google_calendar_id, null);
+              totalSynced += retry.synced;
+              totalDeleted += retry.deleted;
+              if (retry.nextSyncToken) {
+                await admin.from("google_calendar_subscriptions")
+                  .update({ sync_token: retry.nextSyncToken, last_sync_at: new Date().toISOString() })
+                  .eq("account_id", conn.id)
+                  .eq("google_calendar_id", sub.google_calendar_id);
+              }
+            } else if (result.nextSyncToken) {
+              await admin.from("google_calendar_subscriptions")
+                .update({ sync_token: result.nextSyncToken, last_sync_at: new Date().toISOString() })
+                .eq("account_id", conn.id)
+                .eq("google_calendar_id", sub.google_calendar_id);
+            }
+          } catch (err) {
+            console.error("Calendar sync error", conn.google_email, sub.google_calendar_id, err);
+          }
+        }
+
+        await admin.from("google_calendar_connections")
+          .update({ last_sync_at: new Date().toISOString() })
+          .eq("id", conn.id);
       } catch (err) {
-        console.error("Calendar sync error", sub.google_calendar_id, err);
+        console.error("Account sync error", rawConn.google_email, err);
       }
     }
 
-    await admin.from("google_calendar_connections")
-      .update({ last_sync_at: new Date().toISOString() })
-      .eq("user_id", user.id);
-
-    return new Response(JSON.stringify({ synced: totalSynced, deleted: totalDeleted }), {
+    return new Response(JSON.stringify({ synced: totalSynced, deleted: totalDeleted, accounts: connections.length }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
