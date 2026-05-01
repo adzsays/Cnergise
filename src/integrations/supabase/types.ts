@@ -399,6 +399,75 @@ export type Database = {
           },
         ]
       }
+      echo_entries: {
+        Row: {
+          amount: number | null
+          created_at: string
+          description: string | null
+          entry_date: string
+          entry_time: string | null
+          goal_id: string | null
+          id: string
+          metadata: Json
+          raw_voice_text: string | null
+          space_id: string | null
+          title: string
+          type: string
+          unit: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          description?: string | null
+          entry_date?: string
+          entry_time?: string | null
+          goal_id?: string | null
+          id?: string
+          metadata?: Json
+          raw_voice_text?: string | null
+          space_id?: string | null
+          title: string
+          type: string
+          unit?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          description?: string | null
+          entry_date?: string
+          entry_time?: string | null
+          goal_id?: string | null
+          id?: string
+          metadata?: Json
+          raw_voice_text?: string | null
+          space_id?: string | null
+          title?: string
+          type?: string
+          unit?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "echo_entries_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "goals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "echo_entries_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       emails: {
         Row: {
           body: string
