@@ -26,6 +26,7 @@ import Chat from "./pages/Chat";
 import ProjectsAnalytics from "./pages/ProjectsAnalytics";
 import Monitoring from "./pages/Monitoring";
 import Learning from "./pages/Learning";
+import Echo from "./pages/Echo";
 import NotFound from "./pages/NotFound";
 import { AuthGuard } from "./components/AuthGuard";
 import { FeatureGate } from "./components/features/FeatureGate";
