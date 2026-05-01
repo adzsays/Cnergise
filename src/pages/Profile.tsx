@@ -197,8 +197,16 @@ export default function Profile() {
                         </Card>
                       </TabsContent>
 
+                      <TabsContent value="features" className="mt-0">
+                        <MyFeaturesPanel />
+                      </TabsContent>
+
                       <TabsContent value="security" className="mt-0">
                         <SecuritySettings />
+                      </TabsContent>
+
+                      <TabsContent value="legal" className="mt-0">
+                        <ConsentHistory />
                       </TabsContent>
 
                       <TabsContent value="subscriptions" className="mt-0">
