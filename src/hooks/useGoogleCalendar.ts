@@ -23,14 +23,26 @@ export function useGoogleCalendar() {
 
   const connect = useMutation({
     mutationFn: async () => {
+      const oauthWindow = window.open("", "_blank", "width=560,height=720");
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/google-calendar-oauth-start?origin=${encodeURIComponent(window.location.origin)}`;
-      const session = (await supabase.auth.getSession()).data.session;
-      if (!session) throw new Error("Not signed in");
-      const res = await fetch(url, { headers: { Authorization: `Bearer ${session.access_token}` } });
-      const json = await res.json();
-      if (!res.ok || !json.url) throw new Error(json.error || "Failed to start OAuth");
-      window.location.href = json.url;
-      return null;
+      try {
+        const session = (await supabase.auth.getSession()).data.session;
+        if (!session) throw new Error("Not signed in");
+        const res = await fetch(url, { headers: { Authorization: `Bearer ${session.access_token}` } });
+        const json = await res.json();
+        if (!res.ok || !json.url) throw new Error(json.error || "Failed to start OAuth");
+
+        if (oauthWindow && !oauthWindow.closed) {
+          oauthWindow.opener = null;
+          oauthWindow.location.assign(json.url);
+        } else {
+          window.location.assign(json.url);
+        }
+        return null;
+      } catch (error) {
+        oauthWindow?.close();
+        throw error;
+      }
     },
     onError: (e: Error) => toast({ title: "Connection failed", description: e.message, variant: "destructive" }),
   });
