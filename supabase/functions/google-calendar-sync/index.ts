@@ -39,7 +39,11 @@ async function getValidToken(admin: any, userId: string) {
 async function syncCalendar(admin: any, userId: string, accessToken: string, calendarId: string, syncToken: string | null) {
   const params = new URLSearchParams({ singleEvents: "true", maxResults: "250" });
   if (syncToken) params.set("syncToken", syncToken);
-  else params.set("timeMin", new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString());
+  else {
+    params.set("timeMin", new Date(Date.now() - 365 * 24 * 3600 * 1000).toISOString());
+    params.set("timeMax", new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString());
+    params.set("orderBy", "startTime");
+  }
 
   let pageToken: string | null = null;
   let nextSyncToken: string | null = null;
@@ -69,7 +73,7 @@ async function syncCalendar(admin: any, userId: string, accessToken: string, cal
       const startTime = ev.start?.dateTime || ev.start?.date;
       const endTime = ev.end?.dateTime || ev.end?.date;
       if (!startTime || !endTime) continue;
-      await admin.from("calendar_events").upsert({
+      const eventPayload = {
         user_id: userId,
         title: ev.summary || "(no title)",
         description: ev.description || null,
@@ -83,7 +87,21 @@ async function syncCalendar(admin: any, userId: string, accessToken: string, cal
         sync_source: "google",
         last_synced_at: new Date().toISOString(),
         deleted_at: null,
-      }, { onConflict: "user_id,google_event_id" });
+      };
+
+      const { data: existingEvent, error: lookupError } = await admin
+        .from("calendar_events")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("google_calendar_id", calendarId)
+        .eq("google_event_id", ev.id)
+        .maybeSingle();
+      if (lookupError) throw lookupError;
+
+      const { error: saveError } = existingEvent?.id
+        ? await admin.from("calendar_events").update(eventPayload).eq("id", existingEvent.id)
+        : await admin.from("calendar_events").insert(eventPayload);
+      if (saveError) throw saveError;
       synced++;
     }
 
@@ -132,7 +150,15 @@ Deno.serve(async (req) => {
 
     for (const sub of subs) {
       try {
-        const result = await syncCalendar(admin, user.id, conn.access_token, sub.google_calendar_id, sub.sync_token);
+        const { count: existingEventCount } = await admin
+          .from("calendar_events")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .eq("google_calendar_id", sub.google_calendar_id)
+          .is("deleted_at", null);
+
+        const effectiveSyncToken = existingEventCount && existingEventCount > 0 ? sub.sync_token : null;
+        const result = await syncCalendar(admin, user.id, conn.access_token, sub.google_calendar_id, effectiveSyncToken);
         totalSynced += result.synced;
         totalDeleted += result.deleted;
 
