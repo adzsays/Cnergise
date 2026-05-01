@@ -73,7 +73,7 @@ export default function EchoCoach({ entries, goals }: { entries: any[]; goals: a
       <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-3 pr-1">
         <AnimatePresence initial={false}>
           {messages.map((m, i) => (
-            <div
+            <motion.div
               key={i}
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
