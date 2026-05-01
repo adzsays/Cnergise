@@ -123,7 +123,7 @@ export function EventDialog({ open, onOpenChange, event, defaultDate }: Props) {
       if (isGoogle || (isNew && (await hasGoogleConnection()))) {
         const action = isNew ? "create" : "update";
         const { error: pushErr } = await supabase.functions.invoke("google-calendar-push", {
-          body: { action, event: { ...saved } },
+          body: { action, event: { ...saved, add_meet: addMeet, meeting_url: meetingUrl } },
         });
         if (pushErr) {
           toast({ title: "Saved locally", description: "Could not sync to Google: " + pushErr.message });
