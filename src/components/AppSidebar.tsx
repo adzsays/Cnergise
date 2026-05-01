@@ -86,7 +86,9 @@ export function AppSidebar() {
       <SidebarHeader className={cn("p-2", !isCollapsed && "p-3")}>
         {isCollapsed ? (
           <div className="flex flex-col items-center gap-1">
-            <img src={cnergiseLogo} alt="Cnergise" className="h-8 w-8 object-contain shrink-0" />
+            <Link to="/home" aria-label="Go to home" className="flex items-center justify-center">
+              <img src={cnergiseLogo} alt="Cnergise" className="object-contain shrink-0" style={{ height: '3rem', width: '3rem' }} />
+            </Link>
             <Button
               variant="outline"
               size="icon"
@@ -99,10 +101,10 @@ export function AppSidebar() {
           </div>
         ) : (
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <img src={cnergiseLogo} alt="Cnergise" className="h-15 w-15 object-contain shrink-0" style={{ height: '3.75rem', width: '3.75rem' }} />
+            <Link to="/home" aria-label="Go to home" className="flex items-center gap-2 min-w-0 hover:opacity-80 transition-opacity">
+              <img src={cnergiseLogo} alt="Cnergise" className="object-contain shrink-0" style={{ height: '3.75rem', width: '3.75rem' }} />
               <span className="font-semibold text-base truncate">Cnergise</span>
-            </div>
+            </Link>
             <Button
               variant="outline"
               size="icon"
@@ -116,8 +118,8 @@ export function AppSidebar() {
         )}
       </SidebarHeader>
 
-      <SidebarContent className="px-2">
-        <SidebarGroup>
+      <SidebarContent className="px-2 group-data-[collapsible=icon]:px-0">
+        <SidebarGroup className="group-data-[collapsible=icon]:px-0">
           <SidebarGroupContent>
             <SidebarMenu>
               {navItems.map((item) => {
