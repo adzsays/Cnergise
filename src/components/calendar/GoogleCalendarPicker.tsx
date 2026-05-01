@@ -14,7 +14,8 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { CalendarRange, Loader2 } from "lucide-react";
+import { CalendarRange, Loader2, Plus, Unlink } from "lucide-react";
+import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
 
 type GCalendar = {
   id: string;
@@ -23,43 +24,59 @@ type GCalendar = {
   backgroundColor?: string;
   foregroundColor?: string;
   primary?: boolean;
-  accessRole?: string;
   enabled: boolean;
-  subscribed: boolean;
+};
+
+type GAccount = {
+  account_id: string;
+  email: string;
+  last_sync_at?: string | null;
+  calendars: GCalendar[];
+  error?: string;
 };
 
 export function GoogleCalendarPicker({ trigger }: { trigger?: React.ReactNode }) {
   const [open, setOpen] = useState(false);
+  // selections keyed by `${account_id}::${calendar_id}`
   const [selections, setSelections] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
   const qc = useQueryClient();
+  const { connect, disconnect } = useGoogleCalendar();
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["gcal-list"],
     enabled: open,
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke<{ calendars: GCalendar[] }>(
+      const { data, error } = await supabase.functions.invoke<{ accounts: GAccount[] }>(
         "google-calendar-list",
       );
       if (error) throw error;
-      const cals = data?.calendars ?? [];
+      const accounts = data?.accounts ?? [];
       const initial: Record<string, boolean> = {};
-      for (const c of cals) initial[c.id] = c.enabled;
+      for (const a of accounts) {
+        for (const c of a.calendars) initial[`${a.account_id}::${c.id}`] = c.enabled;
+      }
       setSelections(initial);
-      return cals;
+      return accounts;
     },
   });
 
   const save = useMutation({
     mutationFn: async () => {
-      const calendars = (data ?? []).map((c) => ({
-        google_calendar_id: c.id,
-        summary: c.summaryOverride || c.summary,
-        backgroundColor: c.backgroundColor,
-        foregroundColor: c.foregroundColor,
-        primary: c.primary,
-        enabled: !!selections[c.id],
-      }));
+      const calendars: any[] = [];
+      for (const a of data ?? []) {
+        for (const c of a.calendars) {
+          calendars.push({
+            account_id: a.account_id,
+            google_calendar_id: c.id,
+            summary: c.summaryOverride || c.summary,
+            backgroundColor: c.backgroundColor,
+            foregroundColor: c.foregroundColor,
+            primary: c.primary,
+            enabled: !!selections[`${a.account_id}::${c.id}`],
+          });
+        }
+      }
       const { error } = await supabase.functions.invoke("google-calendar-subscribe", {
         body: { calendars },
       });
@@ -70,7 +87,7 @@ export function GoogleCalendarPicker({ trigger }: { trigger?: React.ReactNode })
     onSuccess: () => {
       toast({ title: "Calendars updated", description: "Selected calendars have been synced." });
       qc.invalidateQueries({ queryKey: ["calendar-events"] });
-      qc.invalidateQueries({ queryKey: ["gcal-connection"] });
+      qc.invalidateQueries({ queryKey: ["gcal-connections"] });
       setOpen(false);
     },
     onError: (e: Error) =>
@@ -86,11 +103,11 @@ export function GoogleCalendarPicker({ trigger }: { trigger?: React.ReactNode })
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Your Google Calendars</DialogTitle>
           <DialogDescription>
-            Pick which calendars to show. Disabled calendars stop syncing and their events are removed.
+            Connect multiple Gmail accounts and pick which calendars from each to show.
           </DialogDescription>
         </DialogHeader>
 
@@ -99,48 +116,88 @@ export function GoogleCalendarPicker({ trigger }: { trigger?: React.ReactNode })
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <ScrollArea className="max-h-72 pr-3">
-            <div className="space-y-2">
-              {(data ?? []).map((c) => (
-                <div
-                  key={c.id}
-                  className="flex items-center justify-between rounded-md border p-3"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span
-                      className="h-3 w-3 shrink-0 rounded-full border"
-                      style={{ backgroundColor: c.backgroundColor || "#9ca3af" }}
-                    />
+          <ScrollArea className="max-h-[420px] pr-3">
+            <div className="space-y-4">
+              {(data ?? []).map((account) => (
+                <div key={account.account_id} className="rounded-lg border">
+                  <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/30">
                     <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">
-                        {c.summaryOverride || c.summary}
-                        {c.primary && (
-                          <span className="ml-2 text-xs text-muted-foreground">(primary)</span>
-                        )}
+                      <p className="text-sm font-semibold truncate">{account.email}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {account.error
+                          ? `Error: ${account.error}`
+                          : `${account.calendars.length} calendar(s)`}
                       </p>
-                      <p className="text-xs text-muted-foreground truncate">{c.id}</p>
                     </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => disconnect.mutate(account.account_id)}
+                      disabled={disconnect.isPending}
+                    >
+                      <Unlink className="h-3.5 w-3.5 mr-1" /> Disconnect
+                    </Button>
                   </div>
-                  <Switch
-                    checked={!!selections[c.id]}
-                    onCheckedChange={(v) =>
-                      setSelections((s) => ({ ...s, [c.id]: v }))
-                    }
-                  />
+                  <div className="p-2 space-y-1">
+                    {account.calendars.map((c) => {
+                      const key = `${account.account_id}::${c.id}`;
+                      return (
+                        <div
+                          key={key}
+                          className="flex items-center justify-between rounded-md px-2 py-2 hover:bg-muted/40"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span
+                              className="h-3 w-3 shrink-0 rounded-full border"
+                              style={{ backgroundColor: c.backgroundColor || "#9ca3af" }}
+                            />
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium truncate">
+                                {c.summaryOverride || c.summary}
+                                {c.primary && (
+                                  <span className="ml-2 text-xs text-muted-foreground">(primary)</span>
+                                )}
+                              </p>
+                            </div>
+                          </div>
+                          <Switch
+                            checked={!!selections[key]}
+                            onCheckedChange={(v) =>
+                              setSelections((s) => ({ ...s, [key]: v }))
+                            }
+                          />
+                        </div>
+                      );
+                    })}
+                    {account.calendars.length === 0 && !account.error && (
+                      <p className="text-xs text-muted-foreground text-center py-3">
+                        No calendars found.
+                      </p>
+                    )}
+                  </div>
                 </div>
               ))}
               {(data ?? []).length === 0 && (
                 <p className="text-sm text-muted-foreground text-center py-6">
-                  No calendars found.
+                  No Google accounts connected yet.
                 </p>
               )}
+
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => connect.mutate()}
+                disabled={connect.isPending}
+              >
+                <Plus className="mr-2 h-4 w-4" /> Add another Google account
+              </Button>
             </div>
           </ScrollArea>
         )}
 
         <DialogFooter>
           <Button variant="ghost" onClick={() => refetch()} disabled={isLoading}>
-            Refresh list
+            Refresh
           </Button>
           <Button onClick={() => save.mutate()} disabled={save.isPending || isLoading}>
             {save.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
