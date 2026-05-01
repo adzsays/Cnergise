@@ -35,7 +35,6 @@ Deno.serve(async (req) => {
       return new Response(`Token exchange failed: ${JSON.stringify(tokens)}`, { status: 400 });
     }
 
-    // Get user email
     const ui = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
       headers: { Authorization: `Bearer ${tokens.access_token}` },
     }).then((r) => r.json());
@@ -47,16 +46,35 @@ Deno.serve(async (req) => {
 
     const expiresAt = new Date(Date.now() + (tokens.expires_in ?? 3600) * 1000).toISOString();
 
-    await admin.from("google_calendar_connections").upsert({
-      user_id: userId,
-      google_email: ui.email,
-      access_token: tokens.access_token,
-      refresh_token: tokens.refresh_token,
-      token_expires_at: expiresAt,
-      scope: tokens.scope,
-    }, { onConflict: "user_id" });
+    // Look up existing connection for this (user, email); preserve refresh_token if Google didn't return a new one
+    const { data: existing } = await admin
+      .from("google_calendar_connections")
+      .select("id, refresh_token")
+      .eq("user_id", userId)
+      .eq("google_email", ui.email)
+      .maybeSingle();
 
-    // Redirect back to the app
+    const refreshToken = tokens.refresh_token || existing?.refresh_token;
+
+    if (existing?.id) {
+      await admin.from("google_calendar_connections").update({
+        access_token: tokens.access_token,
+        refresh_token: refreshToken,
+        token_expires_at: expiresAt,
+        scope: tokens.scope,
+        updated_at: new Date().toISOString(),
+      }).eq("id", existing.id);
+    } else {
+      await admin.from("google_calendar_connections").insert({
+        user_id: userId,
+        google_email: ui.email,
+        access_token: tokens.access_token,
+        refresh_token: refreshToken,
+        token_expires_at: expiresAt,
+        scope: tokens.scope,
+      });
+    }
+
     return Response.redirect(`${cb}&status=success`, 302);
   } catch (e) {
     return new Response(`Error: ${String(e)}`, { status: 500 });

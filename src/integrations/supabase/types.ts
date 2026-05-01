@@ -914,6 +914,7 @@ export type Database = {
       }
       google_calendar_channels: {
         Row: {
+          account_id: string | null
           calendar_id: string
           channel_id: string
           created_at: string
@@ -923,6 +924,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          account_id?: string | null
           calendar_id?: string
           channel_id: string
           created_at?: string
@@ -932,6 +934,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          account_id?: string | null
           calendar_id?: string
           channel_id?: string
           created_at?: string
@@ -989,6 +992,7 @@ export type Database = {
       }
       google_calendar_subscriptions: {
         Row: {
+          account_id: string | null
           background_color: string | null
           created_at: string
           enabled: boolean
@@ -1003,6 +1007,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          account_id?: string | null
           background_color?: string | null
           created_at?: string
           enabled?: boolean
@@ -1017,6 +1022,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          account_id?: string | null
           background_color?: string | null
           created_at?: string
           enabled?: boolean

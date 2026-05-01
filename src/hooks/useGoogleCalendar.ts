@@ -5,21 +5,28 @@ import { useEffect } from "react";
 
 const GOOGLE_CALENDAR_CONNECTED_EVENT = "google-calendar-connected";
 
+export type GCalConnection = {
+  id: string;
+  google_email: string | null;
+  last_sync_at: string | null;
+  primary_calendar_id: string | null;
+};
+
 export function useGoogleCalendar() {
   const { toast } = useToast();
   const qc = useQueryClient();
 
-  const { data: connection, isLoading } = useQuery({
-    queryKey: ["gcal-connection"],
-    queryFn: async () => {
+  const { data: connections = [], isLoading } = useQuery({
+    queryKey: ["gcal-connections"],
+    queryFn: async (): Promise<GCalConnection[]> => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
+      if (!user) return [];
       const { data } = await supabase
         .from("google_calendar_connections")
         .select("id, google_email, last_sync_at, primary_calendar_id")
         .eq("user_id", user.id)
-        .maybeSingle();
-      return data;
+        .order("created_at", { ascending: true });
+      return (data ?? []) as GCalConnection[];
     },
   });
 
@@ -55,38 +62,33 @@ export function useGoogleCalendar() {
       return data;
     },
     onSuccess: (d: any) => {
-      toast({ title: "Synced", description: `${d?.synced ?? 0} events synced` });
-      qc.invalidateQueries({ queryKey: ["gcal-connection"] });
+      toast({ title: "Synced", description: `${d?.synced ?? 0} events across ${d?.accounts ?? 0} account(s)` });
+      qc.invalidateQueries({ queryKey: ["gcal-connections"] });
       qc.invalidateQueries({ queryKey: ["calendar-events"] });
     },
     onError: (e: Error) => toast({ title: "Sync failed", description: e.message, variant: "destructive" }),
   });
 
-  const startWatch = useMutation({
-    mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke("google-calendar-watch");
-      if (error) throw error;
-      return data;
-    },
-  });
-
   const disconnect = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.functions.invoke("google-calendar-disconnect");
+    mutationFn: async (accountId?: string) => {
+      const { error } = await supabase.functions.invoke("google-calendar-disconnect", {
+        body: accountId ? { account_id: accountId } : {},
+      });
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({ title: "Disconnected" });
-      qc.invalidateQueries({ queryKey: ["gcal-connection"] });
+      toast({ title: "Account disconnected" });
+      qc.invalidateQueries({ queryKey: ["gcal-connections"] });
+      qc.invalidateQueries({ queryKey: ["gcal-list"] });
+      qc.invalidateQueries({ queryKey: ["calendar-events"] });
     },
   });
 
   useEffect(() => {
     const finishConnection = () => {
-      toast({ title: "Google Calendar connected" });
+      toast({ title: "Google account connected" });
       sync.mutate();
-      startWatch.mutate();
-      qc.invalidateQueries({ queryKey: ["gcal-connection"] });
+      qc.invalidateQueries({ queryKey: ["gcal-connections"] });
     };
 
     const handleConnectedMessage = (event: MessageEvent) => {
@@ -113,5 +115,12 @@ export function useGoogleCalendar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return { connection, isLoading, connect, sync, disconnect, isConnected: !!connection };
+  return {
+    connections,
+    isLoading,
+    connect,
+    sync,
+    disconnect,
+    isConnected: connections.length > 0,
+  };
 }

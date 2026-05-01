@@ -19,9 +19,7 @@ async function refreshAccessToken(refreshToken: string) {
   return res.json();
 }
 
-async function getValidToken(admin: any, userId: string) {
-  const { data: conn } = await admin.from("google_calendar_connections").select("*").eq("user_id", userId).maybeSingle();
-  if (!conn) throw new Error("No Google Calendar connection");
+async function ensureValidToken(admin: any, conn: any) {
   if (new Date(conn.token_expires_at).getTime() < Date.now() + 60_000) {
     const refreshed = await refreshAccessToken(conn.refresh_token);
     if (!refreshed.access_token) throw new Error("Token refresh failed");
@@ -29,7 +27,7 @@ async function getValidToken(admin: any, userId: string) {
     await admin.from("google_calendar_connections").update({
       access_token: refreshed.access_token,
       token_expires_at: newExpiry,
-    }).eq("user_id", userId);
+    }).eq("id", conn.id);
     return { ...conn, access_token: refreshed.access_token };
   }
   return conn;
@@ -48,39 +46,61 @@ Deno.serve(async (req) => {
     if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
 
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const conn = await getValidToken(admin, user.id);
 
-    const res = await fetch("https://www.googleapis.com/calendar/v3/users/me/calendarList?minAccessRole=reader", {
-      headers: { Authorization: `Bearer ${conn.access_token}` },
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(JSON.stringify(data));
+    const { data: connections } = await admin
+      .from("google_calendar_connections")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: true });
 
-    const calendars = (data.items ?? []).map((c: any) => ({
-      id: c.id,
-      summary: c.summary,
-      summaryOverride: c.summaryOverride,
-      backgroundColor: c.backgroundColor,
-      foregroundColor: c.foregroundColor,
-      primary: !!c.primary,
-      accessRole: c.accessRole,
-    }));
-
-    // Get current subscriptions
     const { data: subs } = await admin
       .from("google_calendar_subscriptions")
-      .select("google_calendar_id, enabled")
+      .select("account_id, google_calendar_id, enabled")
       .eq("user_id", user.id);
 
-    const subMap = new Map((subs ?? []).map((s: any) => [s.google_calendar_id, s.enabled]));
+    const subMap = new Map<string, boolean>();
+    for (const s of subs ?? []) subMap.set(`${s.account_id}::${s.google_calendar_id}`, s.enabled);
 
-    const merged = calendars.map((c: any) => ({
-      ...c,
-      enabled: subMap.has(c.id) ? subMap.get(c.id) : c.primary, // default: primary on
-      subscribed: subMap.has(c.id),
-    }));
+    const accounts: any[] = [];
 
-    return new Response(JSON.stringify({ calendars: merged }), {
+    for (const raw of connections ?? []) {
+      try {
+        const conn = await ensureValidToken(admin, raw);
+        const res = await fetch("https://www.googleapis.com/calendar/v3/users/me/calendarList?minAccessRole=reader", {
+          headers: { Authorization: `Bearer ${conn.access_token}` },
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(JSON.stringify(data));
+
+        const calendars = (data.items ?? []).map((c: any) => ({
+          id: c.id,
+          summary: c.summary,
+          summaryOverride: c.summaryOverride,
+          backgroundColor: c.backgroundColor,
+          foregroundColor: c.foregroundColor,
+          primary: !!c.primary,
+          accessRole: c.accessRole,
+          enabled: subMap.has(`${conn.id}::${c.id}`) ? subMap.get(`${conn.id}::${c.id}`) : c.primary,
+        }));
+
+        accounts.push({
+          account_id: conn.id,
+          email: conn.google_email,
+          last_sync_at: conn.last_sync_at,
+          calendars,
+        });
+      } catch (err) {
+        accounts.push({
+          account_id: raw.id,
+          email: raw.google_email,
+          last_sync_at: raw.last_sync_at,
+          calendars: [],
+          error: String(err),
+        });
+      }
+    }
+
+    return new Response(JSON.stringify({ accounts }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {

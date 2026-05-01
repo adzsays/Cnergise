@@ -33,7 +33,8 @@ Deno.serve(async (req) => {
       response_type: "code",
       scope: "https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/userinfo.email",
       access_type: "offline",
-      prompt: "consent",
+      prompt: "consent select_account",
+      include_granted_scopes: "true",
       state,
     });
 
