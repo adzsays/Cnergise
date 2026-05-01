@@ -14,7 +14,7 @@ function addDays(d: Date, n: number) {
 }
 function startOfWeek(d: Date) {
   const x = startOfDay(d);
-  const day = x.getDay(); // Sunday=0
+  const day = x.getDay();
   return addDays(x, -day);
 }
 function startOfMonthGrid(d: Date) {
@@ -35,15 +35,14 @@ function eventsOnDate(events: CalendarEvent[], date: Date) {
   });
 }
 
-export function MonthView({
-  date,
-  events,
-  onSelectDate,
-}: {
+type ViewProps = {
   date: Date;
   events: CalendarEvent[];
+  onSelectEvent?: (e: CalendarEvent) => void;
   onSelectDate?: (d: Date) => void;
-}) {
+};
+
+export function MonthView({ date, events, onSelectDate, onSelectEvent }: ViewProps) {
   const gridStart = useMemo(() => startOfMonthGrid(date), [date]);
   const days = useMemo(
     () => Array.from({ length: 42 }, (_, i) => addDays(gridStart, i)),
@@ -63,15 +62,15 @@ export function MonthView({
         {days.map((d) => {
           const inMonth = d.getMonth() === month;
           const isToday = startOfDay(d).getTime() === today;
-          const dayEvents = eventsOnDate(events, d).slice(0, 3);
-          const more = eventsOnDate(events, d).length - dayEvents.length;
+          const all = eventsOnDate(events, d);
+          const dayEvents = all.slice(0, 3);
+          const more = all.length - dayEvents.length;
           return (
-            <button
-              type="button"
+            <div
               key={d.toISOString()}
               onClick={() => onSelectDate?.(d)}
               className={cn(
-                "min-h-[88px] border-b border-r p-1.5 text-left align-top transition-colors hover:bg-accent/40",
+                "min-h-[88px] cursor-pointer border-b border-r p-1.5 text-left align-top transition-colors hover:bg-accent/40",
                 !inMonth && "bg-muted/20 text-muted-foreground",
               )}
             >
@@ -85,20 +84,22 @@ export function MonthView({
               </div>
               <div className="space-y-1">
                 {dayEvents.map((ev) => (
-                  <div
+                  <button
+                    type="button"
                     key={ev.id}
                     title={ev.title}
-                    className="truncate rounded bg-primary/10 px-1.5 py-0.5 text-[11px] text-primary"
+                    onClick={(e) => { e.stopPropagation(); onSelectEvent?.(ev); }}
+                    className="block w-full truncate rounded bg-primary/10 px-1.5 py-0.5 text-left text-[11px] text-primary hover:bg-primary/20"
                   >
                     {ev.all_day ? "" : `${fmtTime(new Date(ev.start_time))} `}
                     {ev.title}
-                  </div>
+                  </button>
                 ))}
                 {more > 0 && (
                   <div className="text-[11px] text-muted-foreground">+{more} more</div>
                 )}
               </div>
-            </button>
+            </div>
           );
         })}
       </div>
@@ -106,7 +107,7 @@ export function MonthView({
   );
 }
 
-export function WeekView({ date, events }: { date: Date; events: CalendarEvent[] }) {
+export function WeekView({ date, events, onSelectEvent }: ViewProps) {
   const weekStart = useMemo(() => startOfWeek(date), [date]);
   const days = useMemo(
     () => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)),
@@ -135,9 +136,11 @@ export function WeekView({ date, events }: { date: Date; events: CalendarEvent[]
                 <p className="text-[11px] text-muted-foreground text-center pt-4">—</p>
               ) : (
                 dayEvents.map((ev) => (
-                  <div
+                  <button
+                    type="button"
                     key={ev.id}
-                    className="rounded bg-primary/10 px-1.5 py-1 text-[11px] text-primary"
+                    onClick={() => onSelectEvent?.(ev)}
+                    className="block w-full text-left rounded bg-primary/10 px-1.5 py-1 text-[11px] text-primary hover:bg-primary/20"
                   >
                     <div className="font-medium truncate">{ev.title}</div>
                     {!ev.all_day && (
@@ -145,7 +148,7 @@ export function WeekView({ date, events }: { date: Date; events: CalendarEvent[]
                         {fmtTime(new Date(ev.start_time))}
                       </div>
                     )}
-                  </div>
+                  </button>
                 ))
               )}
             </div>
@@ -156,7 +159,7 @@ export function WeekView({ date, events }: { date: Date; events: CalendarEvent[]
   );
 }
 
-export function DayView({ date, events }: { date: Date; events: CalendarEvent[] }) {
+export function DayView({ date, events, onSelectEvent }: ViewProps) {
   const hours = Array.from({ length: 24 }, (_, i) => i);
   const dayEvents = eventsOnDate(events, date);
 
@@ -188,16 +191,18 @@ export function DayView({ date, events }: { date: Date; events: CalendarEvent[] 
               </div>
               <div className="space-y-1 p-1">
                 {inSlot.map((ev) => (
-                  <div
+                  <button
+                    type="button"
                     key={ev.id}
-                    className="rounded bg-primary/10 px-2 py-1 text-xs text-primary"
+                    onClick={() => onSelectEvent?.(ev)}
+                    className="block w-full text-left rounded bg-primary/10 px-2 py-1 text-xs text-primary hover:bg-primary/20"
                   >
                     <div className="font-medium">{ev.title}</div>
                     <div className="text-[10px] opacity-80">
                       {fmtTime(new Date(ev.start_time))} – {fmtTime(new Date(ev.end_time))}
                       {ev.location ? ` · ${ev.location}` : ""}
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>
@@ -208,7 +213,7 @@ export function DayView({ date, events }: { date: Date; events: CalendarEvent[] 
   );
 }
 
-export function ScheduleView({ events }: { events: CalendarEvent[] }) {
+export function ScheduleView({ events, onSelectEvent }: { events: CalendarEvent[]; onSelectEvent?: (e: CalendarEvent) => void }) {
   const grouped = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>();
     for (const e of events) {
@@ -241,18 +246,24 @@ export function ScheduleView({ events }: { events: CalendarEvent[] }) {
           </div>
           <ul className="divide-y">
             {items.map((ev) => (
-              <li key={ev.id} className="flex items-start gap-3 px-3 py-2 text-sm">
-                <div className="w-24 shrink-0 text-xs text-muted-foreground">
-                  {ev.all_day
-                    ? "All day"
-                    : `${fmtTime(new Date(ev.start_time))} – ${fmtTime(new Date(ev.end_time))}`}
-                </div>
-                <div className="min-w-0">
-                  <p className="truncate font-medium">{ev.title}</p>
-                  {ev.location && (
-                    <p className="text-xs text-muted-foreground truncate">{ev.location}</p>
-                  )}
-                </div>
+              <li key={ev.id}>
+                <button
+                  type="button"
+                  onClick={() => onSelectEvent?.(ev)}
+                  className="flex w-full items-start gap-3 px-3 py-2 text-left text-sm hover:bg-accent/40"
+                >
+                  <div className="w-24 shrink-0 text-xs text-muted-foreground">
+                    {ev.all_day
+                      ? "All day"
+                      : `${fmtTime(new Date(ev.start_time))} – ${fmtTime(new Date(ev.end_time))}`}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">{ev.title}</p>
+                    {ev.location && (
+                      <p className="text-xs text-muted-foreground truncate">{ev.location}</p>
+                    )}
+                  </div>
+                </button>
               </li>
             ))}
           </ul>
