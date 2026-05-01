@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
 import { Calendar, RefreshCw, Link2, Unlink } from "lucide-react";
+import { GoogleCalendarPicker } from "./GoogleCalendarPicker";
 
 type GoogleCalendarConnectProps = {
   compact?: boolean;
@@ -21,9 +22,12 @@ export function GoogleCalendarConnect({ compact = false }: GoogleCalendarConnect
     }
 
     return isConnected ? (
-      <Button size="sm" variant="outline" onClick={() => sync.mutate()} disabled={sync.isPending}>
-        <RefreshCw className={`mr-2 h-4 w-4 ${sync.isPending ? "animate-spin" : ""}`} /> Sync Gmail Calendar
-      </Button>
+      <div className="flex items-center gap-2">
+        <Button size="sm" variant="outline" onClick={() => sync.mutate()} disabled={sync.isPending}>
+          <RefreshCw className={`mr-2 h-4 w-4 ${sync.isPending ? "animate-spin" : ""}`} /> Sync
+        </Button>
+        <GoogleCalendarPicker />
+      </div>
     ) : (
       <Button size="sm" onClick={() => connect.mutate()} disabled={connect.isPending}>
         <Link2 className="mr-2 h-4 w-4" /> Connect Gmail Calendar
@@ -54,11 +58,12 @@ export function GoogleCalendarConnect({ compact = false }: GoogleCalendarConnect
               </div>
               <Badge variant="outline">Connected</Badge>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button size="sm" variant="outline" onClick={() => sync.mutate()} disabled={sync.isPending}>
                 <RefreshCw className={`h-3.5 w-3.5 mr-1 ${sync.isPending ? "animate-spin" : ""}`} />
                 Sync now
               </Button>
+              <GoogleCalendarPicker />
               <Button size="sm" variant="ghost" onClick={() => disconnect.mutate()} disabled={disconnect.isPending}>
                 <Unlink className="h-3.5 w-3.5 mr-1" /> Disconnect
               </Button>
