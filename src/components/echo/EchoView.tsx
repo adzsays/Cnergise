@@ -28,6 +28,7 @@ import {
 import { format, addDays, subDays, parseISO } from "date-fns";
 import { useUserCurrency } from "@/hooks/useUserCurrency";
 import { Input } from "@/components/ui/input";
+import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import EchoCoach from "@/components/echo/EchoCoach";
