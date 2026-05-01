@@ -35,7 +35,7 @@ async function getValidToken(admin: any, userId: string) {
   return conn;
 }
 
-function buildBody(event: any) {
+function buildBody(event: any, opts: { addMeet?: boolean } = {}) {
   const body: any = {
     summary: event.title,
     description: event.description ?? undefined,
@@ -48,7 +48,21 @@ function buildBody(event: any) {
     body.start = { dateTime: event.start_time };
     body.end = { dateTime: event.end_time };
   }
+  if (opts.addMeet) {
+    body.conferenceData = {
+      createRequest: {
+        requestId: `meet-${event.id ?? crypto.randomUUID()}-${Date.now()}`,
+        conferenceSolutionKey: { type: "hangoutsMeet" },
+      },
+    };
+  }
   return body;
+}
+
+function extractMeetLink(data: any): string | null {
+  if (data?.hangoutLink) return data.hangoutLink;
+  const ep = data?.conferenceData?.entryPoints?.find?.((e: any) => e.entryPointType === "video");
+  return ep?.uri ?? null;
 }
 
 Deno.serve(async (req) => {
