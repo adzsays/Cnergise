@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Calendar as CalendarIcon } from "lucide-react";
+import { GoogleCalendarConnect } from "@/components/calendar/GoogleCalendarConnect";
 
 export default function Calendar() {
   const [activeTab, setActiveTab] = React.useState("month");
@@ -98,7 +99,8 @@ export default function Calendar() {
                       </Card>
                     </div>
                     
-                    <div>
+                    <div className="space-y-4">
+                      <GoogleCalendarConnect />
                       <Card>
                         <CardHeader className="pb-2">
                           <CardTitle>Today's Events</CardTitle>

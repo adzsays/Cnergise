@@ -1,0 +1,91 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
+
+export function useGoogleCalendar() {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+
+  const { data: connection, isLoading } = useQuery({
+    queryKey: ["gcal-connection"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      const { data } = await supabase
+        .from("google_calendar_connections")
+        .select("id, google_email, last_sync_at, primary_calendar_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      return data;
+    },
+  });
+
+  const connect = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("google-calendar-oauth-start", {
+        body: {},
+        // pass origin via query
+      });
+      // invoke doesn't support query string easily, build it manually:
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/google-calendar-oauth-start?origin=${encodeURIComponent(window.location.origin)}`;
+      const session = (await supabase.auth.getSession()).data.session;
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${session?.access_token}` } });
+      const json = await res.json();
+      if (!res.ok || !json.url) throw new Error(json.error || "Failed");
+      window.location.href = json.url;
+      return null;
+    },
+    onError: (e: Error) => toast({ title: "Connection failed", description: e.message, variant: "destructive" }),
+  });
+
+  const sync = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("google-calendar-sync");
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (d: any) => {
+      toast({ title: "Synced", description: `${d?.synced ?? 0} events synced` });
+      qc.invalidateQueries({ queryKey: ["gcal-connection"] });
+      qc.invalidateQueries({ queryKey: ["calendar-events"] });
+    },
+    onError: (e: Error) => toast({ title: "Sync failed", description: e.message, variant: "destructive" }),
+  });
+
+  const startWatch = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("google-calendar-watch");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const disconnect = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.functions.invoke("google-calendar-disconnect");
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Disconnected" });
+      qc.invalidateQueries({ queryKey: ["gcal-connection"] });
+    },
+  });
+
+  // Auto-handle OAuth callback redirect
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("gcal_callback") === "1" && params.get("status") === "success") {
+      toast({ title: "Google Calendar connected" });
+      // Kick off initial sync + watch
+      sync.mutate();
+      startWatch.mutate();
+      // Clean URL
+      window.history.replaceState({}, "", window.location.pathname);
+      qc.invalidateQueries({ queryKey: ["gcal-connection"] });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return { connection, isLoading, connect, sync, disconnect, isConnected: !!connection };
+}
