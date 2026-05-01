@@ -7,13 +7,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { GoogleCalendarConnect } from "@/components/calendar/GoogleCalendarConnect";
-import { useCalendarEvents } from "@/hooks/useCalendarEvents";
+import { useCalendarEvents, CalendarEvent } from "@/hooks/useCalendarEvents";
 import {
   MonthView,
   WeekView,
   DayView,
   ScheduleView,
 } from "@/components/calendar/CalendarViews";
+import { EventDialog } from "@/components/calendar/EventDialog";
 
 function startOfDay(d: Date) {
   const x = new Date(d);
