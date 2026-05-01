@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
@@ -30,11 +30,23 @@ import cnergiseLogo from "@/assets/cnergise-logo.png";
 
 const Auth = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  // Stealth gate: real auth UI only when arriving via /login or ?access=login
+  const params = new URLSearchParams(location.search);
+  const loginAccess = location.pathname === "/login" || params.get("access") === "login";
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authTab, setAuthTab] = useState<"signin" | "signup">("signup");
+
+  // Tease the auth modal open automatically when entering via /login
+  useEffect(() => {
+    if (loginAccess) {
+      setAuthTab("signin");
+      setShowAuthModal(true);
+    }
+  }, [loginAccess]);
   
   // MFA state
   const [showMFAVerification, setShowMFAVerification] = useState(false);
@@ -317,18 +329,27 @@ const Auth = () => {
               <span className="text-xl font-bold text-foreground">Cnergise</span>
             </div>
             <div className="flex items-center gap-3">
-              <Button 
-                variant="ghost" 
-                onClick={() => { setAuthTab("signin"); setShowAuthModal(true); }}
-              >
-                Sign In
-              </Button>
-              <Button 
-                onClick={() => { setAuthTab("signup"); setShowAuthModal(true); }}
-                className="bg-primary hover:bg-primary/90"
-              >
-                Get Started
-              </Button>
+              {loginAccess ? (
+                <>
+                  <Button
+                    variant="ghost"
+                    onClick={() => { setAuthTab("signin"); setShowAuthModal(true); }}
+                  >
+                    Sign In
+                  </Button>
+                  <Button
+                    onClick={() => { setAuthTab("signup"); setShowAuthModal(true); }}
+                    className="bg-primary hover:bg-primary/90"
+                  >
+                    Get Started
+                  </Button>
+                </>
+              ) : (
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium">
+                  <Sparkles className="w-4 h-4" />
+                  Coming Soon
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -353,25 +374,35 @@ const Auth = () => {
             Let AI handle the complexity while you focus on what matters most.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
-            <Button 
-              size="lg" 
-              onClick={() => { setAuthTab("signup"); setShowAuthModal(true); }}
-              className="bg-primary hover:bg-primary/90 text-lg px-8 py-6"
-            >
-              Start Free Today
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
-            <Button 
-              size="lg" 
-              variant="outline"
-              className="text-lg px-8 py-6"
-            >
-              Watch Demo
-            </Button>
+            {loginAccess ? (
+              <>
+                <Button
+                  size="lg"
+                  onClick={() => { setAuthTab("signup"); setShowAuthModal(true); }}
+                  className="bg-primary hover:bg-primary/90 text-lg px-8 py-6"
+                >
+                  Start Free Today
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+                <Button size="lg" variant="outline" className="text-lg px-8 py-6">
+                  Watch Demo
+                </Button>
+              </>
+            ) : (
+              <div className="flex flex-col items-center gap-3">
+                <div className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-primary/10 text-primary text-base font-medium">
+                  <Sparkles className="w-5 h-5" />
+                  Coming Soon — Launching to invited users
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  We're putting the finishing touches on Cnergise. Stay tuned.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Biometric Login Option */}
-          {biometricAvailable && (
+          {loginAccess && biometricAvailable && (
             <div className="mb-8">
               <Button
                 size="lg"
@@ -494,22 +525,33 @@ const Auth = () => {
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-primary/10 via-accent/5 to-background">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-6">
-            Ready to Transform Your Life?
+            {loginAccess ? "Ready to Transform Your Life?" : "Something Big Is Coming"}
           </h2>
           <p className="text-lg text-muted-foreground mb-8">
-            Join thousands who have simplified their daily routines and achieved more with less stress.
+            {loginAccess
+              ? "Join thousands who have simplified their daily routines and achieved more with less stress."
+              : "Cnergise is launching soon to a small group of invited users. Check back shortly."}
           </p>
-          <Button 
-            size="lg" 
-            onClick={() => { setAuthTab("signup"); setShowAuthModal(true); }}
-            className="bg-primary hover:bg-primary/90 text-lg px-8 py-6"
-          >
-            Get Started Free
-            <ArrowRight className="ml-2 w-5 h-5" />
-          </Button>
-          <p className="text-sm text-muted-foreground mt-4">
-            No credit card required • Free forever plan available
-          </p>
+          {loginAccess ? (
+            <>
+              <Button
+                size="lg"
+                onClick={() => { setAuthTab("signup"); setShowAuthModal(true); }}
+                className="bg-primary hover:bg-primary/90 text-lg px-8 py-6"
+              >
+                Get Started Free
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+              <p className="text-sm text-muted-foreground mt-4">
+                No credit card required • Free forever plan available
+              </p>
+            </>
+          ) : (
+            <div className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-primary/10 text-primary text-base font-medium">
+              <Sparkles className="w-5 h-5" />
+              Coming Soon
+            </div>
+          )}
         </div>
       </section>
 
