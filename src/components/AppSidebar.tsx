@@ -44,6 +44,7 @@ import { useAppFeatures, useMySubscriptions, hasActiveAccess } from "@/hooks/use
 // Map of route -> feature key (only for opt-in modules; core/system items omitted)
 const navItems = [
   { icon: Sun, label: "Today", href: "/home", featureKey: null },
+  { icon: Mic, label: "Echo", href: "/echo", featureKey: "echo" },
   { icon: CheckSquare, label: "Tasks", href: "/tasks", featureKey: "tasks" },
   { icon: FolderKanban, label: "Projects", href: "/projects", featureKey: "projects" },
   { icon: Target, label: "Goals", href: "/goals", featureKey: "goals" },
