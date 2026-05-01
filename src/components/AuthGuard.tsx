@@ -13,7 +13,7 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsAuthenticated(!!session);
       if (!session) {
-        navigate("/");
+        navigate("/login");
       }
     });
 
@@ -25,11 +25,11 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
       const { data: { session } } = await supabase.auth.getSession();
       setIsAuthenticated(!!session);
       if (!session) {
-        navigate("/");
+        navigate("/login");
       }
     } catch (error) {
       console.error("Auth check error:", error);
-      navigate("/");
+      navigate("/login");
     } finally {
       setIsLoading(false);
     }
