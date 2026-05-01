@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
@@ -30,11 +30,23 @@ import cnergiseLogo from "@/assets/cnergise-logo.png";
 
 const Auth = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  // Stealth gate: real auth UI only when arriving via /login or ?access=login
+  const params = new URLSearchParams(location.search);
+  const loginAccess = location.pathname === "/login" || params.get("access") === "login";
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authTab, setAuthTab] = useState<"signin" | "signup">("signup");
+
+  // Tease the auth modal open automatically when entering via /login
+  useEffect(() => {
+    if (loginAccess) {
+      setAuthTab("signin");
+      setShowAuthModal(true);
+    }
+  }, [loginAccess]);
   
   // MFA state
   const [showMFAVerification, setShowMFAVerification] = useState(false);
