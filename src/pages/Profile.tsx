@@ -14,7 +14,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { IntegrationSettings } from "@/components/settings/IntegrationSettings";
 import { SubscriptionSettings } from "@/components/settings/SubscriptionSettings";
 import { SecuritySettings } from "@/components/settings/SecuritySettings";
-import { Upload, Save, User, Key, CreditCard, ShieldCheck } from "lucide-react";
+import { Upload, Save, User, Key, CreditCard, ShieldCheck, Layers } from "lucide-react";
+import { MyFeaturesPanel } from "@/components/features/MyFeaturesPanel";
+import { ConsentHistory } from "@/components/features/ConsentHistory";
 import { SkeletonCard } from "@/components/ui/DashboardWidget";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SUPPORTED_CURRENCIES } from "@/hooks/useUserCurrency";
@@ -64,22 +66,30 @@ export default function Profile() {
             <div className="flex-1 overflow-auto p-4 md:p-6">
               <div className="max-w-3xl mx-auto">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                  <TabsList className="bg-muted/50 mb-6">
+                  <TabsList className="bg-muted/50 mb-6 flex flex-wrap h-auto">
                     <TabsTrigger value="profile" className="text-sm">
                       <User className="h-4 w-4 mr-2" />
                       <span className="hidden sm:inline">Profile</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="features" className="text-sm">
+                      <Layers className="h-4 w-4 mr-2" />
+                      <span className="hidden sm:inline">Features</span>
                     </TabsTrigger>
                     <TabsTrigger value="security" className="text-sm">
                       <ShieldCheck className="h-4 w-4 mr-2" />
                       <span className="hidden sm:inline">Security</span>
                     </TabsTrigger>
+                    <TabsTrigger value="legal" className="text-sm">
+                      <ShieldCheck className="h-4 w-4 mr-2" />
+                      <span className="hidden sm:inline">Legal</span>
+                    </TabsTrigger>
                     <TabsTrigger value="subscriptions" className="text-sm">
                       <CreditCard className="h-4 w-4 mr-2" />
-                      <span className="hidden sm:inline">Subscriptions</span>
+                      <span className="hidden sm:inline">Subs</span>
                     </TabsTrigger>
                     <TabsTrigger value="integrations" className="text-sm">
                       <Key className="h-4 w-4 mr-2" />
-                      <span className="hidden sm:inline">API Connections</span>
+                      <span className="hidden sm:inline">APIs</span>
                     </TabsTrigger>
                   </TabsList>
 
@@ -187,8 +197,16 @@ export default function Profile() {
                         </Card>
                       </TabsContent>
 
+                      <TabsContent value="features" className="mt-0">
+                        <MyFeaturesPanel />
+                      </TabsContent>
+
                       <TabsContent value="security" className="mt-0">
                         <SecuritySettings />
+                      </TabsContent>
+
+                      <TabsContent value="legal" className="mt-0">
+                        <ConsentHistory />
                       </TabsContent>
 
                       <TabsContent value="subscriptions" className="mt-0">

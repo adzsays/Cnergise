@@ -109,6 +109,69 @@ export type Database = {
         }
         Relationships: []
       }
+      app_features: {
+        Row: {
+          category: string
+          compliance_notes: string | null
+          created_at: string
+          current_terms_version: string
+          description: string | null
+          disclaimer: string | null
+          icon: string | null
+          id: string
+          is_available: boolean
+          is_core: boolean
+          is_regulated: boolean
+          key: string
+          name: string
+          requires_approval: boolean
+          route: string | null
+          sort_order: number
+          terms_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          compliance_notes?: string | null
+          created_at?: string
+          current_terms_version?: string
+          description?: string | null
+          disclaimer?: string | null
+          icon?: string | null
+          id?: string
+          is_available?: boolean
+          is_core?: boolean
+          is_regulated?: boolean
+          key: string
+          name: string
+          requires_approval?: boolean
+          route?: string | null
+          sort_order?: number
+          terms_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          compliance_notes?: string | null
+          created_at?: string
+          current_terms_version?: string
+          description?: string | null
+          disclaimer?: string | null
+          icon?: string | null
+          id?: string
+          is_available?: boolean
+          is_core?: boolean
+          is_regulated?: boolean
+          key?: string
+          name?: string
+          requires_approval?: boolean
+          route?: string | null
+          sort_order?: number
+          terms_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       calendar_events: {
         Row: {
           created_at: string | null
@@ -234,6 +297,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      consent_audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          feature_key: string | null
+          id: string
+          ip_address: string | null
+          payload: Json | null
+          performed_by: string | null
+          signature_hash: string | null
+          terms_version: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          feature_key?: string | null
+          id?: string
+          ip_address?: string | null
+          payload?: Json | null
+          performed_by?: string | null
+          signature_hash?: string | null
+          terms_version?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          feature_key?: string | null
+          id?: string
+          ip_address?: string | null
+          payload?: Json | null
+          performed_by?: string | null
+          signature_hash?: string | null
+          terms_version?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       contacts: {
         Row: {
@@ -423,6 +528,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      feature_approval_queue: {
+        Row: {
+          created_at: string
+          feature_key: string
+          id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewer_notes: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          user_notes: string | null
+        }
+        Insert: {
+          created_at?: string
+          feature_key: string
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_notes?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          user_notes?: string | null
+        }
+        Update: {
+          created_at?: string
+          feature_key?: string
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_notes?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          user_notes?: string | null
+        }
+        Relationships: []
       }
       features: {
         Row: {
@@ -1376,6 +1520,93 @@ export type Database = {
         }
         Relationships: []
       }
+      user_agreements: {
+        Row: {
+          agreement_version: string
+          created_at: string
+          email_sent_at: string | null
+          id: string
+          ip_address: string | null
+          pdf_url: string | null
+          selected_features: string[]
+          signature_hash: string
+          signed_at: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          agreement_version?: string
+          created_at?: string
+          email_sent_at?: string | null
+          id?: string
+          ip_address?: string | null
+          pdf_url?: string | null
+          selected_features?: string[]
+          signature_hash: string
+          signed_at?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          agreement_version?: string
+          created_at?: string
+          email_sent_at?: string | null
+          id?: string
+          ip_address?: string | null
+          pdf_url?: string | null
+          selected_features?: string[]
+          signature_hash?: string
+          signed_at?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_feature_subscriptions: {
+        Row: {
+          accepted_at: string | null
+          accepted_terms_version: string | null
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          feature_key: string
+          id: string
+          revoke_reason: string | null
+          revoked_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_terms_version?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          feature_key: string
+          id?: string
+          revoke_reason?: string | null
+          revoked_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_terms_version?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          feature_key?: string
+          id?: string
+          revoke_reason?: string | null
+          revoked_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_integrations: {
         Row: {
           broker_account_id: string | null
@@ -1486,6 +1717,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      has_feature_access: {
+        Args: { _feature_key: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

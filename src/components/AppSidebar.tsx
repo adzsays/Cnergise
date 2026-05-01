@@ -13,7 +13,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
 import {
@@ -33,26 +32,29 @@ import {
   Briefcase,
   FolderKanban,
   GraduationCap,
+  Lock,
+  Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import cnergiseLogo from "@/assets/cnergise-logo.png";
+import { useAppFeatures, useMySubscriptions, hasActiveAccess } from "@/hooks/useFeatures";
 
-// Core navigation items per spec
+// Map of route -> feature key (only for opt-in modules; core/system items omitted)
 const navItems = [
-  { icon: Sun, label: "Today", href: "/home" },
-  { icon: CheckSquare, label: "Tasks", href: "/tasks" },
-  { icon: FolderKanban, label: "Projects", href: "/projects" },
-  { icon: Target, label: "Goals", href: "/goals" },
-  { icon: GraduationCap, label: "Learning", href: "/learning" },
-  { icon: Share2, label: "Social", href: "/social" },
-  { icon: Activity, label: "Health", href: "/health" },
-  { icon: Wallet, label: "Finance", href: "/finances" },
-  { icon: Briefcase, label: "Portfolio", href: "/portfolio" },
-  { icon: Mail, label: "Mail", href: "/mail" },
-  { icon: CalendarDays, label: "Calendar", href: "/calendar" },
-  { icon: MessageSquare, label: "Chat", href: "/chat" },
-  { icon: Settings, label: "Settings", href: "/profile" },
+  { icon: Sun, label: "Today", href: "/home", featureKey: null },
+  { icon: CheckSquare, label: "Tasks", href: "/tasks", featureKey: "tasks" },
+  { icon: FolderKanban, label: "Projects", href: "/projects", featureKey: "projects" },
+  { icon: Target, label: "Goals", href: "/goals", featureKey: "goals" },
+  { icon: GraduationCap, label: "Learning", href: "/learning", featureKey: "learning" },
+  { icon: Share2, label: "Social", href: "/social", featureKey: "social" },
+  { icon: Activity, label: "Health", href: "/health", featureKey: "health" },
+  { icon: Wallet, label: "Finance", href: "/finances", featureKey: "finance" },
+  { icon: Briefcase, label: "Portfolio", href: "/portfolio", featureKey: "portfolio" },
+  { icon: Mail, label: "Mail", href: "/mail", featureKey: "mail" },
+  { icon: CalendarDays, label: "Calendar", href: "/calendar", featureKey: "calendar" },
+  { icon: MessageSquare, label: "Chat", href: "/chat", featureKey: "chat" },
+  { icon: Settings, label: "Settings", href: "/profile", featureKey: null },
 ];
 
 export function AppSidebar() {
@@ -60,6 +62,8 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
+  const { data: features } = useAppFeatures();
+  const { data: subs } = useMySubscriptions();
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -70,16 +74,19 @@ export function AppSidebar() {
     }
   };
 
+  const getAccess = (featureKey: string | null) => {
+    if (!featureKey) return { active: true, status: "active" as const };
+    const f = features?.find((x) => x.key === featureKey);
+    if (!f) return { active: true, status: "active" as const };
+    return hasActiveAccess(f, subs);
+  };
+
   return (
     <Sidebar collapsible="icon" className="border-r bg-sidebar">
       <SidebarHeader className={cn("p-2", !isCollapsed && "p-3")}>
         {isCollapsed ? (
           <div className="flex flex-col items-center gap-1">
-            <img
-              src={cnergiseLogo}
-              alt="Cnergise"
-              className="h-8 w-8 object-contain shrink-0"
-            />
+            <img src={cnergiseLogo} alt="Cnergise" className="h-8 w-8 object-contain shrink-0" />
             <Button
               variant="outline"
               size="icon"
@@ -93,11 +100,7 @@ export function AppSidebar() {
         ) : (
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
-              <img
-                src={cnergiseLogo}
-                alt="Cnergise"
-                className="h-10 w-10 object-contain shrink-0"
-              />
+              <img src={cnergiseLogo} alt="Cnergise" className="h-10 w-10 object-contain shrink-0" />
               <span className="font-semibold text-base truncate">Cnergise</span>
             </div>
             <Button
@@ -119,15 +122,22 @@ export function AppSidebar() {
             <SidebarMenu>
               {navItems.map((item) => {
                 const isActive = location.pathname === item.href;
+                const access = getAccess(item.featureKey);
+                const isLocked = !access.active;
+                const isPending = access.status === "pending_approval";
+                const tooltip = isLocked
+                  ? `${item.label} (${isPending ? "pending approval" : "locked — click to enable"})`
+                  : item.label;
                 return (
                   <SidebarMenuItem key={item.label}>
                     <SidebarMenuButton
                       isActive={isActive}
-                      tooltip={item.label}
+                      tooltip={tooltip}
                       asChild
                       className={cn(
                         "relative transition-colors duration-150",
-                        isActive && "bg-sidebar-accent text-sidebar-primary font-medium"
+                        isActive && "bg-sidebar-accent text-sidebar-primary font-medium",
+                        isLocked && "opacity-60",
                       )}
                     >
                       <Link to={item.href}>
@@ -136,6 +146,9 @@ export function AppSidebar() {
                         )}
                         <item.icon className="h-4 w-4" />
                         <span>{item.label}</span>
+                        {isLocked && !isCollapsed && (
+                          isPending ? <Clock className="h-3 w-3 ml-auto text-amber-500" /> : <Lock className="h-3 w-3 ml-auto text-muted-foreground" />
+                        )}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -149,8 +162,8 @@ export function AppSidebar() {
       <SidebarFooter className="p-2">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton 
-              tooltip="Log out" 
+            <SidebarMenuButton
+              tooltip="Log out"
               className="text-muted-foreground hover:text-destructive"
               onClick={handleLogout}
             >
