@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 
+const GOOGLE_CALENDAR_CONNECTED_EVENT = "google-calendar-connected";
+
 export function useGoogleCalendar() {
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -33,7 +35,6 @@ export function useGoogleCalendar() {
         if (!res.ok || !json.url) throw new Error(json.error || "Failed to start OAuth");
 
         if (oauthWindow && !oauthWindow.closed) {
-          oauthWindow.opener = null;
           oauthWindow.location.assign(json.url);
         } else {
           window.location.assign(json.url);
@@ -80,18 +81,35 @@ export function useGoogleCalendar() {
     },
   });
 
-  // Auto-handle OAuth callback redirect
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("gcal_callback") === "1" && params.get("status") === "success") {
+    const finishConnection = () => {
       toast({ title: "Google Calendar connected" });
-      // Kick off initial sync + watch
       sync.mutate();
       startWatch.mutate();
-      // Clean URL
-      window.history.replaceState({}, "", window.location.pathname);
       qc.invalidateQueries({ queryKey: ["gcal-connection"] });
+    };
+
+    const handleConnectedMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== GOOGLE_CALENDAR_CONNECTED_EVENT) return;
+      finishConnection();
+    };
+
+    window.addEventListener("message", handleConnectedMessage);
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("gcal_callback") === "1" && params.get("status") === "success") {
+      if (window.opener && !window.opener.closed) {
+        window.opener.postMessage({ type: GOOGLE_CALENDAR_CONNECTED_EVENT }, window.location.origin);
+        window.close();
+        return () => window.removeEventListener("message", handleConnectedMessage);
+      }
+
+      finishConnection();
+      window.history.replaceState({}, "", window.location.pathname);
     }
+
+    return () => window.removeEventListener("message", handleConnectedMessage);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
