@@ -1,15 +1,20 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAppFeatures, useMySubscriptions, hasActiveAccess } from "@/hooks/useFeatures";
+import { useProfile } from "@/hooks/useProfile";
 import { EnableFeatureDialog } from "./EnableFeatureDialog";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Lock, Clock, AlertTriangle } from "lucide-react";
+import { Lock, Clock, AlertTriangle, ArrowLeft, Home, ShieldCheck } from "lucide-react";
 
 export function FeatureGate({ featureKey, children }: { featureKey: string; children: React.ReactNode }) {
   const { data: features } = useAppFeatures();
   const { data: subs, isLoading } = useMySubscriptions();
+  const { roles } = useProfile();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
+  const isAdmin = roles?.some((r: any) => r.role === "admin");
   const feature = features?.find((f) => f.key === featureKey);
   if (!feature || isLoading) return <>{children}</>;
   const access = hasActiveAccess(feature, subs);
@@ -39,6 +44,21 @@ export function FeatureGate({ featureKey, children }: { featureKey: string; chil
             {feature.requires_approval ? "Request Access" : "Enable Feature"}
           </Button>
         )}
+
+        <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+          <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+            <ArrowLeft className="h-4 w-4 mr-1" /> Go back
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => navigate("/home")}>
+            <Home className="h-4 w-4 mr-1" /> Home
+          </Button>
+          {isAdmin && access.status === "pending_approval" && (
+            <Button variant="default" size="sm" onClick={() => navigate("/admin")}>
+              <ShieldCheck className="h-4 w-4 mr-1" /> Review in Admin
+            </Button>
+          )}
+        </div>
+
         <EnableFeatureDialog feature={feature} open={open} onOpenChange={setOpen} />
       </Card>
     </div>
