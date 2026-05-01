@@ -345,10 +345,20 @@ const Auth = () => {
                   </Button>
                 </>
               ) : (
-                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium">
-                  <Sparkles className="w-4 h-4" />
-                  Coming Soon
-                </span>
+                <>
+                  <span className="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium">
+                    <Sparkles className="w-4 h-4" />
+                    Coming Soon
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => { setAuthTab("signin"); setShowAuthModal(true); }}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    Sign in
+                  </Button>
+                </>
               )}
             </div>
           </div>
