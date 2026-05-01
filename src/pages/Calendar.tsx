@@ -146,7 +146,12 @@ export default function Calendar() {
                           {todayEvents.length > 0 ? (
                             <div className="space-y-3">
                               {todayEvents.map((event) => (
-                                <div key={event.id} className="border rounded-md p-3">
+                                <button
+                                  type="button"
+                                  key={event.id}
+                                  onClick={() => openEvent(event)}
+                                  className="w-full text-left border rounded-md p-3 hover:bg-accent/40"
+                                >
                                   <h3 className="font-medium text-sm">{event.title}</h3>
                                   <p className="text-xs text-muted-foreground">
                                     {event.all_day
@@ -156,7 +161,7 @@ export default function Calendar() {
                                   {event.location && (
                                     <p className="text-xs text-muted-foreground">{event.location}</p>
                                   )}
-                                </div>
+                                </button>
                               ))}
                             </div>
                           ) : (
