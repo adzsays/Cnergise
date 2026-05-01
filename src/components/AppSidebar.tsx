@@ -86,7 +86,7 @@ export function AppSidebar() {
       <SidebarHeader className={cn("p-2", !isCollapsed && "p-3")}>
         {isCollapsed ? (
           <div className="flex flex-col items-center gap-1">
-            <img src={cnergiseLogo} alt="Cnergise" className="h-20 w-20 object-contain shrink-0" />
+            <img src={cnergiseLogo} alt="Cnergise" className="h-8 w-8 object-contain shrink-0" />
             <Button
               variant="outline"
               size="icon"
@@ -100,8 +100,8 @@ export function AppSidebar() {
         ) : (
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
-              <img src={cnergiseLogo} alt="Cnergise" className="h-24 w-24 object-contain shrink-0" />
-              <span className="font-semibold text-2xl truncate">Cnergise</span>
+              <img src={cnergiseLogo} alt="Cnergise" className="h-10 w-10 object-contain shrink-0" />
+              <span className="font-semibold text-base truncate">Cnergise</span>
             </div>
             <Button
               variant="outline"
