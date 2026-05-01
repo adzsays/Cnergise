@@ -55,6 +55,8 @@ export function EventDialog({ open, onOpenChange, event, defaultDate }: Props) {
       setAllDay(ad);
       setStartStr(ad ? toDateInput(event.start_time) : toLocalInput(event.start_time));
       setEndStr(ad ? toDateInput(event.end_time) : toLocalInput(event.end_time));
+      setMeetingUrl(event.meeting_url ?? null);
+      setAddMeet(false);
     } else {
       const base = defaultDate ?? new Date();
       const start = new Date(base);
@@ -68,6 +70,8 @@ export function EventDialog({ open, onOpenChange, event, defaultDate }: Props) {
       setAllDay(false);
       setStartStr(toLocalInput(start.toISOString()));
       setEndStr(toLocalInput(end.toISOString()));
+      setMeetingUrl(null);
+      setAddMeet(false);
     }
   }, [open, event, defaultDate]);
 
