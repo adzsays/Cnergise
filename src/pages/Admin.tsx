@@ -24,6 +24,7 @@ import { format } from "date-fns";
 import { useState } from "react";
 import { Shield, UserMinus } from "lucide-react";
 import { AllowlistManager } from "@/components/admin/AllowlistManager";
+import { ApprovalQueue } from "@/components/admin/ApprovalQueue";
 
 export default function Admin() {
   const { data: profiles, isLoading } = useAllProfiles();
