@@ -26,7 +26,6 @@ import {
   Trash2,
 } from "lucide-react";
 import { format, addDays, subDays, parseISO } from "date-fns";
-import { motion, AnimatePresence } from "framer-motion";
 import { useUserCurrency } from "@/hooks/useUserCurrency";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
