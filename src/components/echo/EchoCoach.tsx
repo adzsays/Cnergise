@@ -100,7 +100,8 @@ export default function EchoCoach({ entries, goals }: { entries: any[]; goals: a
               )}
             </div>
           ))}
-        
+        </AnimatePresence>
+
         {isLoading && (
           <div className="flex gap-2 items-center">
             <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
