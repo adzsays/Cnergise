@@ -174,6 +174,7 @@ export type Database = {
       }
       calendar_events: {
         Row: {
+          all_day: boolean
           created_at: string | null
           deleted_at: string | null
           description: string | null
@@ -192,6 +193,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          all_day?: boolean
           created_at?: string | null
           deleted_at?: string | null
           description?: string | null
@@ -210,6 +212,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          all_day?: boolean
           created_at?: string | null
           deleted_at?: string | null
           description?: string | null
@@ -979,6 +982,51 @@ export type Database = {
           scope?: string | null
           sync_token?: string | null
           token_expires_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      google_calendar_subscriptions: {
+        Row: {
+          background_color: string | null
+          created_at: string
+          enabled: boolean
+          foreground_color: string | null
+          google_calendar_id: string
+          id: string
+          is_primary: boolean
+          last_sync_at: string | null
+          summary: string | null
+          sync_token: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          background_color?: string | null
+          created_at?: string
+          enabled?: boolean
+          foreground_color?: string | null
+          google_calendar_id: string
+          id?: string
+          is_primary?: boolean
+          last_sync_at?: string | null
+          summary?: string | null
+          sync_token?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          background_color?: string | null
+          created_at?: string
+          enabled?: boolean
+          foreground_color?: string | null
+          google_calendar_id?: string
+          id?: string
+          is_primary?: boolean
+          last_sync_at?: string | null
+          summary?: string | null
+          sync_token?: string | null
           updated_at?: string
           user_id?: string
         }
