@@ -525,22 +525,33 @@ const Auth = () => {
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-primary/10 via-accent/5 to-background">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-6">
-            Ready to Transform Your Life?
+            {loginAccess ? "Ready to Transform Your Life?" : "Something Big Is Coming"}
           </h2>
           <p className="text-lg text-muted-foreground mb-8">
-            Join thousands who have simplified their daily routines and achieved more with less stress.
+            {loginAccess
+              ? "Join thousands who have simplified their daily routines and achieved more with less stress."
+              : "Cnergise is launching soon to a small group of invited users. Check back shortly."}
           </p>
-          <Button 
-            size="lg" 
-            onClick={() => { setAuthTab("signup"); setShowAuthModal(true); }}
-            className="bg-primary hover:bg-primary/90 text-lg px-8 py-6"
-          >
-            Get Started Free
-            <ArrowRight className="ml-2 w-5 h-5" />
-          </Button>
-          <p className="text-sm text-muted-foreground mt-4">
-            No credit card required • Free forever plan available
-          </p>
+          {loginAccess ? (
+            <>
+              <Button
+                size="lg"
+                onClick={() => { setAuthTab("signup"); setShowAuthModal(true); }}
+                className="bg-primary hover:bg-primary/90 text-lg px-8 py-6"
+              >
+                Get Started Free
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+              <p className="text-sm text-muted-foreground mt-4">
+                No credit card required • Free forever plan available
+              </p>
+            </>
+          ) : (
+            <div className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-primary/10 text-primary text-base font-medium">
+              <Sparkles className="w-5 h-5" />
+              Coming Soon
+            </div>
+          )}
         </div>
       </section>
 
