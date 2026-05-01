@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { Search, Plus, User, Calendar, CheckSquare, FileText, Bookmark, X, Sparkles } from "lucide-react";
+import { Search, Plus, User, Calendar, CheckSquare, FileText, Bookmark, X, Sparkles, ShieldCheck, Eye, Bell } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,10 +12,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { SpaceSelector } from "@/components/layout/SpaceSelector";
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
 import { AISearchDialog } from "@/components/ai/AISearchDialog";
+import { useAdminMode, usePendingApprovalsCount } from "@/hooks/useAdminMode";
 
 interface TopBarProps {
   title?: string;
@@ -24,6 +26,9 @@ export function TopBar({ title = "Today" }: TopBarProps) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const navigate = useNavigate();
+  const { isAdmin, viewAs, toggle } = useAdminMode();
+  const { data: pendingCount = 0 } = usePendingApprovalsCount();
 
   return (
     <header className="sticky top-0 z-20 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
@@ -99,6 +104,22 @@ export function TopBar({ title = "Today" }: TopBarProps) {
           {/* AI Search */}
           <AISearchDialog />
 
+          {/* Admin: pending approvals */}
+          {isAdmin && viewAs === "admin" && pendingCount > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/admin")}
+              className="relative h-9 px-2 gap-1"
+              title="Pending feature approvals"
+            >
+              <Bell className="h-4 w-4 text-amber-500" />
+              <Badge className="bg-amber-500 hover:bg-amber-500 text-white text-[10px] h-5 min-w-5 px-1.5">
+                {pendingCount}
+              </Badge>
+            </Button>
+          )}
+
           {/* Notifications */}
           <NotificationCenter />
 
@@ -111,7 +132,7 @@ export function TopBar({ title = "Today" }: TopBarProps) {
                 </div>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
@@ -120,6 +141,26 @@ export function TopBar({ title = "Today" }: TopBarProps) {
               <DropdownMenuItem asChild>
                 <Link to="/profile">Settings</Link>
               </DropdownMenuItem>
+              {isAdmin && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">
+                    Admin tools
+                  </DropdownMenuLabel>
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin" className="flex items-center justify-between">
+                      <span className="flex items-center"><ShieldCheck className="mr-2 h-4 w-4" /> Admin Dashboard</span>
+                      {pendingCount > 0 && (
+                        <Badge className="bg-amber-500 hover:bg-amber-500 text-white text-[10px] h-5 px-1.5">{pendingCount}</Badge>
+                      )}
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={toggle}>
+                    <Eye className="mr-2 h-4 w-4" />
+                    {viewAs === "admin" ? "View as user" : "Return to admin view"}
+                  </DropdownMenuItem>
+                </>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-destructive">
                 Log out
