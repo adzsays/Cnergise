@@ -23,16 +23,12 @@ export function useGoogleCalendar() {
 
   const connect = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke("google-calendar-oauth-start", {
-        body: {},
-        // pass origin via query
-      });
-      // invoke doesn't support query string easily, build it manually:
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/google-calendar-oauth-start?origin=${encodeURIComponent(window.location.origin)}`;
       const session = (await supabase.auth.getSession()).data.session;
-      const res = await fetch(url, { headers: { Authorization: `Bearer ${session?.access_token}` } });
+      if (!session) throw new Error("Not signed in");
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${session.access_token}` } });
       const json = await res.json();
-      if (!res.ok || !json.url) throw new Error(json.error || "Failed");
+      if (!res.ok || !json.url) throw new Error(json.error || "Failed to start OAuth");
       window.location.href = json.url;
       return null;
     },
