@@ -104,6 +104,22 @@ export function TopBar({ title = "Today" }: TopBarProps) {
           {/* AI Search */}
           <AISearchDialog />
 
+          {/* Admin: pending approvals */}
+          {isAdmin && viewAs === "admin" && pendingCount > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/admin")}
+              className="relative h-9 px-2 gap-1"
+              title="Pending feature approvals"
+            >
+              <Bell className="h-4 w-4 text-amber-500" />
+              <Badge className="bg-amber-500 hover:bg-amber-500 text-white text-[10px] h-5 min-w-5 px-1.5">
+                {pendingCount}
+              </Badge>
+            </Button>
+          )}
+
           {/* Notifications */}
           <NotificationCenter />
 
