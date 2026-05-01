@@ -132,7 +132,7 @@ export function TopBar({ title = "Today" }: TopBarProps) {
                 </div>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
@@ -141,6 +141,26 @@ export function TopBar({ title = "Today" }: TopBarProps) {
               <DropdownMenuItem asChild>
                 <Link to="/profile">Settings</Link>
               </DropdownMenuItem>
+              {isAdmin && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">
+                    Admin tools
+                  </DropdownMenuLabel>
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin" className="flex items-center justify-between">
+                      <span className="flex items-center"><ShieldCheck className="mr-2 h-4 w-4" /> Admin Dashboard</span>
+                      {pendingCount > 0 && (
+                        <Badge className="bg-amber-500 hover:bg-amber-500 text-white text-[10px] h-5 px-1.5">{pendingCount}</Badge>
+                      )}
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={toggle}>
+                    <Eye className="mr-2 h-4 w-4" />
+                    {viewAs === "admin" ? "View as user" : "Return to admin view"}
+                  </DropdownMenuItem>
+                </>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-destructive">
                 Log out
