@@ -27,10 +27,8 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
-  CheckSquare,
-  Target,
   Briefcase,
-  FolderKanban,
+  Compass,
   GraduationCap,
   Lock,
   Clock,
@@ -44,10 +42,8 @@ import { useAppFeatures, useMySubscriptions, hasActiveAccess } from "@/hooks/use
 // Map of route -> feature key (only for opt-in modules; core/system items omitted)
 const navItems = [
   { icon: Sun, label: "Today", href: "/home", featureKey: null },
+  { icon: Compass, label: "Plan", href: "/plan", featureKey: "tasks" },
   { icon: Mic, label: "Echo", href: "/echo", featureKey: "echo" },
-  { icon: CheckSquare, label: "Tasks", href: "/tasks", featureKey: "tasks" },
-  { icon: FolderKanban, label: "Projects", href: "/projects", featureKey: "projects" },
-  { icon: Target, label: "Goals", href: "/goals", featureKey: "goals" },
   { icon: GraduationCap, label: "Learning", href: "/learning", featureKey: "learning" },
   { icon: Share2, label: "Social", href: "/social", featureKey: "social" },
   { icon: Activity, label: "Health", href: "/health", featureKey: "health" },

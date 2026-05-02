@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { text, goals, mode } = await req.json();
+    const { text, goals, projects, tasks, mode } = await req.json();
     if (!text || typeof text !== "string" || !text.trim()) {
       return new Response(JSON.stringify({ error: "Text is required" }), {
         status: 400,
@@ -51,16 +51,25 @@ serve(async (req) => {
       });
     }
 
-    // Build goals context (Cnergise goals: id, title, category)
+    // Build plan context (Goals, Projects, Tasks). Echo is the "reality vs plan" check.
     let goalsContext = "";
     if (goals && Array.isArray(goals) && goals.length > 0) {
-      goalsContext = "\n\nThe user has these active goals (id | title | category):\n";
-      for (const g of goals) {
-        goalsContext += `- ${g.id} | ${g.title} | ${g.category}\n`;
-      }
-      goalsContext +=
-        "\nWhen an entry clearly relates to a goal, include goal_id (else omit).";
+      goalsContext = "\n\nUser's active GOALS (id | title | category):\n";
+      for (const g of goals) goalsContext += `- ${g.id} | ${g.title} | ${g.category}\n`;
     }
+    let projectsContext = "";
+    if (projects && Array.isArray(projects) && projects.length > 0) {
+      projectsContext = "\n\nUser's active PROJECTS (id | name | parent_goal_id):\n";
+      for (const p of projects) projectsContext += `- ${p.id} | ${p.name} | ${p.goal_id ?? "-"}\n`;
+    }
+    let tasksContext = "";
+    if (tasks && Array.isArray(tasks) && tasks.length > 0) {
+      tasksContext = "\n\nUser's open TASKS (id | title | parent_project_id):\n";
+      for (const t of tasks) tasksContext += `- ${t.id} | ${t.title} | ${t.project_id ?? "-"}\n`;
+    }
+    const linkingGuidance = (goalsContext || projectsContext || tasksContext)
+      ? "\n\nLinking rules: When an entry clearly relates to a TASK include task_id (this is the most granular). If it relates to a PROJECT (not a specific task), include project_id. If it only relates to a GOAL, include goal_id. Pick the MOST SPECIFIC match. Omit any field that doesn't clearly match — never guess."
+      : "";
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -73,7 +82,7 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `You are a daily activity classifier. Given a voice or text journal entry, extract one or more entries and classify each.
+            content: `You are a daily activity classifier and a "reality vs plan" linker. Given a voice or text journal entry, extract one or more entries and classify each.
 
 For each entry return:
 - type: short category tag (spending, food, exercise, health, events, career, learning, social, productivity, wellness, etc.)
@@ -81,9 +90,9 @@ For each entry return:
 - description: brief description
 - amount: number if applicable (currency for spending, count/duration for exercise, etc.)
 - unit: unit of the amount (£, $, miles, km, minutes, calories, reps)
-- goal_id: if matches a user goal, include its id (else omit)
+- goal_id / project_id / task_id: see linking rules below
 
-Be smart about extracting MULTIPLE entries from a single sentence (e.g. "spent £12 on lunch and ran 3 miles" = 2 entries).${goalsContext}`,
+Be smart about extracting MULTIPLE entries from a single sentence (e.g. "spent £12 on lunch and ran 3 miles" = 2 entries).${goalsContext}${projectsContext}${tasksContext}${linkingGuidance}`,
           },
           { role: "user", content: text },
         ],
@@ -107,6 +116,8 @@ Be smart about extracting MULTIPLE entries from a single sentence (e.g. "spent �
                         amount: { type: "number" },
                         unit: { type: "string" },
                         goal_id: { type: "string" },
+                        project_id: { type: "string" },
+                        task_id: { type: "string" },
                       },
                       required: ["type", "title", "description"],
                       additionalProperties: false,

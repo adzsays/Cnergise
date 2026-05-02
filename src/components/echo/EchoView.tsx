@@ -48,6 +48,8 @@ type EchoEntry = {
   amount: number | null;
   unit: string | null;
   goal_id: string | null;
+  project_id: string | null;
+  task_id: string | null;
   raw_voice_text: string | null;
   entry_date: string;
   entry_time: string | null;
@@ -55,6 +57,8 @@ type EchoEntry = {
 };
 
 type Goal = { id: string; title: string; category: string; status: string };
+type ProjectLite = { id: string; name: string; goal_id: string | null };
+type TaskLite = { id: string; title: string; project_id: string | null };
 
 const iconMap: Record<string, typeof DollarSign> = {
   spending: DollarSign,
@@ -91,6 +95,8 @@ export default function EchoView() {
   const [entries, setEntries] = useState<EchoEntry[]>([]);
   const [allEntries, setAllEntries] = useState<EchoEntry[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
+  const [projects, setProjects] = useState<ProjectLite[]>([]);
+  const [tasks, setTasks] = useState<TaskLite[]>([]);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
   const [loading, setLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -141,8 +147,19 @@ export default function EchoView() {
     setGoals((data as Goal[]) || []);
   }, []);
 
+  const fetchPlanContext = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const [{ data: pData }, { data: tData }] = await Promise.all([
+      supabase.from("projects").select("id, name, goal_id").eq("user_id", user.id).neq("status", "archived"),
+      supabase.from("tasks").select("id, title, project_id").eq("user_id", user.id).neq("status", "done").limit(200),
+    ]);
+    setProjects((pData as ProjectLite[]) || []);
+    setTasks((tData as TaskLite[]) || []);
+  }, []);
+
   useEffect(() => { fetchEntries(); }, [fetchEntries]);
-  useEffect(() => { fetchAllEntries(); fetchGoals(); }, [fetchAllEntries, fetchGoals]);
+  useEffect(() => { fetchAllEntries(); fetchGoals(); fetchPlanContext(); }, [fetchAllEntries, fetchGoals, fetchPlanContext]);
 
   const goToday = () => setSelectedDate(new Date().toISOString().split("T")[0]);
   const goPrev = () =>
@@ -160,7 +177,7 @@ export default function EchoView() {
         if (!user) throw new Error("Not signed in");
 
         const { data, error } = await supabase.functions.invoke("echo-classify-entry", {
-          body: { text: text.trim(), goals },
+          body: { text: text.trim(), goals, projects, tasks },
         });
         if (error) throw error;
         const classified = data?.entries || [];
@@ -177,6 +194,8 @@ export default function EchoView() {
             amount: entry.amount ?? null,
             unit: entry.unit ?? null,
             goal_id: entry.goal_id || null,
+            project_id: entry.project_id || null,
+            task_id: entry.task_id || null,
             raw_voice_text: text.trim(),
             entry_date: selectedDate,
             entry_time: new Date().toLocaleTimeString("en-GB", {
@@ -196,7 +215,7 @@ export default function EchoView() {
         setIsProcessing(false);
       }
     },
-    [goals, selectedDate, fetchEntries, fetchAllEntries]
+    [goals, projects, tasks, selectedDate, fetchEntries, fetchAllEntries]
   );
 
   const resetSilenceTimer = useCallback(() => {
@@ -510,6 +529,8 @@ export default function EchoView() {
                               <span className="text-[10px] text-muted-foreground">{formatTime(entry.entry_time)}</span>
                             )}
                             {entry.goal_id && <Badge variant="outline" className="text-[10px] h-5">🎯 Goal</Badge>}
+                            {entry.project_id && <Badge variant="outline" className="text-[10px] h-5">📁 Project</Badge>}
+                            {entry.task_id && <Badge variant="outline" className="text-[10px] h-5">✓ Task</Badge>}
                           </div>
                           {!isEditing && (
                             <div className="flex items-center gap-1">
