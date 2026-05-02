@@ -1,4 +1,3 @@
-
 import React from "react";
 import { SidebarProvider, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
@@ -6,73 +5,107 @@ import { TopBar } from "@/components/layout/TopBar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { 
-  Heart, 
-  Timer, 
-  Droplets, 
-  Moon, 
-  ArrowUpRight, 
-  ArrowDownRight 
-} from "lucide-react";
-import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer 
-} from "recharts";
+import { Button } from "@/components/ui/button";
+import { Heart, Timer, Droplets, Moon, ArrowUpRight, ArrowDownRight, Upload, Flame } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { SamsungHealthImportDialog } from "@/components/health/SamsungHealthImportDialog";
+
+type Metric = {
+  metric_date: string;
+  steps: number | null;
+  distance_meters: number | null;
+  calories_burned: number | null;
+  active_minutes: number | null;
+  resting_heart_rate: number | null;
+  avg_heart_rate: number | null;
+  max_heart_rate: number | null;
+  sleep_minutes: number | null;
+  weight_kg: number | null;
+};
+
+const STEPS_GOAL = 10000;
+const WATER_GOAL = 2.5;
 
 export default function Health() {
   const [activeTab, setActiveTab] = React.useState("overview");
-  
-  const sleepData = [
-    { day: 'Mon', hours: 7.5 },
-    { day: 'Tue', hours: 6.8 },
-    { day: 'Wed', hours: 7.2 },
-    { day: 'Thu', hours: 8.0 },
-    { day: 'Fri', hours: 6.5 },
-    { day: 'Sat', hours: 7.8 },
-    { day: 'Sun', hours: 8.5 }
-  ];
-  
-  const steps = 8432;
-  const stepsGoal = 10000;
-  const stepsPercentage = Math.min(100, Math.round((steps / stepsGoal) * 100));
-  
-  const waterIntake = 1.8;
-  const waterGoal = 2.5;
-  const waterPercentage = Math.min(100, Math.round((waterIntake / waterGoal) * 100));
-  
-  const heartRate = {
-    current: 72,
-    resting: 65,
-    previous: 74
-  };
+  const [importOpen, setImportOpen] = React.useState(false);
+
+  const { data: metrics = [], isLoading } = useQuery({
+    queryKey: ["health-metrics"],
+    queryFn: async (): Promise<Metric[]> => {
+      const { data } = await supabase
+        .from("health_metrics")
+        .select("metric_date,steps,distance_meters,calories_burned,active_minutes,resting_heart_rate,avg_heart_rate,max_heart_rate,sleep_minutes,weight_kg")
+        .order("metric_date", { ascending: false })
+        .limit(60);
+      return (data ?? []) as Metric[];
+    },
+  });
+
+  const today = metrics[0];
+  const prev = metrics[1];
+
+  const sleepData = React.useMemo(
+    () =>
+      [...metrics]
+        .slice(0, 7)
+        .reverse()
+        .map((m) => ({
+          day: new Date(m.metric_date).toLocaleDateString("en", { weekday: "short" }),
+          hours: m.sleep_minutes ? +(m.sleep_minutes / 60).toFixed(1) : 0,
+        })),
+    [metrics],
+  );
+
+  const steps = today?.steps ?? 0;
+  const stepsPct = Math.min(100, Math.round((steps / STEPS_GOAL) * 100));
+  const waterIntake = 0; // not tracked by Samsung Health export
+  const waterPct = Math.min(100, Math.round((waterIntake / WATER_GOAL) * 100));
+  const hrCurrent = today?.avg_heart_rate ?? 0;
+  const hrResting = today?.resting_heart_rate ?? 0;
+  const hrPrev = prev?.avg_heart_rate ?? 0;
+
+  const hasData = metrics.length > 0;
 
   return (
     <SidebarProvider defaultOpen={false}>
       <div className="flex min-h-[100dvh] w-full overflow-hidden bg-background pt-[env(safe-area-inset-top)]">
         <AppSidebar />
         <SidebarRail />
-        
+
         <SidebarInset>
           <div className="flex h-full flex-col">
             <TopBar title="Health" />
-            
+
             <div className="flex-1 overflow-auto p-4 md:p-6">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-6 gap-2 flex-wrap">
                   <TabsList className="bg-muted/50">
                     <TabsTrigger value="overview" className="text-sm">Overview</TabsTrigger>
                     <TabsTrigger value="activity" className="text-sm">Activity</TabsTrigger>
                     <TabsTrigger value="nutrition" className="text-sm">Nutrition</TabsTrigger>
                     <TabsTrigger value="sleep" className="text-sm">Sleep</TabsTrigger>
                   </TabsList>
+                  <Button size="sm" onClick={() => setImportOpen(true)} className="gap-2">
+                    <Upload className="h-4 w-4" />
+                    Import Samsung Health
+                  </Button>
                 </div>
-                
+
                 <TabsContent value="overview" className="mt-0">
+                  {!isLoading && !hasData && (
+                    <Card className="mb-6">
+                      <CardContent className="py-10 text-center space-y-3">
+                        <p className="text-muted-foreground">No health data yet.</p>
+                        <Button onClick={() => setImportOpen(true)} className="gap-2">
+                          <Upload className="h-4 w-4" /> Import Samsung Health export
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  )}
+
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
                     <Card>
                       <CardHeader className="pb-2">
@@ -83,29 +116,31 @@ export default function Health() {
                       </CardHeader>
                       <CardContent>
                         <div className="text-center py-4">
-                          <div className="text-4xl font-bold mb-1">{heartRate.current}</div>
-                          <div className="text-sm text-muted-foreground">bpm</div>
+                          <div className="text-4xl font-bold mb-1">{hrCurrent || "—"}</div>
+                          <div className="text-sm text-muted-foreground">avg bpm</div>
                         </div>
                         <div className="flex justify-between text-sm pt-2">
                           <div>
                             <div className="text-muted-foreground">Resting</div>
-                            <div>{heartRate.resting} bpm</div>
+                            <div>{hrResting || "—"} bpm</div>
                           </div>
                           <div className="text-right">
                             <div className="text-muted-foreground">Previous</div>
                             <div className="flex items-center">
-                              {heartRate.previous} bpm 
-                              {heartRate.current < heartRate.previous ? (
-                                <ArrowDownRight className="h-4 w-4 text-green-500 ml-1" />
-                              ) : (
-                                <ArrowUpRight className="h-4 w-4 text-red-500 ml-1" />
-                              )}
+                              {hrPrev || "—"} bpm
+                              {hrCurrent && hrPrev ? (
+                                hrCurrent < hrPrev ? (
+                                  <ArrowDownRight className="h-4 w-4 text-green-500 ml-1" />
+                                ) : (
+                                  <ArrowUpRight className="h-4 w-4 text-red-500 ml-1" />
+                                )
+                              ) : null}
                             </div>
                           </div>
                         </div>
                       </CardContent>
                     </Card>
-                    
+
                     <Card>
                       <CardHeader className="pb-2">
                         <CardTitle className="flex items-center gap-2">
@@ -116,46 +151,52 @@ export default function Health() {
                       <CardContent>
                         <div className="text-center py-4">
                           <div className="text-4xl font-bold mb-1">{steps.toLocaleString()}</div>
-                          <div className="text-sm text-muted-foreground">steps today</div>
+                          <div className="text-sm text-muted-foreground">steps · latest day</div>
                         </div>
                         <div className="space-y-2">
                           <div className="flex justify-between text-sm">
                             <span>Progress</span>
-                            <span>{stepsPercentage}%</span>
+                            <span>{stepsPct}%</span>
                           </div>
-                          <Progress value={stepsPercentage} className="h-2" />
+                          <Progress value={stepsPct} className="h-2" />
                           <div className="text-xs text-right text-muted-foreground">
-                            Goal: {stepsGoal.toLocaleString()} steps
+                            Goal: {STEPS_GOAL.toLocaleString()} steps
                           </div>
                         </div>
                       </CardContent>
                     </Card>
-                    
+
                     <Card>
                       <CardHeader className="pb-2">
                         <CardTitle className="flex items-center gap-2">
-                          <Droplets className="h-5 w-5 text-blue-400" />
-                          Water
+                          <Flame className="h-5 w-5 text-orange-500" />
+                          Calories
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="text-center py-4">
-                          <div className="text-4xl font-bold mb-1">{waterIntake}</div>
-                          <div className="text-sm text-muted-foreground">liters</div>
-                        </div>
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span>Progress</span>
-                            <span>{waterPercentage}%</span>
+                          <div className="text-4xl font-bold mb-1">
+                            {today?.calories_burned ? Math.round(today.calories_burned) : "—"}
                           </div>
-                          <Progress value={waterPercentage} className="h-2" />
-                          <div className="text-xs text-right text-muted-foreground">
-                            Goal: {waterGoal} liters
+                          <div className="text-sm text-muted-foreground">kcal burned</div>
+                        </div>
+                        <div className="flex justify-between text-sm pt-2">
+                          <div>
+                            <div className="text-muted-foreground">Active</div>
+                            <div>{today?.active_minutes ?? "—"} min</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-muted-foreground">Distance</div>
+                            <div>
+                              {today?.distance_meters
+                                ? (today.distance_meters / 1000).toFixed(2) + " km"
+                                : "—"}
+                            </div>
                           </div>
                         </div>
                       </CardContent>
                     </Card>
-                    
+
                     <Card className="md:col-span-3">
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
@@ -172,13 +213,7 @@ export default function Health() {
                               <XAxis dataKey="day" />
                               <YAxis domain={[0, 10]} ticks={[0, 2, 4, 6, 8, 10]} />
                               <Tooltip />
-                              <Line 
-                                type="monotone" 
-                                dataKey="hours" 
-                                stroke="#8884d8" 
-                                activeDot={{ r: 8 }} 
-                                strokeWidth={2} 
-                              />
+                              <Line type="monotone" dataKey="hours" stroke="#8884d8" activeDot={{ r: 8 }} strokeWidth={2} />
                             </LineChart>
                           </ResponsiveContainer>
                         </div>
@@ -186,36 +221,60 @@ export default function Health() {
                     </Card>
                   </div>
                 </TabsContent>
-                
+
                 <TabsContent value="activity">
                   <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle>Activity</CardTitle>
-                    </CardHeader>
-                    <CardContent className="min-h-[400px] flex items-center justify-center text-muted-foreground">
-                      Activity tracking features coming soon
+                    <CardHeader><CardTitle>Activity (last 30 days)</CardTitle></CardHeader>
+                    <CardContent>
+                      <div className="h-[300px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart
+                            data={[...metrics].slice(0, 30).reverse().map((m) => ({
+                              date: m.metric_date.slice(5),
+                              steps: m.steps ?? 0,
+                            }))}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="date" />
+                            <YAxis />
+                            <Tooltip />
+                            <Line type="monotone" dataKey="steps" stroke="#3b82f6" strokeWidth={2} dot={false} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
                     </CardContent>
                   </Card>
                 </TabsContent>
-                
+
                 <TabsContent value="nutrition">
                   <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle>Nutrition</CardTitle>
-                    </CardHeader>
-                    <CardContent className="min-h-[400px] flex items-center justify-center text-muted-foreground">
-                      Nutrition tracking features coming soon
+                    <CardHeader><CardTitle>Nutrition</CardTitle></CardHeader>
+                    <CardContent className="min-h-[200px] flex items-center justify-center text-muted-foreground">
+                      Samsung Health export does not include nutrition data.
                     </CardContent>
                   </Card>
                 </TabsContent>
-                
+
                 <TabsContent value="sleep">
                   <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle>Sleep Details</CardTitle>
-                    </CardHeader>
-                    <CardContent className="min-h-[400px] flex items-center justify-center text-muted-foreground">
-                      Detailed sleep tracking features coming soon
+                    <CardHeader><CardTitle>Sleep history (last 30 days)</CardTitle></CardHeader>
+                    <CardContent>
+                      <div className="h-[300px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart
+                            data={[...metrics].slice(0, 30).reverse().map((m) => ({
+                              date: m.metric_date.slice(5),
+                              hours: m.sleep_minutes ? +(m.sleep_minutes / 60).toFixed(1) : 0,
+                            }))}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="date" />
+                            <YAxis domain={[0, 12]} />
+                            <Tooltip />
+                            <Line type="monotone" dataKey="hours" stroke="#8884d8" strokeWidth={2} dot={false} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
                     </CardContent>
                   </Card>
                 </TabsContent>
@@ -223,6 +282,8 @@ export default function Health() {
             </div>
           </div>
         </SidebarInset>
+
+        <SamsungHealthImportDialog open={importOpen} onOpenChange={setImportOpen} />
       </div>
     </SidebarProvider>
   );
