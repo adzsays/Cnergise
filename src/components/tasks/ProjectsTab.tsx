@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useProjects } from "@/hooks/useProjects";
 import { useSpaces } from "@/hooks/useSpaces";
+import { useGoals } from "@/hooks/useGoals";
+import { useCurrentSpace } from "@/contexts/SpaceContext";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,20 +11,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FolderPlus, Trash2, Edit, Calendar } from "lucide-react";
+import { FolderPlus, Trash2, Edit, Calendar, Target } from "lucide-react";
 import { format } from "date-fns";
 
-export function ProjectsTab() {
+export function ProjectsTab({ filterGoalId }: { filterGoalId?: string | null } = {}) {
   const { projects, isLoading, createProject, updateProject, deleteProject } = useProjects();
   const { spaces } = useSpaces();
+  const { goals = [] } = useGoals();
+  const { currentSpaceId } = useCurrentSpace();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<any>(null);
-  
+
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     status: "active" as const,
     space_id: "",
+    goal_id: "",
     start_date: "",
     end_date: "",
   });
