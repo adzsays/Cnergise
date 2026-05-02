@@ -392,8 +392,16 @@ export function InvoicePreview({
       .split("\n")
       .map((l, i) => <p key={i} className="my-0.5 leading-snug">{l || "\u00A0"}</p>);
 
+  const userLocale = typeof navigator !== "undefined" ? navigator.language : "en-GB";
+  const fmtDate = (d?: string | null) => {
+    if (!d) return "";
+    const dt = new Date(d);
+    if (isNaN(dt.getTime())) return d;
+    return new Intl.DateTimeFormat(userLocale, { year: "numeric", month: "short", day: "2-digit" }).format(dt);
+  };
+
   return (
-    <div className="invoice-print bg-[#efefef] rounded-2xl shadow-lg border max-w-[900px] mx-auto">
+    <div className="invoice-print bg-white rounded-2xl shadow-lg border max-w-[900px] mx-auto">
       <div className="p-10 sm:p-12 min-h-[1000px] text-[#1d2630]">
         {/* Top: seller + meta */}
         <div className="grid grid-cols-1 sm:grid-cols-[1.15fr,0.85fr] gap-6">
@@ -403,9 +411,9 @@ export function InvoicePreview({
           </div>
           <div className="grid grid-cols-[1fr,auto] gap-x-4 gap-y-1 sm:justify-self-end self-start text-sm">
             <div className="uppercase text-[#a2abb4]">Invoice</div><div className="font-medium">{draft.invoice_number}</div>
-            <div className="uppercase text-[#a2abb4]">Date</div><div className="font-medium">{draft.invoice_date}</div>
+            <div className="uppercase text-[#a2abb4]">Date</div><div className="font-medium">{fmtDate(draft.invoice_date)}</div>
             <div className="uppercase text-[#a2abb4]">Terms</div><div className="font-medium">{draft.terms}</div>
-            <div className="uppercase text-[#a2abb4]">Due Date</div><div className="font-medium">{draft.due_date}</div>
+            <div className="uppercase text-[#a2abb4]">Due Date</div><div className="font-medium">{fmtDate(draft.due_date)}</div>
           </div>
         </div>
 
