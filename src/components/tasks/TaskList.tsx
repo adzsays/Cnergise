@@ -582,7 +582,7 @@ export function TaskList() {
                         </TableCell>
 
                         {/* Actions */}
-                        <TableCell className="py-2 text-right sticky right-0 bg-background">
+                        <TableCell className="py-2 px-1 text-right">
                           <div className="flex items-center justify-end gap-0.5">
                             <Button
                               variant="ghost"
