@@ -1799,13 +1799,16 @@ export type Database = {
       tasks: {
         Row: {
           assigned_to: string | null
+          completion_percent: number
           created_at: string | null
           description: string | null
           due_date: string | null
+          end_date: string | null
           feature_id: string | null
           id: string
           priority: string | null
           project_id: string | null
+          start_date: string | null
           status: string | null
           team_id: string | null
           title: string
@@ -1814,13 +1817,16 @@ export type Database = {
         }
         Insert: {
           assigned_to?: string | null
+          completion_percent?: number
           created_at?: string | null
           description?: string | null
           due_date?: string | null
+          end_date?: string | null
           feature_id?: string | null
           id?: string
           priority?: string | null
           project_id?: string | null
+          start_date?: string | null
           status?: string | null
           team_id?: string | null
           title: string
@@ -1829,13 +1835,16 @@ export type Database = {
         }
         Update: {
           assigned_to?: string | null
+          completion_percent?: number
           created_at?: string | null
           description?: string | null
           due_date?: string | null
+          end_date?: string | null
           feature_id?: string | null
           id?: string
           priority?: string | null
           project_id?: string | null
+          start_date?: string | null
           status?: string | null
           team_id?: string | null
           title?: string
