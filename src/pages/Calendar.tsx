@@ -29,7 +29,7 @@ function addDays(d: Date, n: number) {
 }
 
 export default function Calendar() {
-  const [activeTab, setActiveTab] = useState("month");
+  const [activeTab, setActiveTab] = useState("schedule");
   const [date, setDate] = useState<Date>(new Date());
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
@@ -83,13 +83,10 @@ export default function Calendar() {
         <SidebarInset>
           <div className="flex h-full flex-col">
             <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-              <div className="flex h-16 items-center justify-between px-4 md:px-6">
+              <div className="flex h-14 items-center justify-between px-4 md:px-6">
                 <div className="flex items-center gap-3">
                   <SidebarTrigger className="md:hidden h-9 w-9" />
-                  <h1 className="text-2xl font-bold gradient-heading">Calendar</h1>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-full bg-gradient-to-r from-taskfinity-blue to-taskfinity-purple"></div>
+                  <h1 className="text-lg font-semibold tracking-tight">Calendar</h1>
                 </div>
               </div>
             </header>
@@ -98,10 +95,10 @@ export default function Calendar() {
               activeTab={activeTab}
               onTabChange={setActiveTab}
               tabs={[
-                { value: "month", label: "Month" },
-                { value: "week", label: "Week" },
-                { value: "day", label: "Day" },
                 { value: "schedule", label: "Schedule" },
+                { value: "day", label: "Day" },
+                { value: "week", label: "Week" },
+                { value: "month", label: "Month" },
               ]}
               actions={
                 <div className="flex flex-wrap items-center gap-2">
@@ -141,43 +138,40 @@ export default function Calendar() {
                     <div className="lg:col-span-2">
                       <MonthView date={date} events={events} colorMap={colorMap} onSelectEvent={openEvent} onSelectDate={(d) => { setDate(d); setActiveTab("day"); }} />
                     </div>
-                    <div className="space-y-4">
-                      <GoogleCalendarConnect />
-                      <Card>
-                        <CardHeader className="pb-2">
-                          <CardTitle>Today's Events</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          {todayEvents.length > 0 ? (
-                            <div className="space-y-3">
-                              {todayEvents.map((event) => (
-                                <button
-                                  type="button"
-                                  key={event.id}
-                                  onClick={() => openEvent(event)}
-                                  className="w-full text-left border rounded-md p-3 hover:bg-accent/40"
-                                >
-                                  <h3 className="font-medium text-sm">{event.title}</h3>
-                                  <p className="text-xs text-muted-foreground">
-                                    {event.all_day
-                                      ? "All day"
-                                      : `${new Date(event.start_time).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} – ${new Date(event.end_time).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`}
-                                  </p>
-                                  {event.location && (
-                                    <p className="text-xs text-muted-foreground">{event.location}</p>
-                                  )}
-                                </button>
-                              ))}
-                            </div>
-                          ) : (
-                            <div className="flex flex-col items-center justify-center h-32 text-muted-foreground">
-                              <CalendarIcon className="h-10 w-10 mb-2 opacity-20" />
-                              <p className="text-sm">No events scheduled for today</p>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    </div>
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base">Today</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {todayEvents.length > 0 ? (
+                          <div className="space-y-2">
+                            {todayEvents.map((event) => (
+                              <button
+                                type="button"
+                                key={event.id}
+                                onClick={() => openEvent(event)}
+                                className="w-full text-left border rounded-md p-3 hover:bg-accent/40 transition-colors"
+                              >
+                                <h3 className="font-medium text-sm">{event.title}</h3>
+                                <p className="text-xs text-muted-foreground">
+                                  {event.all_day
+                                    ? "All day"
+                                    : `${new Date(event.start_time).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} – ${new Date(event.end_time).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`}
+                                </p>
+                                {event.location && (
+                                  <p className="text-xs text-muted-foreground">{event.location}</p>
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center h-32 text-muted-foreground">
+                            <CalendarIcon className="h-8 w-8 mb-2 opacity-20" />
+                            <p className="text-xs">No events today</p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
                   </div>
                 </TabsContent>
 
