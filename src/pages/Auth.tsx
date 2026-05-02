@@ -780,6 +780,8 @@ const Auth = () => {
           </Card>
         </div>
       )}
+
+      <RequestInviteDialog open={showInviteRequest} onOpenChange={setShowInviteRequest} />
     </div>
   );
 };
