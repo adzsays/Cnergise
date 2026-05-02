@@ -29,7 +29,6 @@ const WATER_GOAL = 2.5;
 
 export default function Health() {
   const [activeTab, setActiveTab] = React.useState("overview");
-  const [importOpen, setImportOpen] = React.useState(false);
 
   const { data: metrics = [], isLoading } = useQuery({
     queryKey: ["health-metrics"],
@@ -60,8 +59,6 @@ export default function Health() {
 
   const steps = today?.steps ?? 0;
   const stepsPct = Math.min(100, Math.round((steps / STEPS_GOAL) * 100));
-  const waterIntake = 0; // not tracked by Samsung Health export
-  const waterPct = Math.min(100, Math.round((waterIntake / WATER_GOAL) * 100));
   const hrCurrent = today?.avg_heart_rate ?? 0;
   const hrResting = today?.resting_heart_rate ?? 0;
   const hrPrev = prev?.avg_heart_rate ?? 0;
@@ -78,7 +75,9 @@ export default function Health() {
           <div className="flex h-full flex-col">
             <TopBar title="Health" />
 
-            <div className="flex-1 overflow-auto p-4 md:p-6">
+            <div className="flex-1 overflow-auto p-4 md:p-6 space-y-6">
+              <HealthSourceHub />
+
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <div className="flex items-center justify-between mb-6 gap-2 flex-wrap">
                   <TabsList className="bg-muted/50">
@@ -87,20 +86,13 @@ export default function Health() {
                     <TabsTrigger value="nutrition" className="text-sm">Nutrition</TabsTrigger>
                     <TabsTrigger value="sleep" className="text-sm">Sleep</TabsTrigger>
                   </TabsList>
-                  <Button size="sm" onClick={() => setImportOpen(true)} className="gap-2">
-                    <Upload className="h-4 w-4" />
-                    Import Samsung Health
-                  </Button>
                 </div>
 
                 <TabsContent value="overview" className="mt-0">
                   {!isLoading && !hasData && (
                     <Card className="mb-6">
-                      <CardContent className="py-10 text-center space-y-3">
-                        <p className="text-muted-foreground">No health data yet.</p>
-                        <Button onClick={() => setImportOpen(true)} className="gap-2">
-                          <Upload className="h-4 w-4" /> Import Samsung Health export
-                        </Button>
+                      <CardContent className="py-10 text-center text-muted-foreground">
+                        No health data yet — connect a source above to get started.
                       </CardContent>
                     </Card>
                   )}
