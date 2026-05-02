@@ -20,6 +20,7 @@ export function InvoiceList({ onEdit, onNew }: { onEdit: (id: string) => void; o
   const { invoices, isLoading, remove } = useInvoices();
   const { customers } = useCustomers();
   const customerName = (id: string | null) => customers.find((c) => c.id === id)?.name ?? "—";
+  const customerRef = (id: string | null) => customers.find((c) => c.id === id)?.reference_code ?? null;
 
   const totalOutstanding = invoices
     .filter((i) => i.status !== "paid" && i.status !== "void")
