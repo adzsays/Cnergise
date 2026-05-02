@@ -98,10 +98,10 @@ export default function Calendar() {
               activeTab={activeTab}
               onTabChange={setActiveTab}
               tabs={[
-                { value: "month", label: "Month" },
-                { value: "week", label: "Week" },
-                { value: "day", label: "Day" },
                 { value: "schedule", label: "Schedule" },
+                { value: "day", label: "Day" },
+                { value: "week", label: "Week" },
+                { value: "month", label: "Month" },
               ]}
               actions={
                 <div className="flex flex-wrap items-center gap-2">
@@ -141,43 +141,40 @@ export default function Calendar() {
                     <div className="lg:col-span-2">
                       <MonthView date={date} events={events} colorMap={colorMap} onSelectEvent={openEvent} onSelectDate={(d) => { setDate(d); setActiveTab("day"); }} />
                     </div>
-                    <div className="space-y-4">
-                      <GoogleCalendarConnect />
-                      <Card>
-                        <CardHeader className="pb-2">
-                          <CardTitle>Today's Events</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          {todayEvents.length > 0 ? (
-                            <div className="space-y-3">
-                              {todayEvents.map((event) => (
-                                <button
-                                  type="button"
-                                  key={event.id}
-                                  onClick={() => openEvent(event)}
-                                  className="w-full text-left border rounded-md p-3 hover:bg-accent/40"
-                                >
-                                  <h3 className="font-medium text-sm">{event.title}</h3>
-                                  <p className="text-xs text-muted-foreground">
-                                    {event.all_day
-                                      ? "All day"
-                                      : `${new Date(event.start_time).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} – ${new Date(event.end_time).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`}
-                                  </p>
-                                  {event.location && (
-                                    <p className="text-xs text-muted-foreground">{event.location}</p>
-                                  )}
-                                </button>
-                              ))}
-                            </div>
-                          ) : (
-                            <div className="flex flex-col items-center justify-center h-32 text-muted-foreground">
-                              <CalendarIcon className="h-10 w-10 mb-2 opacity-20" />
-                              <p className="text-sm">No events scheduled for today</p>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    </div>
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base">Today</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {todayEvents.length > 0 ? (
+                          <div className="space-y-2">
+                            {todayEvents.map((event) => (
+                              <button
+                                type="button"
+                                key={event.id}
+                                onClick={() => openEvent(event)}
+                                className="w-full text-left border rounded-md p-3 hover:bg-accent/40 transition-colors"
+                              >
+                                <h3 className="font-medium text-sm">{event.title}</h3>
+                                <p className="text-xs text-muted-foreground">
+                                  {event.all_day
+                                    ? "All day"
+                                    : `${new Date(event.start_time).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} – ${new Date(event.end_time).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`}
+                                </p>
+                                {event.location && (
+                                  <p className="text-xs text-muted-foreground">{event.location}</p>
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center h-32 text-muted-foreground">
+                            <CalendarIcon className="h-8 w-8 mb-2 opacity-20" />
+                            <p className="text-xs">No events today</p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
                   </div>
                 </TabsContent>
 
