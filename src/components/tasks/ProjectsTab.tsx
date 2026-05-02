@@ -141,26 +141,47 @@ export function ProjectsTab({ filterGoalId }: { filterGoalId?: string | null } =
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 />
               </div>
-              <div>
-                <Label htmlFor="space">Space</Label>
-                <Select
-                  value={formData.space_id}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, space_id: value === "__none__" ? "" : value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a space (optional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">No Space</SelectItem>
-                    {spaces.map((space) => (
-                      <SelectItem key={space.id} value={space.id}>
-                        {space.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="space">Space</Label>
+                  <Select
+                    value={formData.space_id || "__none__"}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, space_id: value === "__none__" ? "" : value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a space" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">No Space</SelectItem>
+                      {spaces.map((space) => (
+                        <SelectItem key={space.id} value={space.id}>{space.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="goal">Parent Goal</Label>
+                  <Select
+                    value={formData.goal_id || "__none__"}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, goal_id: value === "__none__" ? "" : value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Link to a goal (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">No Goal</SelectItem>
+                      {goals
+                        .filter((g) => !formData.space_id || (g as any).space_id === formData.space_id)
+                        .map((g) => (
+                          <SelectItem key={g.id} value={g.id}>{g.title}</SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div>
                 <Label htmlFor="status">Status</Label>
@@ -204,56 +225,58 @@ export function ProjectsTab({ filterGoalId }: { filterGoalId?: string | null } =
         </Dialog>
       </div>
 
-      {projects.length === 0 ? (
+      {visibleProjects.length === 0 ? (
         <Card className="p-8 text-center">
-          <p className="text-muted-foreground">No projects yet. Create your first project to get started!</p>
+          <p className="text-muted-foreground">No projects here yet. Create one to start working on a goal.</p>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {projects.map((project) => (
-            <Card key={project.id} className="p-4 space-y-3">
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg">{project.name}</h3>
-                  {project.description && (
-                    <p className="text-sm text-muted-foreground mt-1">{project.description}</p>
-                  )}
+          {visibleProjects.map((project) => {
+            const linkedGoal = (project as any).goal_id ? goalLookup.get((project as any).goal_id) : null;
+            return (
+              <Card key={project.id} className="p-4 space-y-3">
+                <div className="flex justify-between items-start gap-2">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold truncate">{project.name}</h3>
+                    {project.description && (
+                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{project.description}</p>
+                    )}
+                  </div>
+                  <Badge className={getStatusColor(project.status)}>{project.status}</Badge>
                 </div>
-                <Badge className={getStatusColor(project.status)}>
-                  {project.status}
-                </Badge>
-              </div>
-              
-              {(project.start_date || project.end_date) && (
-                <div className="flex items-center text-sm text-muted-foreground">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  {project.start_date && format(new Date(project.start_date), "MMM d, yyyy")}
-                  {project.start_date && project.end_date && " - "}
-                  {project.end_date && format(new Date(project.end_date), "MMM d, yyyy")}
-                </div>
-              )}
 
-              <div className="flex gap-2 pt-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleEdit(project)}
-                  className="flex-1"
-                >
-                  <Edit className="h-4 w-4 mr-1" />
-                  Edit
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleDelete(project.id)}
-                  className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </Card>
-          ))}
+                {linkedGoal && (
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Target className="h-3.5 w-3.5" />
+                    <span className="truncate">Goal: {linkedGoal.title}</span>
+                  </div>
+                )}
+
+                {(project.start_date || project.end_date) && (
+                  <div className="flex items-center text-xs text-muted-foreground">
+                    <Calendar className="h-3.5 w-3.5 mr-1.5" />
+                    {project.start_date && format(new Date(project.start_date), "MMM d, yyyy")}
+                    {project.start_date && project.end_date && " - "}
+                    {project.end_date && format(new Date(project.end_date), "MMM d, yyyy")}
+                  </div>
+                )}
+
+                <div className="flex gap-2 pt-2">
+                  <Button variant="outline" size="sm" onClick={() => handleEdit(project)} className="flex-1">
+                    <Edit className="h-3.5 w-3.5 mr-1" />Edit
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDelete(project.id)}
+                    className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>
