@@ -229,6 +229,14 @@ export function EventDialog({ open, onOpenChange, event, defaultDate, subscripti
                 {enabledSubs.map((s) => {
                   const acct = s.account_id ? accountById.get(s.account_id) : null;
                   const acctEmail = acct?.google_email ?? "Google";
+                  const rawLabel = s.summary || s.google_calendar_id;
+                  // Primary calendars often have the account email as their summary,
+                  // which would render "email · email". Show a friendlier label instead.
+                  const isPrimaryLike =
+                    s.is_primary ||
+                    rawLabel.toLowerCase() === acctEmail.toLowerCase() ||
+                    s.google_calendar_id.toLowerCase() === acctEmail.toLowerCase();
+                  const label = isPrimaryLike ? "Primary" : rawLabel;
                   return (
                     <SelectItem key={s.id} value={s.id}>
                       <span className="inline-flex items-center gap-2">
@@ -236,7 +244,7 @@ export function EventDialog({ open, onOpenChange, event, defaultDate, subscripti
                           className="inline-block h-2.5 w-2.5 rounded-full"
                           style={{ backgroundColor: s.background_color ?? "#666" }}
                         />
-                        {s.summary || s.google_calendar_id} · {acctEmail}
+                        {label} · {acctEmail}
                       </span>
                     </SelectItem>
                   );
