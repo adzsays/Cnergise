@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Auth from "./pages/Auth";
 import Stealth from "./pages/Stealth";
 import Onboarding from "./pages/Onboarding";
@@ -24,6 +24,7 @@ import Teams from "./pages/Teams";
 import Contacts from "./pages/Contacts";
 import Chat from "./pages/Chat";
 import ProjectsAnalytics from "./pages/ProjectsAnalytics";
+import Plan from "./pages/Plan";
 import Monitoring from "./pages/Monitoring";
 import Learning from "./pages/Learning";
 import Echo from "./pages/Echo";
@@ -49,8 +50,11 @@ const App = () => (
               <Route path="/install" element={<Install />} />
               <Route path="/onboarding" element={<AuthGuard><Onboarding /></AuthGuard>} />
               <Route path="/home" element={<AuthGuard><Home /></AuthGuard>} />
-              <Route path="/tasks" element={<AuthGuard><FeatureGate featureKey="tasks"><TaskManagement /></FeatureGate></AuthGuard>} />
-              <Route path="/projects" element={<AuthGuard><FeatureGate featureKey="projects"><ProjectsAnalytics /></FeatureGate></AuthGuard>} />
+              <Route path="/plan" element={<AuthGuard><FeatureGate featureKey="tasks"><Plan /></FeatureGate></AuthGuard>} />
+              <Route path="/tasks" element={<Navigate to="/plan" replace />} />
+              <Route path="/projects" element={<Navigate to="/plan" replace />} />
+              <Route path="/goals" element={<Navigate to="/plan" replace />} />
+              <Route path="/projects-analytics" element={<AuthGuard><FeatureGate featureKey="projects"><ProjectsAnalytics /></FeatureGate></AuthGuard>} />
               <Route path="/dashboard" element={<AuthGuard><Dashboard /></AuthGuard>} />
               <Route path="/calendar" element={<AuthGuard><FeatureGate featureKey="calendar"><Calendar /></FeatureGate></AuthGuard>} />
               <Route path="/mail" element={<AuthGuard><FeatureGate featureKey="mail"><Mail /></FeatureGate></AuthGuard>} />
