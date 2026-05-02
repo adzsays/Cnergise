@@ -423,6 +423,45 @@ export type Database = {
           },
         ]
       }
+      credit_scores: {
+        Row: {
+          created_at: string
+          id: string
+          max_score: number
+          notes: string | null
+          provider: string
+          rating: string | null
+          score: number
+          score_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          max_score?: number
+          notes?: string | null
+          provider: string
+          rating?: string | null
+          score: number
+          score_date?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          max_score?: number
+          notes?: string | null
+          provider?: string
+          rating?: string | null
+          score?: number
+          score_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       echo_entries: {
         Row: {
           amount: number | null
