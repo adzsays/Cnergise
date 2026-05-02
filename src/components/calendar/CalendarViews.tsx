@@ -40,7 +40,20 @@ type ViewProps = {
   events: CalendarEvent[];
   onSelectEvent?: (e: CalendarEvent) => void;
   onSelectDate?: (d: Date) => void;
+  colorMap?: Record<string, string>;
 };
+
+function eventColor(ev: CalendarEvent, colorMap?: Record<string, string>): string | undefined {
+  if (ev.google_calendar_id && colorMap?.[ev.google_calendar_id]) return colorMap[ev.google_calendar_id];
+  return undefined;
+}
+
+function eventStyle(ev: CalendarEvent, colorMap?: Record<string, string>): React.CSSProperties {
+  const c = eventColor(ev, colorMap);
+  if (!c) return {};
+  // background tinted, text uses the same color for contrast
+  return { backgroundColor: `${c}22`, color: c, borderLeft: `3px solid ${c}` };
+}
 
 export function MonthView({ date, events, onSelectDate, onSelectEvent }: ViewProps) {
   const gridStart = useMemo(() => startOfMonthGrid(date), [date]);
