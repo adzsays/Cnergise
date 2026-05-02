@@ -16,6 +16,7 @@ import {
   useInvoice,
   useInvoiceItemsMutations,
   useInvoices,
+  useServices,
 } from "@/hooks/useInvoicing";
 import { useSpaces } from "@/hooks/useSpaces";
 import { useProjects } from "@/hooks/useProjects";
@@ -56,6 +57,7 @@ export function InvoiceEditor({ invoiceId, onSaved }: Props) {
   const { customers } = useCustomers();
   const { spaces } = useSpaces();
   const { projects } = useProjects();
+  const { services } = useServices();
   const loaded = useInvoice(invoiceId);
   const { upsert } = useInvoices();
   const itemsMut = useInvoiceItemsMutations();
@@ -308,6 +310,37 @@ export function InvoiceEditor({ invoiceId, onSaved }: Props) {
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>
+              {services.length > 0 && (
+                <Select
+                  value=""
+                  onValueChange={(svcId) => {
+                    const s = services.find((x) => x.id === svcId);
+                    if (!s) return;
+                    setItem(idx, {
+                      service: s.name,
+                      description: s.description ?? "",
+                      qty: Number(s.default_qty ?? 1),
+                      rate: Number(s.default_rate ?? 0),
+                    });
+                    // Inherit Space / cost centre / project on the invoice if not set
+                    setDraft((d) => ({
+                      ...d,
+                      space_id: d.space_id ?? s.space_id ?? null,
+                      project_id: d.project_id ?? s.project_id ?? null,
+                      cost_centre: d.cost_centre || s.cost_centre || "",
+                    }));
+                  }}
+                >
+                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Pick from saved services…" /></SelectTrigger>
+                  <SelectContent>
+                    {services.filter((s) => s.is_active).map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.name} — {fmtMoney(Number(s.default_rate), s.currency)}{s.unit ? `/${s.unit}` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
               <Input placeholder="Service" value={it.service ?? ""} onChange={(e) => setItem(idx, { service: e.target.value })} />
               <Textarea rows={2} placeholder="Description" value={it.description ?? ""} onChange={(e) => setItem(idx, { description: e.target.value })} />
               <Textarea rows={2} placeholder="Side note (e.g. Week 4)" value={it.meta ?? ""} onChange={(e) => setItem(idx, { meta: e.target.value })} />

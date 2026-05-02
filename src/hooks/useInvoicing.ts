@@ -453,6 +453,71 @@ export function useBankReceipts() {
   return { receipts: list.data ?? [], isLoading: list.isLoading, bulkInsert, update };
 }
 
+// ---------- Services (reusable invoice line catalog) ----------
+export type Service = {
+  id: string;
+  user_id: string;
+  name: string;
+  description: string | null;
+  default_rate: number;
+  default_qty: number;
+  unit: string | null;
+  currency: string;
+  cost_centre: string | null;
+  space_id: string | null;
+  project_id: string | null;
+  is_active: boolean;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export function useServices() {
+  const qc = useQueryClient();
+
+  const list = useQuery({
+    queryKey: ["invoicing", "services"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("services")
+        .select("*")
+        .order("name", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as Service[];
+    },
+  });
+
+  const upsert = useMutation({
+    mutationFn: async (payload: Partial<Service> & { id?: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+      const row = { ...payload, user_id: user.id };
+      if (payload.id) {
+        const { data, error } = await (supabase as any)
+          .from("services").update(row).eq("id", payload.id).select().single();
+        if (error) throw error;
+        return data;
+      }
+      const { data, error } = await (supabase as any)
+        .from("services").insert(row).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => { inv(qc)(); toast.success("Service saved"); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await (supabase as any).from("services").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { inv(qc)(); toast.success("Deleted"); },
+  });
+
+  return { services: list.data ?? [], isLoading: list.isLoading, upsert, remove };
+}
+
 // helper: format currency for invoice screens
 export function fmtMoney(value: number, currency = "GBP") {
   const symbol: Record<string, string> = { GBP: "£", USD: "$", EUR: "€" };

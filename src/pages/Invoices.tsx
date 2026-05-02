@@ -3,11 +3,12 @@ import { SidebarProvider, SidebarInset, SidebarRail } from "@/components/ui/side
 import { AppSidebar } from "@/components/AppSidebar";
 import { TopBar } from "@/components/layout/TopBar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Users, Building2, ListChecks } from "lucide-react";
+import { FileText, Users, Building2, ListChecks, Briefcase } from "lucide-react";
 import { InvoiceList } from "@/components/invoices/InvoiceList";
 import { InvoiceEditor } from "@/components/invoices/InvoiceEditor";
 import { CustomerManager } from "@/components/invoices/CustomerManager";
 import { BillingEntityManager } from "@/components/invoices/BillingEntityManager";
+import { ServiceManager } from "@/components/invoices/ServiceManager";
 
 const Invoices = () => {
   const [tab, setTab] = useState("list");
@@ -32,6 +33,7 @@ const Invoices = () => {
                   <TabsTrigger value="list"><ListChecks className="h-4 w-4 mr-1" />Invoices</TabsTrigger>
                   <TabsTrigger value="editor"><FileText className="h-4 w-4 mr-1" />Editor</TabsTrigger>
                   <TabsTrigger value="customers"><Users className="h-4 w-4 mr-1" />Customers</TabsTrigger>
+                  <TabsTrigger value="services"><Briefcase className="h-4 w-4 mr-1" />Services</TabsTrigger>
                   <TabsTrigger value="entities"><Building2 className="h-4 w-4 mr-1" />Billing entities</TabsTrigger>
                 </TabsList>
 
@@ -42,6 +44,7 @@ const Invoices = () => {
                   <InvoiceEditor invoiceId={editingId} onSaved={(id) => setEditingId(id)} />
                 </TabsContent>
                 <TabsContent value="customers"><CustomerManager /></TabsContent>
+                <TabsContent value="services"><ServiceManager /></TabsContent>
                 <TabsContent value="entities"><BillingEntityManager /></TabsContent>
               </Tabs>
             </div>
