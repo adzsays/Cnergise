@@ -267,11 +267,25 @@ const Chat = () => {
                   </div>
                 </>
               ) : (
-                <div className="flex-1 flex items-center justify-center">
-                  <div className="text-center text-muted-foreground">
-                    <MessageSquare className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                    <h2 className="text-xl font-semibold mb-2">Welcome to Chat</h2>
-                    <p>Select a channel or create one to start chatting</p>
+                <div className="flex-1 flex items-center justify-center p-6">
+                  <div className="text-center text-muted-foreground max-w-sm">
+                    {mode === "dm" ? (
+                      <>
+                        <AtSign className="h-16 w-16 mx-auto mb-4 opacity-30" />
+                        <h2 className="text-xl font-semibold mb-2">Your Cnergise ID</h2>
+                        <p className="text-sm">
+                          {myHandle
+                            ? `You're @${myHandle}. Pick a thread on the left, or tap "New" to message a contact's @handle.`
+                            : "Claim your @handle on the left to start direct messaging."}
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <MessageSquare className="h-16 w-16 mx-auto mb-4 opacity-30" />
+                        <h2 className="text-xl font-semibold mb-2">Welcome to Channels</h2>
+                        <p className="text-sm">Select a channel or create one to start chatting</p>
+                      </>
+                    )}
                   </div>
                 </div>
               )}
