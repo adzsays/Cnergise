@@ -28,6 +28,7 @@ import Plan from "./pages/Plan";
 import Monitoring from "./pages/Monitoring";
 import Learning from "./pages/Learning";
 import Echo from "./pages/Echo";
+import Invoices from "./pages/Invoices";
 import NotFound from "./pages/NotFound";
 import { AuthGuard } from "./components/AuthGuard";
 import { FeatureGate } from "./components/features/FeatureGate";
@@ -72,6 +73,7 @@ const App = () => (
               <Route path="/monitoring" element={<AuthGuard><Monitoring /></AuthGuard>} />
               <Route path="/learning" element={<AuthGuard><FeatureGate featureKey="learning"><Learning /></FeatureGate></AuthGuard>} />
               <Route path="/echo" element={<AuthGuard><FeatureGate featureKey="echo"><Echo /></FeatureGate></AuthGuard>} />
+              <Route path="/invoices" element={<AuthGuard><FeatureGate featureKey="invoicing"><Invoices /></FeatureGate></AuthGuard>} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
