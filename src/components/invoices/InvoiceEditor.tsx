@@ -98,15 +98,19 @@ export function InvoiceEditor({ invoiceId, onSaved }: Props) {
     }
   }, [loaded.data, invoiceId, entities]);
 
-  // Apply selected customer to client snapshot fields (only when changed)
+  // Apply selected customer to client snapshot fields + auto invoice number per client
   const applyCustomer = (id: string) => {
     const c = customers.find((x) => x.id === id);
     if (!c) return;
+    const seq = String(c.next_invoice_seq ?? 1).padStart(3, "0");
+    const ref = c.reference_code || c.name.slice(0, 4).toUpperCase().replace(/\s+/g, "");
     setDraft((d) => ({
       ...d,
       customer_id: id,
       client_name: c.name,
       client_address_lines: c.address_lines ?? "",
+      // Auto-generate per-client invoice number when creating new (no existing id)
+      invoice_number: invoiceId || d.id ? d.invoice_number : `${ref}-${seq}`,
     }));
   };
 
