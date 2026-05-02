@@ -1,38 +1,35 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Upload, Clock, CheckCircle2, ExternalLink } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Upload, RefreshCw, CheckCircle2, Smartphone, Apple, FileSpreadsheet, Activity, Watch, Circle, Heart, Scale } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { HealthImportDialog, type ImporterProvider } from "./HealthImportDialog";
 import { formatDistanceToNow } from "date-fns";
+import { cn } from "@/lib/utils";
 
 type ProviderDef = {
   key: string;
   name: string;
   mode: "upload" | "oauth" | "soon";
   importerProvider?: ImporterProvider;
-  description: string;
+  Icon: React.ComponentType<{ className?: string }>;
+  tint: string;
+  hint: string;
 };
 
 const PROVIDERS: ProviderDef[] = [
   { key: "samsung_health", name: "Samsung Health", mode: "upload", importerProvider: "samsung_health",
-    description: "Upload the ZIP from Samsung Health → Settings → Download personal data." },
+    Icon: Smartphone, tint: "text-blue-500", hint: "Upload ZIP from Samsung Health export" },
   { key: "apple_health", name: "Apple Health", mode: "upload", importerProvider: "apple_health",
-    description: "Upload export.zip from iPhone Health → Profile → Export All Health Data." },
-  { key: "generic_csv", name: "CSV / Spreadsheet", mode: "upload", importerProvider: "generic_csv",
-    description: "Any CSV with a date column and metric columns (steps, hr, sleep, etc.)." },
-  { key: "fitbit", name: "Fitbit", mode: "soon",
-    description: "Auto-sync via Fitbit API. Coming next — needs API keys." },
-  { key: "garmin", name: "Garmin Connect", mode: "soon",
-    description: "Garmin requires business approval for API access." },
-  { key: "oura", name: "Oura Ring", mode: "soon",
-    description: "Auto-sync via Oura API. Add personal access token." },
-  { key: "whoop", name: "Whoop", mode: "soon",
-    description: "Auto-sync via Whoop API." },
-  { key: "withings", name: "Withings", mode: "soon",
-    description: "Auto-sync via Withings API. Best for weight/body composition." },
+    Icon: Apple, tint: "text-foreground", hint: "Upload export.zip from iPhone Health" },
+  { key: "generic_csv", name: "CSV", mode: "upload", importerProvider: "generic_csv",
+    Icon: FileSpreadsheet, tint: "text-emerald-500", hint: "Any CSV with a date column" },
+  { key: "fitbit", name: "Fitbit", mode: "soon", Icon: Activity, tint: "text-cyan-500", hint: "Coming soon" },
+  { key: "garmin", name: "Garmin", mode: "soon", Icon: Watch, tint: "text-sky-600", hint: "Coming soon" },
+  { key: "oura", name: "Oura", mode: "soon", Icon: Circle, tint: "text-muted-foreground", hint: "Coming soon" },
+  { key: "whoop", name: "Whoop", mode: "soon", Icon: Heart, tint: "text-rose-500", hint: "Coming soon" },
+  { key: "withings", name: "Withings", mode: "soon", Icon: Scale, tint: "text-indigo-500", hint: "Coming soon" },
 ];
 
 export function HealthSourceHub() {
@@ -70,66 +67,61 @@ export function HealthSourceHub() {
   return (
     <>
       <Card>
-        <CardHeader>
-          <CardTitle>Health data sources</CardTitle>
-          <CardDescription>
-            Connect a source to populate your dashboard. Re-uploading the same export will refresh
-            existing days — not duplicate them.
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Health data sources</CardTitle>
+          <CardDescription className="text-xs">
+            Tap a logo to sync or upload. Re-uploads refresh existing days — no duplicates.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {PROVIDERS.map((p) => {
-              const s = sourceMap.get(p.key);
-              const connected = !!s;
-              return (
-                <div key={p.key} className="rounded-lg border p-3 flex flex-col gap-2 bg-card">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-medium text-sm">{p.name}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{p.description}</p>
-                    </div>
-                    {p.mode === "soon" && (
-                      <Badge variant="outline" className="shrink-0 text-xs">Soon</Badge>
-                    )}
-                    {connected && (
-                      <Badge variant="secondary" className="shrink-0 gap-1 text-xs">
-                        <CheckCircle2 className="h-3 w-3" /> Synced
-                      </Badge>
-                    )}
-                  </div>
+          <TooltipProvider delayDuration={200}>
+            <div className="flex flex-wrap gap-2">
+              {PROVIDERS.map((p) => {
+                const s = sourceMap.get(p.key);
+                const connected = !!s;
+                const disabled = p.mode === "soon";
+                const ActionIcon = connected ? RefreshCw : Upload;
+                const tooltip = disabled
+                  ? `${p.name} — ${p.hint}`
+                  : connected && s
+                    ? `${p.name} · ${s.daysCount} days · updated ${formatDistanceToNow(new Date(s.lastUpdated), { addSuffix: true })}`
+                    : `${p.name} — ${p.hint}`;
 
-                  {connected && s && (
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <Clock className="h-3 w-3" />
-                      <span>
-                        {s.daysCount} days · updated {formatDistanceToNow(new Date(s.lastUpdated), { addSuffix: true })}
-                      </span>
-                    </div>
-                  )}
-
-                  <div className="mt-auto pt-1">
-                    {p.mode === "upload" && p.importerProvider && (
-                      <Button
-                        size="sm"
-                        variant={connected ? "outline" : "default"}
-                        className="w-full gap-1.5"
-                        onClick={() => setOpenProvider(p.importerProvider!)}
+                return (
+                  <Tooltip key={p.key}>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => p.importerProvider && setOpenProvider(p.importerProvider)}
+                        className={cn(
+                          "group relative h-12 w-12 rounded-lg border bg-card flex items-center justify-center transition-all",
+                          disabled
+                            ? "opacity-40 cursor-not-allowed"
+                            : "hover:border-primary hover:shadow-sm hover:-translate-y-0.5 cursor-pointer",
+                          connected && "border-primary/40"
+                        )}
+                        aria-label={tooltip}
                       >
-                        <Upload className="h-3.5 w-3.5" />
-                        {connected ? "Update data" : "Upload"}
-                      </Button>
-                    )}
-                    {p.mode === "soon" && (
-                      <Button size="sm" variant="ghost" className="w-full gap-1.5 text-muted-foreground" disabled>
-                        <ExternalLink className="h-3.5 w-3.5" /> Coming soon
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                        <p.Icon className={cn("h-5 w-5", p.tint)} />
+                        {connected && (
+                          <CheckCircle2 className="absolute -top-1 -right-1 h-3.5 w-3.5 text-primary bg-background rounded-full" />
+                        )}
+                        {!disabled && (
+                          <span className="absolute inset-0 rounded-lg bg-background/80 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                            <ActionIcon className="h-4 w-4 text-foreground" />
+                          </span>
+                        )}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="text-xs">
+                      {tooltip}
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              })}
+            </div>
+          </TooltipProvider>
         </CardContent>
       </Card>
 
