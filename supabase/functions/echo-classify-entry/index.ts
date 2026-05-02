@@ -116,6 +116,8 @@ Be smart about extracting MULTIPLE entries from a single sentence (e.g. "spent Â
                         amount: { type: "number" },
                         unit: { type: "string" },
                         goal_id: { type: "string" },
+                        project_id: { type: "string" },
+                        task_id: { type: "string" },
                       },
                       required: ["type", "title", "description"],
                       additionalProperties: false,
