@@ -12,7 +12,7 @@ import TaskManagement from "./pages/TaskManagement";
 import Dashboard from "./pages/Dashboard";
 import Calendar from "./pages/Calendar";
 import Mail from "./pages/Mail";
-import Goals from "./pages/Goals";
+
 import Health from "./pages/Health";
 import Portfolio from "./pages/Portfolio";
 import Finances from "./pages/Finances";
