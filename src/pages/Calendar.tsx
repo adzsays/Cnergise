@@ -121,21 +121,25 @@ export default function Calendar() {
             <div className="flex-1 overflow-auto p-4 md:p-6">
               {activeTab !== "schedule" && (
                 <div className="mb-3 flex items-center justify-between">
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-2">
                     <Button size="icon" variant="outline" onClick={() => navigate(-1)} className="h-8 w-8">
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={() => setDate(new Date())}>
-                      Today
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setDate(new Date())}
+                      className="min-w-[180px] justify-center text-sm font-medium"
+                    >
+                      {headerLabel}
                     </Button>
                     <Button size="icon" variant="outline" onClick={() => navigate(1)} className="h-8 w-8">
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
-                  <div className="text-sm font-medium text-muted-foreground">
-                    {headerLabel}
-                    {isLoading && " · loading…"}
-                  </div>
+                  {isLoading && (
+                    <div className="text-xs text-muted-foreground">loading…</div>
+                  )}
                 </div>
               )}
 
