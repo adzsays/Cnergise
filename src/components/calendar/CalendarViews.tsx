@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import React, { useMemo } from "react";
 import { CalendarEvent } from "@/hooks/useCalendarEvents";
 import { cn } from "@/lib/utils";
 
