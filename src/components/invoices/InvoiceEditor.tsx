@@ -151,6 +151,7 @@ export function InvoiceEditor({ invoiceId, onSaved }: Props) {
     }
     setSaving(true);
     try {
+      const isNew = !invoiceId && !draft.id;
       const payload: Partial<Invoice> = {
         ...draft,
         subtotal: totals.subtotal,
@@ -161,6 +162,16 @@ export function InvoiceEditor({ invoiceId, onSaved }: Props) {
       };
       const saved = await upsert.mutateAsync(payload);
       await itemsMut.replaceAll.mutateAsync({ invoiceId: saved.id, items });
+      // Bump per-client invoice sequence on first save
+      if (isNew && draft.customer_id) {
+        const cust = customers.find((c) => c.id === draft.customer_id);
+        if (cust) {
+          await supabase
+            .from("customers")
+            .update({ next_invoice_seq: (cust.next_invoice_seq ?? 1) + 1 })
+            .eq("id", cust.id);
+        }
+      }
       toast.success("Invoice saved");
       onSaved?.(saved.id);
     } finally {
