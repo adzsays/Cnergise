@@ -31,6 +31,8 @@ export type Customer = {
   address_lines: string | null;
   tax_id: string | null;
   notes: string | null;
+  reference_code: string | null;
+  next_invoice_seq: number;
   created_at: string;
   updated_at: string;
 };

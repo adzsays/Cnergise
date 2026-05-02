@@ -98,15 +98,19 @@ export function InvoiceEditor({ invoiceId, onSaved }: Props) {
     }
   }, [loaded.data, invoiceId, entities]);
 
-  // Apply selected customer to client snapshot fields (only when changed)
+  // Apply selected customer to client snapshot fields + auto invoice number per client
   const applyCustomer = (id: string) => {
     const c = customers.find((x) => x.id === id);
     if (!c) return;
+    const seq = String(c.next_invoice_seq ?? 1).padStart(3, "0");
+    const ref = c.reference_code || c.name.slice(0, 4).toUpperCase().replace(/\s+/g, "");
     setDraft((d) => ({
       ...d,
       customer_id: id,
       client_name: c.name,
       client_address_lines: c.address_lines ?? "",
+      // Auto-generate per-client invoice number when creating new (no existing id)
+      invoice_number: invoiceId || d.id ? d.invoice_number : `${ref}-${seq}`,
     }));
   };
 
@@ -147,6 +151,7 @@ export function InvoiceEditor({ invoiceId, onSaved }: Props) {
     }
     setSaving(true);
     try {
+      const isNew = !invoiceId && !draft.id;
       const payload: Partial<Invoice> = {
         ...draft,
         subtotal: totals.subtotal,
@@ -157,6 +162,16 @@ export function InvoiceEditor({ invoiceId, onSaved }: Props) {
       };
       const saved = await upsert.mutateAsync(payload);
       await itemsMut.replaceAll.mutateAsync({ invoiceId: saved.id, items });
+      // Bump per-client invoice sequence on first save
+      if (isNew && draft.customer_id) {
+        const cust = customers.find((c) => c.id === draft.customer_id);
+        if (cust) {
+          await supabase
+            .from("customers")
+            .update({ next_invoice_seq: (cust.next_invoice_seq ?? 1) + 1 })
+            .eq("id", cust.id);
+        }
+      }
       toast.success("Invoice saved");
       onSaved?.(saved.id);
     } finally {
@@ -377,8 +392,16 @@ export function InvoicePreview({
       .split("\n")
       .map((l, i) => <p key={i} className="my-0.5 leading-snug">{l || "\u00A0"}</p>);
 
+  const userLocale = typeof navigator !== "undefined" ? navigator.language : "en-GB";
+  const fmtDate = (d?: string | null) => {
+    if (!d) return "";
+    const dt = new Date(d);
+    if (isNaN(dt.getTime())) return d;
+    return new Intl.DateTimeFormat(userLocale, { year: "numeric", month: "short", day: "2-digit" }).format(dt);
+  };
+
   return (
-    <div className="invoice-print bg-[#efefef] rounded-2xl shadow-lg border max-w-[900px] mx-auto">
+    <div className="invoice-print bg-white rounded-2xl shadow-lg border max-w-[900px] mx-auto">
       <div className="p-10 sm:p-12 min-h-[1000px] text-[#1d2630]">
         {/* Top: seller + meta */}
         <div className="grid grid-cols-1 sm:grid-cols-[1.15fr,0.85fr] gap-6">
@@ -388,9 +411,9 @@ export function InvoicePreview({
           </div>
           <div className="grid grid-cols-[1fr,auto] gap-x-4 gap-y-1 sm:justify-self-end self-start text-sm">
             <div className="uppercase text-[#a2abb4]">Invoice</div><div className="font-medium">{draft.invoice_number}</div>
-            <div className="uppercase text-[#a2abb4]">Date</div><div className="font-medium">{draft.invoice_date}</div>
+            <div className="uppercase text-[#a2abb4]">Date</div><div className="font-medium">{fmtDate(draft.invoice_date)}</div>
             <div className="uppercase text-[#a2abb4]">Terms</div><div className="font-medium">{draft.terms}</div>
-            <div className="uppercase text-[#a2abb4]">Due Date</div><div className="font-medium">{draft.due_date}</div>
+            <div className="uppercase text-[#a2abb4]">Due Date</div><div className="font-medium">{fmtDate(draft.due_date)}</div>
           </div>
         </div>
 

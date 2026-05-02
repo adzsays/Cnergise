@@ -594,8 +594,10 @@ export type Database = {
           email: string | null
           id: string
           name: string
+          next_invoice_seq: number
           notes: string | null
           phone: string | null
+          reference_code: string | null
           tax_id: string | null
           updated_at: string
           user_id: string
@@ -606,8 +608,10 @@ export type Database = {
           email?: string | null
           id?: string
           name: string
+          next_invoice_seq?: number
           notes?: string | null
           phone?: string | null
+          reference_code?: string | null
           tax_id?: string | null
           updated_at?: string
           user_id: string
@@ -618,8 +622,10 @@ export type Database = {
           email?: string | null
           id?: string
           name?: string
+          next_invoice_seq?: number
           notes?: string | null
           phone?: string | null
+          reference_code?: string | null
           tax_id?: string | null
           updated_at?: string
           user_id?: string

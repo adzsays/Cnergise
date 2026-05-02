@@ -20,6 +20,7 @@ export function InvoiceList({ onEdit, onNew }: { onEdit: (id: string) => void; o
   const { invoices, isLoading, remove } = useInvoices();
   const { customers } = useCustomers();
   const customerName = (id: string | null) => customers.find((c) => c.id === id)?.name ?? "—";
+  const customerRef = (id: string | null) => customers.find((c) => c.id === id)?.reference_code ?? null;
 
   const totalOutstanding = invoices
     .filter((i) => i.status !== "paid" && i.status !== "void")
@@ -64,7 +65,12 @@ export function InvoiceList({ onEdit, onNew }: { onEdit: (id: string) => void; o
               {invoices.map((i) => (
                 <TableRow key={i.id}>
                   <TableCell className="font-medium">{i.invoice_number}</TableCell>
-                  <TableCell>{i.client_name ?? customerName(i.customer_id)}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <span>{i.client_name ?? customerName(i.customer_id)}</span>
+                      {customerRef(i.customer_id) ? <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-mono">{customerRef(i.customer_id)}</span> : null}
+                    </div>
+                  </TableCell>
                   <TableCell>{i.invoice_date}</TableCell>
                   <TableCell>{i.due_date ?? "—"}</TableCell>
                   <TableCell><Badge className={statusColors[i.status] ?? ""} variant="secondary">{i.status}</Badge></TableCell>
