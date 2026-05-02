@@ -45,7 +45,10 @@ export function CustomerManager() {
             <Card key={c.id} className="p-3">
               <div className="flex justify-between items-start gap-2">
                 <div className="min-w-0">
-                  <div className="font-medium truncate">{c.name}</div>
+                  <div className="flex items-center gap-2">
+                    <div className="font-medium truncate">{c.name}</div>
+                    {(c as any).reference_code ? <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-mono">{(c as any).reference_code}</span> : null}
+                  </div>
                   <div className="text-xs text-muted-foreground truncate">{c.email}</div>
                   {c.address_lines ? <div className="text-xs text-muted-foreground mt-1 line-clamp-2 whitespace-pre-line">{c.address_lines}</div> : null}
                 </div>
