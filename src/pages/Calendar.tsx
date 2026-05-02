@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { GoogleCalendarConnect } from "@/components/calendar/GoogleCalendarConnect";
 import { useCalendarEvents, CalendarEvent } from "@/hooks/useCalendarEvents";
+import { useCalendarSubscriptions } from "@/hooks/useCalendarSubscriptions";
 import {
   MonthView,
   WeekView,
