@@ -8,8 +8,9 @@ import { FinanceDashboardView } from "@/components/finances/FinanceDashboardView
 import { CashFlowView } from "@/components/finances/CashFlowView";
 import { CreditScoreView } from "@/components/finances/CreditScoreView";
 import { BalancesView } from "@/components/finances/BalancesView";
+import { ReceiptsView } from "@/components/finances/ReceiptsView";
 
-import { LayoutDashboard, TrendingUp, CreditCard, Scale } from "lucide-react";
+import { LayoutDashboard, TrendingUp, CreditCard, Scale, Receipt } from "lucide-react";
 
 const Finances = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -46,6 +47,10 @@ const Finances = () => {
                         <CreditCard className="h-3.5 w-3.5 md:h-4 md:w-4 md:mr-2" />
                         <span className="hidden md:inline">Credit Score</span>
                       </TabsTrigger>
+                      <TabsTrigger value="receipts" className="text-xs md:text-sm rounded-md md:rounded-lg px-2 md:px-3 py-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                        <Receipt className="h-3.5 w-3.5 md:h-4 md:w-4 md:mr-2" />
+                        <span className="hidden md:inline">Receipts</span>
+                      </TabsTrigger>
                     </TabsList>
                   </div>
 
@@ -63,6 +68,10 @@ const Finances = () => {
 
                   <TabsContent value="credit" className="mt-0">
                     <CreditScoreView />
+                  </TabsContent>
+
+                  <TabsContent value="receipts" className="mt-0">
+                    <ReceiptsView />
                   </TabsContent>
                 </Tabs>
               </div>
