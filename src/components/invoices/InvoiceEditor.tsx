@@ -55,7 +55,7 @@ export function InvoiceEditor({ invoiceId, onSaved }: Props) {
   const { entities } = useBillingEntities();
   const { customers } = useCustomers();
   const { spaces } = useSpaces();
-  const { data: projects = [] } = useProjects();
+  const { projects } = useProjects();
   const loaded = useInvoice(invoiceId);
   const { upsert } = useInvoices();
   const itemsMut = useInvoiceItemsMutations();
