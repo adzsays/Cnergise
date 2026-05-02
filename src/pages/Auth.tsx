@@ -410,11 +410,18 @@ const Auth = () => {
               <div className="flex flex-col items-center gap-3">
                 <div className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-primary/10 text-primary text-base font-medium">
                   <Sparkles className="w-5 h-5" />
-                  Coming Soon — Launching to invited users
+                  Private beta · By invitation only
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  We're putting the finishing touches on Cnergise. Stay tuned.
+                <p className="text-sm text-muted-foreground max-w-md text-center">
+                  Cnergise is currently invite-only. Request access and we'll review personally.
                 </p>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowInviteRequest(true)}
+                  className="mt-1"
+                >
+                  Request an invite
+                </Button>
               </div>
             )}
           </div>
