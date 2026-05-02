@@ -177,7 +177,7 @@ export default function EchoView() {
         if (!user) throw new Error("Not signed in");
 
         const { data, error } = await supabase.functions.invoke("echo-classify-entry", {
-          body: { text: text.trim(), goals },
+          body: { text: text.trim(), goals, projects, tasks },
         });
         if (error) throw error;
         const classified = data?.entries || [];
@@ -194,6 +194,8 @@ export default function EchoView() {
             amount: entry.amount ?? null,
             unit: entry.unit ?? null,
             goal_id: entry.goal_id || null,
+            project_id: entry.project_id || null,
+            task_id: entry.task_id || null,
             raw_voice_text: text.trim(),
             entry_date: selectedDate,
             entry_time: new Date().toLocaleTimeString("en-GB", {
@@ -213,7 +215,7 @@ export default function EchoView() {
         setIsProcessing(false);
       }
     },
-    [goals, selectedDate, fetchEntries, fetchAllEntries]
+    [goals, projects, tasks, selectedDate, fetchEntries, fetchAllEntries]
   );
 
   const resetSilenceTimer = useCallback(() => {
