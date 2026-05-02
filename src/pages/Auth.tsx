@@ -27,6 +27,7 @@ import {
   Loader2
 } from "lucide-react";
 import cnergiseLogo from "@/assets/cnergise-logo.png";
+import { RequestInviteDialog } from "@/components/auth/RequestInviteDialog";
 
 const Auth = () => {
   const navigate = useNavigate();
