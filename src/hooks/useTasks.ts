@@ -14,6 +14,9 @@ export type Task = {
   priority: 'low' | 'medium' | 'high';
   status: 'todo' | 'in_progress' | 'done';
   due_date?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  completion_percent?: number | null;
   created_at: string;
   updated_at: string;
 };
