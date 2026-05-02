@@ -225,7 +225,11 @@ const Index = () => {
                   ) : (
                     <div className="space-y-3">
                       {todayEvents.slice(0, 5).map((event: any) => (
-                        <div key={event.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                        <div
+                          key={event.id}
+                          onClick={() => navigate("/calendar")}
+                          className="flex items-center justify-between py-2 border-b border-border last:border-0 cursor-pointer hover:bg-muted/50 -mx-2 px-2 rounded transition-colors"
+                        >
                           <div className="flex items-center gap-3 min-w-0">
                             <div className="h-2 w-2 rounded-full bg-primary shrink-0" />
                             <div className="min-w-0">
@@ -260,7 +264,11 @@ const Index = () => {
                   ) : (
                     <div className="space-y-3">
                       {tasks.map((task: any) => (
-                        <div key={task.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                        <div
+                          key={task.id}
+                          onClick={() => navigate("/tasks")}
+                          className="flex items-center justify-between py-2 border-b border-border last:border-0 cursor-pointer hover:bg-muted/50 -mx-2 px-2 rounded transition-colors"
+                        >
                           <div className="flex items-center gap-3 min-w-0">
                             <CheckCircle2 className="h-4 w-4 text-muted-foreground shrink-0" />
                             <div className="min-w-0">
@@ -293,7 +301,11 @@ const Index = () => {
                   ) : (
                     <div className="space-y-4">
                       {goals.map((goal: any) => (
-                        <div key={goal.id}>
+                        <div
+                          key={goal.id}
+                          onClick={() => navigate("/goals")}
+                          className="cursor-pointer hover:bg-muted/50 -mx-2 px-2 py-1 rounded transition-colors"
+                        >
                           <div className="flex items-center justify-between mb-1">
                             <div className="flex items-center gap-2 min-w-0">
                               <Target className="h-4 w-4 text-primary shrink-0" />
