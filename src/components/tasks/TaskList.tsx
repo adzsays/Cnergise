@@ -621,7 +621,7 @@ export function TaskList() {
                 </TableBody>
               </Table>
             </div>
-          </ScrollArea>
+          </div>
         </div>
       )}
 
