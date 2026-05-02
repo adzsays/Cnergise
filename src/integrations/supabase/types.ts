@@ -1173,6 +1173,117 @@ export type Database = {
         }
         Relationships: []
       }
+      impact_filters: {
+        Row: {
+          action_required_only: boolean
+          brands: string[]
+          created_at: string
+          handles: string[]
+          id: string
+          keywords: string[]
+          min_score: number
+          people: string[]
+          realtime_enabled: boolean
+          sources: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          action_required_only?: boolean
+          brands?: string[]
+          created_at?: string
+          handles?: string[]
+          id?: string
+          keywords?: string[]
+          min_score?: number
+          people?: string[]
+          realtime_enabled?: boolean
+          sources?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          action_required_only?: boolean
+          brands?: string[]
+          created_at?: string
+          handles?: string[]
+          id?: string
+          keywords?: string[]
+          min_score?: number
+          people?: string[]
+          realtime_enabled?: boolean
+          sources?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      impact_messages: {
+        Row: {
+          action_required: boolean
+          author: string | null
+          author_handle: string | null
+          created_at: string
+          external_id: string | null
+          full_content: string | null
+          id: string
+          is_archived: boolean
+          is_read: boolean
+          matched_filters: string[]
+          message_at: string
+          preview: string
+          reason: string | null
+          score: number
+          scored_at: string
+          source: string
+          urgency: string
+          url: string | null
+          user_id: string
+        }
+        Insert: {
+          action_required?: boolean
+          author?: string | null
+          author_handle?: string | null
+          created_at?: string
+          external_id?: string | null
+          full_content?: string | null
+          id?: string
+          is_archived?: boolean
+          is_read?: boolean
+          matched_filters?: string[]
+          message_at?: string
+          preview: string
+          reason?: string | null
+          score?: number
+          scored_at?: string
+          source: string
+          urgency?: string
+          url?: string | null
+          user_id: string
+        }
+        Update: {
+          action_required?: boolean
+          author?: string | null
+          author_handle?: string | null
+          created_at?: string
+          external_id?: string | null
+          full_content?: string | null
+          id?: string
+          is_archived?: boolean
+          is_read?: boolean
+          matched_filters?: string[]
+          message_at?: string
+          preview?: string
+          reason?: string | null
+          score?: number
+          scored_at?: string
+          source?: string
+          urgency?: string
+          url?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       invite_requests: {
         Row: {
           created_at: string
