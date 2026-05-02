@@ -2138,6 +2138,60 @@ export type Database = {
           },
         ]
       }
+      services: {
+        Row: {
+          cost_centre: string | null
+          created_at: string
+          currency: string
+          default_qty: number
+          default_rate: number
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          project_id: string | null
+          space_id: string | null
+          unit: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cost_centre?: string | null
+          created_at?: string
+          currency?: string
+          default_qty?: number
+          default_rate?: number
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          project_id?: string | null
+          space_id?: string | null
+          unit?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cost_centre?: string | null
+          created_at?: string
+          currency?: string
+          default_qty?: number
+          default_rate?: number
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          project_id?: string | null
+          space_id?: string | null
+          unit?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       spaces: {
         Row: {
           color: string | null
