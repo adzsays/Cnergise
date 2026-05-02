@@ -529,6 +529,8 @@ export default function EchoView() {
                               <span className="text-[10px] text-muted-foreground">{formatTime(entry.entry_time)}</span>
                             )}
                             {entry.goal_id && <Badge variant="outline" className="text-[10px] h-5">🎯 Goal</Badge>}
+                            {entry.project_id && <Badge variant="outline" className="text-[10px] h-5">📁 Project</Badge>}
+                            {entry.task_id && <Badge variant="outline" className="text-[10px] h-5">✓ Task</Badge>}
                           </div>
                           {!isEditing && (
                             <div className="flex items-center gap-1">
