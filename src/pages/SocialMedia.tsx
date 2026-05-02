@@ -21,9 +21,11 @@ import {
   Send,
   Plus,
   RefreshCw,
-  Newspaper
+  Newspaper,
+  Sparkles
 } from "lucide-react";
 import { NewsFeed } from "@/components/social/NewsFeed";
+import { ImpactInbox } from "@/components/social/ImpactInbox";
 
 // Mock data for social media feeds
 const instagramPosts = [
@@ -62,7 +64,7 @@ const whatsappMessages = [
 ];
 
 const SocialMedia = () => {
-  const [activeTab, setActiveTab] = useState("all");
+  const [activeTab, setActiveTab] = useState("impact");
 
   const SocialPost = ({ platform, children }: { platform: string; children: React.ReactNode }) => (
     <Card className="mb-4 hover:shadow-md transition-shadow">
@@ -83,9 +85,9 @@ const SocialMedia = () => {
                 <div className="flex items-center gap-3">
                   <SidebarTrigger className="md:hidden h-9 w-9" />
                   <div>
-                    <h1 className="text-2xl font-bold gradient-heading">Social Media Hub</h1>
+                    <h1 className="text-2xl font-bold gradient-heading">Social Hub</h1>
                     <p className="text-sm text-muted-foreground">
-                      All your social feeds in one place
+                      AI-filtered impact across every platform
                     </p>
                   </div>
                 </div>
@@ -105,6 +107,10 @@ const SocialMedia = () => {
             <div className="flex-1 overflow-auto p-6">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
                 <TabsList className="flex-wrap">
+                  <TabsTrigger value="impact" className="gap-2">
+                    <Sparkles className="h-4 w-4" />
+                    Impact Inbox
+                  </TabsTrigger>
                   <TabsTrigger value="all">All Feeds</TabsTrigger>
                   <TabsTrigger value="instagram" className="gap-2">
                     <Instagram className="h-4 w-4" />
