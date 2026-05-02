@@ -25,6 +25,7 @@ import { useState } from "react";
 import { Shield, UserMinus } from "lucide-react";
 import { AllowlistManager } from "@/components/admin/AllowlistManager";
 import { ApprovalQueue } from "@/components/admin/ApprovalQueue";
+import { InviteRequestsManager } from "@/components/admin/InviteRequestsManager";
 
 export default function Admin() {
   const { data: profiles, isLoading } = useAllProfiles();
@@ -65,6 +66,8 @@ export default function Admin() {
               <h1 className="text-3xl font-bold">Admin Dashboard</h1>
               <p className="text-muted-foreground mt-2">Manage users and their roles</p>
             </div>
+
+            <InviteRequestsManager />
 
             <AllowlistManager />
 

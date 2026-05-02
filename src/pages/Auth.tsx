@@ -27,6 +27,7 @@ import {
   Loader2
 } from "lucide-react";
 import cnergiseLogo from "@/assets/cnergise-logo.png";
+import { RequestInviteDialog } from "@/components/auth/RequestInviteDialog";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -39,6 +40,7 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authTab, setAuthTab] = useState<"signin" | "signup">("signup");
+  const [showInviteRequest, setShowInviteRequest] = useState(false);
 
   // Tease the auth modal open automatically when entering via /login
   useEffect(() => {
@@ -398,23 +400,28 @@ const Auth = () => {
                 <Button
                   size="lg"
                   variant="ghost"
-                  asChild
+                  onClick={() => setShowInviteRequest(true)}
                   className="text-lg px-8 py-6 text-muted-foreground hover:text-foreground"
                 >
-                  <a href="mailto:invites@cnergise.com?subject=Cnergise%20invite%20request">
-                    Request an invite
-                  </a>
+                  Request an invite
                 </Button>
               </>
             ) : (
               <div className="flex flex-col items-center gap-3">
                 <div className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-primary/10 text-primary text-base font-medium">
                   <Sparkles className="w-5 h-5" />
-                  Coming Soon — Launching to invited users
+                  Private beta · By invitation only
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  We're putting the finishing touches on Cnergise. Stay tuned.
+                <p className="text-sm text-muted-foreground max-w-md text-center">
+                  Cnergise is currently invite-only. Request access and we'll review personally.
                 </p>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowInviteRequest(true)}
+                  className="mt-1"
+                >
+                  Request an invite
+                </Button>
               </div>
             )}
           </div>
@@ -773,6 +780,8 @@ const Auth = () => {
           </Card>
         </div>
       )}
+
+      <RequestInviteDialog open={showInviteRequest} onOpenChange={setShowInviteRequest} />
     </div>
   );
 };
