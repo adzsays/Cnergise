@@ -30,6 +30,7 @@ import {
   Upload,
   MoreHorizontal,
   Pencil,
+  Trash2,
 } from "lucide-react";
 import {
   Table,
@@ -39,6 +40,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 import { EditTaskDialog } from "./EditTaskDialog";
 import { TaskUploadDialog } from "./TaskUploadDialog";
 import { toast } from "sonner";
@@ -73,6 +75,7 @@ export function TaskList() {
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [editingCell, setEditingCell] = useState<{ id: string; field: string } | null>(null);
   const [draftValue, setDraftValue] = useState<string>("");
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
 
   const projectMap = useMemo(
     () => Object.fromEntries(projects.map((p) => [p.id, p.name])),
@@ -268,52 +271,77 @@ export function TaskList() {
     return <div className="text-center py-12">Loading tasks...</div>;
   }
 
+  const allSelected = sortedTasks.length > 0 && sortedTasks.every((t) => selected[t.id]);
+  const selectedIds = Object.entries(selected).filter(([, v]) => v).map(([k]) => k);
+  const toggleAll = (v: boolean) => {
+    const next: Record<string, boolean> = {};
+    if (v) sortedTasks.forEach((t) => (next[t.id] = true));
+    setSelected(next);
+  };
+  const deleteSelected = () => {
+    if (selectedIds.length === 0) return;
+    if (!confirm(`Delete ${selectedIds.length} selected task(s)? This cannot be undone.`)) return;
+    selectedIds.forEach((id) => deleteTask.mutate(id));
+    setSelected({});
+  };
+
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-sm text-muted-foreground">
+      {/* Toolbar — sticky so Import/Export are always visible */}
+      <div className="sticky top-0 z-30 -mx-3 md:mx-0 px-3 md:px-0 py-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70 flex flex-wrap items-center justify-between gap-2 border-b">
+        <p className="text-xs md:text-sm text-muted-foreground">
           {tasks.length} task{tasks.length === 1 ? "" : "s"}
-          {sortKey && (
-            <span className="ml-2">
-              · sorted by <span className="font-medium">{sortKey.replace("_", " ")}</span>{" "}
-              ({sortDir})
-            </span>
+          {selectedIds.length > 0 && (
+            <span className="ml-2 font-medium text-foreground">· {selectedIds.length} selected</span>
           )}
         </p>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {selectedIds.length > 0 && (
+            <Button variant="destructive" size="sm" onClick={deleteSelected}>
+              <Trash2 className="h-4 w-4 mr-1" />
+              Delete ({selectedIds.length})
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={() => setShowImport(true)}>
             <Upload className="h-4 w-4 mr-1" />
-            Import
+            Import CSV
           </Button>
-          <Button variant="outline" size="sm" onClick={exportCsv}>
+          <Button variant="default" size="sm" onClick={exportCsv}>
             <Download className="h-4 w-4 mr-1" />
-            Export
+            Export CSV
           </Button>
         </div>
       </div>
 
       {tasks.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground border rounded-lg">
-          No tasks found. Create a new task or import tasks to get started!
+          No tasks found. Import a CSV, generate from a Project with AI, or create one manually.
         </div>
       ) : (
         <div className="border rounded-lg overflow-hidden">
-          <ScrollArea className="h-[calc(100vh-320px)]">
-            <div className="min-w-[1500px]">
+          <ScrollArea className="h-[calc(100vh-360px)]">
+            <div className="min-w-[1180px]">
               <Table>
                 <TableHeader className="sticky top-0 z-20 bg-background shadow-sm">
                   <TableRow className="bg-muted/50 hover:bg-muted/50">
-                    <SortableHead label="Task" k="title" width="w-[240px]" />
-                    <SortableHead label="Project" k="project" width="w-[150px]" />
-                    <SortableHead label="Status" k="status" width="w-[130px]" />
-                    <SortableHead label="Priority" k="priority" width="w-[110px]" />
-                    <SortableHead label="Team" k="team" width="w-[130px]" />
-                    <SortableHead label="Assignee" k="assignee" width="w-[140px]" />
-                    <SortableHead label="Start" k="start_date" width="w-[130px]" />
-                    <SortableHead label="End" k="end_date" width="w-[130px]" />
-                    <SortableHead label="Due" k="due_date" width="w-[130px]" />
-                    <SortableHead label="% Complete" k="completion_percent" width="w-[160px]" />
-                    <TableHead className="w-[80px] text-right">Actions</TableHead>
+                    <TableHead className="w-[36px]">
+                      <Checkbox
+                        checked={allSelected}
+                        onCheckedChange={(v) => toggleAll(!!v)}
+                        aria-label="Select all"
+                      />
+                    </TableHead>
+                    <SortableHead label="Task" k="title" width="w-[200px]" />
+                    <SortableHead label="Project" k="project" width="w-[120px]" />
+                    <SortableHead label="Status" k="status" width="w-[110px]" />
+                    <SortableHead label="Pri" k="priority" width="w-[90px]" />
+                    <SortableHead label="Team" k="team" width="w-[110px]" />
+                    <SortableHead label="Assignee" k="assignee" width="w-[120px]" />
+                    <SortableHead label="Start" k="start_date" width="w-[120px]" />
+                    <SortableHead label="End" k="end_date" width="w-[120px]" />
+                    <SortableHead label="Due" k="due_date" width="w-[120px]" />
+                    <SortableHead label="%" k="completion_percent" width="w-[130px]" />
+                    <TableHead className="w-[70px] text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -324,6 +352,15 @@ export function TaskList() {
 
                     return (
                       <TableRow key={task.id} className="hover:bg-muted/30">
+                        <TableCell className="py-2">
+                          <Checkbox
+                            checked={!!selected[task.id]}
+                            onCheckedChange={(v) =>
+                              setSelected((p) => ({ ...p, [task.id]: !!v }))
+                            }
+                            aria-label="Select row"
+                          />
+                        </TableCell>
                         {/* Title */}
                         <TableCell
                           className="py-2 text-sm cursor-text"

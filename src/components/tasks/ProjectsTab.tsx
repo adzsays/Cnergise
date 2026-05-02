@@ -11,7 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FolderPlus, Trash2, Edit, Calendar, Target } from "lucide-react";
+import { FolderPlus, Trash2, Edit, Calendar, Target, Sparkles } from "lucide-react";
+import { AIGenerateTasksDialog } from "./AIGenerateTasksDialog";
 import { format } from "date-fns";
 
 export function ProjectsTab({ filterGoalId }: { filterGoalId?: string | null } = {}) {
@@ -21,6 +22,7 @@ export function ProjectsTab({ filterGoalId }: { filterGoalId?: string | null } =
   const { currentSpaceId } = useCurrentSpace();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<any>(null);
+  const [aiProject, setAiProject] = useState<any>(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -262,8 +264,17 @@ export function ProjectsTab({ filterGoalId }: { filterGoalId?: string | null } =
                 )}
 
                 <div className="flex gap-2 pt-2">
-                  <Button variant="outline" size="sm" onClick={() => handleEdit(project)} className="flex-1">
-                    <Edit className="h-3.5 w-3.5 mr-1" />Edit
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => setAiProject(project)}
+                    className="flex-1"
+                    title="Generate detailed task list with AI"
+                  >
+                    <Sparkles className="h-3.5 w-3.5 mr-1" />AI Tasks
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => handleEdit(project)}>
+                    <Edit className="h-3.5 w-3.5" />
                   </Button>
                   <Button
                     variant="outline"
@@ -279,6 +290,13 @@ export function ProjectsTab({ filterGoalId }: { filterGoalId?: string | null } =
           })}
         </div>
       )}
+
+      <AIGenerateTasksDialog
+        open={!!aiProject}
+        onOpenChange={(v) => !v && setAiProject(null)}
+        project={aiProject}
+        goalTitle={aiProject?.goal_id ? goalLookup.get(aiProject.goal_id)?.title : undefined}
+      />
     </div>
   );
 }
