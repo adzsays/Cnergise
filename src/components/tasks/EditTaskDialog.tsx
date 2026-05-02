@@ -47,6 +47,9 @@ export function EditTaskDialog({
   const [status, setStatus] = useState<Task["status"]>("todo");
   const [priority, setPriority] = useState<Task["priority"]>("medium");
   const [dueDate, setDueDate] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [completion, setCompletion] = useState<number>(0);
 
   useEffect(() => {
     if (task) {
@@ -58,6 +61,9 @@ export function EditTaskDialog({
       setStatus(task.status);
       setPriority(task.priority);
       setDueDate(task.due_date ? task.due_date.split('T')[0] : "");
+      setStartDate(task.start_date ? task.start_date.split('T')[0] : "");
+      setEndDate(task.end_date ? task.end_date.split('T')[0] : "");
+      setCompletion(task.completion_percent ?? 0);
     }
   }, [task]);
 
@@ -80,6 +86,9 @@ export function EditTaskDialog({
       status,
       priority,
       due_date: dueDate || null,
+      start_date: startDate || null,
+      end_date: endDate || null,
+      completion_percent: Math.max(0, Math.min(100, Number(completion) || 0)),
     });
     
     onOpenChange(false);
@@ -209,12 +218,44 @@ export function EditTaskDialog({
               </div>
               
               <div className="space-y-2">
+                <Label htmlFor="start-date">Start Date</Label>
+                <Input
+                  id="start-date"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="end-date">End Date</Label>
+                <Input
+                  id="end-date"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="due-date">Due Date</Label>
                 <Input
                   id="due-date"
                   type="date"
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="completion">% Complete</Label>
+                <Input
+                  id="completion"
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={completion}
+                  onChange={(e) => setCompletion(Number(e.target.value))}
                 />
               </div>
             </div>

@@ -41,10 +41,10 @@ export const TaskUploadDialog: React.FC<TaskUploadDialogProps> = ({
   };
 
   const downloadSampleCsv = () => {
-    const csvContent = 
-      "title,description,priority,status,due_date,project_id,team_id,assigned_to,feature_id\n" +
-      "Sample Task,This is a sample task description,medium,todo,2025-12-31,,,,";
-    
+    const csvContent =
+      "title,description,priority,status,start_date,end_date,due_date,completion_percent,project_id,team_id,assigned_to,feature_id\n" +
+      "Sample Task,This is a sample task description,medium,todo,2025-12-01,2025-12-15,2025-12-31,0,,,,";
+
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -126,12 +126,20 @@ export const TaskUploadDialog: React.FC<TaskUploadDialogProps> = ({
       const featureIdValue = row[headers.findIndex(h => h.toLowerCase() === 'feature_id')]?.trim();
       const featureId = featureIdValue || null;
 
+      const startDateValue = row[headers.findIndex(h => h.toLowerCase() === 'start_date')]?.trim();
+      const endDateValue = row[headers.findIndex(h => h.toLowerCase() === 'end_date')]?.trim();
+      const completionRaw = row[headers.findIndex(h => h.toLowerCase() === 'completion_percent')]?.trim();
+      const completion = Math.max(0, Math.min(100, parseInt(completionRaw || '0', 10) || 0));
+
       const task: any = {
         title,
         description: row[headers.findIndex(h => h.toLowerCase() === 'description')]?.trim() || null,
         priority,
         status,
         due_date: dueDate,
+        start_date: startDateValue || null,
+        end_date: endDateValue || null,
+        completion_percent: completion,
         project_id: projectId,
         team_id: teamId,
         assigned_to: assignedTo,
@@ -266,13 +274,11 @@ export const TaskUploadDialog: React.FC<TaskUploadDialogProps> = ({
               <p className="font-medium mt-2">Optional columns:</p>
               <ul className="list-disc pl-4">
                 <li>description - Task description</li>
-                <li>priority - Priority (low/medium/high, defaults to medium)</li>
-                <li>status - Status (todo/in_progress/done, defaults to todo)</li>
-                <li>due_date - Due date (YYYY-MM-DD format)</li>
-                <li>project_id - Project ID (uses first project if empty)</li>
-                <li>team_id - Team ID (optional)</li>
-                <li>assigned_to - Team member ID (optional)</li>
-                <li>feature_id - Feature ID (optional)</li>
+                <li>priority - low/medium/high (default medium)</li>
+                <li>status - todo/in_progress/done (default todo)</li>
+                <li>start_date / end_date / due_date (YYYY-MM-DD)</li>
+                <li>completion_percent - 0 to 100</li>
+                <li>project_id, team_id, assigned_to, feature_id</li>
               </ul>
             </div>
             
