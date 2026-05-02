@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { GoogleCalendarConnect } from "@/components/calendar/GoogleCalendarConnect";
 import { useCalendarEvents, CalendarEvent } from "@/hooks/useCalendarEvents";
+import { useCalendarSubscriptions } from "@/hooks/useCalendarSubscriptions";
 import {
   MonthView,
   WeekView,
@@ -44,6 +45,10 @@ export default function Calendar() {
   }, [date]);
 
   const { data: events = [], isLoading } = useCalendarEvents(rangeStart, rangeEnd);
+  const { data: subData } = useCalendarSubscriptions();
+  const colorMap = subData?.colorMap ?? {};
+  const subscriptions = subData?.subscriptions ?? [];
+  const accounts = subData?.accounts ?? [];
 
   const todayEvents = useMemo(() => {
     const today = startOfDay(new Date()).getTime();
@@ -134,7 +139,7 @@ export default function Calendar() {
                 <TabsContent value="month" className="mt-0">
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2">
-                      <MonthView date={date} events={events} onSelectEvent={openEvent} onSelectDate={(d) => { setDate(d); setActiveTab("day"); }} />
+                      <MonthView date={date} events={events} colorMap={colorMap} onSelectEvent={openEvent} onSelectDate={(d) => { setDate(d); setActiveTab("day"); }} />
                     </div>
                     <div className="space-y-4">
                       <GoogleCalendarConnect />
@@ -177,15 +182,15 @@ export default function Calendar() {
                 </TabsContent>
 
                 <TabsContent value="week" className="mt-0">
-                  <WeekView date={date} events={events} onSelectEvent={openEvent} />
+                  <WeekView date={date} events={events} colorMap={colorMap} onSelectEvent={openEvent} />
                 </TabsContent>
 
                 <TabsContent value="day" className="mt-0">
-                  <DayView date={date} events={events} onSelectEvent={openEvent} />
+                  <DayView date={date} events={events} colorMap={colorMap} onSelectEvent={openEvent} />
                 </TabsContent>
 
                 <TabsContent value="schedule" className="mt-0">
-                  <ScheduleView events={events} onSelectEvent={openEvent} />
+                  <ScheduleView events={events} colorMap={colorMap} onSelectEvent={openEvent} />
                 </TabsContent>
               </Tabs>
 
@@ -194,6 +199,8 @@ export default function Calendar() {
                 onOpenChange={setDialogOpen}
                 event={selectedEvent}
                 defaultDate={date}
+                subscriptions={subscriptions}
+                accounts={accounts}
               />
             </div>
           </div>

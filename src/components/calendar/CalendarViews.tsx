@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import React, { useMemo } from "react";
 import { CalendarEvent } from "@/hooks/useCalendarEvents";
 import { cn } from "@/lib/utils";
 
@@ -40,9 +40,22 @@ type ViewProps = {
   events: CalendarEvent[];
   onSelectEvent?: (e: CalendarEvent) => void;
   onSelectDate?: (d: Date) => void;
+  colorMap?: Record<string, string>;
 };
 
-export function MonthView({ date, events, onSelectDate, onSelectEvent }: ViewProps) {
+function eventColor(ev: CalendarEvent, colorMap?: Record<string, string>): string | undefined {
+  if (ev.google_calendar_id && colorMap?.[ev.google_calendar_id]) return colorMap[ev.google_calendar_id];
+  return undefined;
+}
+
+function eventStyle(ev: CalendarEvent, colorMap?: Record<string, string>): React.CSSProperties {
+  const c = eventColor(ev, colorMap);
+  if (!c) return {};
+  // background tinted, text uses the same color for contrast
+  return { backgroundColor: `${c}22`, color: c, borderLeft: `3px solid ${c}` };
+}
+
+export function MonthView({ date, events, onSelectDate, onSelectEvent, colorMap }: ViewProps) {
   const gridStart = useMemo(() => startOfMonthGrid(date), [date]);
   const days = useMemo(
     () => Array.from({ length: 42 }, (_, i) => addDays(gridStart, i)),
@@ -89,7 +102,8 @@ export function MonthView({ date, events, onSelectDate, onSelectEvent }: ViewPro
                     key={ev.id}
                     title={ev.title}
                     onClick={(e) => { e.stopPropagation(); onSelectEvent?.(ev); }}
-                    className="block w-full truncate rounded bg-primary/10 px-1.5 py-0.5 text-left text-[11px] text-primary hover:bg-primary/20"
+                    style={eventStyle(ev, colorMap)}
+                    className="block w-full truncate rounded bg-primary/10 px-1.5 py-0.5 text-left text-[11px] text-primary hover:opacity-80"
                   >
                     {ev.all_day ? "" : `${fmtTime(new Date(ev.start_time))} `}
                     {ev.title}
@@ -107,7 +121,7 @@ export function MonthView({ date, events, onSelectDate, onSelectEvent }: ViewPro
   );
 }
 
-export function WeekView({ date, events, onSelectEvent }: ViewProps) {
+export function WeekView({ date, events, onSelectEvent, colorMap }: ViewProps) {
   const weekStart = useMemo(() => startOfWeek(date), [date]);
   const days = useMemo(
     () => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)),
@@ -140,7 +154,8 @@ export function WeekView({ date, events, onSelectEvent }: ViewProps) {
                     type="button"
                     key={ev.id}
                     onClick={() => onSelectEvent?.(ev)}
-                    className="block w-full text-left rounded bg-primary/10 px-1.5 py-1 text-[11px] text-primary hover:bg-primary/20"
+                    style={eventStyle(ev, colorMap)}
+                    className="block w-full text-left rounded bg-primary/10 px-1.5 py-1 text-[11px] text-primary hover:opacity-80"
                   >
                     <div className="font-medium truncate">{ev.title}</div>
                     {!ev.all_day && (
@@ -159,7 +174,7 @@ export function WeekView({ date, events, onSelectEvent }: ViewProps) {
   );
 }
 
-export function DayView({ date, events, onSelectEvent }: ViewProps) {
+export function DayView({ date, events, onSelectEvent, colorMap }: ViewProps) {
   const hours = Array.from({ length: 24 }, (_, i) => i);
   const dayEvents = eventsOnDate(events, date);
 
@@ -195,7 +210,8 @@ export function DayView({ date, events, onSelectEvent }: ViewProps) {
                     type="button"
                     key={ev.id}
                     onClick={() => onSelectEvent?.(ev)}
-                    className="block w-full text-left rounded bg-primary/10 px-2 py-1 text-xs text-primary hover:bg-primary/20"
+                    style={eventStyle(ev, colorMap)}
+                    className="block w-full text-left rounded bg-primary/10 px-2 py-1 text-xs text-primary hover:opacity-80"
                   >
                     <div className="font-medium">{ev.title}</div>
                     <div className="text-[10px] opacity-80">
@@ -213,7 +229,7 @@ export function DayView({ date, events, onSelectEvent }: ViewProps) {
   );
 }
 
-export function ScheduleView({ events, onSelectEvent }: { events: CalendarEvent[]; onSelectEvent?: (e: CalendarEvent) => void }) {
+export function ScheduleView({ events, onSelectEvent, colorMap }: { events: CalendarEvent[]; onSelectEvent?: (e: CalendarEvent) => void; colorMap?: Record<string, string> }) {
   const grouped = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>();
     for (const e of events) {
@@ -245,27 +261,34 @@ export function ScheduleView({ events, onSelectEvent }: { events: CalendarEvent[
             })}
           </div>
           <ul className="divide-y">
-            {items.map((ev) => (
-              <li key={ev.id}>
-                <button
-                  type="button"
-                  onClick={() => onSelectEvent?.(ev)}
-                  className="flex w-full items-start gap-3 px-3 py-2 text-left text-sm hover:bg-accent/40"
-                >
-                  <div className="w-24 shrink-0 text-xs text-muted-foreground">
-                    {ev.all_day
-                      ? "All day"
-                      : `${fmtTime(new Date(ev.start_time))} – ${fmtTime(new Date(ev.end_time))}`}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="truncate font-medium">{ev.title}</p>
-                    {ev.location && (
-                      <p className="text-xs text-muted-foreground truncate">{ev.location}</p>
-                    )}
-                  </div>
-                </button>
-              </li>
-            ))}
+            {items.map((ev) => {
+              const c = eventColor(ev, colorMap);
+              return (
+                <li key={ev.id}>
+                  <button
+                    type="button"
+                    onClick={() => onSelectEvent?.(ev)}
+                    className="flex w-full items-start gap-3 px-3 py-2 text-left text-sm hover:bg-accent/40"
+                  >
+                    <span
+                      className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full"
+                      style={{ backgroundColor: c ?? "hsl(var(--primary))" }}
+                    />
+                    <div className="w-24 shrink-0 text-xs text-muted-foreground">
+                      {ev.all_day
+                        ? "All day"
+                        : `${fmtTime(new Date(ev.start_time))} – ${fmtTime(new Date(ev.end_time))}`}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{ev.title}</p>
+                      {ev.location && (
+                        <p className="text-xs text-muted-foreground truncate">{ev.location}</p>
+                      )}
+                    </div>
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </div>
       ))}
