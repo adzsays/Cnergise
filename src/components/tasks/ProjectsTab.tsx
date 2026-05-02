@@ -34,10 +34,11 @@ export function ProjectsTab({ filterGoalId }: { filterGoalId?: string | null } =
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const projectData = {
+
+    const projectData: any = {
       ...formData,
       space_id: formData.space_id || null,
+      goal_id: formData.goal_id || null,
       start_date: formData.start_date || null,
       end_date: formData.end_date || null,
     };
@@ -48,12 +49,13 @@ export function ProjectsTab({ filterGoalId }: { filterGoalId?: string | null } =
     } else {
       await createProject.mutateAsync(projectData);
     }
-    
+
     setFormData({
       name: "",
       description: "",
       status: "active",
       space_id: "",
+      goal_id: "",
       start_date: "",
       end_date: "",
     });
@@ -67,6 +69,7 @@ export function ProjectsTab({ filterGoalId }: { filterGoalId?: string | null } =
       description: project.description || "",
       status: project.status,
       space_id: project.space_id || "",
+      goal_id: (project as any).goal_id || "",
       start_date: project.start_date ? format(new Date(project.start_date), "yyyy-MM-dd") : "",
       end_date: project.end_date ? format(new Date(project.end_date), "yyyy-MM-dd") : "",
     });
@@ -89,6 +92,15 @@ export function ProjectsTab({ filterGoalId }: { filterGoalId?: string | null } =
     }
   };
 
+  // Filter by current space and (optionally) by goal
+  const visibleProjects = projects.filter((p) => {
+    if (currentSpaceId && p.space_id !== currentSpaceId) return false;
+    if (filterGoalId && (p as any).goal_id !== filterGoalId) return false;
+    return true;
+  });
+
+  const goalLookup = new Map(goals.map((g) => [g.id, g] as const));
+
   if (isLoading) {
     return <div className="p-6">Loading projects...</div>;
   }
@@ -96,10 +108,13 @@ export function ProjectsTab({ filterGoalId }: { filterGoalId?: string | null } =
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Projects</h2>
+        <div>
+          <h2 className="text-xl font-semibold">Projects</h2>
+          <p className="text-sm text-muted-foreground">Workstreams that move a goal forward.</p>
+        </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => { setEditingProject(null); setFormData({ name: "", description: "", status: "active", space_id: "", start_date: "", end_date: "" }); }}>
+            <Button size="sm" onClick={() => { setEditingProject(null); setFormData({ name: "", description: "", status: "active", space_id: currentSpaceId || "", goal_id: filterGoalId || "", start_date: "", end_date: "" }); }}>
               <FolderPlus className="mr-2 h-4 w-4" />
               New Project
             </Button>
