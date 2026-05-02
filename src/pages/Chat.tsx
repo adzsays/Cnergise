@@ -76,6 +76,9 @@ const Chat = () => {
       }
     }
   };
+  const queryClient = useQueryClient();
+  const [mode, setMode] = useState<"dm" | "channels">("dm");
+  const myHandle = (profile as any)?.handle ?? null;
 
   const getInitials = (name: string) => {
     return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
@@ -89,89 +92,114 @@ const Chat = () => {
         
         <SidebarInset>
           <div className="flex h-full">
-            {/* Channels Sidebar */}
-            <div className="w-64 border-r bg-muted/30 flex flex-col">
-              <div className="p-4 border-b">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <SidebarTrigger className="md:hidden h-8 w-8" />
-                    <h2 className="font-semibold">Channels</h2>
-                  </div>
-                  <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Create Channel</DialogTitle>
-                      </DialogHeader>
-                      <form onSubmit={handleCreateChannel} className="space-y-4">
-                        <div>
-                          <Label htmlFor="channel-name">Channel Name</Label>
-                          <Input
-                            id="channel-name"
-                            value={channelName}
-                            onChange={(e) => setChannelName(e.target.value)}
-                            placeholder="e.g., general"
-                            required
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="channel-desc">Description (optional)</Label>
-                          <Input
-                            id="channel-desc"
-                            value={channelDescription}
-                            onChange={(e) => setChannelDescription(e.target.value)}
-                            placeholder="What's this channel about?"
-                          />
-                        </div>
-                        <Button type="submit" className="w-full">Create Channel</Button>
-                      </form>
-                    </DialogContent>
-                  </Dialog>
-                </div>
+            {/* Left rail with mode tabs */}
+            <div className="w-72 border-r bg-muted/30 flex flex-col">
+              <div className="p-3 border-b flex items-center gap-2">
+                <SidebarTrigger className="md:hidden h-8 w-8" />
+                <h2 className="font-semibold text-sm">Messages</h2>
               </div>
-              
-              <ScrollArea className="flex-1">
-                <div className="p-2 space-y-1">
-                  {channelsLoading ? (
-                    <div className="p-4 text-center text-muted-foreground text-sm">Loading...</div>
-                  ) : channels.length === 0 ? (
-                    <div className="p-4 text-center text-muted-foreground text-sm">
-                      No channels yet. Create one to get started!
+              <Tabs value={mode} onValueChange={(v) => setMode(v as "dm" | "channels")} className="flex-1 flex flex-col overflow-hidden">
+                <TabsList className="grid grid-cols-2 m-2">
+                  <TabsTrigger value="dm" className="text-xs gap-1">
+                    <AtSign className="h-3 w-3" /> Direct
+                  </TabsTrigger>
+                  <TabsTrigger value="channels" className="text-xs gap-1">
+                    <Hash className="h-3 w-3" /> Channels
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="dm" className="flex-1 m-0 overflow-hidden flex flex-col">
+                  {!myHandle && (
+                    <div className="p-3">
+                      <HandleSetupCard
+                        currentHandle={myHandle}
+                        onSaved={() => queryClient.invalidateQueries({ queryKey: ["profile"] })}
+                      />
                     </div>
-                  ) : (
-                    channels.map((channel) => (
-                      <div
-                        key={channel.id}
-                        className={`flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer group transition-colors ${
-                          selectedChannel?.id === channel.id 
-                            ? "bg-accent text-accent-foreground" 
-                            : "hover:bg-accent/50"
-                        }`}
-                        onClick={() => setSelectedChannel(channel)}
-                      >
-                        {channel.is_private ? (
-                          <Lock className="h-4 w-4 text-muted-foreground" />
-                        ) : (
-                          <Hash className="h-4 w-4 text-muted-foreground" />
-                        )}
-                        <span className="flex-1 truncate text-sm">{channel.name}</span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={(e) => handleDeleteChannel(channel.id, e)}
-                        >
-                          <Trash2 className="h-3 w-3 text-destructive" />
-                        </Button>
-                      </div>
-                    ))
                   )}
-                </div>
-              </ScrollArea>
+                  <div className="flex-1 overflow-hidden">
+                    <DirectMessages myHandle={myHandle} />
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="channels" className="flex-1 m-0 overflow-hidden flex flex-col">
+                  <div className="p-3 border-b flex items-center justify-between">
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Channels</span>
+                    <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7">
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Create Channel</DialogTitle>
+                        </DialogHeader>
+                        <form onSubmit={handleCreateChannel} className="space-y-4">
+                          <div>
+                            <Label htmlFor="channel-name">Channel Name</Label>
+                            <Input
+                              id="channel-name"
+                              value={channelName}
+                              onChange={(e) => setChannelName(e.target.value)}
+                              placeholder="e.g., general"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="channel-desc">Description (optional)</Label>
+                            <Input
+                              id="channel-desc"
+                              value={channelDescription}
+                              onChange={(e) => setChannelDescription(e.target.value)}
+                              placeholder="What's this channel about?"
+                            />
+                          </div>
+                          <Button type="submit" className="w-full">Create Channel</Button>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                  <ScrollArea className="flex-1">
+                    <div className="p-2 space-y-1">
+                      {channelsLoading ? (
+                        <div className="p-4 text-center text-muted-foreground text-sm">Loading...</div>
+                      ) : channels.length === 0 ? (
+                        <div className="p-4 text-center text-muted-foreground text-sm">
+                          No channels yet. Create one to get started!
+                        </div>
+                      ) : (
+                        channels.map((channel) => (
+                          <div
+                            key={channel.id}
+                            className={`flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer group transition-colors ${
+                              selectedChannel?.id === channel.id
+                                ? "bg-accent text-accent-foreground"
+                                : "hover:bg-accent/50"
+                            }`}
+                            onClick={() => setSelectedChannel(channel)}
+                          >
+                            {channel.is_private ? (
+                              <Lock className="h-4 w-4 text-muted-foreground" />
+                            ) : (
+                              <Hash className="h-4 w-4 text-muted-foreground" />
+                            )}
+                            <span className="flex-1 truncate text-sm">{channel.name}</span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={(e) => handleDeleteChannel(channel.id, e)}
+                            >
+                              <Trash2 className="h-3 w-3 text-destructive" />
+                            </Button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </ScrollArea>
+                </TabsContent>
+              </Tabs>
             </div>
 
             {/* Chat Area */}
