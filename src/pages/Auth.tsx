@@ -40,6 +40,7 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authTab, setAuthTab] = useState<"signin" | "signup">("signup");
+  const [showInviteRequest, setShowInviteRequest] = useState(false);
 
   // Tease the auth modal open automatically when entering via /login
   useEffect(() => {
