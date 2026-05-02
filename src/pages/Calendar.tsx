@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { GoogleCalendarConnect } from "@/components/calendar/GoogleCalendarConnect";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCalendarEvents, CalendarEvent } from "@/hooks/useCalendarEvents";
 import { useCalendarSubscriptions } from "@/hooks/useCalendarSubscriptions";
 import {
@@ -101,13 +102,19 @@ export default function Calendar() {
                 { value: "month", label: "Month" },
               ]}
               actions={
-                <div className="flex flex-wrap items-center gap-2">
-                  <GoogleCalendarConnect compact />
-                  <Button variant="outline" size="sm" onClick={openNew}>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    New Event
-                  </Button>
-                </div>
+                <TooltipProvider delayDuration={150}>
+                  <div className="flex items-center gap-0.5">
+                    <GoogleCalendarConnect compact />
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" onClick={openNew} className="h-8 w-8">
+                          <PlusCircle className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>New event</TooltipContent>
+                    </Tooltip>
+                  </div>
+                </TooltipProvider>
               }
             />
 

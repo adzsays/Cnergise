@@ -231,14 +231,23 @@ export function DayView({ date, events, onSelectEvent, colorMap }: ViewProps) {
 
 export function ScheduleView({ events, onSelectEvent, colorMap }: { events: CalendarEvent[]; onSelectEvent?: (e: CalendarEvent) => void; colorMap?: Record<string, string> }) {
   const grouped = useMemo(() => {
+    const todayStart = startOfDay(new Date()).getTime();
     const map = new Map<string, CalendarEvent[]>();
     for (const e of events) {
+      const endMs = new Date(e.end_time).getTime();
+      // Only include events that haven't ended yet (today or future)
+      if (endMs < todayStart) continue;
       const k = startOfDay(new Date(e.start_time)).toISOString();
       const arr = map.get(k) ?? [];
       arr.push(e);
       map.set(k, arr);
     }
-    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
+    // Sort days ascending and events within day by start time
+    const out = Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
+    for (const [, items] of out) {
+      items.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+    }
+    return out;
   }, [events]);
 
   if (grouped.length === 0) {
