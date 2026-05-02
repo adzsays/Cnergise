@@ -19,9 +19,11 @@ async function refreshAccessToken(refreshToken: string) {
   return res.json();
 }
 
-async function getValidToken(admin: any, userId: string) {
-  const { data: conn } = await admin.from("google_calendar_connections").select("*").eq("user_id", userId).maybeSingle();
-  if (!conn) throw new Error("No Google Calendar connection");
+async function getValidConn(admin: any, userId: string, accountId?: string) {
+  let q = admin.from("google_calendar_connections").select("*").eq("user_id", userId);
+  if (accountId) q = q.eq("id", accountId);
+  const { data: conn } = await q.maybeSingle();
+  if (!conn) throw new Error("No matching Google Calendar connection");
   if (new Date(conn.token_expires_at).getTime() < Date.now() + 60_000) {
     const refreshed = await refreshAccessToken(conn.refresh_token);
     if (!refreshed.access_token) throw new Error("Token refresh failed");
@@ -29,7 +31,7 @@ async function getValidToken(admin: any, userId: string) {
     await admin.from("google_calendar_connections").update({
       access_token: refreshed.access_token,
       token_expires_at: newExpiry,
-    }).eq("user_id", userId);
+    }).eq("id", conn.id);
     return { ...conn, access_token: refreshed.access_token };
   }
   return conn;
@@ -77,10 +79,23 @@ Deno.serve(async (req) => {
     const { data: { user } } = await userClient.auth.getUser();
     if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
 
-    const { action, event } = await req.json();
+    const { action, event, account_id, target_calendar_id } = await req.json();
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const conn = await getValidToken(admin, user.id);
-    const calId = conn.primary_calendar_id || "primary";
+
+    // For update/delete on existing google events without explicit account, look up the owning subscription
+    let resolvedAccountId: string | undefined = account_id;
+    if (!resolvedAccountId && event?.google_calendar_id) {
+      const { data: sub } = await admin
+        .from("google_calendar_subscriptions")
+        .select("account_id")
+        .eq("user_id", user.id)
+        .eq("google_calendar_id", event.google_calendar_id)
+        .maybeSingle();
+      if (sub?.account_id) resolvedAccountId = sub.account_id;
+    }
+
+    const conn = await getValidConn(admin, user.id, resolvedAccountId);
+    const calId = target_calendar_id || event?.google_calendar_id || conn.primary_calendar_id || "primary";
     const base = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events`;
 
     if (action === "create") {
@@ -119,15 +134,6 @@ Deno.serve(async (req) => {
         ...(meetLink ? { meeting_url: meetLink } : {}),
       }).eq("id", event.id).eq("user_id", user.id);
       return new Response(JSON.stringify({ ok: true, meeting_url: meetLink }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-
-    if (action === "delete") {
-      if (!event.google_event_id) return new Response(JSON.stringify({ ok: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      await fetch(`${base}/${event.google_event_id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${conn.access_token}` },
-      });
-      return new Response(JSON.stringify({ ok: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     if (action === "delete") {
