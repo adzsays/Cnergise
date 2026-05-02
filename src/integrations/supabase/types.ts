@@ -1041,6 +1041,72 @@ export type Database = {
         }
         Relationships: []
       }
+      health_metrics: {
+        Row: {
+          active_minutes: number | null
+          avg_heart_rate: number | null
+          calories_burned: number | null
+          created_at: string
+          distance_meters: number | null
+          id: string
+          max_heart_rate: number | null
+          metric_date: string
+          provider: string | null
+          raw: Json | null
+          resting_heart_rate: number | null
+          sleep_minutes: number | null
+          sleep_quality: number | null
+          source: string
+          steps: number | null
+          updated_at: string
+          user_id: string
+          water_ml: number | null
+          weight_kg: number | null
+        }
+        Insert: {
+          active_minutes?: number | null
+          avg_heart_rate?: number | null
+          calories_burned?: number | null
+          created_at?: string
+          distance_meters?: number | null
+          id?: string
+          max_heart_rate?: number | null
+          metric_date: string
+          provider?: string | null
+          raw?: Json | null
+          resting_heart_rate?: number | null
+          sleep_minutes?: number | null
+          sleep_quality?: number | null
+          source?: string
+          steps?: number | null
+          updated_at?: string
+          user_id: string
+          water_ml?: number | null
+          weight_kg?: number | null
+        }
+        Update: {
+          active_minutes?: number | null
+          avg_heart_rate?: number | null
+          calories_burned?: number | null
+          created_at?: string
+          distance_meters?: number | null
+          id?: string
+          max_heart_rate?: number | null
+          metric_date?: string
+          provider?: string | null
+          raw?: Json | null
+          resting_heart_rate?: number | null
+          sleep_minutes?: number | null
+          sleep_quality?: number | null
+          source?: string
+          steps?: number | null
+          updated_at?: string
+          user_id?: string
+          water_ml?: number | null
+          weight_kg?: number | null
+        }
+        Relationships: []
+      }
       journal_entries: {
         Row: {
           created_at: string
@@ -1620,6 +1686,48 @@ export type Database = {
           name?: string
           updated_at?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      terra_connections: {
+        Row: {
+          created_at: string
+          id: string
+          last_sync_at: string | null
+          last_webhook_at: string | null
+          provider: string | null
+          reference_id: string | null
+          scopes: string | null
+          status: string
+          terra_user_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_sync_at?: string | null
+          last_webhook_at?: string | null
+          provider?: string | null
+          reference_id?: string | null
+          scopes?: string | null
+          status?: string
+          terra_user_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_sync_at?: string | null
+          last_webhook_at?: string | null
+          provider?: string | null
+          reference_id?: string | null
+          scopes?: string | null
+          status?: string
+          terra_user_id?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
