@@ -1,14 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { CalendarEvent } from "@/hooks/useCalendarEvents";
+import { CalendarAccount, CalendarSubscription } from "@/hooks/useCalendarSubscriptions";
 import { Trash2 } from "lucide-react";
 
 type Props = {
@@ -16,7 +18,11 @@ type Props = {
   onOpenChange: (v: boolean) => void;
   event: CalendarEvent | null;
   defaultDate?: Date;
+  subscriptions?: CalendarSubscription[];
+  accounts?: CalendarAccount[];
 };
+
+const LOCAL_TARGET = "__local__";
 
 function toLocalInput(iso: string) {
   const d = new Date(iso);
@@ -29,7 +35,7 @@ function toDateInput(iso: string) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-export function EventDialog({ open, onOpenChange, event, defaultDate }: Props) {
+export function EventDialog({ open, onOpenChange, event, defaultDate, subscriptions = [], accounts = [] }: Props) {
   const { toast } = useToast();
   const qc = useQueryClient();
   const isNew = !event;
@@ -42,8 +48,16 @@ export function EventDialog({ open, onOpenChange, event, defaultDate }: Props) {
   const [endStr, setEndStr] = useState("");
   const [addMeet, setAddMeet] = useState(false);
   const [meetingUrl, setMeetingUrl] = useState<string | null>(null);
+  const [target, setTarget] = useState<string>(LOCAL_TARGET); // value: subscription.id or LOCAL_TARGET
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  const enabledSubs = useMemo(() => subscriptions.filter((s) => s.enabled), [subscriptions]);
+  const accountById = useMemo(() => {
+    const m = new Map<string, CalendarAccount>();
+    accounts.forEach((a) => m.set(a.id, a));
+    return m;
+  }, [accounts]);
 
   useEffect(() => {
     if (!open) return;
@@ -57,6 +71,13 @@ export function EventDialog({ open, onOpenChange, event, defaultDate }: Props) {
       setEndStr(ad ? toDateInput(event.end_time) : toLocalInput(event.end_time));
       setMeetingUrl(event.meeting_url ?? null);
       setAddMeet(false);
+      // resolve current target subscription from event.google_calendar_id
+      if (event.google_calendar_id) {
+        const sub = enabledSubs.find((s) => s.google_calendar_id === event.google_calendar_id);
+        setTarget(sub?.id ?? LOCAL_TARGET);
+      } else {
+        setTarget(LOCAL_TARGET);
+      }
     } else {
       const base = defaultDate ?? new Date();
       const start = new Date(base);
@@ -72,10 +93,16 @@ export function EventDialog({ open, onOpenChange, event, defaultDate }: Props) {
       setEndStr(toLocalInput(end.toISOString()));
       setMeetingUrl(null);
       setAddMeet(false);
+      // Default new events to the user's primary calendar if any
+      const primarySub = enabledSubs.find((s) => s.is_primary) ?? enabledSubs[0];
+      setTarget(primarySub?.id ?? LOCAL_TARGET);
     }
-  }, [open, event, defaultDate]);
+  }, [open, event, defaultDate, enabledSubs]);
 
   const isGoogle = !!event?.google_calendar_id;
+  const targetSub = enabledSubs.find((s) => s.id === target);
+  const movedToDifferentCalendar =
+    !isNew && isGoogle && targetSub && targetSub.google_calendar_id !== event?.google_calendar_id;
 
   const handleSave = async () => {
     if (!title.trim()) {
@@ -90,7 +117,7 @@ export function EventDialog({ open, onOpenChange, event, defaultDate }: Props) {
       const startISO = allDay ? new Date(`${startStr}T00:00:00`).toISOString() : new Date(startStr).toISOString();
       const endISO = allDay ? new Date(`${endStr}T00:00:00`).toISOString() : new Date(endStr).toISOString();
 
-      const payload = {
+      const payload: any = {
         title: title.trim(),
         description: description.trim() || null,
         location: location.trim() || null,
@@ -119,11 +146,24 @@ export function EventDialog({ open, onOpenChange, event, defaultDate }: Props) {
         saved = data;
       }
 
-      // Push to Google if this event lives on a Google calendar (or new + connected)
-      if (isGoogle || (isNew && (await hasGoogleConnection()))) {
-        const action = isNew ? "create" : "update";
+      // Push to Google when user picked a Google calendar as target.
+      // For existing Google events that are being moved to a different calendar,
+      // we recreate on the new calendar; the previous remote event becomes orphaned
+      // (we leave it in place to avoid unintended deletion).
+      if (targetSub) {
+        const accountId = targetSub.account_id ?? undefined;
+        const targetCalId = targetSub.google_calendar_id;
+
+        const isCreate = isNew || !event?.google_event_id || movedToDifferentCalendar;
+        const action = isCreate ? "create" : "update";
+
         const { error: pushErr } = await supabase.functions.invoke("google-calendar-push", {
-          body: { action, event: { ...saved, add_meet: addMeet, meeting_url: meetingUrl } },
+          body: {
+            action,
+            event: { ...saved, add_meet: addMeet, meeting_url: meetingUrl },
+            account_id: accountId,
+            target_calendar_id: targetCalId,
+          },
         });
         if (pushErr) {
           toast({ title: "Saved locally", description: "Could not sync to Google: " + pushErr.message });
@@ -176,6 +216,38 @@ export function EventDialog({ open, onOpenChange, event, defaultDate }: Props) {
           <div>
             <Label>Title</Label>
             <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Event title" />
+          </div>
+
+          <div>
+            <Label>Save to calendar</Label>
+            <Select value={target} onValueChange={setTarget}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={LOCAL_TARGET}>Cnergise (local only)</SelectItem>
+                {enabledSubs.map((s) => {
+                  const acct = s.account_id ? accountById.get(s.account_id) : null;
+                  const acctEmail = acct?.google_email ?? "Google";
+                  return (
+                    <SelectItem key={s.id} value={s.id}>
+                      <span className="inline-flex items-center gap-2">
+                        <span
+                          className="inline-block h-2.5 w-2.5 rounded-full"
+                          style={{ backgroundColor: s.background_color ?? "#666" }}
+                        />
+                        {s.summary || s.google_calendar_id} · {acctEmail}
+                      </span>
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+            {movedToDifferentCalendar && (
+              <p className="mt-1 text-[11px] text-amber-600">
+                Moving to a different calendar will create a new event there. The original remains in its previous calendar.
+              </p>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
@@ -237,22 +309,21 @@ export function EventDialog({ open, onOpenChange, event, defaultDate }: Props) {
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <Checkbox id="addmeet" checked={addMeet} onCheckedChange={(v) => setAddMeet(!!v)} />
+                <Checkbox
+                  id="addmeet"
+                  checked={addMeet}
+                  onCheckedChange={(v) => setAddMeet(!!v)}
+                  disabled={target === LOCAL_TARGET}
+                />
                 <Label htmlFor="addmeet" className="cursor-pointer text-sm">
                   Add Google Meet video conferencing
                 </Label>
               </div>
             )}
             <p className="text-[11px] text-muted-foreground">
-              A unique Meet link will be generated by Google Calendar when the event is saved.
+              Meet links require saving the event to a Google calendar.
             </p>
           </div>
-
-          {isGoogle && (
-            <p className="text-xs text-muted-foreground">
-              This event is synced from Google Calendar. Changes will be pushed back.
-            </p>
-          )}
         </div>
 
         <DialogFooter className="flex-row justify-between sm:justify-between">
@@ -271,14 +342,4 @@ export function EventDialog({ open, onOpenChange, event, defaultDate }: Props) {
       </DialogContent>
     </Dialog>
   );
-}
-
-async function hasGoogleConnection() {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return false;
-  const { count } = await supabase
-    .from("google_calendar_connections")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", user.id);
-  return (count ?? 0) > 0;
 }
