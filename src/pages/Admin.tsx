@@ -67,6 +67,8 @@ export default function Admin() {
               <p className="text-muted-foreground mt-2">Manage users and their roles</p>
             </div>
 
+            <InviteRequestsManager />
+
             <AllowlistManager />
 
             <ApprovalQueue />
