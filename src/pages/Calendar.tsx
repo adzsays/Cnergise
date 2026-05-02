@@ -139,7 +139,7 @@ export default function Calendar() {
                 <TabsContent value="month" className="mt-0">
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2">
-                      <MonthView date={date} events={events} onSelectEvent={openEvent} onSelectDate={(d) => { setDate(d); setActiveTab("day"); }} />
+                      <MonthView date={date} events={events} colorMap={colorMap} onSelectEvent={openEvent} onSelectDate={(d) => { setDate(d); setActiveTab("day"); }} />
                     </div>
                     <div className="space-y-4">
                       <GoogleCalendarConnect />
@@ -182,15 +182,15 @@ export default function Calendar() {
                 </TabsContent>
 
                 <TabsContent value="week" className="mt-0">
-                  <WeekView date={date} events={events} onSelectEvent={openEvent} />
+                  <WeekView date={date} events={events} colorMap={colorMap} onSelectEvent={openEvent} />
                 </TabsContent>
 
                 <TabsContent value="day" className="mt-0">
-                  <DayView date={date} events={events} onSelectEvent={openEvent} />
+                  <DayView date={date} events={events} colorMap={colorMap} onSelectEvent={openEvent} />
                 </TabsContent>
 
                 <TabsContent value="schedule" className="mt-0">
-                  <ScheduleView events={events} onSelectEvent={openEvent} />
+                  <ScheduleView events={events} colorMap={colorMap} onSelectEvent={openEvent} />
                 </TabsContent>
               </Tabs>
 
@@ -199,6 +199,8 @@ export default function Calendar() {
                 onOpenChange={setDialogOpen}
                 event={selectedEvent}
                 defaultDate={date}
+                subscriptions={subscriptions}
+                accounts={accounts}
               />
             </div>
           </div>
