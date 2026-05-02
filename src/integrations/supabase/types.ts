@@ -462,6 +462,33 @@ export type Database = {
         }
         Relationships: []
       }
+      direct_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          read_at: string | null
+          recipient_id: string
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          recipient_id: string
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          recipient_id?: string
+          sender_id?: string
+        }
+        Relationships: []
+      }
       echo_entries: {
         Row: {
           amount: number | null
@@ -1497,6 +1524,7 @@ export type Database = {
           bio: string | null
           created_at: string
           currency: string
+          handle: string | null
           id: string
           name: string | null
           updated_at: string
@@ -1506,6 +1534,7 @@ export type Database = {
           bio?: string | null
           created_at?: string
           currency?: string
+          handle?: string | null
           id: string
           name?: string | null
           updated_at?: string
@@ -1515,6 +1544,7 @@ export type Database = {
           bio?: string | null
           created_at?: string
           currency?: string
+          handle?: string | null
           id?: string
           name?: string | null
           updated_at?: string
@@ -2122,6 +2152,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      find_user_by_handle: {
+        Args: { _handle: string }
+        Returns: {
+          avatar_url: string
+          handle: string
+          id: string
+          name: string
+        }[]
+      }
       has_feature_access: {
         Args: { _feature_key: string; _user_id: string }
         Returns: boolean
