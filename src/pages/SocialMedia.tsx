@@ -142,6 +142,11 @@ const SocialMedia = () => {
                   </TabsTrigger>
                 </TabsList>
 
+                {/* AI Impact Inbox - default tab */}
+                <TabsContent value="impact">
+                  <ImpactInbox />
+                </TabsContent>
+
                 {/* All Feeds */}
                 <TabsContent value="all">
                   <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
