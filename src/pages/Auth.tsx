@@ -370,7 +370,7 @@ const Auth = () => {
         <div className="max-w-7xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
             <Sparkles className="w-4 h-4" />
-            AI-Powered Life Management
+            Private beta · By invitation only
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight">
             Simplify Your Life,
@@ -380,22 +380,30 @@ const Auth = () => {
             </span>
           </h1>
           <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
-            Cnergise brings together tasks, goals, health, finances, and investments in one intelligent platform. 
-            Let AI handle the complexity while you focus on what matters most.
+            Cnergise brings together tasks, goals, health, finances, and investments in one intelligent platform.
+            Access is currently limited to invited members — request an invite or sign in with the credentials we sent you.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
             {loginAccess ? (
               <>
                 <Button
                   size="lg"
-                  onClick={() => { setAuthTab("signup"); setShowAuthModal(true); }}
-                  className="bg-primary hover:bg-primary/90 text-lg px-8 py-6"
+                  variant="outline"
+                  onClick={() => { setAuthTab("signin"); setShowAuthModal(true); }}
+                  className="text-lg px-8 py-6"
                 >
-                  Start Free Today
+                  Sign in with invite
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
-                <Button size="lg" variant="outline" className="text-lg px-8 py-6">
-                  Watch Demo
+                <Button
+                  size="lg"
+                  variant="ghost"
+                  asChild
+                  className="text-lg px-8 py-6 text-muted-foreground hover:text-foreground"
+                >
+                  <a href="mailto:invites@cnergise.com?subject=Cnergise%20invite%20request">
+                    Request an invite
+                  </a>
                 </Button>
               </>
             ) : (
