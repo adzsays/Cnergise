@@ -30,6 +30,7 @@ import {
   Upload,
   MoreHorizontal,
   Pencil,
+  Trash2,
 } from "lucide-react";
 import {
   Table,
@@ -39,6 +40,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 import { EditTaskDialog } from "./EditTaskDialog";
 import { TaskUploadDialog } from "./TaskUploadDialog";
 import { toast } from "sonner";
@@ -73,6 +75,7 @@ export function TaskList() {
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [editingCell, setEditingCell] = useState<{ id: string; field: string } | null>(null);
   const [draftValue, setDraftValue] = useState<string>("");
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
 
   const projectMap = useMemo(
     () => Object.fromEntries(projects.map((p) => [p.id, p.name])),
