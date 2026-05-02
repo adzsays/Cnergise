@@ -45,6 +45,10 @@ export default function Calendar() {
   }, [date]);
 
   const { data: events = [], isLoading } = useCalendarEvents(rangeStart, rangeEnd);
+  const { data: subData } = useCalendarSubscriptions();
+  const colorMap = subData?.colorMap ?? {};
+  const subscriptions = subData?.subscriptions ?? [];
+  const accounts = subData?.accounts ?? [];
 
   const todayEvents = useMemo(() => {
     const today = startOfDay(new Date()).getTime();
