@@ -5,12 +5,11 @@ import { TopBar } from "@/components/layout/TopBar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
-import { Heart, Timer, Droplets, Moon, ArrowUpRight, ArrowDownRight, Upload, Flame } from "lucide-react";
+import { Heart, Timer, Moon, ArrowUpRight, ArrowDownRight, Flame } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { SamsungHealthImportDialog } from "@/components/health/SamsungHealthImportDialog";
+import { HealthSourceHub } from "@/components/health/HealthSourceHub";
 
 type Metric = {
   metric_date: string;
