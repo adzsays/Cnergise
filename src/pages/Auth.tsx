@@ -400,12 +400,10 @@ const Auth = () => {
                 <Button
                   size="lg"
                   variant="ghost"
-                  asChild
+                  onClick={() => setShowInviteRequest(true)}
                   className="text-lg px-8 py-6 text-muted-foreground hover:text-foreground"
                 >
-                  <a href="mailto:invites@cnergise.com?subject=Cnergise%20invite%20request">
-                    Request an invite
-                  </a>
+                  Request an invite
                 </Button>
               </>
             ) : (
