@@ -8,17 +8,22 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useChatChannels, useChatMessages, ChatChannel } from "@/hooks/useChat";
 import { useProfile } from "@/hooks/useProfile";
-import { 
-  Plus, 
-  Hash, 
-  Send, 
+import { DirectMessages } from "@/components/chat/DirectMessages";
+import { HandleSetupCard } from "@/components/chat/HandleSetupCard";
+import {
+  Plus,
+  Hash,
+  Send,
   Trash2,
   MessageSquare,
-  Lock
+  Lock,
+  AtSign,
 } from "lucide-react";
 import { format } from "date-fns";
+import { useQueryClient } from "@tanstack/react-query";
 
 const Chat = () => {
   const { channels, isLoading: channelsLoading, createChannel, deleteChannel } = useChatChannels();
