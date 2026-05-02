@@ -67,66 +67,61 @@ export function HealthSourceHub() {
   return (
     <>
       <Card>
-        <CardHeader>
-          <CardTitle>Health data sources</CardTitle>
-          <CardDescription>
-            Connect a source to populate your dashboard. Re-uploading the same export will refresh
-            existing days — not duplicate them.
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Health data sources</CardTitle>
+          <CardDescription className="text-xs">
+            Tap a logo to sync or upload. Re-uploads refresh existing days — no duplicates.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {PROVIDERS.map((p) => {
-              const s = sourceMap.get(p.key);
-              const connected = !!s;
-              return (
-                <div key={p.key} className="rounded-lg border p-3 flex flex-col gap-2 bg-card">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-medium text-sm">{p.name}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{p.description}</p>
-                    </div>
-                    {p.mode === "soon" && (
-                      <Badge variant="outline" className="shrink-0 text-xs">Soon</Badge>
-                    )}
-                    {connected && (
-                      <Badge variant="secondary" className="shrink-0 gap-1 text-xs">
-                        <CheckCircle2 className="h-3 w-3" /> Synced
-                      </Badge>
-                    )}
-                  </div>
+          <TooltipProvider delayDuration={200}>
+            <div className="flex flex-wrap gap-2">
+              {PROVIDERS.map((p) => {
+                const s = sourceMap.get(p.key);
+                const connected = !!s;
+                const disabled = p.mode === "soon";
+                const ActionIcon = connected ? RefreshCw : Upload;
+                const tooltip = disabled
+                  ? `${p.name} — ${p.hint}`
+                  : connected && s
+                    ? `${p.name} · ${s.daysCount} days · updated ${formatDistanceToNow(new Date(s.lastUpdated), { addSuffix: true })}`
+                    : `${p.name} — ${p.hint}`;
 
-                  {connected && s && (
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <Clock className="h-3 w-3" />
-                      <span>
-                        {s.daysCount} days · updated {formatDistanceToNow(new Date(s.lastUpdated), { addSuffix: true })}
-                      </span>
-                    </div>
-                  )}
-
-                  <div className="mt-auto pt-1">
-                    {p.mode === "upload" && p.importerProvider && (
-                      <Button
-                        size="sm"
-                        variant={connected ? "outline" : "default"}
-                        className="w-full gap-1.5"
-                        onClick={() => setOpenProvider(p.importerProvider!)}
+                return (
+                  <Tooltip key={p.key}>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => p.importerProvider && setOpenProvider(p.importerProvider)}
+                        className={cn(
+                          "group relative h-12 w-12 rounded-lg border bg-card flex items-center justify-center transition-all",
+                          disabled
+                            ? "opacity-40 cursor-not-allowed"
+                            : "hover:border-primary hover:shadow-sm hover:-translate-y-0.5 cursor-pointer",
+                          connected && "border-primary/40"
+                        )}
+                        aria-label={tooltip}
                       >
-                        <Upload className="h-3.5 w-3.5" />
-                        {connected ? "Update data" : "Upload"}
-                      </Button>
-                    )}
-                    {p.mode === "soon" && (
-                      <Button size="sm" variant="ghost" className="w-full gap-1.5 text-muted-foreground" disabled>
-                        <ExternalLink className="h-3.5 w-3.5" /> Coming soon
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                        <p.Icon className={cn("h-5 w-5", p.tint)} />
+                        {connected && (
+                          <CheckCircle2 className="absolute -top-1 -right-1 h-3.5 w-3.5 text-primary bg-background rounded-full" />
+                        )}
+                        {!disabled && (
+                          <span className="absolute inset-0 rounded-lg bg-background/80 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                            <ActionIcon className="h-4 w-4 text-foreground" />
+                          </span>
+                        )}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="text-xs">
+                      {tooltip}
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              })}
+            </div>
+          </TooltipProvider>
         </CardContent>
       </Card>
 
