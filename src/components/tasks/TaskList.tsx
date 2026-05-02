@@ -363,7 +363,7 @@ export function TaskList() {
                         </TableCell>
                         {/* Title */}
                         <TableCell
-                          className="py-2 text-sm cursor-text"
+                          className="py-2 text-sm cursor-text max-w-0"
                           onClick={() => !isEditing("title") && startEdit(task.id, "title", task.title)}
                         >
                           {isEditing("title") ? (
@@ -380,7 +380,7 @@ export function TaskList() {
                               className="h-8 text-sm"
                             />
                           ) : (
-                            <span className="font-medium">{task.title}</span>
+                            <span className="font-medium block truncate" title={task.title}>{task.title}</span>
                           )}
                         </TableCell>
 
