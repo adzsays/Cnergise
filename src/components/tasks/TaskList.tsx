@@ -319,30 +319,29 @@ export function TaskList() {
         </div>
       ) : (
         <div className="border rounded-lg">
-          {/* Native overflow so horizontal + vertical scrollbars are visible */}
-          <div className="max-h-[calc(100vh-360px)] overflow-auto">
-            <div className="min-w-[1320px]">
-              <Table>
+          <div className="max-h-[calc(100vh-360px)] overflow-y-auto overflow-x-hidden">
+            <div className="w-full">
+              <Table className="w-full table-fixed text-xs">
                 <TableHeader className="sticky top-0 z-20 bg-background shadow-sm">
                   <TableRow className="bg-muted/50 hover:bg-muted/50">
-                    <TableHead className="w-[36px]">
+                    <TableHead className="w-[2.5%] px-1">
                       <Checkbox
                         checked={allSelected}
                         onCheckedChange={(v) => toggleAll(!!v)}
                         aria-label="Select all"
                       />
                     </TableHead>
-                    <SortableHead label="Task" k="title" width="min-w-[220px]" />
-                    <SortableHead label="Project" k="project" width="w-[130px]" />
-                    <SortableHead label="Status" k="status" width="w-[110px]" />
-                    <SortableHead label="Pri" k="priority" width="w-[90px]" />
-                    <SortableHead label="Team" k="team" width="w-[120px]" />
-                    <SortableHead label="Assignee" k="assignee" width="w-[130px]" />
-                    <SortableHead label="Start" k="start_date" width="w-[130px]" />
-                    <SortableHead label="End" k="end_date" width="w-[130px]" />
-                    <SortableHead label="Due" k="due_date" width="w-[130px]" />
-                    <SortableHead label="%" k="completion_percent" width="w-[140px]" />
-                    <TableHead className="w-[80px] text-right sticky right-0 bg-muted/50">Actions</TableHead>
+                    <SortableHead label="Task" k="title" width="w-[20%]" />
+                    <SortableHead label="Project" k="project" width="w-[10%]" />
+                    <SortableHead label="Status" k="status" width="w-[8%]" />
+                    <SortableHead label="Pri" k="priority" width="w-[6%]" />
+                    <SortableHead label="Team" k="team" width="w-[8%]" />
+                    <SortableHead label="Assignee" k="assignee" width="w-[9%]" />
+                    <SortableHead label="Start" k="start_date" width="w-[8%]" />
+                    <SortableHead label="End" k="end_date" width="w-[8%]" />
+                    <SortableHead label="Due" k="due_date" width="w-[8%]" />
+                    <SortableHead label="%" k="completion_percent" width="w-[8%]" />
+                    <TableHead className="w-[4.5%] text-right px-1">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
