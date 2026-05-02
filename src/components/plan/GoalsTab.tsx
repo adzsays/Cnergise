@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useGoals } from "@/hooks/useGoals";
 import { useProjects } from "@/hooks/useProjects";
-import { useSpace } from "@/contexts/SpaceContext";
+import { useCurrentSpace } from "@/contexts/SpaceContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +16,7 @@ import { Target, Plus, FolderKanban, Trash2 } from "lucide-react";
 const CATEGORIES = ["Personal", "Career", "Health", "Finance", "Learning", "Business", "Other"];
 
 export function GoalsTab({ onSelectGoal }: { onSelectGoal?: (goalId: string) => void }) {
-  const { currentSpaceId } = useSpace();
+  const { currentSpaceId } = useCurrentSpace();
   const { goals = [], isLoading, createGoal, deleteGoal } = useGoals();
   const { projects = [] } = useProjects();
   const [open, setOpen] = useState(false);
