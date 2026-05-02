@@ -1,38 +1,35 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Upload, Clock, CheckCircle2, ExternalLink } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Upload, RefreshCw, CheckCircle2, Smartphone, Apple, FileSpreadsheet, Activity, Watch, Circle, Heart, Scale } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { HealthImportDialog, type ImporterProvider } from "./HealthImportDialog";
 import { formatDistanceToNow } from "date-fns";
+import { cn } from "@/lib/utils";
 
 type ProviderDef = {
   key: string;
   name: string;
   mode: "upload" | "oauth" | "soon";
   importerProvider?: ImporterProvider;
-  description: string;
+  Icon: React.ComponentType<{ className?: string }>;
+  tint: string;
+  hint: string;
 };
 
 const PROVIDERS: ProviderDef[] = [
   { key: "samsung_health", name: "Samsung Health", mode: "upload", importerProvider: "samsung_health",
-    description: "Upload the ZIP from Samsung Health → Settings → Download personal data." },
+    Icon: Smartphone, tint: "text-blue-500", hint: "Upload ZIP from Samsung Health export" },
   { key: "apple_health", name: "Apple Health", mode: "upload", importerProvider: "apple_health",
-    description: "Upload export.zip from iPhone Health → Profile → Export All Health Data." },
-  { key: "generic_csv", name: "CSV / Spreadsheet", mode: "upload", importerProvider: "generic_csv",
-    description: "Any CSV with a date column and metric columns (steps, hr, sleep, etc.)." },
-  { key: "fitbit", name: "Fitbit", mode: "soon",
-    description: "Auto-sync via Fitbit API. Coming next — needs API keys." },
-  { key: "garmin", name: "Garmin Connect", mode: "soon",
-    description: "Garmin requires business approval for API access." },
-  { key: "oura", name: "Oura Ring", mode: "soon",
-    description: "Auto-sync via Oura API. Add personal access token." },
-  { key: "whoop", name: "Whoop", mode: "soon",
-    description: "Auto-sync via Whoop API." },
-  { key: "withings", name: "Withings", mode: "soon",
-    description: "Auto-sync via Withings API. Best for weight/body composition." },
+    Icon: Apple, tint: "text-foreground", hint: "Upload export.zip from iPhone Health" },
+  { key: "generic_csv", name: "CSV", mode: "upload", importerProvider: "generic_csv",
+    Icon: FileSpreadsheet, tint: "text-emerald-500", hint: "Any CSV with a date column" },
+  { key: "fitbit", name: "Fitbit", mode: "soon", Icon: Activity, tint: "text-cyan-500", hint: "Coming soon" },
+  { key: "garmin", name: "Garmin", mode: "soon", Icon: Watch, tint: "text-sky-600", hint: "Coming soon" },
+  { key: "oura", name: "Oura", mode: "soon", Icon: Circle, tint: "text-muted-foreground", hint: "Coming soon" },
+  { key: "whoop", name: "Whoop", mode: "soon", Icon: Heart, tint: "text-rose-500", hint: "Coming soon" },
+  { key: "withings", name: "Withings", mode: "soon", Icon: Scale, tint: "text-indigo-500", hint: "Coming soon" },
 ];
 
 export function HealthSourceHub() {
