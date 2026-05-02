@@ -25,6 +25,7 @@ import { useState } from "react";
 import { Shield, UserMinus } from "lucide-react";
 import { AllowlistManager } from "@/components/admin/AllowlistManager";
 import { ApprovalQueue } from "@/components/admin/ApprovalQueue";
+import { InviteRequestsManager } from "@/components/admin/InviteRequestsManager";
 
 export default function Admin() {
   const { data: profiles, isLoading } = useAllProfiles();
