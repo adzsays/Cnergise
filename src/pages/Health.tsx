@@ -274,7 +274,7 @@ export default function Health() {
           </div>
         </SidebarInset>
 
-        <SamsungHealthImportDialog open={importOpen} onOpenChange={setImportOpen} />
+        
       </div>
     </SidebarProvider>
   );
