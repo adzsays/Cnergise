@@ -499,8 +499,10 @@ export type Database = {
           goal_id: string | null
           id: string
           metadata: Json
+          project_id: string | null
           raw_voice_text: string | null
           space_id: string | null
+          task_id: string | null
           title: string
           type: string
           unit: string | null
@@ -516,8 +518,10 @@ export type Database = {
           goal_id?: string | null
           id?: string
           metadata?: Json
+          project_id?: string | null
           raw_voice_text?: string | null
           space_id?: string | null
+          task_id?: string | null
           title: string
           type: string
           unit?: string | null
@@ -533,8 +537,10 @@ export type Database = {
           goal_id?: string | null
           id?: string
           metadata?: Json
+          project_id?: string | null
           raw_voice_text?: string | null
           space_id?: string | null
+          task_id?: string | null
           title?: string
           type?: string
           unit?: string | null
@@ -550,10 +556,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "echo_entries_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "echo_entries_space_id_fkey"
             columns: ["space_id"]
             isOneToOne: false
             referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "echo_entries_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
         ]
@@ -1667,6 +1687,7 @@ export type Database = {
           created_at: string | null
           description: string | null
           end_date: string | null
+          goal_id: string | null
           id: string
           name: string
           space_id: string | null
@@ -1679,6 +1700,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           end_date?: string | null
+          goal_id?: string | null
           id?: string
           name: string
           space_id?: string | null
@@ -1691,6 +1713,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           end_date?: string | null
+          goal_id?: string | null
           id?: string
           name?: string
           space_id?: string | null
@@ -1700,6 +1723,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "projects_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "goals"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "projects_space_id_fkey"
             columns: ["space_id"]
