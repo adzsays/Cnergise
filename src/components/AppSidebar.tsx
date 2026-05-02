@@ -33,6 +33,7 @@ import {
   Lock,
   Clock,
   Mic,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -48,6 +49,7 @@ const navItems = [
   { icon: Share2, label: "Social", href: "/social", featureKey: "social" },
   { icon: Activity, label: "Health", href: "/health", featureKey: "health" },
   { icon: Wallet, label: "Finance", href: "/finances", featureKey: "finance" },
+  { icon: FileText, label: "Invoices", href: "/invoices", featureKey: "invoicing" },
   { icon: Briefcase, label: "Portfolio", href: "/portfolio", featureKey: "portfolio" },
   { icon: Mail, label: "Mail", href: "/mail", featureKey: "mail" },
   { icon: CalendarDays, label: "Calendar", href: "/calendar", featureKey: "calendar" },
