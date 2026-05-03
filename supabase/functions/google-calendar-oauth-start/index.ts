@@ -22,8 +22,20 @@ Deno.serve(async (req) => {
     if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
 
     const url = new URL(req.url);
-    const redirectOrigin = url.searchParams.get("origin") || "";
-    const callbackUrl = `${redirectOrigin}/calendar?gcal_callback=1`;
+    const requestedOrigin = (url.searchParams.get("origin") || "").replace(/\/$/, "");
+
+    // Allowlist of permitted origins to prevent open-redirects
+    const ALLOWED_ORIGINS = new Set([
+      "https://cnergise.com",
+      "https://www.cnergise.com",
+      "https://cnergise.lovable.app",
+      "https://id-preview--173356b8-2140-42ad-ba57-ca70a8c1df7c.lovable.app",
+    ]);
+    const isLovablePreview = /^https:\/\/[a-z0-9-]+\.lovable\.app$/i.test(requestedOrigin);
+    const isLocalhost = /^http:\/\/localhost(:\d+)?$/i.test(requestedOrigin);
+    const originOk = ALLOWED_ORIGINS.has(requestedOrigin) || isLovablePreview || isLocalhost;
+    const safeOrigin = originOk ? requestedOrigin : "https://cnergise.lovable.app";
+    const callbackUrl = `${safeOrigin}/calendar?gcal_callback=1`;
 
     const payload = { uid: user.id, cb: callbackUrl, ts: Date.now() };
     const payloadB64 = btoa(JSON.stringify(payload));

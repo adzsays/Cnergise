@@ -25,6 +25,12 @@ Deno.serve(async (req) => {
     const webhookUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/google-calendar-webhook`;
     const calId = conn.primary_calendar_id || "primary";
 
+    // Compute HMAC token so the webhook can verify Google is the caller
+    const secret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+    const sigBuf = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(channelId));
+    const channelToken = btoa(String.fromCharCode(...new Uint8Array(sigBuf)));
+
     const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events/watch`, {
       method: "POST",
       headers: { Authorization: `Bearer ${conn.access_token}`, "Content-Type": "application/json" },
@@ -32,6 +38,7 @@ Deno.serve(async (req) => {
         id: channelId,
         type: "web_hook",
         address: webhookUrl,
+        token: channelToken,
       }),
     });
     const data = await res.json();
