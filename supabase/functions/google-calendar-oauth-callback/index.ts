@@ -24,7 +24,22 @@ Deno.serve(async (req) => {
     const state = JSON.parse(atob(payloadB64));
     if (!state?.ts || Date.now() - state.ts > 10 * 60 * 1000) return new Response("State expired", { status: 400 });
     const userId: string = state.uid;
-    const cb: string = state.cb;
+    const cbRaw: string = state.cb || "";
+    // Defence-in-depth: re-validate redirect target against allowlist
+    let cbHost = "";
+    try { cbHost = new URL(cbRaw).origin; } catch { return new Response("Invalid callback", { status: 400 }); }
+    const ALLOWED = new Set([
+      "https://cnergise.com",
+      "https://www.cnergise.com",
+      "https://cnergise.lovable.app",
+      "https://id-preview--173356b8-2140-42ad-ba57-ca70a8c1df7c.lovable.app",
+    ]);
+    const isLovablePreview = /^https:\/\/[a-z0-9-]+\.lovable\.app$/i.test(cbHost);
+    const isLocalhost = /^http:\/\/localhost(:\d+)?$/i.test(cbHost);
+    if (!ALLOWED.has(cbHost) && !isLovablePreview && !isLocalhost) {
+      return new Response("Disallowed redirect", { status: 400 });
+    }
+    const cb: string = cbRaw;
 
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
