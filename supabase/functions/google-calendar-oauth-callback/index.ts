@@ -14,7 +14,15 @@ Deno.serve(async (req) => {
     const stateRaw = url.searchParams.get("state");
     if (!code || !stateRaw) return new Response("Missing code/state", { status: 400 });
 
-    const state = JSON.parse(atob(stateRaw));
+    const [payloadB64, sigB64] = stateRaw.split(".");
+    if (!payloadB64 || !sigB64) return new Response("Invalid state format", { status: 400 });
+    const secret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
+    const sigBytes = Uint8Array.from(atob(sigB64), (c) => c.charCodeAt(0));
+    const valid = await crypto.subtle.verify("HMAC", key, sigBytes, new TextEncoder().encode(payloadB64));
+    if (!valid) return new Response("Invalid state signature", { status: 400 });
+    const state = JSON.parse(atob(payloadB64));
+    if (!state?.ts || Date.now() - state.ts > 10 * 60 * 1000) return new Response("State expired", { status: 400 });
     const userId: string = state.uid;
     const cb: string = state.cb;
 
