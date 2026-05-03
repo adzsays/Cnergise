@@ -698,6 +698,36 @@ export type Database = {
         }
         Relationships: []
       }
+      device_push_tokens: {
+        Row: {
+          created_at: string
+          device_label: string | null
+          id: string
+          last_used_at: string | null
+          platform: string
+          token: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_label?: string | null
+          id?: string
+          last_used_at?: string | null
+          platform: string
+          token: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_label?: string | null
+          id?: string
+          last_used_at?: string | null
+          platform?: string
+          token?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       direct_messages: {
         Row: {
           content: string
@@ -2034,6 +2064,54 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          created_at: string
+          default_lead_minutes: number
+          email_enabled: boolean
+          event_lead_minutes: number
+          in_app_enabled: boolean
+          native_push_enabled: boolean
+          payment_lead_minutes: number
+          quiet_hours_end: string | null
+          quiet_hours_start: string | null
+          task_lead_minutes: number
+          updated_at: string
+          user_id: string
+          web_push_enabled: boolean
+        }
+        Insert: {
+          created_at?: string
+          default_lead_minutes?: number
+          email_enabled?: boolean
+          event_lead_minutes?: number
+          in_app_enabled?: boolean
+          native_push_enabled?: boolean
+          payment_lead_minutes?: number
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          task_lead_minutes?: number
+          updated_at?: string
+          user_id: string
+          web_push_enabled?: boolean
+        }
+        Update: {
+          created_at?: string
+          default_lead_minutes?: number
+          email_enabled?: boolean
+          event_lead_minutes?: number
+          in_app_enabled?: boolean
+          native_push_enabled?: boolean
+          payment_lead_minutes?: number
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          task_lead_minutes?: number
+          updated_at?: string
+          user_id?: string
+          web_push_enabled?: boolean
+        }
+        Relationships: []
+      }
       performance_metrics: {
         Row: {
           created_at: string
@@ -2203,6 +2281,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      reminders: {
+        Row: {
+          channels: string[]
+          created_at: string
+          delivery_status: Json | null
+          description: string | null
+          external_url: string | null
+          id: string
+          lead_minutes: number | null
+          remind_at: string
+          sent_at: string | null
+          source_id: string | null
+          source_table: string | null
+          source_type: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          channels?: string[]
+          created_at?: string
+          delivery_status?: Json | null
+          description?: string | null
+          external_url?: string | null
+          id?: string
+          lead_minutes?: number | null
+          remind_at: string
+          sent_at?: string | null
+          source_id?: string | null
+          source_table?: string | null
+          source_type: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          channels?: string[]
+          created_at?: string
+          delivery_status?: Json | null
+          description?: string | null
+          external_url?: string | null
+          id?: string
+          lead_minutes?: number | null
+          remind_at?: string
+          sent_at?: string | null
+          source_id?: string | null
+          source_table?: string | null
+          source_type?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       services: {
         Row: {
@@ -2812,6 +2941,39 @@ export type Database = {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      web_push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          last_used_at: string | null
+          p256dh: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          last_used_at?: string | null
+          p256dh: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          last_used_at?: string | null
+          p256dh?: string
+          user_agent?: string | null
           user_id?: string
         }
         Relationships: []
