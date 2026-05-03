@@ -108,53 +108,51 @@ export default function Portfolio() {
               }
             />
             
-            <div className="flex-1 overflow-auto p-6">
+            <div className="flex-1 overflow-auto p-3 md:p-6 pb-[env(safe-area-inset-bottom)]">
               <Tabs value={activeTab} className="w-full">
                 <TabsContent value="overview" className="mt-0">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6">
                     <Card>
                       <CardHeader className="pb-2">
-                        <CardTitle>Portfolio Value</CardTitle>
+                        <CardTitle className="text-sm md:text-base">Portfolio Value</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="space-y-2">
-                          <div className="text-3xl font-bold">
+                        <div className="space-y-1">
+                          <div className="text-2xl md:text-3xl font-bold tabular-nums">
                             ${portfolioValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </div>
-                          <div className={`flex items-center text-sm ${portfolioChangePercent >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                          <div className={`flex items-center text-xs md:text-sm ${portfolioChangePercent >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                             {portfolioChangePercent >= 0 ? (
                               <TrendingUp className="mr-1 h-4 w-4" />
                             ) : (
                               <TrendingDown className="mr-1 h-4 w-4" />
                             )}
-                            <span>
-                              ${Math.abs(portfolioChange).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} 
+                            <span className="tabular-nums">
+                              ${Math.abs(portfolioChange).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                               ({portfolioChangePercent >= 0 ? '+' : ''}{portfolioChangePercent.toFixed(2)}%)
                             </span>
                           </div>
-                          <div className="text-xs text-muted-foreground">
-                            Today, May 20, 2025
-                          </div>
+                          <div className="text-[10px] md:text-xs text-muted-foreground">Today</div>
                         </div>
                       </CardContent>
                     </Card>
-                    
+
                     <Card className="md:col-span-2">
                       <CardHeader className="pb-2">
-                        <CardTitle>Portfolio History</CardTitle>
+                        <CardTitle className="text-sm md:text-base">Portfolio History</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="h-[200px] w-full">
+                        <div className="h-[160px] md:h-[200px] w-full">
                           <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={marketData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                            <AreaChart data={marketData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                               <defs>
                                 <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                                   <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
                                   <stop offset="95%" stopColor="#8884d8" stopOpacity={0}/>
                                 </linearGradient>
                               </defs>
-                              <XAxis dataKey="name" />
-                              <YAxis />
+                              <XAxis dataKey="name" fontSize={10} />
+                              <YAxis fontSize={10} width={40} />
                               <CartesianGrid strokeDasharray="3 3" />
                               <Tooltip formatter={(value) => ["$" + value.toLocaleString(), "Value"]} />
                               <Area type="monotone" dataKey="value" stroke="#8884d8" fillOpacity={1} fill="url(#colorValue)" />
@@ -163,22 +161,22 @@ export default function Portfolio() {
                         </div>
                       </CardContent>
                     </Card>
-                    
+
                     <Card>
                       <CardHeader className="pb-2">
-                        <CardTitle>Asset Allocation</CardTitle>
+                        <CardTitle className="text-sm md:text-base">Asset Allocation</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="h-[200px] w-full">
+                        <div className="h-[180px] md:h-[200px] w-full">
                           <ResponsiveContainer width="100%" height="100%">
                             <RechartsPieChart>
                               <Pie
                                 data={assetAllocation}
                                 cx="50%"
                                 cy="50%"
-                                innerRadius={60}
-                                outerRadius={80}
-                                paddingAngle={5}
+                                innerRadius={45}
+                                outerRadius={70}
+                                paddingAngle={4}
                                 dataKey="value"
                                 label={({name, percent}) => `${name} ${(percent * 100).toFixed(0)}%`}
                               >
@@ -192,24 +190,22 @@ export default function Portfolio() {
                         </div>
                       </CardContent>
                     </Card>
-                    
+
                     <Card className="md:col-span-2">
                       <CardHeader className="pb-2">
-                        <CardTitle>Top Holdings</CardTitle>
+                        <CardTitle className="text-sm md:text-base">Top Holdings</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="space-y-4">
+                        <div className="space-y-2.5">
                           {topHoldings.map((holding) => (
-                            <div key={holding.name} className="flex items-center justify-between">
-                              <div>
-                                <div className="font-medium">{holding.name}</div>
-                                <div className="text-sm text-muted-foreground">{holding.fullName}</div>
+                            <div key={holding.name} className="flex items-center justify-between gap-2">
+                              <div className="min-w-0">
+                                <div className="font-medium text-sm">{holding.name}</div>
+                                <div className="text-xs text-muted-foreground truncate">{holding.fullName}</div>
                               </div>
-                              <div>
-                                <div className="text-right font-medium">
-                                  ${holding.value.toLocaleString()}
-                                </div>
-                                <div className={`text-right text-sm ${holding.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                              <div className="shrink-0 text-right">
+                                <div className="text-sm font-medium tabular-nums">${holding.value.toLocaleString()}</div>
+                                <div className={`text-xs tabular-nums ${holding.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                                   {holding.change >= 0 ? '+' : ''}{holding.change}%
                                 </div>
                               </div>
