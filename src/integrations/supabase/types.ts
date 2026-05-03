@@ -67,7 +67,7 @@ export type Database = {
           created_at: string
           currency: string
           description: string | null
-          external_id: string | null
+          external_id: string
           id: string
           merchant: string | null
           notes: string | null
@@ -88,7 +88,7 @@ export type Database = {
           created_at?: string
           currency?: string
           description?: string | null
-          external_id?: string | null
+          external_id?: string
           id?: string
           merchant?: string | null
           notes?: string | null
@@ -109,7 +109,7 @@ export type Database = {
           created_at?: string
           currency?: string
           description?: string | null
-          external_id?: string | null
+          external_id?: string
           id?: string
           merchant?: string | null
           notes?: string | null
