@@ -222,6 +222,9 @@ export default function Profile() {
                       <TabsContent value="integrations" className="mt-0">
                         <IntegrationSettings />
                       </TabsContent>
+                      <TabsContent value="notifications" className="mt-0">
+                        <NotificationSettings />
+                      </TabsContent>
                     </>
                   )}
                 </Tabs>
