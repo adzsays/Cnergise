@@ -234,47 +234,76 @@ export function ActualExpensesView() {
             No expenses yet. Upload your bank statement to get started.
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Merchant</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Account</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.slice(0, 500).map((e) => (
-                  <TableRow key={e.id}>
-                    <TableCell className="whitespace-nowrap">{e.posted_on}</TableCell>
-                    <TableCell className="max-w-[180px] truncate" title={e.merchant ?? ""}>{e.merchant}</TableCell>
-                    <TableCell className="max-w-[260px] truncate" title={e.description ?? ""}>{e.description}</TableCell>
-                    <TableCell>{e.category && <Badge variant="secondary">{e.category}</Badge>}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{e.account_provider}</TableCell>
-                    <TableCell className={`text-right tabular-nums ${e.amount < 0 ? "text-destructive" : "text-green-600"}`}>
+          <>
+            {/* Mobile: stacked cards */}
+            <div className="md:hidden divide-y">
+              {filtered.slice(0, 200).map((e) => (
+                <div key={e.id} className="p-3 flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium truncate">{e.merchant || e.description || "—"}</span>
+                    </div>
+                    <div className="text-xs text-muted-foreground truncate">{e.description}</div>
+                    <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[10px] text-muted-foreground tabular-nums">{e.posted_on}</span>
+                      {e.category && <Badge variant="secondary" className="text-[10px] py-0 h-4">{e.category}</Badge>}
+                      {e.account_provider && <span className="text-[10px] text-muted-foreground">· {e.account_provider}</span>}
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className={`text-sm font-semibold tabular-nums ${e.amount < 0 ? "text-destructive" : "text-green-600"}`}>
                       {fmtMoney(e.amount, e.currency)}
-                    </TableCell>
-                    <TableCell>{e.status && <Badge variant="outline">{e.status}</Badge>}</TableCell>
-                    <TableCell>
-                      <Button size="icon" variant="ghost" onClick={() => remove.mutate(e.id)}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </TableCell>
+                    </div>
+                    <Button size="icon" variant="ghost" className="h-6 w-6 mt-1" onClick={() => remove.mutate(e.id)}>
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {/* Desktop: table */}
+            <div className="hidden md:block overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Merchant</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Account</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead></TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filtered.slice(0, 500).map((e) => (
+                    <TableRow key={e.id}>
+                      <TableCell className="whitespace-nowrap">{e.posted_on}</TableCell>
+                      <TableCell className="max-w-[180px] truncate" title={e.merchant ?? ""}>{e.merchant}</TableCell>
+                      <TableCell className="max-w-[260px] truncate" title={e.description ?? ""}>{e.description}</TableCell>
+                      <TableCell>{e.category && <Badge variant="secondary">{e.category}</Badge>}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{e.account_provider}</TableCell>
+                      <TableCell className={`text-right tabular-nums ${e.amount < 0 ? "text-destructive" : "text-green-600"}`}>
+                        {fmtMoney(e.amount, e.currency)}
+                      </TableCell>
+                      <TableCell>{e.status && <Badge variant="outline">{e.status}</Badge>}</TableCell>
+                      <TableCell>
+                        <Button size="icon" variant="ghost" onClick={() => remove.mutate(e.id)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
             {filtered.length > 500 && (
               <div className="p-3 text-center text-xs text-muted-foreground border-t">
                 Showing first 500 of {filtered.length} — refine search to see more.
               </div>
             )}
-          </div>
+          </>
         )}
       </Card>
     </div>
