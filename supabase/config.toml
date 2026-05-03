@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.google-calendar-webhook]
 verify_jwt = false
+
+[functions.dispatch-reminders]
+verify_jwt = false
