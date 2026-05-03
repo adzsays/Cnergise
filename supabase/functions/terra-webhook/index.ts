@@ -103,15 +103,20 @@ Deno.serve(async (req) => {
 
   const body = await req.text();
   const signingSecret = Deno.env.get("TERRA_SIGNING_SECRET");
-  if (signingSecret) {
-    const ok = await verifyTerraSignature(req.headers.get("terra-signature"), body, signingSecret);
-    if (!ok) {
-      console.warn("terra-webhook: invalid signature");
-      return new Response(JSON.stringify({ error: "invalid signature" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+  if (!signingSecret) {
+    console.error("terra-webhook: TERRA_SIGNING_SECRET not configured — refusing request");
+    return new Response(JSON.stringify({ error: "Webhook not configured" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  const ok = await verifyTerraSignature(req.headers.get("terra-signature"), body, signingSecret);
+  if (!ok) {
+    console.warn("terra-webhook: invalid signature");
+    return new Response(JSON.stringify({ error: "invalid signature" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   let payload: any;
