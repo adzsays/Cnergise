@@ -14,6 +14,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { IntegrationSettings } from "@/components/settings/IntegrationSettings";
 import { SubscriptionSettings } from "@/components/settings/SubscriptionSettings";
 import { SecuritySettings } from "@/components/settings/SecuritySettings";
+import { NotificationSettings } from "@/components/notifications/NotificationSettings";
+import { Bell } from "lucide-react";
 import { Upload, Save, User, Key, CreditCard, ShieldCheck, Layers } from "lucide-react";
 import { MyFeaturesPanel } from "@/components/features/MyFeaturesPanel";
 import { ConsentHistory } from "@/components/features/ConsentHistory";
@@ -90,6 +92,10 @@ export default function Profile() {
                     <TabsTrigger value="integrations" className="text-sm">
                       <Key className="h-4 w-4 mr-2" />
                       <span className="hidden sm:inline">APIs</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="notifications" className="text-sm">
+                      <Bell className="h-4 w-4 mr-2" />
+                      <span className="hidden sm:inline">Alerts</span>
                     </TabsTrigger>
                   </TabsList>
 
@@ -215,6 +221,9 @@ export default function Profile() {
 
                       <TabsContent value="integrations" className="mt-0">
                         <IntegrationSettings />
+                      </TabsContent>
+                      <TabsContent value="notifications" className="mt-0">
+                        <NotificationSettings />
                       </TabsContent>
                     </>
                   )}
