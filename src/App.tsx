@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Auth from "./pages/Auth";
 import Install from "./pages/Install";
 import { AuthGuard } from "./components/AuthGuard";
+import { AdminGuard } from "./components/AdminGuard";
 import { FeatureGate } from "./components/features/FeatureGate";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { SpaceProvider } from "./contexts/SpaceContext";
@@ -82,8 +83,8 @@ const App = () => (
                 <Route path="/health" element={<AuthGuard><FeatureGate featureKey="health"><Health /></FeatureGate></AuthGuard>} />
                 <Route path="/portfolio" element={<AuthGuard><FeatureGate featureKey="portfolio"><Portfolio /></FeatureGate></AuthGuard>} />
                 <Route path="/profile" element={<AuthGuard><Profile /></AuthGuard>} />
-                <Route path="/users" element={<AuthGuard><Users /></AuthGuard>} />
-                <Route path="/admin" element={<AuthGuard><Admin /></AuthGuard>} />
+                <Route path="/users" element={<AuthGuard><AdminGuard><Users /></AdminGuard></AuthGuard>} />
+                <Route path="/admin" element={<AuthGuard><AdminGuard><Admin /></AdminGuard></AuthGuard>} />
                 <Route path="/teams" element={<AuthGuard><FeatureGate featureKey="teams"><Teams /></FeatureGate></AuthGuard>} />
                 <Route path="/contacts" element={<AuthGuard><FeatureGate featureKey="contacts"><Contacts /></FeatureGate></AuthGuard>} />
                 <Route path="/chat" element={<AuthGuard><FeatureGate featureKey="chat"><Chat /></FeatureGate></AuthGuard>} />
