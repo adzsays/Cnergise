@@ -25,7 +25,13 @@ Deno.serve(async (req) => {
     const redirectOrigin = url.searchParams.get("origin") || "";
     const callbackUrl = `${redirectOrigin}/calendar?gcal_callback=1`;
 
-    const state = btoa(JSON.stringify({ uid: user.id, cb: callbackUrl, ts: Date.now() }));
+    const payload = { uid: user.id, cb: callbackUrl, ts: Date.now() };
+    const payloadB64 = btoa(JSON.stringify(payload));
+    const secret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+    const sigBuf = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payloadB64));
+    const sigB64 = btoa(String.fromCharCode(...new Uint8Array(sigBuf)));
+    const state = `${payloadB64}.${sigB64}`;
 
     const params = new URLSearchParams({
       client_id: Deno.env.get("GOOGLE_CALENDAR_CLIENT_ID")!,
