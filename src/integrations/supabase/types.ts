@@ -58,6 +58,72 @@ export type Database = {
           },
         ]
       }
+      actual_expenses: {
+        Row: {
+          account_name: string | null
+          account_provider: string | null
+          amount: number
+          category: string | null
+          created_at: string
+          currency: string
+          description: string | null
+          external_id: string | null
+          id: string
+          merchant: string | null
+          notes: string | null
+          posted_on: string
+          raw: Json | null
+          source: string
+          space_id: string | null
+          status: string | null
+          sub_type: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_name?: string | null
+          account_provider?: string | null
+          amount: number
+          category?: string | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          external_id?: string | null
+          id?: string
+          merchant?: string | null
+          notes?: string | null
+          posted_on: string
+          raw?: Json | null
+          source?: string
+          space_id?: string | null
+          status?: string | null
+          sub_type?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_name?: string | null
+          account_provider?: string | null
+          amount?: number
+          category?: string | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          external_id?: string | null
+          id?: string
+          merchant?: string | null
+          notes?: string | null
+          posted_on?: string
+          raw?: Json | null
+          source?: string
+          space_id?: string | null
+          status?: string | null
+          sub_type?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_search_history: {
         Row: {
           created_at: string
