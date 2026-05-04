@@ -52,6 +52,8 @@ export default function Plan() {
                   </p>
                 </Card>
 
+                <AIBriefCard scope="plan" title="Plan AI brief" />
+
                 <Tabs value={tab} onValueChange={(v) => { setTab(v); if (v !== "projects") setFocusGoalId(null); }}>
                   <div className="overflow-x-auto -mx-3 px-3 md:mx-0 md:px-0">
                     <TabsList className="bg-muted/50 inline-flex min-w-max">
