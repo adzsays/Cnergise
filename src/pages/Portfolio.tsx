@@ -217,27 +217,20 @@ export default function Portfolio() {
                 </TabsContent>
                 
                 <TabsContent value="performance">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Portfolio Performance</CardTitle>
-                      <CardDescription>Comparison against benchmark</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="h-[300px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={performance} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="name" />
-                            <YAxis tickFormatter={(value) => `${value}%`} />
-                            <Tooltip formatter={(value) => [`${value}%`, "Return"]} />
-                            <Legend />
-                            <Bar dataKey="portfolio" name="Your Portfolio" fill="#8884d8" />
-                            <Bar dataKey="benchmark" name="Benchmark" fill="#82ca9d" />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <SleekChart
+                    kind="bar"
+                    data={performance}
+                    xKey="name"
+                    series={[
+                      { key: "portfolio", label: "Your Portfolio", color: "primary" },
+                      { key: "benchmark", label: "Benchmark", hsl: "152 58% 48%" },
+                    ]}
+                    title="Portfolio Performance"
+                    subtitle="Comparison against benchmark"
+                    valueFormatter={(v) => `${v}%`}
+                    compactHeight={140}
+                    expandedHeight={360}
+                  />
                 </TabsContent>
                 
                 <TabsContent value="transactions">
