@@ -59,6 +59,8 @@ export interface SleekChartProps {
   inline?: boolean;
   className?: string;
   emptyLabel?: string;
+  /** stack bar series in bar charts */
+  stacked?: boolean;
 }
 
 /* ------------------------------------------------------------------ */
@@ -116,11 +118,11 @@ const SleekTooltip = ({
 /*  Inner chart renderer (used in both compact + expanded)             */
 /* ------------------------------------------------------------------ */
 
-interface RenderProps extends Pick<SleekChartProps, "data" | "series" | "xKey" | "kind" | "valueFormatter"> {
+interface RenderProps extends Pick<SleekChartProps, "data" | "series" | "xKey" | "kind" | "valueFormatter" | "stacked"> {
   compact?: boolean;
 }
 
-const ChartBody = ({ kind, data, series, xKey, valueFormatter, compact }: RenderProps) => {
+const ChartBody = ({ kind, data, series, xKey, valueFormatter, compact, stacked }: RenderProps) => {
   const fmt = valueFormatter || defaultFormatter;
   const colors = useMemo(() => series.map((s, i) => tokenColor(s, i)), [series]);
 
