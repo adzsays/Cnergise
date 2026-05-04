@@ -154,14 +154,77 @@ async function dispatchDue() {
       status.web_push = `${okCount}/${subs?.length ?? 0}`;
     }
 
-    // 3. Native push (FCM) — placeholder: stores intent; requires FCM_SERVER_KEY when ready
+    // 3. Native push (FCM HTTP v1)
     if (r.channels.includes("native_push")) {
-      status.native_push = "pending_fcm_setup";
+      const { data: tokens } = await admin
+        .from("device_push_tokens")
+        .select("*")
+        .eq("user_id", r.user_id);
+      let okCount = 0;
+      for (const t of tokens ?? []) {
+        try {
+          const res = await sendFcm(t.token, {
+            title: r.title,
+            body: r.description ?? "",
+            data: {
+              source_type: r.source_type ?? "",
+              source_id: r.source_id ?? "",
+              url: r.external_url ?? "/",
+            },
+          });
+          if (res.ok) okCount++;
+          else if (res.shouldRemoveToken) {
+            await admin.from("device_push_tokens").delete().eq("id", t.id);
+          }
+        } catch (e) {
+          console.error("FCM send error", e);
+        }
+      }
+      status.native_push = `${okCount}/${tokens?.length ?? 0}`;
     }
 
-    // 4. Email — placeholder: requires email infra setup
+    // 4. Email — enqueue via send-transactional-email
     if (r.channels.includes("email")) {
-      status.email = "pending_email_setup";
+      try {
+        const { data: profile } = await admin
+          .from("profiles")
+          .select("email,name")
+          .eq("id", r.user_id)
+          .maybeSingle();
+        const { data: authUser } = await admin.auth.admin.getUserById(r.user_id);
+        const to = profile?.email ?? authUser?.user?.email;
+        if (to) {
+          const resp = await fetch(
+            `${SUPABASE_URL}/functions/v1/send-transactional-email`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${SERVICE_KEY}`,
+              },
+              body: JSON.stringify({
+                to,
+                template: "reminder",
+                purpose: "transactional",
+                idempotency_key: `reminder:${r.id}`,
+                variables: {
+                  recipient_name: profile?.name ?? "there",
+                  title: r.title,
+                  description: r.description ?? "",
+                  remind_at: r.remind_at,
+                  source_type: r.source_type,
+                  url: r.external_url ?? "",
+                },
+              }),
+            },
+          );
+          status.email = resp.ok ? "queued" : `err:${resp.status}`;
+        } else {
+          status.email = "no_address";
+        }
+      } catch (e: any) {
+        status.email = `err:${e.message}`;
+      }
     }
 
     await admin.from("reminders").update({
