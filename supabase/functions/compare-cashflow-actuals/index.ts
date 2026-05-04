@@ -1,5 +1,6 @@
 // Compare planned cash-flow transactions to actual expenses using Lovable AI to auto-map them.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logServiceUsage } from "../_shared/cost-tracking.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

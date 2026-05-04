@@ -1,5 +1,6 @@
 // Public visitor chat endpoint with AI response and human handoff support.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { logServiceUsage } from "../_shared/cost-tracking.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -147,6 +148,8 @@ Deno.serve(async (req) => {
 
       const ai = await aiResp.json();
       const reply = ai?.choices?.[0]?.message?.content ?? "Thanks — let me check on that.";
+      const totalTokens = Number(ai?.usage?.total_tokens ?? 0);
+      logServiceUsage({ service: "lovable-ai", operation: "google/gemini-3-flash-preview", units: totalTokens / 1000, function_name: "visitor-chat", metadata: { session_id: sess.id, usage: ai?.usage } });
       await sb.from("visitor_chat_messages").insert({
         session_id: sess.id,
         role: "assistant",
