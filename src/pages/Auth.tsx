@@ -780,6 +780,7 @@ const Auth = () => {
       )}
 
       <RequestInviteDialog open={showInviteRequest} onOpenChange={setShowInviteRequest} />
+      <VisitorChat />
     </div>
   );
 };
