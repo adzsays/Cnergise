@@ -69,6 +69,7 @@ const App = () => (
                 <Route path="/" element={<Auth />} />
                 <Route path="/login" element={<Auth />} />
                 <Route path="/install" element={<Install />} />
+                <Route path="/unsubscribe" element={<Unsubscribe />} />
                 <Route path="/onboarding" element={<AuthGuard><Onboarding /></AuthGuard>} />
                 <Route path="/home" element={<AuthGuard><Home /></AuthGuard>} />
                 <Route path="/plan" element={<AuthGuard><FeatureGate featureKey="tasks"><Plan /></FeatureGate></AuthGuard>} />
