@@ -65,12 +65,10 @@ export function Sidebar({ className }: SidebarProps) {
       <div className="flex items-center justify-between px-4 py-5">
         {expanded ? (
           <Link to="/" className="flex items-center gap-2">
-            <img src={cnergiseLogo} alt="Cnergise" className="h-10 w-10 object-contain" />
-            <span className="text-xl font-bold text-foreground">Cnergise</span>
-          </Link>
-        ) : (
-          <Link to="/" className="w-12 h-12 mx-auto flex items-center justify-center">
-            <img src={cnergiseLogo} alt="Cnergise" className="h-10 w-10 object-contain" />
+            <img src={cnergiseLogo} alt="Cnergise" className="h-25 w-25 object-contain" style={{ height: '6.25rem', width: '6.25rem' }} />
+          </div>
+          <div className="hidden md:flex items-center justify-center mb-4">
+            <img src={cnergiseLogo} alt="Cnergise" className="object-contain" style={{ height: '6.25rem', width: '6.25rem' }} />
           </Link>
         )}
       </div>
