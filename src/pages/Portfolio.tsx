@@ -184,15 +184,21 @@ export default function Portfolio() {
                 </TabsContent>
                 
                 <TabsContent value="holdings">
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle>Portfolio Holdings</CardTitle>
-                    </CardHeader>
-                    <CardContent className="min-h-[400px] flex items-center justify-center text-muted-foreground">
-                      Detailed holdings information coming soon
-                    </CardContent>
-                  </Card>
+                  <LiveHoldings />
                 </TabsContent>
+
+                <TabsContent value="strategies">
+                  <StrategyManager />
+                </TabsContent>
+
+                <TabsContent value="risk">
+                  <RiskManager />
+                </TabsContent>
+
+                <TabsContent value="ibkr">
+                  <IBKRConnection />
+                </TabsContent>
+
                 
                 <TabsContent value="performance">
                   <SleekChart
