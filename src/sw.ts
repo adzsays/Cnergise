@@ -5,6 +5,15 @@ declare const self: ServiceWorkerGlobalScope & { __WB_MANIFEST: any };
 
 precacheAndRoute(self.__WB_MANIFEST);
 
+// Never intercept OAuth broker paths — they must always hit the network
+// so the state cookie handshake on oauth.lovable.app works correctly.
+self.addEventListener('fetch', (event: FetchEvent) => {
+  const url = new URL(event.request.url);
+  if (url.pathname.startsWith('/~oauth')) {
+    event.respondWith(fetch(event.request));
+  }
+});
+
 self.addEventListener('push', (event: PushEvent) => {
   const data = (() => {
     try { return event.data?.json() ?? {}; } catch { return { title: event.data?.text() ?? 'Notification' }; }
