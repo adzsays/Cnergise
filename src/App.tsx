@@ -36,6 +36,7 @@ const Monitoring = lazy(() => import("./pages/Monitoring"));
 const Learning = lazy(() => import("./pages/Learning"));
 const Echo = lazy(() => import("./pages/Echo"));
 const Invoices = lazy(() => import("./pages/Invoices"));
+const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -68,6 +69,7 @@ const App = () => (
                 <Route path="/" element={<Auth />} />
                 <Route path="/login" element={<Auth />} />
                 <Route path="/install" element={<Install />} />
+                <Route path="/unsubscribe" element={<Unsubscribe />} />
                 <Route path="/onboarding" element={<AuthGuard><Onboarding /></AuthGuard>} />
                 <Route path="/home" element={<AuthGuard><Home /></AuthGuard>} />
                 <Route path="/plan" element={<AuthGuard><FeatureGate featureKey="tasks"><Plan /></FeatureGate></AuthGuard>} />

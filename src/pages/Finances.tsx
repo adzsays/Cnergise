@@ -12,6 +12,7 @@ import { ReceiptsView } from "@/components/finances/ReceiptsView";
 import { ActualExpensesView } from "@/components/finances/ActualExpensesView";
 
 import { LayoutDashboard, TrendingUp, CreditCard, Scale, Receipt, Wallet } from "lucide-react";
+import { AIBriefCard } from "@/components/ai/AIBriefCard";
 
 const Finances = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -28,7 +29,8 @@ const Finances = () => {
               
               <TopBar title="Finance" />
 
-              <div className="flex-1 overflow-auto p-3 md:p-6">
+              <div className="flex-1 overflow-auto p-3 md:p-6 space-y-4">
+                <AIBriefCard scope="finance" title="Finance AI brief" />
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
                   <div className="overflow-x-auto -mx-3 px-3 md:mx-0 md:px-0">
                     <TabsList className="bg-muted/50 inline-flex h-auto gap-0.5 md:gap-1 p-1 md:p-1.5 rounded-lg md:rounded-xl min-w-max">
