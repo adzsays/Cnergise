@@ -3142,6 +3142,83 @@ export type Database = {
         }
         Relationships: []
       }
+      visitor_chat_messages: {
+        Row: {
+          admin_user_id: string | null
+          content: string
+          created_at: string
+          id: string
+          role: string
+          session_id: string
+        }
+        Insert: {
+          admin_user_id?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          role: string
+          session_id: string
+        }
+        Update: {
+          admin_user_id?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          role?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visitor_chat_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "visitor_chat_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      visitor_chat_sessions: {
+        Row: {
+          created_at: string
+          id: string
+          last_message_at: string
+          page_url: string | null
+          session_token: string
+          status: string
+          unread_admin_count: number
+          updated_at: string
+          user_agent: string | null
+          visitor_email: string | null
+          visitor_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_message_at?: string
+          page_url?: string | null
+          session_token: string
+          status?: string
+          unread_admin_count?: number
+          updated_at?: string
+          user_agent?: string | null
+          visitor_email?: string | null
+          visitor_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_message_at?: string
+          page_url?: string | null
+          session_token?: string
+          status?: string
+          unread_admin_count?: number
+          updated_at?: string
+          user_agent?: string | null
+          visitor_email?: string | null
+          visitor_name?: string | null
+        }
+        Relationships: []
+      }
       web_push_subscriptions: {
         Row: {
           auth: string

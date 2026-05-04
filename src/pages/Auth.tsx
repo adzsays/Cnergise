@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import cnergiseLogo from "@/assets/cnergise-logo.png";
 import { RequestInviteDialog } from "@/components/auth/RequestInviteDialog";
+import { VisitorChat } from "@/components/VisitorChat";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -780,6 +781,7 @@ const Auth = () => {
       )}
 
       <RequestInviteDialog open={showInviteRequest} onOpenChange={setShowInviteRequest} />
+      <VisitorChat />
     </div>
   );
 };
