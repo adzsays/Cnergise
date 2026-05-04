@@ -124,6 +124,92 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_brief_questions: {
+        Row: {
+          answer: string | null
+          answered_at: string | null
+          asked_at: string
+          brief_id: string | null
+          context: Json
+          id: string
+          question: string
+          user_id: string
+        }
+        Insert: {
+          answer?: string | null
+          answered_at?: string | null
+          asked_at?: string
+          brief_id?: string | null
+          context?: Json
+          id?: string
+          question: string
+          user_id: string
+        }
+        Update: {
+          answer?: string | null
+          answered_at?: string | null
+          asked_at?: string
+          brief_id?: string | null
+          context?: Json
+          id?: string
+          question?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_brief_questions_brief_id_fkey"
+            columns: ["brief_id"]
+            isOneToOne: false
+            referencedRelation: "ai_briefs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_briefs: {
+        Row: {
+          actions: Json
+          body: string
+          confidence: number
+          created_at: string
+          dismissed_at: string | null
+          generated_for_date: string
+          headline: string
+          id: string
+          model: string | null
+          related_ids: Json
+          scope: string
+          user_id: string
+        }
+        Insert: {
+          actions?: Json
+          body: string
+          confidence?: number
+          created_at?: string
+          dismissed_at?: string | null
+          generated_for_date?: string
+          headline: string
+          id?: string
+          model?: string | null
+          related_ids?: Json
+          scope: string
+          user_id: string
+        }
+        Update: {
+          actions?: Json
+          body?: string
+          confidence?: number
+          created_at?: string
+          dismissed_at?: string | null
+          generated_for_date?: string
+          headline?: string
+          id?: string
+          model?: string | null
+          related_ids?: Json
+          scope?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_search_history: {
         Row: {
           created_at: string
@@ -3111,6 +3197,7 @@ export type Database = {
           name: string
         }[]
       }
+      get_cron_secret: { Args: never; Returns: string }
       has_feature_access: {
         Args: { _feature_key: string; _user_id: string }
         Returns: boolean
