@@ -250,14 +250,8 @@ Deno.serve(async (req) => {
   let isVaultCronSecret = false;
   if (!isServiceRole && !isEnvCronSecret && providedSecret) {
     try {
-      const { data: vaultRow } = await admin
-        .schema("vault" as any)
-        .from("decrypted_secrets" as any)
-        .select("decrypted_secret")
-        .eq("name", "cnergise_cron_secret")
-        .maybeSingle();
-      const vaultSecret = (vaultRow as any)?.decrypted_secret as string | undefined;
-      isVaultCronSecret = !!vaultSecret && providedSecret === vaultSecret;
+      const { data: vaultSecret } = await admin.rpc("get_cron_secret");
+      isVaultCronSecret = !!vaultSecret && providedSecret === (vaultSecret as string);
     } catch (e) {
       console.error("vault read failed", e);
     }
