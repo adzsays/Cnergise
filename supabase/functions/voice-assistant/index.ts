@@ -186,6 +186,7 @@ Always respond with a brief, friendly confirmation of what you're doing. If you'
     const aiResponse = await response.json();
     const toolCalls = aiResponse.choices?.[0]?.message?.tool_calls;
     const assistantMessage = aiResponse.choices?.[0]?.message?.content || "";
+    logServiceUsage({ service: "lovable-ai", operation: "google/gemini-3-flash-preview", units: Number(aiResponse?.usage?.total_tokens ?? 0) / 1000, function_name: "voice-assistant", metadata: { usage: aiResponse?.usage } });
 
     let actionResult = null;
 
