@@ -121,59 +121,30 @@ export default function Portfolio() {
                       </CardContent>
                     </Card>
 
-                    <Card className="md:col-span-2">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm md:text-base">Portfolio History</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="h-[160px] md:h-[200px] w-full">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={marketData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                              <defs>
-                                <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                                  <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
-                                  <stop offset="95%" stopColor="#8884d8" stopOpacity={0}/>
-                                </linearGradient>
-                              </defs>
-                              <XAxis dataKey="name" fontSize={10} />
-                              <YAxis fontSize={10} width={40} />
-                              <CartesianGrid strokeDasharray="3 3" />
-                              <Tooltip formatter={(value) => ["$" + value.toLocaleString(), "Value"]} />
-                              <Area type="monotone" dataKey="value" stroke="#8884d8" fillOpacity={1} fill="url(#colorValue)" />
-                            </AreaChart>
-                          </ResponsiveContainer>
-                        </div>
-                      </CardContent>
-                    </Card>
+                    <div className="md:col-span-2">
+                      <SleekChart
+                        kind="area"
+                        data={marketData}
+                        xKey="name"
+                        series={[{ key: "value", label: "Value", color: "primary" }]}
+                        title="Portfolio History"
+                        subtitle="6-month performance"
+                        kpi={`$${(marketData[marketData.length - 1].value / 1000).toFixed(1)}k`}
+                        valueFormatter={(v) => `$${v.toLocaleString()}`}
+                        compactHeight={120}
+                      />
+                    </div>
 
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm md:text-base">Asset Allocation</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="h-[180px] md:h-[200px] w-full">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <RechartsPieChart>
-                              <Pie
-                                data={assetAllocation}
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={45}
-                                outerRadius={70}
-                                paddingAngle={4}
-                                dataKey="value"
-                                label={({name, percent}) => `${name} ${(percent * 100).toFixed(0)}%`}
-                              >
-                                {assetAllocation.map((entry, index) => (
-                                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                ))}
-                              </Pie>
-                              <Tooltip formatter={(value) => [`${value}%`, "Allocation"]} />
-                            </RechartsPieChart>
-                          </ResponsiveContainer>
-                        </div>
-                      </CardContent>
-                    </Card>
+                    <SleekChart
+                      kind="pie"
+                      data={assetAllocation}
+                      xKey="name"
+                      series={[{ key: "value", label: "Allocation" }]}
+                      title="Asset Allocation"
+                      subtitle="Portfolio breakdown"
+                      valueFormatter={(v) => `${v}%`}
+                      compactHeight={140}
+                    />
 
                     <Card className="md:col-span-2">
                       <CardHeader className="pb-2">
