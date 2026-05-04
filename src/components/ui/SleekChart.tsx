@@ -1,8 +1,6 @@
-import React, { useState, useMemo } from "react";
+import React, { useMemo } from "react";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Maximize2, TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   ResponsiveContainer,
@@ -287,13 +285,30 @@ export function SleekChart(props: SleekChartProps) {
     stacked,
   } = props;
 
-  const [open, setOpen] = useState(false);
   const isEmpty = !data || data.length === 0 || (kind === "pie" && data.every((d) => !d[series[0]?.key || "value"]));
+
+  // Responsive height: scales smoothly based on viewport
+  const [vw, setVw] = React.useState<number>(typeof window !== "undefined" ? window.innerWidth : 1024);
+  React.useEffect(() => {
+    const onResize = () => setVw(window.innerWidth);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  // Pick height: mobile -> ~180, tablet -> ~240, desktop -> ~300 (capped by expandedHeight)
+  const responsiveHeight = useMemo(() => {
+    let h: number;
+    if (vw < 640) h = 200;
+    else if (vw < 1024) h = 260;
+    else if (vw < 1440) h = 300;
+    else h = 340;
+    return Math.min(h, expandedHeight);
+  }, [vw, expandedHeight]);
 
   /* Inline mode: just render the chart at expanded size, no card frame */
   if (inline) {
     return (
-      <div className={cn("w-full", className)} style={{ height: expandedHeight }}>
+      <div className={cn("w-full", className)} style={{ height: responsiveHeight }}>
         {isEmpty ? (
           <div className="h-full flex items-center justify-center text-xs text-muted-foreground">{emptyLabel}</div>
         ) : (
@@ -305,6 +320,11 @@ export function SleekChart(props: SleekChartProps) {
 
   const deltaUp = (deltaPct ?? 0) >= 0;
 
+  // For non-pie: enable horizontal scroll when many data points on small screens
+  const minPointWidth = kind === "pie" ? 0 : (vw < 640 ? 56 : vw < 1024 ? 48 : 40);
+  const needsScroll = kind !== "pie" && data && data.length * minPointWidth > vw - 80;
+  const innerWidth = needsScroll ? data.length * minPointWidth : undefined;
+
   return (
     <Card className={cn("relative overflow-hidden border-border/60", className)}>
       <div className="p-4">
@@ -313,77 +333,54 @@ export function SleekChart(props: SleekChartProps) {
             <h3 className="text-sm font-semibold truncate">{title}</h3>
             {subtitle && <p className="text-xs text-muted-foreground truncate">{subtitle}</p>}
           </div>
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
-                aria-label="Expand chart"
-              >
-                <Maximize2 className="h-4 w-4" />
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-3xl p-0 gap-0">
-              <DialogHeader className="p-5 pb-2">
-                <DialogTitle className="text-base">{title}</DialogTitle>
-                {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
-              </DialogHeader>
-              <div className="px-2 sm:px-5 pb-5">
-                <div style={{ height: expandedHeight }}>
-                  {isEmpty ? (
-                    <div className="h-full flex items-center justify-center text-sm text-muted-foreground">{emptyLabel}</div>
-                  ) : (
-                    <ChartBody kind={kind} data={data} series={series} xKey={xKey} valueFormatter={valueFormatter} stacked={stacked} />
+          {(kpi !== undefined || deltaPct !== undefined) && (
+            <div className="flex items-baseline gap-2 shrink-0">
+              {kpi !== undefined && (
+                <span className="text-xl sm:text-2xl font-bold tabular-nums tracking-tight">{kpi}</span>
+              )}
+              {deltaPct !== undefined && (
+                <span
+                  className={cn(
+                    "inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-medium",
+                    deltaUp
+                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                      : "bg-rose-500/10 text-rose-600 dark:text-rose-400"
                   )}
-                </div>
-                {series.length > 1 && (
-                  <div className="flex flex-wrap items-center gap-3 pt-3 border-t mt-3">
-                    {series.map((s, i) => (
-                      <div key={s.key} className="flex items-center gap-1.5 text-xs">
-                        <span
-                          className="h-2 w-2 rounded-full"
-                          style={{ background: tokenColor(s, i) }}
-                        />
-                        <span className="text-muted-foreground">{s.label}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        {(kpi !== undefined || deltaPct !== undefined) && (
-          <div className="flex items-baseline gap-2 mt-2">
-            {kpi !== undefined && (
-              <span className="text-2xl font-bold tabular-nums tracking-tight">{kpi}</span>
-            )}
-            {deltaPct !== undefined && (
-              <span
-                className={cn(
-                  "inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-medium",
-                  deltaUp
-                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                    : "bg-rose-500/10 text-rose-600 dark:text-rose-400"
-                )}
-              >
-                {deltaUp ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                {deltaUp ? "+" : ""}
-                {deltaPct.toFixed(1)}%
-              </span>
-            )}
-          </div>
-        )}
-
-        <div className="mt-3" style={{ height: compactHeight }}>
-          {isEmpty ? (
-            <div className="h-full flex items-center justify-center text-xs text-muted-foreground">{emptyLabel}</div>
-          ) : (
-            <ChartBody kind={kind} data={data} series={series} xKey={xKey} valueFormatter={valueFormatter} stacked={stacked} compact />
+                >
+                  {deltaUp ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                  {deltaUp ? "+" : ""}
+                  {deltaPct.toFixed(1)}%
+                </span>
+              )}
+            </div>
           )}
         </div>
+
+        <div
+          className={cn(
+            "mt-3",
+            needsScroll && "overflow-x-auto -mx-4 px-4 [scrollbar-width:thin]"
+          )}
+        >
+          <div style={{ height: responsiveHeight, width: innerWidth, minWidth: needsScroll ? innerWidth : "100%" }}>
+            {isEmpty ? (
+              <div className="h-full flex items-center justify-center text-xs text-muted-foreground">{emptyLabel}</div>
+            ) : (
+              <ChartBody kind={kind} data={data} series={series} xKey={xKey} valueFormatter={valueFormatter} stacked={stacked} />
+            )}
+          </div>
+        </div>
+
+        {series.length > 1 && kind !== "pie" && (
+          <div className="flex flex-wrap items-center gap-3 pt-3 mt-3 border-t border-border/40">
+            {series.map((s, i) => (
+              <div key={s.key} className="flex items-center gap-1.5 text-xs">
+                <span className="h-2 w-2 rounded-full" style={{ background: tokenColor(s, i) }} />
+                <span className="text-muted-foreground">{s.label}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </Card>
   );
