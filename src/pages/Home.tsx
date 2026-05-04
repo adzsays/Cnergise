@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { VoiceAssistant } from "@/components/VoiceAssistant";
 import { NewsTicker } from "@/components/dashboard/NewsTicker";
+import { AIBriefCard } from "@/components/ai/AIBriefCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useCalendarEvents } from "@/hooks/useCalendarEvents";
 import { useUserCurrency } from "@/hooks/useUserCurrency";

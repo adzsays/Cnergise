@@ -374,12 +374,10 @@ const Auth = () => {
             <Sparkles className="w-4 h-4" />
             Private beta · By invitation only
           </div>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight tracking-tight">
             Simplify Your Life,
             <br />
-            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Amplify Your Potential
-            </span>
+            <span className="text-primary">Amplify Your Potential</span>
           </h1>
           <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
             Cnergise brings together tasks, goals, health, finances, and investments in one intelligent platform.
