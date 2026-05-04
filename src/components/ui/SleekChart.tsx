@@ -201,7 +201,8 @@ const ChartBody = ({ kind, data, series, xKey, valueFormatter, compact, stacked 
               dataKey={s.key}
               name={s.label}
               fill={colors[i]}
-              radius={[6, 6, 0, 0]}
+              radius={stacked ? (i === series.length - 1 ? [6, 6, 0, 0] : [0, 0, 0, 0]) : [6, 6, 0, 0]}
+              stackId={stacked ? "a" : undefined}
               isAnimationActive
             />
           ))}
