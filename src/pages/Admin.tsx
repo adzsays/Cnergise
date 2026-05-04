@@ -26,6 +26,7 @@ import { Shield, UserMinus } from "lucide-react";
 import { AllowlistManager } from "@/components/admin/AllowlistManager";
 import { ApprovalQueue } from "@/components/admin/ApprovalQueue";
 import { InviteRequestsManager } from "@/components/admin/InviteRequestsManager";
+import { VisitorChatManager } from "@/components/admin/VisitorChatManager";
 
 export default function Admin() {
   const { data: profiles, isLoading } = useAllProfiles();
@@ -68,6 +69,8 @@ export default function Admin() {
             </div>
 
             <InviteRequestsManager />
+
+            <VisitorChatManager />
 
             <AllowlistManager />
 

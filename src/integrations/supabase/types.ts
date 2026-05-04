@@ -3142,6 +3142,36 @@ export type Database = {
         }
         Relationships: []
       }
+      visitor_chat_knowledge: {
+        Row: {
+          content: string
+          created_at: string
+          enabled: boolean
+          id: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       visitor_chat_messages: {
         Row: {
           admin_user_id: string | null

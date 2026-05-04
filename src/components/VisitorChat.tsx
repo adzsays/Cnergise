@@ -12,6 +12,7 @@ type Msg = { id?: string; role: "visitor" | "assistant" | "admin" | "system"; co
 const STORAGE_KEY = "cnergise_visitor_chat_token";
 
 export const VisitorChat = () => {
+  const [enabled, setEnabled] = useState(false);
   const [open, setOpen] = useState(false);
   const [token, setToken] = useState<string | null>(() => localStorage.getItem(STORAGE_KEY));
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -21,6 +22,17 @@ export const VisitorChat = () => {
   const [sending, setSending] = useState(false);
   const [starting, setStarting] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("system_settings")
+        .select("value")
+        .eq("key", "visitor_chat_enabled")
+        .maybeSingle();
+      setEnabled(data?.value === "true");
+    })();
+  }, []);
 
   // load history when opening
   useEffect(() => {
@@ -97,11 +109,16 @@ export const VisitorChat = () => {
       body: { action: "send", session_token: token, content: text, email: email || undefined },
     });
     setSending(false);
-    // realtime will deliver the reply, but if not yet, we already optimistically added the user msg.
-    if (data?.ai_replied === false) {
-      // human-takeover, no auto reply
+    if (data?.ai_replied && data?.content) {
+      setMessages((prev) => {
+        // avoid duplicate if realtime already inserted
+        if (prev.some((m) => m.role === "assistant" && m.content === data.content)) return prev;
+        return [...prev, { role: "assistant", content: data.content }];
+      });
     }
   };
+
+  if (!enabled) return null;
 
   return (
     <>
