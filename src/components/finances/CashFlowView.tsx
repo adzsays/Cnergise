@@ -4,7 +4,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { HoverCard, HoverCardTrigger, HoverCardContent } from '@/components/ui/hover-card';
-import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { SleekChart } from '@/components/ui/SleekChart';
 import { useFinancialData } from '@/contexts/FinancialDataContext';
 import { cn } from '@/lib/utils';
 import { useUserCurrency } from '@/hooks/useUserCurrency';
@@ -516,50 +516,21 @@ export function CashFlowView() {
       </div>
 
       {/* Single chart */}
-      <Card className="p-4">
-        <div className="h-[340px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={chartData} margin={{ top: 10, right: 16, left: -10, bottom: 50 }}>
-              <defs>
-                <linearGradient id="ig" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="hsl(var(--income))" stopOpacity={0.4} />
-                  <stop offset="100%" stopColor="hsl(var(--income))" stopOpacity={0.02} />
-                </linearGradient>
-                <linearGradient id="eg" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="hsl(var(--expense))" stopOpacity={0.4} />
-                  <stop offset="100%" stopColor="hsl(var(--expense))" stopOpacity={0.02} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} vertical={false} />
-              <XAxis dataKey="label" tick={{ fontSize: 10 }} angle={-35} textAnchor="end" height={50} interval={0} />
-              <YAxis yAxisId="left" tick={{ fontSize: 10 }} tickFormatter={(v) => `£${(v / 1000).toFixed(0)}k`} />
-              <YAxis
-                yAxisId="right"
-                orientation="right"
-                tick={{ fontSize: 10, fill: 'hsl(var(--primary))' }}
-                tickFormatter={(v) => `£${(v / 1000).toFixed(0)}k`}
-              />
-              <Tooltip
-                contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8 }}
-                formatter={(v: number) => fmt(Math.round(v))}
-              />
-              <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" iconSize={8} />
-              <Area type="monotone" dataKey="income" fill="url(#ig)" stroke="hsl(var(--income))" name="Income" yAxisId="left" />
-              <Area type="monotone" dataKey="expense" fill="url(#eg)" stroke="hsl(var(--expense))" name="Expenses" yAxisId="left" />
-              <Line
-                type="monotone"
-                dataKey="cash"
-                stroke="hsl(var(--primary))"
-                strokeWidth={2.5}
-                strokeDasharray="5 5"
-                name="Cash Balance"
-                dot={false}
-                yAxisId="right"
-              />
-            </ComposedChart>
-          </ResponsiveContainer>
-        </div>
-      </Card>
+      <SleekChart
+        kind="area"
+        data={chartData}
+        xKey="label"
+        series={[
+          { key: 'income', label: 'Income', color: 'income' },
+          { key: 'expense', label: 'Expenses', color: 'expense' },
+          { key: 'cash', label: 'Cash Balance', color: 'primary' },
+        ]}
+        title="Cash Flow"
+        subtitle={`Per ${PERIOD_LABEL[period]}`}
+        valueFormatter={(v) => fmt(Math.round(v))}
+        compactHeight={160}
+        expandedHeight={380}
+      />
 
       {/* Monthly summary with weekly & daily breakdowns. Hover for category split. */}
       <Card className="p-4">
