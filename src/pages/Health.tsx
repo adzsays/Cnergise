@@ -57,6 +57,27 @@ export default function Health() {
     [metrics],
   );
 
+  const activityData = React.useMemo(
+    () =>
+      [...metrics].slice(0, 30).reverse().map((m) => ({
+        date: m.metric_date.slice(5),
+        steps: m.steps ?? 0,
+      })),
+    [metrics],
+  );
+
+  const sleepHistoryData = React.useMemo(
+    () =>
+      [...metrics].slice(0, 30).reverse().map((m) => ({
+        date: m.metric_date.slice(5),
+        hours: m.sleep_minutes ? +(m.sleep_minutes / 60).toFixed(1) : 0,
+      })),
+    [metrics],
+  );
+
+  const avgSleep = sleepData.length ? +(sleepData.reduce((s, d) => s + d.hours, 0) / sleepData.length).toFixed(1) : 0;
+  const avgSteps = activityData.length ? Math.round(activityData.reduce((s, d) => s + d.steps, 0) / activityData.length) : 0;
+
   const steps = today?.steps ?? 0;
   const stepsPct = Math.min(100, Math.round((steps / STEPS_GOAL) * 100));
   const hrCurrent = today?.avg_heart_rate ?? 0;
