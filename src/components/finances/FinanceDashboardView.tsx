@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowDownRight, ArrowUpRight, Sparkles, TrendingUp, Wallet, Target } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { SleekChart } from '@/components/ui/SleekChart';
 
 const formatCurrency = (n: number) =>
   new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 }).format(n);
@@ -191,41 +191,30 @@ export function FinanceDashboardView() {
         <Card className="p-3"><div className="flex items-center gap-1.5 text-xs text-muted-foreground"><Target className="h-3 w-3" />Net</div><p className={`text-base font-semibold mt-1 ${monthlyNet >= 0 ? 'text-income' : 'text-expense'}`}>{formatCompact(monthlyNet)}</p></Card>
       </div>
 
-      <Card className="p-4">
-        <div className="mb-3"><h2 className="font-semibold">Daily Money Flow</h2><p className="text-xs text-muted-foreground">Income vs expenses, day by day this month</p></div>
-        <div className="h-56">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={dailyData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
-              <defs>
-                <linearGradient id="incomeFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="hsl(var(--income))" stopOpacity={0.4} /><stop offset="100%" stopColor="hsl(var(--income))" stopOpacity={0} /></linearGradient>
-                <linearGradient id="expenseFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="hsl(var(--expense))" stopOpacity={0.4} /><stop offset="100%" stopColor="hsl(var(--expense))" stopOpacity={0} /></linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} opacity={0.4} />
-              <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} interval={Math.max(1, Math.floor(daysInMonth / 6))} />
-              <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} tickFormatter={(v) => formatCompact(v)} />
-              <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 12, fontSize: 12 }} formatter={(value: number, name: string) => [formatCurrency(value), name === 'income' ? 'Income' : 'Expense']} labelFormatter={(l) => `Day ${l}`} />
-              <Area type="monotone" dataKey="income" stroke="hsl(var(--income))" strokeWidth={2} fill="url(#incomeFill)" />
-              <Area type="monotone" dataKey="expense" stroke="hsl(var(--expense))" strokeWidth={2} fill="url(#expenseFill)" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      </Card>
+      <SleekChart
+        kind="area"
+        data={dailyData}
+        xKey="label"
+        series={[
+          { key: 'income', label: 'Income', color: 'income' },
+          { key: 'expense', label: 'Expense', color: 'expense' },
+        ]}
+        title="Daily Money Flow"
+        subtitle="Income vs expenses, day by day this month"
+        valueFormatter={(v) => formatCompact(v)}
+        compactHeight={140}
+      />
 
-      <Card className="p-4">
-        <div className="mb-3"><h2 className="font-semibold">Cumulative Cash This Month</h2><p className="text-xs text-muted-foreground">Running total day by day</p></div>
-        <div className="h-40">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={dailyData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
-              <defs><linearGradient id="cumFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.5} /><stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} /></linearGradient></defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} opacity={0.4} />
-              <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} interval={Math.max(1, Math.floor(daysInMonth / 6))} />
-              <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} tickFormatter={(v) => formatCompact(v)} />
-              <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 12, fontSize: 12 }} formatter={(value: number) => [formatCurrency(value), 'Cumulative']} labelFormatter={(l) => `Day ${l}`} />
-              <Area type="monotone" dataKey="cumulative" stroke="hsl(var(--primary))" strokeWidth={2.5} fill="url(#cumFill)" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      </Card>
+      <SleekChart
+        kind="area"
+        data={dailyData}
+        xKey="label"
+        series={[{ key: 'cumulative', label: 'Cumulative', color: 'primary' }]}
+        title="Cumulative Cash This Month"
+        subtitle="Running total day by day"
+        valueFormatter={(v) => formatCompact(v)}
+        compactHeight={120}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="p-4">
