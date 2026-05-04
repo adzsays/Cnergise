@@ -36,6 +36,7 @@ const Monitoring = lazy(() => import("./pages/Monitoring"));
 const Learning = lazy(() => import("./pages/Learning"));
 const Echo = lazy(() => import("./pages/Echo"));
 const Invoices = lazy(() => import("./pages/Invoices"));
+const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
