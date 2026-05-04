@@ -12,6 +12,7 @@ import { ReceiptsView } from "@/components/finances/ReceiptsView";
 import { ActualExpensesView } from "@/components/finances/ActualExpensesView";
 
 import { LayoutDashboard, TrendingUp, CreditCard, Scale, Receipt, Wallet } from "lucide-react";
+import { AIBriefCard } from "@/components/ai/AIBriefCard";
 
 const Finances = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
