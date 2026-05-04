@@ -296,7 +296,7 @@ export function SleekChart(props: SleekChartProps) {
         {isEmpty ? (
           <div className="h-full flex items-center justify-center text-xs text-muted-foreground">{emptyLabel}</div>
         ) : (
-          <ChartBody kind={kind} data={data} series={series} xKey={xKey} valueFormatter={valueFormatter} />
+          <ChartBody kind={kind} data={data} series={series} xKey={xKey} valueFormatter={valueFormatter} stacked={stacked} />
         )}
       </div>
     );
@@ -333,7 +333,7 @@ export function SleekChart(props: SleekChartProps) {
                   {isEmpty ? (
                     <div className="h-full flex items-center justify-center text-sm text-muted-foreground">{emptyLabel}</div>
                   ) : (
-                    <ChartBody kind={kind} data={data} series={series} xKey={xKey} valueFormatter={valueFormatter} />
+                    <ChartBody kind={kind} data={data} series={series} xKey={xKey} valueFormatter={valueFormatter} stacked={stacked} />
                   )}
                 </div>
                 {series.length > 1 && (
@@ -380,7 +380,7 @@ export function SleekChart(props: SleekChartProps) {
           {isEmpty ? (
             <div className="h-full flex items-center justify-center text-xs text-muted-foreground">{emptyLabel}</div>
           ) : (
-            <ChartBody kind={kind} data={data} series={series} xKey={xKey} valueFormatter={valueFormatter} compact />
+            <ChartBody kind={kind} data={data} series={series} xKey={xKey} valueFormatter={valueFormatter} stacked={stacked} compact />
           )}
         </div>
       </div>
