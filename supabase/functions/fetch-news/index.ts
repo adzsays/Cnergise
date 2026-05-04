@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logServiceUsage } from "../_shared/cost-tracking.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -66,6 +67,7 @@ serve(async (req) => {
     }
 
     const data = await response.json();
+    logServiceUsage({ service: "perplexity", operation: "sonar", units: 1, function_name: "fetch-news", metadata: { usage: data?.usage } });
     const content = data.choices?.[0]?.message?.content || "";
     
     // Try to parse JSON from the response

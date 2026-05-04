@@ -1,5 +1,6 @@
 // Compare planned cash-flow transactions to actual expenses using Lovable AI to auto-map them.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logServiceUsage } from "../_shared/cost-tracking.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -129,6 +130,7 @@ Deno.serve(async (req) => {
     }
 
     const aiJson = await aiResp.json();
+    logServiceUsage({ service: "lovable-ai", operation: "google/gemini-2.5-flash", units: Number(aiJson?.usage?.total_tokens ?? 0) / 1000, function_name: "compare-cashflow-actuals", metadata: { usage: aiJson?.usage } });
     const args = aiJson.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
     if (!args) throw new Error("No mapping returned");
     const parsed = JSON.parse(args);

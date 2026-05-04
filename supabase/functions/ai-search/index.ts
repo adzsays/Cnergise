@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.76.1";
+import { logServiceUsage } from "../_shared/cost-tracking.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -94,6 +95,7 @@ Always reference specific items from their data when relevant. Be concise and ac
       });
 
       const perplexityData = await perplexityResponse.json();
+      logServiceUsage({ service: "perplexity", operation: "sonar", units: 1, function_name: "ai-search", user_id: user.id, metadata: { usage: perplexityData?.usage } });
       aiResponse = perplexityData.choices?.[0]?.message?.content || null;
     }
 
