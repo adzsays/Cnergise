@@ -6,10 +6,10 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Heart, Timer, Moon, ArrowUpRight, ArrowDownRight, Flame } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { HealthSourceHub } from "@/components/health/HealthSourceHub";
+import { SleekChart } from "@/components/ui/SleekChart";
 
 type Metric = {
   metric_date: string;
