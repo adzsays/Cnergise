@@ -3197,6 +3197,7 @@ export type Database = {
           name: string
         }[]
       }
+      get_cron_secret: { Args: never; Returns: string }
       has_feature_access: {
         Args: { _feature_key: string; _user_id: string }
         Returns: boolean
