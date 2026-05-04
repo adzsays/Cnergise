@@ -13,6 +13,7 @@ import { useGoals } from "@/hooks/useGoals";
 import { Target, FolderKanban, CheckSquare, BarChart3, X } from "lucide-react";
 import { useCurrentSpace } from "@/contexts/SpaceContext";
 import { VoiceAssistant } from "@/components/VoiceAssistant";
+import { AIBriefCard } from "@/components/ai/AIBriefCard";
 
 export default function Plan() {
   const [tab, setTab] = useState("goals");
