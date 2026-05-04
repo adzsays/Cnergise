@@ -10,6 +10,10 @@ import { PlusCircle, TrendingUp, TrendingDown, DollarSign, PieChart, ArrowRightL
 import { TradeEntry } from "@/components/portfolio/TradeEntry";
 import { MarketTicker } from "@/components/social/MarketTicker";
 import { SleekChart } from "@/components/ui/SleekChart";
+import { IBKRConnection } from "@/components/portfolio/IBKRConnection";
+import { RiskManager } from "@/components/portfolio/RiskManager";
+import { StrategyManager } from "@/components/portfolio/StrategyManager";
+import { LiveHoldings } from "@/components/portfolio/LiveHoldings";
 
 export default function Portfolio() {
   const [activeTab, setActiveTab] = React.useState("overview");
