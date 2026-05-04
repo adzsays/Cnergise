@@ -2506,6 +2506,87 @@ export type Database = {
         }
         Relationships: []
       }
+      service_pricing: {
+        Row: {
+          created_at: string
+          currency: string
+          id: string
+          is_active: boolean
+          notes: string | null
+          operation: string
+          service: string
+          unit: string
+          unit_cost: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          operation?: string
+          service: string
+          unit?: string
+          unit_cost?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          operation?: string
+          service?: string
+          unit?: string
+          unit_cost?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      service_usage_events: {
+        Row: {
+          created_at: string
+          currency: string
+          function_name: string | null
+          id: string
+          metadata: Json
+          operation: string
+          service: string
+          total_cost: number
+          unit_cost: number
+          units: number
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          function_name?: string | null
+          id?: string
+          metadata?: Json
+          operation?: string
+          service: string
+          total_cost?: number
+          unit_cost?: number
+          units?: number
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          function_name?: string | null
+          id?: string
+          metadata?: Json
+          operation?: string
+          service?: string
+          total_cost?: number
+          unit_cost?: number
+          units?: number
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       services: {
         Row: {
           cost_centre: string | null
