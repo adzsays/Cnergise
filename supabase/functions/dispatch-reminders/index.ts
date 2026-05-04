@@ -238,6 +238,21 @@ async function dispatchDue() {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  // Require either CRON_SECRET header or service-role bearer token (used by pg_cron)
+  const cronSecret = Deno.env.get("CRON_SECRET");
+  const authHeader = req.headers.get("authorization") || req.headers.get("Authorization") || "";
+  const providedSecret = req.headers.get("x-cron-secret") || "";
+  const bearer = authHeader.toLowerCase().startsWith("bearer ") ? authHeader.slice(7).trim() : "";
+  const isServiceRole = bearer && bearer === SERVICE_KEY;
+  const isCronSecret = cronSecret && providedSecret === cronSecret;
+  if (!isServiceRole && !isCronSecret) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   try {
     await generateReminders();
     const result = await dispatchDue();
