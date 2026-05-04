@@ -9,23 +9,7 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle, TrendingUp, TrendingDown, DollarSign, PieChart, ArrowRightLeft } from "lucide-react";
 import { TradeEntry } from "@/components/portfolio/TradeEntry";
 import { MarketTicker } from "@/components/social/MarketTicker";
-import { 
-  AreaChart, 
-  Area, 
-  BarChart,
-  Bar,
-  PieChart as RechartsPieChart,
-  Pie,
-  Cell,
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend,
-  ResponsiveContainer 
-} from "recharts";
+import { SleekChart } from "@/components/ui/SleekChart";
 
 export default function Portfolio() {
   const [activeTab, setActiveTab] = React.useState("overview");
@@ -137,59 +121,30 @@ export default function Portfolio() {
                       </CardContent>
                     </Card>
 
-                    <Card className="md:col-span-2">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm md:text-base">Portfolio History</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="h-[160px] md:h-[200px] w-full">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={marketData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                              <defs>
-                                <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                                  <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
-                                  <stop offset="95%" stopColor="#8884d8" stopOpacity={0}/>
-                                </linearGradient>
-                              </defs>
-                              <XAxis dataKey="name" fontSize={10} />
-                              <YAxis fontSize={10} width={40} />
-                              <CartesianGrid strokeDasharray="3 3" />
-                              <Tooltip formatter={(value) => ["$" + value.toLocaleString(), "Value"]} />
-                              <Area type="monotone" dataKey="value" stroke="#8884d8" fillOpacity={1} fill="url(#colorValue)" />
-                            </AreaChart>
-                          </ResponsiveContainer>
-                        </div>
-                      </CardContent>
-                    </Card>
+                    <div className="md:col-span-2">
+                      <SleekChart
+                        kind="area"
+                        data={marketData}
+                        xKey="name"
+                        series={[{ key: "value", label: "Value", color: "primary" }]}
+                        title="Portfolio History"
+                        subtitle="6-month performance"
+                        kpi={`$${(marketData[marketData.length - 1].value / 1000).toFixed(1)}k`}
+                        valueFormatter={(v) => `$${v.toLocaleString()}`}
+                        compactHeight={120}
+                      />
+                    </div>
 
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm md:text-base">Asset Allocation</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="h-[180px] md:h-[200px] w-full">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <RechartsPieChart>
-                              <Pie
-                                data={assetAllocation}
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={45}
-                                outerRadius={70}
-                                paddingAngle={4}
-                                dataKey="value"
-                                label={({name, percent}) => `${name} ${(percent * 100).toFixed(0)}%`}
-                              >
-                                {assetAllocation.map((entry, index) => (
-                                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                ))}
-                              </Pie>
-                              <Tooltip formatter={(value) => [`${value}%`, "Allocation"]} />
-                            </RechartsPieChart>
-                          </ResponsiveContainer>
-                        </div>
-                      </CardContent>
-                    </Card>
+                    <SleekChart
+                      kind="pie"
+                      data={assetAllocation}
+                      xKey="name"
+                      series={[{ key: "value", label: "Allocation" }]}
+                      title="Asset Allocation"
+                      subtitle="Portfolio breakdown"
+                      valueFormatter={(v) => `${v}%`}
+                      compactHeight={140}
+                    />
 
                     <Card className="md:col-span-2">
                       <CardHeader className="pb-2">
@@ -233,27 +188,20 @@ export default function Portfolio() {
                 </TabsContent>
                 
                 <TabsContent value="performance">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Portfolio Performance</CardTitle>
-                      <CardDescription>Comparison against benchmark</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="h-[300px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={performance} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="name" />
-                            <YAxis tickFormatter={(value) => `${value}%`} />
-                            <Tooltip formatter={(value) => [`${value}%`, "Return"]} />
-                            <Legend />
-                            <Bar dataKey="portfolio" name="Your Portfolio" fill="#8884d8" />
-                            <Bar dataKey="benchmark" name="Benchmark" fill="#82ca9d" />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <SleekChart
+                    kind="bar"
+                    data={performance}
+                    xKey="name"
+                    series={[
+                      { key: "portfolio", label: "Your Portfolio", color: "primary" },
+                      { key: "benchmark", label: "Benchmark", hsl: "152 58% 48%" },
+                    ]}
+                    title="Portfolio Performance"
+                    subtitle="Comparison against benchmark"
+                    valueFormatter={(v) => `${v}%`}
+                    compactHeight={140}
+                    expandedHeight={360}
+                  />
                 </TabsContent>
                 
                 <TabsContent value="transactions">

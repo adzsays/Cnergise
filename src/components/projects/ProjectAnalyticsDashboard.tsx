@@ -5,21 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  BarChart,
-  Bar,
-  Legend,
-} from "recharts";
+import { SleekChart } from "@/components/ui/SleekChart";
 import { 
   FolderKanban, 
   Users, 
@@ -122,120 +108,31 @@ export function ProjectAnalyticsDashboard() {
 
       {/* Progress Chart & Status Pie */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
-        {/* Progress Over Time */}
-        <Card className="lg:col-span-2 border-border/50">
-          <CardHeader className="pb-2 px-3 md:px-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <CardTitle className="text-sm md:text-base font-medium">Progress Over Time</CardTitle>
-              <div className="flex items-center gap-3 text-xs">
-                <div className="flex items-center gap-1.5">
-                  <div className="h-2 w-2 rounded-full" style={{ background: COLORS.info }} />
-                  <span className="text-muted-foreground">Target</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="h-2 w-2 rounded-full" style={{ background: COLORS.done }} />
-                  <span className="text-muted-foreground">Completed</span>
-                </div>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="px-2 md:px-6">
-            <div className="w-full overflow-x-auto">
-              <div className="min-w-[300px]">
-                <ResponsiveContainer width="100%" height={200}>
-                  <LineChart data={metrics.progressOverTime} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
-                    <XAxis 
-                      dataKey="month" 
-                      tick={{ fontSize: 10 }} 
-                      stroke="hsl(var(--muted-foreground))"
-                      axisLine={false}
-                      tickLine={false}
-                      interval="preserveStartEnd"
-                    />
-                    <YAxis 
-                      tick={{ fontSize: 10 }} 
-                      stroke="hsl(var(--muted-foreground))"
-                      axisLine={false}
-                      tickLine={false}
-                      width={30}
-                    />
-                    <Tooltip 
-                      contentStyle={{ 
-                        background: "hsl(var(--card))", 
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px",
-                        fontSize: "11px"
-                      }} 
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="tasksTarget" 
-                      stroke={COLORS.info}
-                      strokeWidth={2}
-                      dot={false}
-                      name="Tasks Target"
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="tasksCompleted" 
-                      stroke={COLORS.done}
-                      strokeWidth={2}
-                      dot={false}
-                      name="Tasks Completed"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="lg:col-span-2">
+          <SleekChart
+            kind="line"
+            data={metrics.progressOverTime}
+            xKey="month"
+            series={[
+              { key: "tasksTarget", label: "Target", hsl: "199 89% 48%" },
+              { key: "tasksCompleted", label: "Completed", hsl: "142 76% 36%" },
+            ]}
+            title="Progress Over Time"
+            subtitle="Tasks target vs completed"
+            compactHeight={140}
+            expandedHeight={360}
+          />
+        </div>
 
-        {/* Project Status Pie */}
-        <Card className="border-border/50">
-          <CardHeader className="pb-2 px-3 md:px-6">
-            <CardTitle className="text-sm md:text-base font-medium">Project Status</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center px-2 md:px-6">
-            <ResponsiveContainer width="100%" height={160}>
-              <PieChart>
-                <Pie
-                  data={projectStatusData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={35}
-                  outerRadius={60}
-                  paddingAngle={2}
-                  dataKey="value"
-                >
-                  {projectStatusData.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  contentStyle={{ 
-                    background: "hsl(var(--card))", 
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "8px",
-                    fontSize: "11px"
-                  }} 
-                />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="flex flex-wrap justify-center gap-2 mt-2">
-              {projectStatusData.map((entry, index) => (
-                <div key={entry.name} className="flex items-center gap-1 text-xs">
-                  <div 
-                    className="h-2 w-2 rounded-full" 
-                    style={{ background: PIE_COLORS[index % PIE_COLORS.length] }}
-                  />
-                  <span className="text-muted-foreground">{entry.name}</span>
-                  <span className="font-medium">{entry.value}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <SleekChart
+          kind="pie"
+          data={projectStatusData}
+          xKey="name"
+          series={[{ key: "value", label: "Projects" }]}
+          title="Project Status"
+          subtitle="Status breakdown"
+          compactHeight={140}
+        />
       </div>
 
       {/* Completion Gauges & Stats */}
@@ -278,67 +175,21 @@ export function ProjectAnalyticsDashboard() {
       </div>
 
       {/* Status by Project Bar Chart */}
-      <Card className="border-border/50">
-        <CardHeader className="pb-2 px-3 md:px-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <CardTitle className="text-sm md:text-base font-medium">Task Status by Project</CardTitle>
-            <div className="flex items-center gap-3 text-xs">
-              <div className="flex items-center gap-1">
-                <div className="h-2 w-2 rounded-full" style={{ background: COLORS.todo }} />
-                <span className="text-muted-foreground">Todo</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="h-2 w-2 rounded-full" style={{ background: COLORS.inProgress }} />
-                <span className="text-muted-foreground">In Progress</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="h-2 w-2 rounded-full" style={{ background: COLORS.done }} />
-                <span className="text-muted-foreground">Done</span>
-              </div>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="px-2 md:px-6">
-          <div className="w-full overflow-x-auto">
-            <div className="min-w-[300px]">
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={metrics.statusByProject} layout="horizontal" margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
-                  <XAxis 
-                    dataKey="project" 
-                    tick={{ fontSize: 9 }} 
-                    stroke="hsl(var(--muted-foreground))"
-                    axisLine={false}
-                    tickLine={false}
-                    angle={-20}
-                    textAnchor="end"
-                    height={50}
-                    interval={0}
-                  />
-                  <YAxis 
-                    tick={{ fontSize: 10 }} 
-                    stroke="hsl(var(--muted-foreground))"
-                    axisLine={false}
-                    tickLine={false}
-                    width={25}
-                  />
-                  <Tooltip 
-                    contentStyle={{ 
-                      background: "hsl(var(--card))", 
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px",
-                      fontSize: "11px"
-                    }} 
-                  />
-                  <Bar dataKey="todo" stackId="a" fill={COLORS.todo} name="Todo" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="inProgress" stackId="a" fill={COLORS.inProgress} name="In Progress" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="done" stackId="a" fill={COLORS.done} name="Done" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <SleekChart
+        kind="bar"
+        data={metrics.statusByProject}
+        xKey="project"
+        stacked
+        series={[
+          { key: "todo", label: "Todo", hsl: "215 16% 47%" },
+          { key: "inProgress", label: "In Progress", hsl: "199 89% 48%" },
+          { key: "done", label: "Done", hsl: "142 76% 36%" },
+        ]}
+        title="Task Status by Project"
+        subtitle="Stacked breakdown per project"
+        compactHeight={160}
+        expandedHeight={380}
+      />
     </div>
   );
 }

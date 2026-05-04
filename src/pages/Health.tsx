@@ -6,10 +6,10 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Heart, Timer, Moon, ArrowUpRight, ArrowDownRight, Flame } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { HealthSourceHub } from "@/components/health/HealthSourceHub";
+import { SleekChart } from "@/components/ui/SleekChart";
 
 type Metric = {
   metric_date: string;
@@ -56,6 +56,27 @@ export default function Health() {
         })),
     [metrics],
   );
+
+  const activityData = React.useMemo(
+    () =>
+      [...metrics].slice(0, 30).reverse().map((m) => ({
+        date: m.metric_date.slice(5),
+        steps: m.steps ?? 0,
+      })),
+    [metrics],
+  );
+
+  const sleepHistoryData = React.useMemo(
+    () =>
+      [...metrics].slice(0, 30).reverse().map((m) => ({
+        date: m.metric_date.slice(5),
+        hours: m.sleep_minutes ? +(m.sleep_minutes / 60).toFixed(1) : 0,
+      })),
+    [metrics],
+  );
+
+  const avgSleep = sleepData.length ? +(sleepData.reduce((s, d) => s + d.hours, 0) / sleepData.length).toFixed(1) : 0;
+  const avgSteps = activityData.length ? Math.round(activityData.reduce((s, d) => s + d.steps, 0) / activityData.length) : 0;
 
   const steps = today?.steps ?? 0;
   const stepsPct = Math.min(100, Math.round((steps / STEPS_GOAL) * 100));
@@ -188,53 +209,34 @@ export default function Health() {
                       </CardContent>
                     </Card>
 
-                    <Card className="md:col-span-3">
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <Moon className="h-5 w-5 text-indigo-400" />
-                          Sleep
-                        </CardTitle>
-                        <CardDescription>Last 7 days of sleep data</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="h-[300px] w-full">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={sleepData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                              <CartesianGrid strokeDasharray="3 3" />
-                              <XAxis dataKey="day" />
-                              <YAxis domain={[0, 10]} ticks={[0, 2, 4, 6, 8, 10]} />
-                              <Tooltip />
-                              <Line type="monotone" dataKey="hours" stroke="#8884d8" activeDot={{ r: 8 }} strokeWidth={2} />
-                            </LineChart>
-                          </ResponsiveContainer>
-                        </div>
-                      </CardContent>
-                    </Card>
+                    <div className="md:col-span-3">
+                      <SleekChart
+                        kind="area"
+                        data={sleepData}
+                        xKey="day"
+                        series={[{ key: "hours", label: "Hours slept", hsl: "238 70% 65%" }]}
+                        title="Sleep"
+                        subtitle="Last 7 days"
+                        kpi={`${avgSleep}h`}
+                        valueFormatter={(v) => `${v}h`}
+                        compactHeight={120}
+                      />
+                    </div>
                   </div>
                 </TabsContent>
 
                 <TabsContent value="activity">
-                  <Card>
-                    <CardHeader><CardTitle>Activity (last 30 days)</CardTitle></CardHeader>
-                    <CardContent>
-                      <div className="h-[300px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart
-                            data={[...metrics].slice(0, 30).reverse().map((m) => ({
-                              date: m.metric_date.slice(5),
-                              steps: m.steps ?? 0,
-                            }))}
-                          >
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="date" />
-                            <YAxis />
-                            <Tooltip />
-                            <Line type="monotone" dataKey="steps" stroke="#3b82f6" strokeWidth={2} dot={false} />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <SleekChart
+                    kind="area"
+                    data={activityData}
+                    xKey="date"
+                    series={[{ key: "steps", label: "Steps", hsl: "199 89% 48%" }]}
+                    title="Activity"
+                    subtitle="Steps · last 30 days"
+                    kpi={avgSteps.toLocaleString()}
+                    valueFormatter={(v) => v.toLocaleString()}
+                    compactHeight={140}
+                  />
                 </TabsContent>
 
                 <TabsContent value="nutrition">
@@ -247,27 +249,17 @@ export default function Health() {
                 </TabsContent>
 
                 <TabsContent value="sleep">
-                  <Card>
-                    <CardHeader><CardTitle>Sleep history (last 30 days)</CardTitle></CardHeader>
-                    <CardContent>
-                      <div className="h-[300px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart
-                            data={[...metrics].slice(0, 30).reverse().map((m) => ({
-                              date: m.metric_date.slice(5),
-                              hours: m.sleep_minutes ? +(m.sleep_minutes / 60).toFixed(1) : 0,
-                            }))}
-                          >
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="date" />
-                            <YAxis domain={[0, 12]} />
-                            <Tooltip />
-                            <Line type="monotone" dataKey="hours" stroke="#8884d8" strokeWidth={2} dot={false} />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <SleekChart
+                    kind="area"
+                    data={sleepHistoryData}
+                    xKey="date"
+                    series={[{ key: "hours", label: "Hours", hsl: "238 70% 65%" }]}
+                    title="Sleep history"
+                    subtitle="Last 30 days"
+                    kpi={`${avgSleep}h`}
+                    valueFormatter={(v) => `${v}h`}
+                    compactHeight={140}
+                  />
                 </TabsContent>
               </Tabs>
             </div>
