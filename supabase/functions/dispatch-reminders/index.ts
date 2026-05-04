@@ -239,14 +239,31 @@ async function dispatchDue() {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  // Require either CRON_SECRET header or service-role bearer token (used by pg_cron)
-  const cronSecret = Deno.env.get("CRON_SECRET");
+  // Auth: accept either service-role bearer, env CRON_SECRET, or vault-stored cnergise_cron_secret (used by pg_cron)
+  const envCronSecret = Deno.env.get("CRON_SECRET");
   const authHeader = req.headers.get("authorization") || req.headers.get("Authorization") || "";
   const providedSecret = req.headers.get("x-cron-secret") || "";
   const bearer = authHeader.toLowerCase().startsWith("bearer ") ? authHeader.slice(7).trim() : "";
   const isServiceRole = bearer && bearer === SERVICE_KEY;
-  const isCronSecret = cronSecret && providedSecret === cronSecret;
-  if (!isServiceRole && !isCronSecret) {
+  const isEnvCronSecret = envCronSecret && providedSecret === envCronSecret;
+
+  let isVaultCronSecret = false;
+  if (!isServiceRole && !isEnvCronSecret && providedSecret) {
+    try {
+      const { data: vaultRow } = await admin
+        .schema("vault" as any)
+        .from("decrypted_secrets" as any)
+        .select("decrypted_secret")
+        .eq("name", "cnergise_cron_secret")
+        .maybeSingle();
+      const vaultSecret = (vaultRow as any)?.decrypted_secret as string | undefined;
+      isVaultCronSecret = !!vaultSecret && providedSecret === vaultSecret;
+    } catch (e) {
+      console.error("vault read failed", e);
+    }
+  }
+
+  if (!isServiceRole && !isEnvCronSecret && !isVaultCronSecret) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
