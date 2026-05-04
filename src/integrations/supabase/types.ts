@@ -237,6 +237,77 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_trade_signals: {
+        Row: {
+          asset_class: string | null
+          conviction: number | null
+          created_at: string
+          expires_at: string | null
+          generated_at: string
+          id: string
+          rationale: string | null
+          risk_assessment: Json | null
+          side: string
+          status: string
+          strategy_id: string | null
+          suggested_limit_price: number | null
+          suggested_quantity: number | null
+          suggested_stop_loss: number | null
+          suggested_take_profit: number | null
+          symbol: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          asset_class?: string | null
+          conviction?: number | null
+          created_at?: string
+          expires_at?: string | null
+          generated_at?: string
+          id?: string
+          rationale?: string | null
+          risk_assessment?: Json | null
+          side: string
+          status?: string
+          strategy_id?: string | null
+          suggested_limit_price?: number | null
+          suggested_quantity?: number | null
+          suggested_stop_loss?: number | null
+          suggested_take_profit?: number | null
+          symbol: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          asset_class?: string | null
+          conviction?: number | null
+          created_at?: string
+          expires_at?: string | null
+          generated_at?: string
+          id?: string
+          rationale?: string | null
+          risk_assessment?: Json | null
+          side?: string
+          status?: string
+          strategy_id?: string | null
+          suggested_limit_price?: number | null
+          suggested_quantity?: number | null
+          suggested_stop_loss?: number | null
+          suggested_take_profit?: number | null
+          symbol?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_trade_signals_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "trading_strategies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       allowed_emails: {
         Row: {
           created_at: string
@@ -444,6 +515,147 @@ export type Database = {
           logo_url?: string | null
           name?: string
           next_invoice_seq?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      broker_orders: {
+        Row: {
+          account_id: string | null
+          asset_class: string | null
+          avg_fill_price: number | null
+          broker: string
+          broker_order_id: string | null
+          created_at: string
+          filled_at: string | null
+          filled_quantity: number | null
+          id: string
+          limit_price: number | null
+          order_type: string
+          quantity: number
+          rationale: string | null
+          raw: Json | null
+          side: string
+          signal_id: string | null
+          status: string
+          stop_price: number | null
+          strategy_id: string | null
+          submitted_at: string | null
+          symbol: string
+          tif: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_id?: string | null
+          asset_class?: string | null
+          avg_fill_price?: number | null
+          broker?: string
+          broker_order_id?: string | null
+          created_at?: string
+          filled_at?: string | null
+          filled_quantity?: number | null
+          id?: string
+          limit_price?: number | null
+          order_type?: string
+          quantity: number
+          rationale?: string | null
+          raw?: Json | null
+          side: string
+          signal_id?: string | null
+          status?: string
+          stop_price?: number | null
+          strategy_id?: string | null
+          submitted_at?: string | null
+          symbol: string
+          tif?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string | null
+          asset_class?: string | null
+          avg_fill_price?: number | null
+          broker?: string
+          broker_order_id?: string | null
+          created_at?: string
+          filled_at?: string | null
+          filled_quantity?: number | null
+          id?: string
+          limit_price?: number | null
+          order_type?: string
+          quantity?: number
+          rationale?: string | null
+          raw?: Json | null
+          side?: string
+          signal_id?: string | null
+          status?: string
+          stop_price?: number | null
+          strategy_id?: string | null
+          submitted_at?: string | null
+          symbol?: string
+          tif?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      broker_positions: {
+        Row: {
+          account_id: string | null
+          asset_class: string | null
+          avg_cost: number | null
+          broker: string
+          created_at: string
+          currency: string | null
+          id: string
+          market_price: number | null
+          market_value: number | null
+          quantity: number
+          raw: Json | null
+          realized_pnl: number | null
+          symbol: string
+          synced_at: string
+          unrealized_pnl: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_id?: string | null
+          asset_class?: string | null
+          avg_cost?: number | null
+          broker?: string
+          created_at?: string
+          currency?: string | null
+          id?: string
+          market_price?: number | null
+          market_value?: number | null
+          quantity?: number
+          raw?: Json | null
+          realized_pnl?: number | null
+          symbol: string
+          synced_at?: string
+          unrealized_pnl?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string | null
+          asset_class?: string | null
+          avg_cost?: number | null
+          broker?: string
+          created_at?: string
+          currency?: string | null
+          id?: string
+          market_price?: number | null
+          market_value?: number | null
+          quantity?: number
+          raw?: Json | null
+          realized_pnl?: number | null
+          symbol?: string
+          synced_at?: string
+          unrealized_pnl?: number | null
           updated_at?: string
           user_id?: string
         }
@@ -1632,6 +1844,54 @@ export type Database = {
         }
         Relationships: []
       }
+      ibkr_connections: {
+        Row: {
+          access_token: string | null
+          account_id: string | null
+          created_at: string
+          environment: string
+          expires_at: string | null
+          id: string
+          last_error: string | null
+          last_synced_at: string | null
+          refresh_token: string | null
+          status: string
+          token_type: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          account_id?: string | null
+          created_at?: string
+          environment?: string
+          expires_at?: string | null
+          id?: string
+          last_error?: string | null
+          last_synced_at?: string | null
+          refresh_token?: string | null
+          status?: string
+          token_type?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          account_id?: string | null
+          created_at?: string
+          environment?: string
+          expires_at?: string | null
+          id?: string
+          last_error?: string | null
+          last_synced_at?: string | null
+          refresh_token?: string | null
+          status?: string
+          token_type?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       impact_filters: {
         Row: {
           action_required_only: boolean
@@ -2506,6 +2766,54 @@ export type Database = {
         }
         Relationships: []
       }
+      risk_profiles: {
+        Row: {
+          allow_options: boolean
+          allow_short: boolean
+          created_at: string
+          default_stop_loss_pct: number
+          default_take_profit_pct: number
+          id: string
+          max_daily_loss_pct: number
+          max_drawdown_pct: number
+          max_leverage: number
+          max_position_pct: number
+          max_sector_pct: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          allow_options?: boolean
+          allow_short?: boolean
+          created_at?: string
+          default_stop_loss_pct?: number
+          default_take_profit_pct?: number
+          id?: string
+          max_daily_loss_pct?: number
+          max_drawdown_pct?: number
+          max_leverage?: number
+          max_position_pct?: number
+          max_sector_pct?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          allow_options?: boolean
+          allow_short?: boolean
+          created_at?: string
+          default_stop_loss_pct?: number
+          default_take_profit_pct?: number
+          id?: string
+          max_daily_loss_pct?: number
+          max_drawdown_pct?: number
+          max_leverage?: number
+          max_position_pct?: number
+          max_sector_pct?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       service_pricing: {
         Row: {
           created_at: string
@@ -2910,6 +3218,63 @@ export type Database = {
           scopes?: string | null
           status?: string
           terra_user_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      trading_strategies: {
+        Row: {
+          ai_prompt: string | null
+          asset_universe: string[] | null
+          auto_execute: boolean
+          created_at: string
+          description: string | null
+          id: string
+          last_run_at: string | null
+          max_position_pct: number | null
+          name: string
+          schedule: string | null
+          status: string
+          stop_loss_pct: number | null
+          strategy_type: string
+          take_profit_pct: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_prompt?: string | null
+          asset_universe?: string[] | null
+          auto_execute?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          last_run_at?: string | null
+          max_position_pct?: number | null
+          name: string
+          schedule?: string | null
+          status?: string
+          stop_loss_pct?: number | null
+          strategy_type?: string
+          take_profit_pct?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_prompt?: string | null
+          asset_universe?: string[] | null
+          auto_execute?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          last_run_at?: string | null
+          max_position_pct?: number | null
+          name?: string
+          schedule?: string | null
+          status?: string
+          stop_loss_pct?: number | null
+          strategy_type?: string
+          take_profit_pct?: number | null
           updated_at?: string
           user_id?: string
         }
