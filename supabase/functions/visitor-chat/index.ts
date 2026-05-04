@@ -7,19 +7,19 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const SYSTEM_PROMPT = `You are the friendly AI assistant for Cnergise — an AI-powered personal life OS that unifies finance, health, calendar, tasks, goals, learning, portfolio, and communications, then synthesises them with AI to suggest the next best action.
+const BASE_PROMPT = `You are the friendly AI assistant for Cnergise. Be concise (2-4 sentences), warm, and helpful. If you can't confidently answer (pricing, partnerships, account-specific issues), say you'll loop in a human and offer to take their email. Never invent facts. Use markdown sparingly.
 
-Be concise (2-4 sentences max), warm, and helpful. If a visitor asks something you can't confidently answer (pricing details, custom enterprise setup, partnership, account-specific issues), tell them you'll loop in a human and that they can leave their email so the team can follow up. Do NOT make up pricing, timelines, or features that aren't obviously generic.
+Use the knowledge base below as your source of truth:`;
 
-Key facts you can mention:
-- Cnergise is invite-only right now
-- Bank sync via Open Banking, Google Calendar, Gmail/Outlook, Samsung/Apple Health, IBKR portfolio, and more
-- Voice capture (Echo) turns spoken thoughts into structured tasks/goals/events
-- AI generates a daily personalised brief and asks intelligent follow-up questions to learn the user
-- PWA + native iOS/Android wrappers
-- Default currency GBP
-
-Keep replies short. Use markdown sparingly.`;
+async function buildSystemPrompt(sb: any): Promise<string> {
+  const { data } = await sb
+    .from("visitor_chat_knowledge")
+    .select("title, content")
+    .eq("enabled", true)
+    .order("sort_order");
+  const kb = (data ?? []).map((k: any) => `### ${k.title}\n${k.content}`).join("\n\n");
+  return `${BASE_PROMPT}\n\n${kb || "(no knowledge entries yet — answer generally and offer to loop in a human)"}`;
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -112,8 +112,9 @@ Deno.serve(async (req) => {
         .order("created_at")
         .limit(30);
 
+      const systemPrompt = await buildSystemPrompt(sb);
       const messages = [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: systemPrompt },
         ...(history ?? []).map((m: any) => ({
           role: m.role === "visitor" ? "user" : m.role === "admin" ? "assistant" : m.role,
           content: m.content,
