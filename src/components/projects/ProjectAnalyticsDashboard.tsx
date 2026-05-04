@@ -179,6 +179,7 @@ export function ProjectAnalyticsDashboard() {
         kind="bar"
         data={metrics.statusByProject}
         xKey="project"
+        stacked
         series={[
           { key: "todo", label: "Todo", hsl: "215 16% 47%" },
           { key: "inProgress", label: "In Progress", hsl: "199 89% 48%" },

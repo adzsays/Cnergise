@@ -284,6 +284,7 @@ export function SleekChart(props: SleekChartProps) {
     inline,
     className,
     emptyLabel = "No data yet",
+    stacked,
   } = props;
 
   const [open, setOpen] = useState(false);
