@@ -10,6 +10,10 @@ import { PlusCircle, TrendingUp, TrendingDown, DollarSign, PieChart, ArrowRightL
 import { TradeEntry } from "@/components/portfolio/TradeEntry";
 import { MarketTicker } from "@/components/social/MarketTicker";
 import { SleekChart } from "@/components/ui/SleekChart";
+import { IBKRConnection } from "@/components/portfolio/IBKRConnection";
+import { RiskManager } from "@/components/portfolio/RiskManager";
+import { StrategyManager } from "@/components/portfolio/StrategyManager";
+import { LiveHoldings } from "@/components/portfolio/LiveHoldings";
 
 export default function Portfolio() {
   const [activeTab, setActiveTab] = React.useState("overview");
@@ -81,6 +85,9 @@ export default function Portfolio() {
                 { value: "overview", label: "Overview" },
                 { value: "trade", label: "Trade" },
                 { value: "holdings", label: "Holdings" },
+                { value: "strategies", label: "AI Strategies" },
+                { value: "risk", label: "Risk" },
+                { value: "ibkr", label: "IBKR" },
                 { value: "performance", label: "Performance" },
                 { value: "transactions", label: "Transactions" }
               ]}
@@ -177,15 +184,21 @@ export default function Portfolio() {
                 </TabsContent>
                 
                 <TabsContent value="holdings">
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle>Portfolio Holdings</CardTitle>
-                    </CardHeader>
-                    <CardContent className="min-h-[400px] flex items-center justify-center text-muted-foreground">
-                      Detailed holdings information coming soon
-                    </CardContent>
-                  </Card>
+                  <LiveHoldings />
                 </TabsContent>
+
+                <TabsContent value="strategies">
+                  <StrategyManager />
+                </TabsContent>
+
+                <TabsContent value="risk">
+                  <RiskManager />
+                </TabsContent>
+
+                <TabsContent value="ibkr">
+                  <IBKRConnection />
+                </TabsContent>
+
                 
                 <TabsContent value="performance">
                   <SleekChart

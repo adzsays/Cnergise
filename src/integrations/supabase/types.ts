@@ -1848,12 +1848,16 @@ export type Database = {
         Row: {
           access_token: string | null
           account_id: string | null
+          api_token: string | null
           created_at: string
+          demo_mode: boolean
           environment: string
           expires_at: string | null
+          gateway_url: string | null
           id: string
           last_error: string | null
           last_synced_at: string | null
+          nickname: string | null
           refresh_token: string | null
           status: string
           token_type: string | null
@@ -1863,12 +1867,16 @@ export type Database = {
         Insert: {
           access_token?: string | null
           account_id?: string | null
+          api_token?: string | null
           created_at?: string
+          demo_mode?: boolean
           environment?: string
           expires_at?: string | null
+          gateway_url?: string | null
           id?: string
           last_error?: string | null
           last_synced_at?: string | null
+          nickname?: string | null
           refresh_token?: string | null
           status?: string
           token_type?: string | null
@@ -1878,12 +1886,16 @@ export type Database = {
         Update: {
           access_token?: string | null
           account_id?: string | null
+          api_token?: string | null
           created_at?: string
+          demo_mode?: boolean
           environment?: string
           expires_at?: string | null
+          gateway_url?: string | null
           id?: string
           last_error?: string | null
           last_synced_at?: string | null
+          nickname?: string | null
           refresh_token?: string | null
           status?: string
           token_type?: string | null
