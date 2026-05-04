@@ -9,23 +9,7 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle, TrendingUp, TrendingDown, DollarSign, PieChart, ArrowRightLeft } from "lucide-react";
 import { TradeEntry } from "@/components/portfolio/TradeEntry";
 import { MarketTicker } from "@/components/social/MarketTicker";
-import { 
-  AreaChart, 
-  Area, 
-  BarChart,
-  Bar,
-  PieChart as RechartsPieChart,
-  Pie,
-  Cell,
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend,
-  ResponsiveContainer 
-} from "recharts";
+import { SleekChart } from "@/components/ui/SleekChart";
 
 export default function Portfolio() {
   const [activeTab, setActiveTab] = React.useState("overview");
