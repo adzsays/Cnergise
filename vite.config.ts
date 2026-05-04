@@ -21,10 +21,6 @@ export default defineConfig(({ mode }) => ({
       injectRegister: 'auto',
       injectManifest: {
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
-        navigateFallbackDenylist: [/^\/~oauth/],
-      },
-      workbox: {
-        navigateFallbackDenylist: [/^\/~oauth/],
       },
       includeAssets: ['favicon.ico', 'favicon.png', 'apple-touch-icon.png'],
       manifest: {
