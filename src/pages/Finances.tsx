@@ -10,8 +10,9 @@ import { CreditScoreView } from "@/components/finances/CreditScoreView";
 import { BalancesView } from "@/components/finances/BalancesView";
 import { ReceiptsView } from "@/components/finances/ReceiptsView";
 import { ActualExpensesView } from "@/components/finances/ActualExpensesView";
+import { CashFlowComparisonView } from "@/components/finances/CashFlowComparisonView";
 
-import { LayoutDashboard, TrendingUp, CreditCard, Scale, Receipt, Wallet } from "lucide-react";
+import { LayoutDashboard, TrendingUp, CreditCard, Scale, Receipt, Wallet, Sparkles } from "lucide-react";
 import { AIBriefCard } from "@/components/ai/AIBriefCard";
 
 const Finances = () => {
@@ -58,6 +59,10 @@ const Finances = () => {
                         <Wallet className="h-3.5 w-3.5 md:h-4 md:w-4 md:mr-2" />
                         <span className="hidden md:inline">Expenses</span>
                       </TabsTrigger>
+                      <TabsTrigger value="compare" className="text-xs md:text-sm rounded-md md:rounded-lg px-2 md:px-3 py-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                        <Sparkles className="h-3.5 w-3.5 md:h-4 md:w-4 md:mr-2" />
+                        <span className="hidden md:inline">AI Compare</span>
+                      </TabsTrigger>
                     </TabsList>
                   </div>
 
@@ -83,6 +88,10 @@ const Finances = () => {
 
                   <TabsContent value="expenses" className="mt-0">
                     <ActualExpensesView />
+                  </TabsContent>
+
+                  <TabsContent value="compare" className="mt-0">
+                    <CashFlowComparisonView />
                   </TabsContent>
                 </Tabs>
               </div>
