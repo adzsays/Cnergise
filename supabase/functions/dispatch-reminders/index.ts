@@ -2,6 +2,7 @@
 // Auto-generates reminders for upcoming tasks/events/payments based on user prefs.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import webpush from "https://esm.sh/web-push@3.6.7";
+import { sendFcm } from "../_shared/fcm.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
