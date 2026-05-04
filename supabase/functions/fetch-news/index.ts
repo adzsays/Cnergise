@@ -67,6 +67,7 @@ serve(async (req) => {
     }
 
     const data = await response.json();
+    logServiceUsage({ service: "perplexity", operation: "sonar", units: 1, function_name: "fetch-news", metadata: { usage: data?.usage } });
     const content = data.choices?.[0]?.message?.content || "";
     
     // Try to parse JSON from the response

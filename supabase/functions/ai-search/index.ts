@@ -95,6 +95,7 @@ Always reference specific items from their data when relevant. Be concise and ac
       });
 
       const perplexityData = await perplexityResponse.json();
+      logServiceUsage({ service: "perplexity", operation: "sonar", units: 1, function_name: "ai-search", user_id: user.id, metadata: { usage: perplexityData?.usage } });
       aiResponse = perplexityData.choices?.[0]?.message?.content || null;
     }
 
