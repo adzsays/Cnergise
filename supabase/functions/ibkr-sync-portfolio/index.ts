@@ -41,12 +41,16 @@ serve(async (req) => {
     let positions = DEMO_POSITIONS;
     let source = "demo";
 
-    if (conn && !conn.demo_mode && conn.api_token && conn.gateway_url) {
+    if (conn && !conn.demo_mode && conn.gateway_url) {
       try {
-        // IBKR Client Portal Gateway endpoint pattern
+        // IBKR Client Portal Gateway — auth is via session cookie established by browser login.
+        // Token is only used if user is on institutional OAuth 1.0a.
         const url = `${conn.gateway_url.replace(/\/$/, "")}/portfolio/${conn.account_id || ""}/positions/0`;
         const res = await fetch(url, {
-          headers: { Authorization: `Bearer ${conn.api_token}`, Accept: "application/json" },
+          headers: {
+            Accept: "application/json",
+            ...(conn.api_token ? { Authorization: `Bearer ${conn.api_token}` } : {}),
+          },
         });
         if (res.ok) {
           const raw = await res.json();
