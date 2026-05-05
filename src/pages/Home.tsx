@@ -16,7 +16,7 @@ import { useUserCurrency } from "@/hooks/useUserCurrency";
 import {
   CalendarDays,
   DollarSign,
-  Mail,
+  
   MessageSquare,
   TrendingDown,
   TrendingUp,
