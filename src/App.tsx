@@ -80,7 +80,7 @@ const App = () => (
                 <Route path="/projects-analytics" element={<AuthGuard><FeatureGate featureKey="projects"><ProjectsAnalytics /></FeatureGate></AuthGuard>} />
                 <Route path="/dashboard" element={<AuthGuard><Dashboard /></AuthGuard>} />
                 <Route path="/calendar" element={<AuthGuard><FeatureGate featureKey="calendar"><Calendar /></FeatureGate></AuthGuard>} />
-                <Route path="/mail" element={<AuthGuard><FeatureGate featureKey="mail"><Mail /></FeatureGate></AuthGuard>} />
+                <Route path="/mail" element={<Navigate to="/social" replace />} />
                 <Route path="/finances" element={<AuthGuard><FeatureGate featureKey="finance"><Finances /></FeatureGate></AuthGuard>} />
                 <Route path="/social" element={<AuthGuard><FeatureGate featureKey="social"><SocialMedia /></FeatureGate></AuthGuard>} />
                 <Route path="/health" element={<AuthGuard><FeatureGate featureKey="health"><Health /></FeatureGate></AuthGuard>} />
