@@ -319,7 +319,7 @@ export function TaskList() {
         </div>
       ) : (
         <div className="border rounded-lg">
-          <div className="max-h-[calc(100vh-360px)] overflow-y-auto overflow-x-hidden">
+          <div className="max-h-[calc(100vh-360px)] overflow-auto">
             <div className="w-full">
               <Table className="w-full table-fixed text-xs">
                 <TableHeader className="sticky top-0 z-20 bg-background shadow-sm">
