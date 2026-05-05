@@ -116,7 +116,25 @@ export function IBKRConnection() {
         </div>
 
         <div className="space-y-2">
-          <Label>Gateway URL</Label>
+          <div className="flex items-center gap-1.5">
+            <Label>Gateway URL</Label>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button type="button" className="text-muted-foreground hover:text-foreground"><HelpCircle className="h-3.5 w-3.5" /></button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs text-xs">
+                  <p className="font-medium mb-1">Where do I get this?</p>
+                  <p>The IBKR Client Portal Gateway runs on a machine you control. It bridges this app to IBKR.</p>
+                  <ul className="mt-1 list-disc pl-4 space-y-0.5">
+                    <li><b>Local only</b> (laptop): use <code>https://localhost:5000/v1/api</code> — only works on that device.</li>
+                    <li><b>Phone + laptop</b>: host the gateway on a small VPS/Pi with HTTPS and put that public URL here.</li>
+                    <li><b>No setup</b>: keep Demo mode ON to use simulated data on every device.</li>
+                  </ul>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
           <Input
             value={conn.gateway_url || ""}
             onChange={(e) => setConn({ ...conn, gateway_url: e.target.value })}
