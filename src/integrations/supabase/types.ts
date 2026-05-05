@@ -2830,6 +2830,8 @@ export type Database = {
         Row: {
           allow_options: boolean
           allow_short: boolean
+          assessed_at: string | null
+          assessment_inputs: Json | null
           created_at: string
           default_stop_loss_pct: number
           default_take_profit_pct: number
@@ -2839,12 +2841,16 @@ export type Database = {
           max_leverage: number
           max_position_pct: number
           max_sector_pct: number
+          risk_band: string | null
+          risk_score: number | null
           updated_at: string
           user_id: string
         }
         Insert: {
           allow_options?: boolean
           allow_short?: boolean
+          assessed_at?: string | null
+          assessment_inputs?: Json | null
           created_at?: string
           default_stop_loss_pct?: number
           default_take_profit_pct?: number
@@ -2854,12 +2860,16 @@ export type Database = {
           max_leverage?: number
           max_position_pct?: number
           max_sector_pct?: number
+          risk_band?: string | null
+          risk_score?: number | null
           updated_at?: string
           user_id: string
         }
         Update: {
           allow_options?: boolean
           allow_short?: boolean
+          assessed_at?: string | null
+          assessment_inputs?: Json | null
           created_at?: string
           default_stop_loss_pct?: number
           default_take_profit_pct?: number
@@ -2869,6 +2879,8 @@ export type Database = {
           max_leverage?: number
           max_position_pct?: number
           max_sector_pct?: number
+          risk_band?: string | null
+          risk_score?: number | null
           updated_at?: string
           user_id?: string
         }
@@ -3041,6 +3053,150 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      strategy_bundle_items: {
+        Row: {
+          bundle_id: string
+          created_at: string
+          id: string
+          strategy_id: string
+          user_id: string
+          weight_pct: number
+        }
+        Insert: {
+          bundle_id: string
+          created_at?: string
+          id?: string
+          strategy_id: string
+          user_id: string
+          weight_pct?: number
+        }
+        Update: {
+          bundle_id?: string
+          created_at?: string
+          id?: string
+          strategy_id?: string
+          user_id?: string
+          weight_pct?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "strategy_bundle_items_bundle_id_fkey"
+            columns: ["bundle_id"]
+            isOneToOne: false
+            referencedRelation: "strategy_bundles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "strategy_bundle_items_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "trading_strategies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      strategy_bundles: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          status: string
+          target_risk_band: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          status?: string
+          target_risk_band?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          status?: string
+          target_risk_band?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      strategy_performance_snapshots: {
+        Row: {
+          benchmark_return_pct: number | null
+          bundle_id: string | null
+          created_at: string
+          cumulative_return_pct: number | null
+          id: string
+          max_drawdown_pct: number | null
+          metrics: Json | null
+          notes: string | null
+          return_pct: number | null
+          sharpe_ratio: number | null
+          snapshot_date: string
+          strategy_id: string | null
+          trades_count: number | null
+          user_id: string
+          win_rate_pct: number | null
+        }
+        Insert: {
+          benchmark_return_pct?: number | null
+          bundle_id?: string | null
+          created_at?: string
+          cumulative_return_pct?: number | null
+          id?: string
+          max_drawdown_pct?: number | null
+          metrics?: Json | null
+          notes?: string | null
+          return_pct?: number | null
+          sharpe_ratio?: number | null
+          snapshot_date?: string
+          strategy_id?: string | null
+          trades_count?: number | null
+          user_id: string
+          win_rate_pct?: number | null
+        }
+        Update: {
+          benchmark_return_pct?: number | null
+          bundle_id?: string | null
+          created_at?: string
+          cumulative_return_pct?: number | null
+          id?: string
+          max_drawdown_pct?: number | null
+          metrics?: Json | null
+          notes?: string | null
+          return_pct?: number | null
+          sharpe_ratio?: number | null
+          snapshot_date?: string
+          strategy_id?: string | null
+          trades_count?: number | null
+          user_id?: string
+          win_rate_pct?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "strategy_performance_snapshots_bundle_id_fkey"
+            columns: ["bundle_id"]
+            isOneToOne: false
+            referencedRelation: "strategy_bundles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "strategy_performance_snapshots_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "trading_strategies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       suppressed_emails: {
         Row: {

@@ -7,15 +7,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Brain, Plus, Sparkles, Loader2, Trash2 } from "lucide-react";
+import { Brain, Plus, Sparkles, Loader2, Trash2, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
+import { StrategyAnalytics } from "./StrategyAnalytics";
 
 export function StrategyManager() {
   const [strategies, setStrategies] = useState<any[]>([]);
   const [signals, setSignals] = useState<any[]>([]);
   const [creating, setCreating] = useState(false);
   const [running, setRunning] = useState<string | null>(null);
-  const [executing, setExecuting] = useState<string | null>(null);
+  const [analyticsFor, setAnalyticsFor] = useState<string | null>(null);
   const [draft, setDraft] = useState({
     name: "", description: "", asset_universe: "",
     ai_prompt: "Identify high-conviction opportunities based on momentum, news catalysts, and risk-adjusted return.",
@@ -73,23 +74,10 @@ export function StrategyManager() {
     load();
   };
 
-  const executeSignal = async (sig: any) => {
-    setExecuting(sig.id);
-    const { error } = await supabase.functions.invoke("ibkr-place-order", {
-      body: {
-        symbol: sig.symbol,
-        side: sig.side,
-        quantity: sig.suggested_quantity || 1,
-        order_type: sig.suggested_limit_price ? "LMT" : "MKT",
-        limit_price: sig.suggested_limit_price,
-        strategy_id: sig.strategy_id,
-        signal_id: sig.id,
-        rationale: sig.rationale,
-      },
-    });
-    if (!error) await supabase.from("ai_trade_signals").update({ status: "executed" }).eq("id", sig.id);
-    setExecuting(null);
-    if (error) toast.error(error.message); else { toast.success("Order placed"); load(); }
+  const acknowledgeSignal = async (sig: any) => {
+    await supabase.from("ai_trade_signals").update({ status: "acknowledged" }).eq("id", sig.id);
+    toast.success("Marked as reviewed");
+    load();
   };
 
   return (
@@ -136,6 +124,9 @@ export function StrategyManager() {
                 {s.last_run_at && <p className="text-[10px] text-muted-foreground mt-1">Last run: {new Date(s.last_run_at).toLocaleString()}</p>}
               </div>
               <div className="flex gap-2 shrink-0">
+                <Button size="sm" variant="outline" onClick={() => setAnalyticsFor(analyticsFor === s.id ? null : s.id)}>
+                  <BarChart3 className="h-4 w-4" />
+                </Button>
                 <Button size="sm" variant="outline" onClick={() => runStrategy(s)} disabled={running === s.id}>
                   {running === s.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                 </Button>
@@ -143,6 +134,10 @@ export function StrategyManager() {
               </div>
             </div>
           ))}
+          {analyticsFor && (() => {
+            const s = strategies.find((x) => x.id === analyticsFor);
+            return s ? <StrategyAnalytics strategyId={s.id} label={s.name} /> : null;
+          })()}
         </CardContent>
       </Card>
 
@@ -160,10 +155,8 @@ export function StrategyManager() {
                     <span className="text-xs text-muted-foreground">conviction {Math.round(s.conviction || 0)}%</span>
                     <Badge variant="secondary" className="text-xs">{s.status}</Badge>
                   </div>
-                  {s.status === "new" && s.side !== "HOLD" && (
-                    <Button size="sm" onClick={() => executeSignal(s)} disabled={executing === s.id}>
-                      {executing === s.id ? <Loader2 className="h-4 w-4 animate-spin" /> : "Execute"}
-                    </Button>
+                  {s.status === "new" && (
+                    <Button size="sm" variant="outline" onClick={() => acknowledgeSignal(s)}>Mark reviewed</Button>
                   )}
                 </div>
                 {s.rationale && <p className="text-xs text-muted-foreground mt-2">{s.rationale}</p>}
