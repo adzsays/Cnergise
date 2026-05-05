@@ -2010,11 +2010,13 @@ export type Database = {
           is_read: boolean
           matched_filters: string[]
           message_at: string
+          notified_at: string | null
           preview: string
           reason: string | null
           score: number
           scored_at: string
           source: string
+          suggested_reply: string | null
           urgency: string
           url: string | null
           user_id: string
@@ -2031,11 +2033,13 @@ export type Database = {
           is_read?: boolean
           matched_filters?: string[]
           message_at?: string
+          notified_at?: string | null
           preview: string
           reason?: string | null
           score?: number
           scored_at?: string
           source: string
+          suggested_reply?: string | null
           urgency?: string
           url?: string | null
           user_id: string
@@ -2052,11 +2056,13 @@ export type Database = {
           is_read?: boolean
           matched_filters?: string[]
           message_at?: string
+          notified_at?: string | null
           preview?: string
           reason?: string | null
           score?: number
           scored_at?: string
           source?: string
+          suggested_reply?: string | null
           urgency?: string
           url?: string | null
           user_id?: string
@@ -2503,6 +2509,75 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      listening_agent_settings: {
+        Row: {
+          created_at: string
+          digest_hour: number
+          enabled: boolean
+          id: string
+          last_digest_at: string | null
+          last_scan_at: string | null
+          min_score: number
+          prompt_digest: boolean
+          prompt_floating: boolean
+          prompt_push: boolean
+          source_email: boolean
+          source_messaging: boolean
+          source_social: boolean
+          trigger_action_required: boolean
+          trigger_keywords: boolean
+          trigger_mentions: boolean
+          trigger_vip: boolean
+          updated_at: string
+          user_id: string
+          vip_handles: string[]
+        }
+        Insert: {
+          created_at?: string
+          digest_hour?: number
+          enabled?: boolean
+          id?: string
+          last_digest_at?: string | null
+          last_scan_at?: string | null
+          min_score?: number
+          prompt_digest?: boolean
+          prompt_floating?: boolean
+          prompt_push?: boolean
+          source_email?: boolean
+          source_messaging?: boolean
+          source_social?: boolean
+          trigger_action_required?: boolean
+          trigger_keywords?: boolean
+          trigger_mentions?: boolean
+          trigger_vip?: boolean
+          updated_at?: string
+          user_id: string
+          vip_handles?: string[]
+        }
+        Update: {
+          created_at?: string
+          digest_hour?: number
+          enabled?: boolean
+          id?: string
+          last_digest_at?: string | null
+          last_scan_at?: string | null
+          min_score?: number
+          prompt_digest?: boolean
+          prompt_floating?: boolean
+          prompt_push?: boolean
+          source_email?: boolean
+          source_messaging?: boolean
+          source_social?: boolean
+          trigger_action_required?: boolean
+          trigger_keywords?: boolean
+          trigger_mentions?: boolean
+          trigger_vip?: boolean
+          updated_at?: string
+          user_id?: string
+          vip_handles?: string[]
+        }
+        Relationships: []
       }
       loan_rate_terms: {
         Row: {
