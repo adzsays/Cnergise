@@ -332,6 +332,54 @@ export type Database = {
         }
         Relationships: []
       }
+      alpaca_connections: {
+        Row: {
+          api_key_id: string | null
+          api_secret: string | null
+          base_url: string | null
+          created_at: string
+          demo_mode: boolean
+          environment: string
+          id: string
+          last_error: string | null
+          last_synced_at: string | null
+          nickname: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          api_key_id?: string | null
+          api_secret?: string | null
+          base_url?: string | null
+          created_at?: string
+          demo_mode?: boolean
+          environment?: string
+          id?: string
+          last_error?: string | null
+          last_synced_at?: string | null
+          nickname?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          api_key_id?: string | null
+          api_secret?: string | null
+          base_url?: string | null
+          created_at?: string
+          demo_mode?: boolean
+          environment?: string
+          id?: string
+          last_error?: string | null
+          last_synced_at?: string | null
+          nickname?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       app_features: {
         Row: {
           category: string

@@ -11,6 +11,7 @@ import { TradeEntry } from "@/components/portfolio/TradeEntry";
 import { MarketTicker } from "@/components/social/MarketTicker";
 import { SleekChart } from "@/components/ui/SleekChart";
 import { IBKRConnection } from "@/components/portfolio/IBKRConnection";
+import { AlpacaConnection } from "@/components/portfolio/AlpacaConnection";
 import { RiskManager } from "@/components/portfolio/RiskManager";
 import { StrategyManager } from "@/components/portfolio/StrategyManager";
 import { LiveHoldings } from "@/components/portfolio/LiveHoldings";
@@ -87,7 +88,7 @@ export default function Portfolio() {
                 { value: "holdings", label: "Holdings" },
                 { value: "strategies", label: "AI Strategies" },
                 { value: "risk", label: "Risk" },
-                { value: "ibkr", label: "IBKR" },
+                { value: "ibkr", label: "Brokers" },
                 { value: "performance", label: "Performance" },
                 { value: "transactions", label: "Transactions" }
               ]}
@@ -195,7 +196,8 @@ export default function Portfolio() {
                   <RiskManager />
                 </TabsContent>
 
-                <TabsContent value="ibkr">
+                <TabsContent value="ibkr" className="space-y-4">
+                  <AlpacaConnection />
                   <IBKRConnection />
                 </TabsContent>
 
