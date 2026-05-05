@@ -124,6 +124,9 @@ export function StrategyManager() {
                 {s.last_run_at && <p className="text-[10px] text-muted-foreground mt-1">Last run: {new Date(s.last_run_at).toLocaleString()}</p>}
               </div>
               <div className="flex gap-2 shrink-0">
+                <Button size="sm" variant="outline" onClick={() => setAnalyticsFor(analyticsFor === s.id ? null : s.id)}>
+                  <BarChart3 className="h-4 w-4" />
+                </Button>
                 <Button size="sm" variant="outline" onClick={() => runStrategy(s)} disabled={running === s.id}>
                   {running === s.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                 </Button>
@@ -131,6 +134,10 @@ export function StrategyManager() {
               </div>
             </div>
           ))}
+          {analyticsFor && (() => {
+            const s = strategies.find((x) => x.id === analyticsFor);
+            return s ? <StrategyAnalytics strategyId={s.id} label={s.name} /> : null;
+          })()}
         </CardContent>
       </Card>
 
@@ -148,10 +155,8 @@ export function StrategyManager() {
                     <span className="text-xs text-muted-foreground">conviction {Math.round(s.conviction || 0)}%</span>
                     <Badge variant="secondary" className="text-xs">{s.status}</Badge>
                   </div>
-                  {s.status === "new" && s.side !== "HOLD" && (
-                    <Button size="sm" onClick={() => executeSignal(s)} disabled={executing === s.id}>
-                      {executing === s.id ? <Loader2 className="h-4 w-4 animate-spin" /> : "Execute"}
-                    </Button>
+                  {s.status === "new" && (
+                    <Button size="sm" variant="outline" onClick={() => acknowledgeSignal(s)}>Mark reviewed</Button>
                   )}
                 </div>
                 {s.rationale && <p className="text-xs text-muted-foreground mt-2">{s.rationale}</p>}
