@@ -230,6 +230,9 @@ export default function Profile() {
                       <TabsContent value="notifications" className="mt-0">
                         <NotificationSettings />
                       </TabsContent>
+                      <TabsContent value="agent" className="mt-0">
+                        <ListeningAgentSettings />
+                      </TabsContent>
                     </>
                   )}
                 </Tabs>
