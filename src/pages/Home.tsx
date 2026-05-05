@@ -74,21 +74,7 @@ const Index = () => {
     },
   });
 
-  // Recent / unread emails
-  const { data: emails = [] } = useQuery({
-    queryKey: ["home-emails"],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
-      const { data } = await supabase
-        .from("emails")
-        .select("id, subject, from_email, to_email, status, created_at, sent_at")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(4);
-      return data ?? [];
-    },
-  });
+  const emails: any[] = [];
 
   // Chats - recent messages
   const { data: chats = [] } = useQuery({
