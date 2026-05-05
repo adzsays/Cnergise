@@ -34,7 +34,7 @@ const ProjectsAnalytics = lazy(() => import("./pages/ProjectsAnalytics"));
 const Plan = lazy(() => import("./pages/Plan"));
 const Monitoring = lazy(() => import("./pages/Monitoring"));
 const Learning = lazy(() => import("./pages/Learning"));
-const Echo = lazy(() => import("./pages/Echo"));
+
 const Invoices = lazy(() => import("./pages/Invoices"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 const AdminInbox = lazy(() => import("./pages/AdminInbox"));
@@ -94,7 +94,7 @@ const App = () => (
                 <Route path="/chat" element={<AuthGuard><FeatureGate featureKey="chat"><Chat /></FeatureGate></AuthGuard>} />
                 <Route path="/monitoring" element={<AuthGuard><Monitoring /></AuthGuard>} />
                 <Route path="/learning" element={<AuthGuard><FeatureGate featureKey="learning"><Learning /></FeatureGate></AuthGuard>} />
-                <Route path="/echo" element={<AuthGuard><FeatureGate featureKey="echo"><Echo /></FeatureGate></AuthGuard>} />
+                <Route path="/echo" element={<Navigate to="/plan" replace />} />
                 <Route path="/invoices" element={<AuthGuard><FeatureGate featureKey="invoicing"><Invoices /></FeatureGate></AuthGuard>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>

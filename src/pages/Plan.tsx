@@ -9,8 +9,9 @@ import { GoalsTab } from "@/components/plan/GoalsTab";
 import { ProjectsTab } from "@/components/tasks/ProjectsTab";
 import { TaskList } from "@/components/tasks/TaskList";
 import { ProjectAnalyticsDashboard } from "@/components/projects/ProjectAnalyticsDashboard";
+import EchoView from "@/components/echo/EchoView";
 import { useGoals } from "@/hooks/useGoals";
-import { Target, FolderKanban, CheckSquare, BarChart3, X } from "lucide-react";
+import { Target, FolderKanban, CheckSquare, BarChart3, Mic, X } from "lucide-react";
 import { useCurrentSpace } from "@/contexts/SpaceContext";
 import { VoiceAssistant } from "@/components/VoiceAssistant";
 import { AIBriefCard } from "@/components/ai/AIBriefCard";
@@ -69,6 +70,9 @@ export default function Plan() {
                       <TabsTrigger value="analytics" className="text-xs md:text-sm gap-1.5">
                         <BarChart3 className="h-3.5 w-3.5" />Analytics
                       </TabsTrigger>
+                      <TabsTrigger value="echo" className="text-xs md:text-sm gap-1.5">
+                        <Mic className="h-3.5 w-3.5" />Echo
+                      </TabsTrigger>
                     </TabsList>
                   </div>
 
@@ -97,6 +101,10 @@ export default function Plan() {
 
                   <TabsContent value="analytics" className="mt-4">
                     <ProjectAnalyticsDashboard />
+                  </TabsContent>
+
+                  <TabsContent value="echo" className="mt-4">
+                    <EchoView />
                   </TabsContent>
                 </Tabs>
               </div>
