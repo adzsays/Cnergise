@@ -19,7 +19,7 @@ const Home = lazy(() => import("./pages/Home"));
 const TaskManagement = lazy(() => import("./pages/TaskManagement"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Calendar = lazy(() => import("./pages/Calendar"));
-const Mail = lazy(() => import("./pages/Mail"));
+
 const Health = lazy(() => import("./pages/Health"));
 const Portfolio = lazy(() => import("./pages/Portfolio"));
 const Finances = lazy(() => import("./pages/Finances"));
