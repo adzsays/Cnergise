@@ -33,7 +33,7 @@ export function AlpacaConnection() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     const { data } = await supabase.from("alpaca_connections" as any).select("*").eq("user_id", user.id).maybeSingle();
-    if (data) setConn((c: any) => ({ ...c, ...data }));
+    if (data) setConn((c: any) => ({ ...c, ...(data as any) }));
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
