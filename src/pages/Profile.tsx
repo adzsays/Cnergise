@@ -15,7 +15,8 @@ import { IntegrationSettings } from "@/components/settings/IntegrationSettings";
 import { SubscriptionSettings } from "@/components/settings/SubscriptionSettings";
 import { SecuritySettings } from "@/components/settings/SecuritySettings";
 import { NotificationSettings } from "@/components/notifications/NotificationSettings";
-import { Bell } from "lucide-react";
+import { ListeningAgentSettings } from "@/components/agent/ListeningAgentSettings";
+import { Bell, Bot } from "lucide-react";
 import { Upload, Save, User, Key, CreditCard, ShieldCheck, Layers } from "lucide-react";
 import { MyFeaturesPanel } from "@/components/features/MyFeaturesPanel";
 import { ConsentHistory } from "@/components/features/ConsentHistory";
@@ -96,6 +97,10 @@ export default function Profile() {
                     <TabsTrigger value="notifications" className="text-sm">
                       <Bell className="h-4 w-4 mr-2" />
                       <span className="hidden sm:inline">Alerts</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="agent" className="text-sm">
+                      <Bot className="h-4 w-4 mr-2" />
+                      <span className="hidden sm:inline">Agent</span>
                     </TabsTrigger>
                   </TabsList>
 
@@ -224,6 +229,9 @@ export default function Profile() {
                       </TabsContent>
                       <TabsContent value="notifications" className="mt-0">
                         <NotificationSettings />
+                      </TabsContent>
+                      <TabsContent value="agent" className="mt-0">
+                        <ListeningAgentSettings />
                       </TabsContent>
                     </>
                   )}
