@@ -98,6 +98,10 @@ export default function Profile() {
                       <Bell className="h-4 w-4 mr-2" />
                       <span className="hidden sm:inline">Alerts</span>
                     </TabsTrigger>
+                    <TabsTrigger value="agent" className="text-sm">
+                      <Bot className="h-4 w-4 mr-2" />
+                      <span className="hidden sm:inline">Agent</span>
+                    </TabsTrigger>
                   </TabsList>
 
                   {isLoading ? (
