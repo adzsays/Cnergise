@@ -7,8 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Eye, EyeOff, Shield, Loader2, RefreshCw, Link as LinkIcon } from "lucide-react";
+import { Eye, EyeOff, Shield, Loader2, RefreshCw, Link as LinkIcon, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
 export function IBKRConnection() {
   const [loading, setLoading] = useState(true);
