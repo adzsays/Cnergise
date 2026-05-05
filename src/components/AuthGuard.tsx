@@ -64,5 +64,15 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   }
 
   if (!isAuthenticated) return null;
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <ListeningAgentMount />
+    </>
+  );
+};
+
+const ListeningAgentMount = () => {
+  useListeningAgentScanner();
+  return <ListeningAgentPrompt />;
 };
