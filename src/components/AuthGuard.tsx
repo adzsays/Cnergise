@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { ListeningAgentPrompt } from "@/components/agent/ListeningAgentPrompt";
+import { useListeningAgentScanner } from "@/hooks/useListeningAgentScanner";
 
 export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
