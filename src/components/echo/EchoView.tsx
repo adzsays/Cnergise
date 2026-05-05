@@ -161,6 +161,12 @@ export default function EchoView() {
   useEffect(() => { fetchEntries(); }, [fetchEntries]);
   useEffect(() => { fetchAllEntries(); fetchGoals(); fetchPlanContext(); }, [fetchAllEntries, fetchGoals, fetchPlanContext]);
 
+  useEffect(() => {
+    const handler = () => { fetchEntries(); fetchAllEntries(); };
+    window.addEventListener("echo:entries-updated", handler);
+    return () => window.removeEventListener("echo:entries-updated", handler);
+  }, [fetchEntries, fetchAllEntries]);
+
   const goToday = () => setSelectedDate(new Date().toISOString().split("T")[0]);
   const goPrev = () =>
     setSelectedDate(format(subDays(new Date(selectedDate + "T12:00:00"), 1), "yyyy-MM-dd"));
