@@ -81,20 +81,20 @@ Deno.serve(async (req) => {
       if (sourceFilter.length > 0) {
         const { data: meta } = await supabase
           .from("unified_metadata")
-          .select("id, source, title, snippet, url, sender, created_at")
+          .select("id, source_type, title, description, external_url, participants, created_at, date_occurred")
           .eq("user_id", userId)
-          .in("source", sourceFilter)
+          .in("source_type", sourceFilter)
           .gte("created_at", since)
           .order("created_at", { ascending: false })
           .limit(40);
 
         items = (meta ?? []).map((m: any) => ({
-          source: m.source,
+          source: m.source_type,
           external_id: m.id,
-          author: m.sender ?? null,
-          preview: `${m.title ?? ""}\n${m.snippet ?? ""}`.trim().slice(0, 800),
-          url: m.url,
-          message_at: m.created_at,
+          author: Array.isArray(m.participants) && m.participants[0] ? m.participants[0] : null,
+          preview: `${m.title ?? ""}\n${m.description ?? ""}`.trim().slice(0, 800),
+          url: m.external_url,
+          message_at: m.date_occurred ?? m.created_at,
         }));
       }
     }
