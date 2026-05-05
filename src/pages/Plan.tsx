@@ -70,6 +70,9 @@ export default function Plan() {
                       <TabsTrigger value="analytics" className="text-xs md:text-sm gap-1.5">
                         <BarChart3 className="h-3.5 w-3.5" />Analytics
                       </TabsTrigger>
+                      <TabsTrigger value="echo" className="text-xs md:text-sm gap-1.5">
+                        <Mic className="h-3.5 w-3.5" />Echo
+                      </TabsTrigger>
                     </TabsList>
                   </div>
 
