@@ -184,12 +184,7 @@ export function CustomizableDashboard() {
                       index
                     );
                   case "emails":
-                    return renderWidget(
-                      "emails",
-                      "Recent Emails",
-                      <EmailsSection projectFilter={selectedProject} />,
-                      index
-                    );
+                    return null;
                   case "activity":
                     return renderWidget(
                       "activity",
