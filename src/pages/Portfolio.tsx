@@ -88,7 +88,7 @@ export default function Portfolio() {
                 { value: "holdings", label: "Holdings" },
                 { value: "strategies", label: "AI Strategies" },
                 { value: "risk", label: "Risk" },
-                { value: "ibkr", label: "IBKR" },
+                { value: "ibkr", label: "Brokers" },
                 { value: "performance", label: "Performance" },
                 { value: "transactions", label: "Transactions" }
               ]}
