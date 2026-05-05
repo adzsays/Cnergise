@@ -142,7 +142,7 @@ const Index = () => {
     [tasks, todayStart, todayEnd],
   );
 
-  const unreadEmailCount = emails.filter((e: any) => e.status === "draft" || e.status === "received" || e.status === "unread").length;
+  
 
   return (
     <SidebarProvider defaultOpen={false}>
