@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,8 +9,6 @@ import {
   Mic,
   Loader2,
   Send,
-  Square,
-  X,
   Sparkles,
   ChevronLeft,
   ChevronRight,
@@ -33,12 +31,6 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import EchoCoach from "@/components/echo/EchoCoach";
 import EchoStats from "@/components/echo/EchoStats";
-
-const SILENCE_TIMEOUT_MS = 5_000;
-const SpeechRecognitionAPI =
-  (typeof window !== "undefined" &&
-    ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition)) ||
-  null;
 
 type EchoEntry = {
   id: string;
