@@ -7,15 +7,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Brain, Plus, Sparkles, Loader2, Trash2 } from "lucide-react";
+import { Brain, Plus, Sparkles, Loader2, Trash2, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
+import { StrategyAnalytics } from "./StrategyAnalytics";
 
 export function StrategyManager() {
   const [strategies, setStrategies] = useState<any[]>([]);
   const [signals, setSignals] = useState<any[]>([]);
   const [creating, setCreating] = useState(false);
   const [running, setRunning] = useState<string | null>(null);
-  const [executing, setExecuting] = useState<string | null>(null);
+  const [analyticsFor, setAnalyticsFor] = useState<string | null>(null);
   const [draft, setDraft] = useState({
     name: "", description: "", asset_universe: "",
     ai_prompt: "Identify high-conviction opportunities based on momentum, news catalysts, and risk-adjusted return.",
@@ -73,23 +74,10 @@ export function StrategyManager() {
     load();
   };
 
-  const executeSignal = async (sig: any) => {
-    setExecuting(sig.id);
-    const { error } = await supabase.functions.invoke("ibkr-place-order", {
-      body: {
-        symbol: sig.symbol,
-        side: sig.side,
-        quantity: sig.suggested_quantity || 1,
-        order_type: sig.suggested_limit_price ? "LMT" : "MKT",
-        limit_price: sig.suggested_limit_price,
-        strategy_id: sig.strategy_id,
-        signal_id: sig.id,
-        rationale: sig.rationale,
-      },
-    });
-    if (!error) await supabase.from("ai_trade_signals").update({ status: "executed" }).eq("id", sig.id);
-    setExecuting(null);
-    if (error) toast.error(error.message); else { toast.success("Order placed"); load(); }
+  const acknowledgeSignal = async (sig: any) => {
+    await supabase.from("ai_trade_signals").update({ status: "acknowledged" }).eq("id", sig.id);
+    toast.success("Marked as reviewed");
+    load();
   };
 
   return (
