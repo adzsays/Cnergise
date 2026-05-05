@@ -319,19 +319,27 @@ export function TaskList() {
         </div>
       ) : (
         <div className="border rounded-lg">
-          <div className="max-h-[calc(100vh-360px)] overflow-y-auto overflow-x-hidden">
-            <div className="w-full">
-              <Table className="w-full table-fixed text-xs">
+          <div className="max-h-[calc(100vh-360px)] overflow-auto">
+            <div className="min-w-[1100px]">
+              <Table className="text-xs">
                 <TableHeader className="sticky top-0 z-20 bg-background shadow-sm">
                   <TableRow className="bg-muted/50 hover:bg-muted/50">
-                    <TableHead className="w-[2.5%] px-1">
+                    <TableHead className="w-10 px-2 sticky left-0 z-30 bg-muted">
                       <Checkbox
                         checked={allSelected}
                         onCheckedChange={(v) => toggleAll(!!v)}
                         aria-label="Select all"
                       />
                     </TableHead>
-                    <SortableHead label="Task" k="title" width="w-[20%]" />
+                    <TableHead className="sticky left-10 z-30 bg-muted min-w-[180px] max-w-[260px] shadow-[1px_0_0_0_hsl(var(--border))]">
+                      <button
+                        type="button"
+                        onClick={() => toggleSort("title")}
+                        className="flex items-center gap-1 font-medium hover:text-foreground"
+                      >
+                        Task <SortIcon k="title" />
+                      </button>
+                    </TableHead>
                     <SortableHead label="Project" k="project" width="w-[10%]" />
                     <SortableHead label="Status" k="status" width="w-[8%]" />
                     <SortableHead label="Pri" k="priority" width="w-[6%]" />
@@ -352,7 +360,7 @@ export function TaskList() {
 
                     return (
                       <TableRow key={task.id} className="hover:bg-muted/30">
-                        <TableCell className="py-2">
+                        <TableCell className="py-2 sticky left-0 z-10 bg-background w-10 px-2">
                           <Checkbox
                             checked={!!selected[task.id]}
                             onCheckedChange={(v) =>
@@ -363,7 +371,7 @@ export function TaskList() {
                         </TableCell>
                         {/* Title */}
                         <TableCell
-                          className="py-2 text-sm cursor-text max-w-0"
+                          className="py-2 text-sm cursor-text sticky left-10 z-10 bg-background min-w-[180px] max-w-[260px] shadow-[1px_0_0_0_hsl(var(--border))]"
                           onClick={() => !isEditing("title") && startEdit(task.id, "title", task.title)}
                         >
                           {isEditing("title") ? (
