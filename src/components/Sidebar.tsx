@@ -11,7 +11,7 @@ import {
   Target,
   Heart,
   PieChart,
-  Mail,
+  
   ChevronLeft,
   ChevronRight,
   Settings,
