@@ -35,7 +35,7 @@ const sidebarItems: SidebarItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/" },
   { icon: CheckSquare, label: "Tasks", href: "/tasks", badge: 5 },
   { icon: Calendar, label: "Calendar", href: "/calendar" },
-  { icon: Mail, label: "Mail", href: "/mail", badge: 3 },
+  
   { icon: BarChart3, label: "Finances", href: "/finances" },
   { icon: Target, label: "Goals", href: "/goals" },
   { icon: Heart, label: "Health", href: "/health" },
