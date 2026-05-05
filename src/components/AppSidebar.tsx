@@ -44,7 +44,7 @@ import { useAppFeatures, useMySubscriptions, hasActiveAccess } from "@/hooks/use
 const navItems = [
   { icon: Sun, label: "Today", href: "/home", featureKey: null },
   { icon: Compass, label: "Plan", href: "/plan", featureKey: "tasks" },
-  { icon: Mic, label: "Echo", href: "/echo", featureKey: "echo" },
+  
   { icon: GraduationCap, label: "Learning", href: "/learning", featureKey: "learning" },
   { icon: Share2, label: "Social Listener", href: "/social", featureKey: "social" },
   { icon: Activity, label: "Health", href: "/health", featureKey: "health" },
