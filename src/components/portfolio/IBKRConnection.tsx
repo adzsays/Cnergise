@@ -7,14 +7,16 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Eye, EyeOff, Shield, Loader2, RefreshCw, Link as LinkIcon, HelpCircle } from "lucide-react";
+import { Eye, EyeOff, Shield, Loader2, RefreshCw, Link as LinkIcon, HelpCircle, Plug } from "lucide-react";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { IBKRSetupGuide } from "./IBKRSetupGuide";
 
 export function IBKRConnection() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [testing, setTesting] = useState(false);
   const [show, setShow] = useState(false);
   const [conn, setConn] = useState<any>({
     nickname: "",
@@ -55,6 +57,17 @@ export function IBKRConnection() {
     setSaving(false);
     if (error) toast.error(error.message);
     else { toast.success("IBKR settings saved"); load(); }
+  };
+
+  const test = async () => {
+    setTesting(true);
+    const { data, error } = await supabase.functions.invoke("ibkr-test-connection", { body: {} });
+    setTesting(false);
+    if (error) { toast.error(error.message); return; }
+    if (data?.ok && data?.authenticated) toast.success("Gateway reachable & authenticated ✓");
+    else if (data?.ok) toast.warning(data.message || "Reachable, but not logged in to IBKR yet");
+    else toast.error(data?.error || "Connection test failed");
+    load();
   };
 
   const sync = async () => {
@@ -169,6 +182,10 @@ export function IBKRConnection() {
 
         <div className="flex flex-wrap gap-2">
           <Button onClick={save} disabled={saving}>{saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Save</Button>
+          <Button onClick={test} variant="secondary" disabled={testing}>
+            {testing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Plug className="h-4 w-4 mr-2" />}
+            Test Connection
+          </Button>
           <Button onClick={sync} variant="outline" disabled={syncing}>
             {syncing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
             Sync Portfolio
@@ -178,6 +195,10 @@ export function IBKRConnection() {
           )}
         </div>
       </CardContent>
+
+      <div className="px-6 pb-6">
+        <IBKRSetupGuide />
+      </div>
     </Card>
   );
 }
