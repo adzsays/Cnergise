@@ -395,74 +395,39 @@ export default function EchoView() {
         </TabsList>
 
         <TabsContent value="log" className="space-y-4 mt-4">
-          {/* Voice / Text input */}
+          {/* Quick text log — voice handled by the global floating mic (Echo mode) */}
           <Card className="p-4 space-y-3">
-            <p className="text-sm text-muted-foreground">What did you do today?</p>
-            <form onSubmit={handleSubmit} className="space-y-3">
-              <div className="relative">
-                <Textarea
-                  value={manualText}
-                  onChange={(e) => setManualText(e.target.value)}
-                  placeholder='Tap the mic or type: "Spent £12 on lunch, ran 3 miles, had a team meeting"'
-                  disabled={isProcessing}
-                  className="min-h-[100px] resize-none text-sm"
-                />
-                {isRecording && (
-                  <div className="absolute bottom-2 right-2 flex items-center gap-1.5 text-xs text-destructive bg-background/80 rounded px-1.5 py-0.5">
-                    <span className="w-2 h-2 rounded-full bg-destructive animate-pulse" />
-                    listening…
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={isRecording ? stopRecording : startRecording}
-                  disabled={isProcessing}
-                  className={`w-11 h-11 rounded-full flex items-center justify-center transition-all ${
-                    isRecording
-                      ? "bg-destructive text-destructive-foreground shadow-lg scale-110"
-                      : "bg-primary text-primary-foreground hover:scale-105"
-                  } disabled:opacity-50`}
-                  aria-label={isRecording ? "Stop recording" : "Start voice recording"}
-                >
-                  {isRecording ? <Square className="w-4 h-4 fill-current" /> : <Mic className="w-4 h-4" />}
-                </button>
-
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm text-muted-foreground">Quick log (or use the floating mic → Echo mode)</p>
+            </div>
+            <form onSubmit={handleSubmit} className="space-y-2">
+              <Textarea
+                value={manualText}
+                onChange={(e) => setManualText(e.target.value)}
+                placeholder='"Spent £12 on lunch, ran 3 miles, had a team meeting"'
+                disabled={isProcessing}
+                className="min-h-[80px] resize-none text-sm"
+              />
+              <div className="flex items-center justify-end gap-2">
                 {manualText.trim() && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={handleAutoCorrect}
-                      disabled={isProcessing || isAutoCorrecting || isRecording}
-                      className="w-9 h-9 rounded-full flex items-center justify-center bg-secondary hover:bg-accent transition-all disabled:opacity-50"
-                      aria-label="Auto-correct text"
-                    >
-                      {isAutoCorrecting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setManualText("")}
-                      disabled={isProcessing}
-                      className="w-9 h-9 rounded-full flex items-center justify-center bg-secondary text-muted-foreground hover:text-foreground transition-all disabled:opacity-50"
-                      aria-label="Clear text"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </>
-                )}
-
-                <div className="ml-auto">
                   <button
-                    type="submit"
-                    disabled={!manualText.trim() || isProcessing}
-                    className="w-11 h-11 rounded-full flex items-center justify-center bg-primary text-primary-foreground hover:scale-105 transition-all disabled:opacity-30"
-                    aria-label="Save and classify"
+                    type="button"
+                    onClick={handleAutoCorrect}
+                    disabled={isProcessing || isAutoCorrecting}
+                    className="h-8 px-3 rounded-md text-xs flex items-center gap-1 bg-secondary hover:bg-accent disabled:opacity-50"
                   >
-                    {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                    {isAutoCorrecting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                    Tidy
                   </button>
-                </div>
+                )}
+                <button
+                  type="submit"
+                  disabled={!manualText.trim() || isProcessing}
+                  className="h-8 px-3 rounded-md text-xs flex items-center gap-1 bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-30"
+                >
+                  {isProcessing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+                  Log
+                </button>
               </div>
             </form>
           </Card>
