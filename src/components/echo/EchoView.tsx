@@ -101,14 +101,10 @@ export default function EchoView() {
   const [loading, setLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [manualText, setManualText] = useState("");
-  const [isRecording, setIsRecording] = useState(false);
   const [isAutoCorrecting, setIsAutoCorrecting] = useState(false);
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editState, setEditState] = useState({ title: "", description: "", amount: "", unit: "" });
-
-  const recognitionRef = useRef<any>(null);
-  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchEntries = useCallback(async () => {
     setLoading(true);
