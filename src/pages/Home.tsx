@@ -344,49 +344,6 @@ const Index = () => {
                   </div>
                 </DashboardWidget>
 
-                {/* Inbox Preview */}
-                <DashboardWidget
-                  title="Inbox"
-                  action={
-                    <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => navigate("/mail")}>
-                      Open Mail
-                    </Button>
-                  }
-                >
-                  {emails.length === 0 ? (
-                    <div className="py-4 text-center">
-                      <Inbox className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
-                      <p className="text-sm text-muted-foreground">No emails yet.</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {emails.map((email: any) => {
-                        const who = email.from_email || email.to_email || "Unknown";
-                        return (
-                          <div
-                            key={email.id}
-                            onClick={() => navigate("/mail")}
-                            className="flex items-start gap-3 py-2 border-b border-border last:border-0 cursor-pointer hover:bg-muted/50 -mx-2 px-2 rounded transition-colors"
-                          >
-                            <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
-                              <span className="text-xs font-medium">{who.charAt(0).toUpperCase()}</span>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between gap-2">
-                                <p className="text-sm font-medium truncate">{who}</p>
-                                <span className="text-xs text-muted-foreground shrink-0">
-                                  {format(new Date(email.created_at), "MMM d")}
-                                </span>
-                              </div>
-                              <p className="text-sm text-muted-foreground truncate">{email.subject || "(no subject)"}</p>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </DashboardWidget>
-
                 {/* Chats Preview */}
                 <DashboardWidget
                   title="Recent Chats"
