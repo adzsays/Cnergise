@@ -39,7 +39,7 @@ const sidebarItems: SidebarItem[] = [
   { icon: BarChart3, label: "Finances", href: "/finances" },
   { icon: Target, label: "Goals", href: "/goals" },
   { icon: Heart, label: "Health", href: "/health" },
-  { icon: PieChart, label: "Portfolio", href: "/portfolio" },
+  { icon: PieChart, label: "Trading Strategies", href: "/portfolio" },
   { icon: User, label: "Profile", href: "/profile" },
   { icon: Users, label: "Users", href: "/users" },
   { icon: Shield, label: "Admin", href: "/admin" },
