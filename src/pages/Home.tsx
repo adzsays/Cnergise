@@ -16,7 +16,7 @@ import { useUserCurrency } from "@/hooks/useUserCurrency";
 import {
   CalendarDays,
   DollarSign,
-  Mail,
+  
   MessageSquare,
   TrendingDown,
   TrendingUp,
@@ -74,21 +74,7 @@ const Index = () => {
     },
   });
 
-  // Recent / unread emails
-  const { data: emails = [] } = useQuery({
-    queryKey: ["home-emails"],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
-      const { data } = await supabase
-        .from("emails")
-        .select("id, subject, from_email, to_email, status, created_at, sent_at")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(4);
-      return data ?? [];
-    },
-  });
+  const emails: any[] = [];
 
   // Chats - recent messages
   const { data: chats = [] } = useQuery({
@@ -156,7 +142,7 @@ const Index = () => {
     [tasks, todayStart, todayEnd],
   );
 
-  const unreadEmailCount = emails.filter((e: any) => e.status === "draft" || e.status === "received" || e.status === "unread").length;
+  
 
   return (
     <SidebarProvider defaultOpen={false}>
@@ -203,10 +189,10 @@ const Index = () => {
                   icon={<DollarSign className="h-4 w-4 sm:h-5 sm:w-5" />}
                 />
                 <MetricCard
-                  label="Inbox"
+                  label="Listener"
                   value={String(emails.length)}
-                  change={{ value: `${unreadEmailCount} new`, type: unreadEmailCount > 0 ? "neutral" : "positive" }}
-                  icon={<Mail className="h-4 w-4 sm:h-5 sm:w-5" />}
+                  change={{ value: "Social Listener", type: "neutral" }}
+                  icon={<Inbox className="h-4 w-4 sm:h-5 sm:w-5" />}
                 />
               </div>
 
@@ -356,49 +342,6 @@ const Index = () => {
                       <p className="text-xs text-muted-foreground">No transactions recorded this month.</p>
                     )}
                   </div>
-                </DashboardWidget>
-
-                {/* Inbox Preview */}
-                <DashboardWidget
-                  title="Inbox"
-                  action={
-                    <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => navigate("/mail")}>
-                      Open Mail
-                    </Button>
-                  }
-                >
-                  {emails.length === 0 ? (
-                    <div className="py-4 text-center">
-                      <Inbox className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
-                      <p className="text-sm text-muted-foreground">No emails yet.</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {emails.map((email: any) => {
-                        const who = email.from_email || email.to_email || "Unknown";
-                        return (
-                          <div
-                            key={email.id}
-                            onClick={() => navigate("/mail")}
-                            className="flex items-start gap-3 py-2 border-b border-border last:border-0 cursor-pointer hover:bg-muted/50 -mx-2 px-2 rounded transition-colors"
-                          >
-                            <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
-                              <span className="text-xs font-medium">{who.charAt(0).toUpperCase()}</span>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between gap-2">
-                                <p className="text-sm font-medium truncate">{who}</p>
-                                <span className="text-xs text-muted-foreground shrink-0">
-                                  {format(new Date(email.created_at), "MMM d")}
-                                </span>
-                              </div>
-                              <p className="text-sm text-muted-foreground truncate">{email.subject || "(no subject)"}</p>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
                 </DashboardWidget>
 
                 {/* Chats Preview */}

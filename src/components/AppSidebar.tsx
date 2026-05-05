@@ -51,7 +51,6 @@ const navItems = [
   { icon: Wallet, label: "Finance", href: "/finances", featureKey: "finance" },
   { icon: FileText, label: "Invoices", href: "/invoices", featureKey: "invoicing" },
   { icon: Briefcase, label: "Trading Strategies", href: "/portfolio", featureKey: "portfolio" },
-  { icon: Mail, label: "Mail", href: "/mail", featureKey: "mail" },
   { icon: CalendarDays, label: "Calendar", href: "/calendar", featureKey: "calendar" },
   { icon: MessageSquare, label: "Chat", href: "/chat", featureKey: "chat" },
   { icon: Settings, label: "Settings", href: "/profile", featureKey: null },

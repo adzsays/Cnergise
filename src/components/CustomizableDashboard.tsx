@@ -5,7 +5,7 @@ import { CustomCard } from "@/components/ui/CustomCard";
 import { Button } from "@/components/ui/button";
 import { ProjectsSection } from "@/components/dashboard/ProjectsSection";
 import { TasksSection } from "@/components/dashboard/TasksSection";
-import { EmailsSection } from "@/components/dashboard/EmailsSection";
+
 import { ActivitySection } from "@/components/dashboard/ActivitySection";
 import { EventsSection } from "@/components/dashboard/EventsSection";
 import { GoalsSection } from "@/components/dashboard/GoalsSection";
@@ -184,12 +184,7 @@ export function CustomizableDashboard() {
                       index
                     );
                   case "emails":
-                    return renderWidget(
-                      "emails",
-                      "Recent Emails",
-                      <EmailsSection projectFilter={selectedProject} />,
-                      index
-                    );
+                    return null;
                   case "activity":
                     return renderWidget(
                       "activity",
