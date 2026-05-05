@@ -360,7 +360,7 @@ export function TaskList() {
 
                     return (
                       <TableRow key={task.id} className="hover:bg-muted/30">
-                        <TableCell className="py-2">
+                        <TableCell className="py-2 sticky left-0 z-10 bg-background w-10 px-2">
                           <Checkbox
                             checked={!!selected[task.id]}
                             onCheckedChange={(v) =>
@@ -371,7 +371,7 @@ export function TaskList() {
                         </TableCell>
                         {/* Title */}
                         <TableCell
-                          className="py-2 text-sm cursor-text max-w-0"
+                          className="py-2 text-sm cursor-text sticky left-10 z-10 bg-background min-w-[180px] max-w-[260px] shadow-[1px_0_0_0_hsl(var(--border))]"
                           onClick={() => !isEditing("title") && startEdit(task.id, "title", task.title)}
                         >
                           {isEditing("title") ? (
