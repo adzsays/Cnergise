@@ -189,10 +189,10 @@ const Index = () => {
                   icon={<DollarSign className="h-4 w-4 sm:h-5 sm:w-5" />}
                 />
                 <MetricCard
-                  label="Inbox"
+                  label="Listener"
                   value={String(emails.length)}
-                  change={{ value: `${unreadEmailCount} new`, type: unreadEmailCount > 0 ? "neutral" : "positive" }}
-                  icon={<Mail className="h-4 w-4 sm:h-5 sm:w-5" />}
+                  change={{ value: "Social Listener", type: "neutral" }}
+                  icon={<Inbox className="h-4 w-4 sm:h-5 sm:w-5" />}
                 />
               </div>
 
