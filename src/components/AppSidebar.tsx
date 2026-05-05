@@ -46,7 +46,7 @@ const navItems = [
   { icon: Compass, label: "Plan", href: "/plan", featureKey: "tasks" },
   { icon: Mic, label: "Echo", href: "/echo", featureKey: "echo" },
   { icon: GraduationCap, label: "Learning", href: "/learning", featureKey: "learning" },
-  { icon: Share2, label: "Social", href: "/social", featureKey: "social" },
+  { icon: Share2, label: "Social Listener", href: "/social", featureKey: "social" },
   { icon: Activity, label: "Health", href: "/health", featureKey: "health" },
   { icon: Wallet, label: "Finance", href: "/finances", featureKey: "finance" },
   { icon: FileText, label: "Invoices", href: "/invoices", featureKey: "invoicing" },
