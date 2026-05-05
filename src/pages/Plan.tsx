@@ -102,6 +102,10 @@ export default function Plan() {
                   <TabsContent value="analytics" className="mt-4">
                     <ProjectAnalyticsDashboard />
                   </TabsContent>
+
+                  <TabsContent value="echo" className="mt-4">
+                    <EchoView />
+                  </TabsContent>
                 </Tabs>
               </div>
             </main>
