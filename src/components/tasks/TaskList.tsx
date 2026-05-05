@@ -324,14 +324,22 @@ export function TaskList() {
               <Table className="text-xs">
                 <TableHeader className="sticky top-0 z-20 bg-background shadow-sm">
                   <TableRow className="bg-muted/50 hover:bg-muted/50">
-                    <TableHead className="w-[2.5%] px-1">
+                    <TableHead className="w-10 px-2 sticky left-0 z-30 bg-muted">
                       <Checkbox
                         checked={allSelected}
                         onCheckedChange={(v) => toggleAll(!!v)}
                         aria-label="Select all"
                       />
                     </TableHead>
-                    <SortableHead label="Task" k="title" width="w-[20%]" />
+                    <TableHead className="sticky left-10 z-30 bg-muted min-w-[180px] max-w-[260px] shadow-[1px_0_0_0_hsl(var(--border))]">
+                      <button
+                        type="button"
+                        onClick={() => toggleSort("title")}
+                        className="flex items-center gap-1 font-medium hover:text-foreground"
+                      >
+                        Task <SortIcon k="title" />
+                      </button>
+                    </TableHead>
                     <SortableHead label="Project" k="project" width="w-[10%]" />
                     <SortableHead label="Status" k="status" width="w-[8%]" />
                     <SortableHead label="Pri" k="priority" width="w-[6%]" />
