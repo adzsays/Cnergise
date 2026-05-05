@@ -97,8 +97,9 @@ export function IBKRConnection() {
         <Alert>
           <Shield className="h-4 w-4" />
           <AlertDescription className="text-xs">
-            Get your API token from IBKR Client Portal → Settings → API. Run the IBKR Client Portal Gateway locally,
-            then paste its URL and your authentication token. Only you can read these values (RLS-locked).
+            <b>You don't need an API token.</b> IBKR's Client Portal Gateway uses a browser session, not a token.
+            Just paste your public Gateway URL + Account ID, then log in to that URL once in your browser.
+            Static API tokens only exist for institutional OAuth 1.0a (requires IBKR approval) — leave it blank.
           </AlertDescription>
         </Alert>
 
@@ -160,21 +161,24 @@ export function IBKRConnection() {
           <Input value={conn.account_id || ""} onChange={(e) => setConn({ ...conn, account_id: e.target.value })} placeholder="Uxxxxxxx" />
         </div>
 
-        <div className="space-y-2">
-          <Label>API Token</Label>
-          <div className="relative">
-            <Input
-              type={show ? "text" : "password"}
-              value={conn.api_token || ""}
-              onChange={(e) => setConn({ ...conn, api_token: e.target.value })}
-              placeholder="Paste your IBKR API token"
-              className="pr-10"
-            />
-            <Button type="button" variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3" onClick={() => setShow(!show)}>
-              {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </Button>
+        <details className="rounded-md border p-3">
+          <summary className="text-sm cursor-pointer text-muted-foreground">Advanced: API Token (institutional OAuth only — leave blank)</summary>
+          <div className="space-y-2 mt-3">
+            <Label className="text-xs">API Token</Label>
+            <div className="relative">
+              <Input
+                type={show ? "text" : "password"}
+                value={conn.api_token || ""}
+                onChange={(e) => setConn({ ...conn, api_token: e.target.value })}
+                placeholder="Leave blank unless IBKR issued you an OAuth token"
+                className="pr-10"
+              />
+              <Button type="button" variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3" onClick={() => setShow(!show)}>
+                {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </Button>
+            </div>
           </div>
-        </div>
+        </details>
 
         {conn.last_error && (
           <Alert variant="destructive"><AlertDescription className="text-xs">{conn.last_error}</AlertDescription></Alert>
