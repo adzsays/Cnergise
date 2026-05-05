@@ -312,7 +312,6 @@ export default function EchoView() {
 
   const handleSubmit = (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (isRecording) stopRecording();
     if (manualText.trim() && !isProcessing) classifyAndSave(manualText);
   };
 
