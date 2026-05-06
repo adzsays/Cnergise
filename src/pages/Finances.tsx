@@ -91,10 +91,6 @@ const Finances = () => {
                         <FileText className="h-3.5 w-3.5 md:h-4 md:w-4 md:mr-2" />
                         <span className="hidden md:inline">Invoices</span>
                       </TabsTrigger>
-                      <TabsTrigger value="compare" className="text-xs md:text-sm rounded-md md:rounded-lg px-2 md:px-3 py-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                        <Sparkles className="h-3.5 w-3.5 md:h-4 md:w-4 md:mr-2" />
-                        <span className="hidden md:inline">AI Compare</span>
-                      </TabsTrigger>
                     </TabsList>
                   </div>
 
