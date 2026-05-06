@@ -9,7 +9,7 @@ import { CashFlowView } from "@/components/finances/CashFlowView";
 import { CreditScoreView } from "@/components/finances/CreditScoreView";
 import { BalancesView } from "@/components/finances/BalancesView";
 import { ActualExpensesView } from "@/components/finances/ActualExpensesView";
-import { CashFlowComparisonView } from "@/components/finances/CashFlowComparisonView";
+
 import { AccountingGroupsView } from "@/components/finances/AccountingGroupsView";
 import { InvoiceList } from "@/components/invoices/InvoiceList";
 import { InvoiceEditor } from "@/components/invoices/InvoiceEditor";
