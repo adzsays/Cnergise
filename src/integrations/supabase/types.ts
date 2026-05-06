@@ -1360,6 +1360,71 @@ export type Database = {
         }
         Relationships: []
       }
+      expense_group_members: {
+        Row: {
+          created_at: string
+          group_id: string
+          id: string
+          member_type: string
+          member_value: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          id?: string
+          member_type: string
+          member_value: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          id?: string
+          member_type?: string
+          member_value?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "expense_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expense_groups: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       external_messages: {
         Row: {
           contact_id: string | null
