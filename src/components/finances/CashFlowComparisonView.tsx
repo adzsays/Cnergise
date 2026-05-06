@@ -19,15 +19,15 @@ type SummaryRow = {
   count: number;
 };
 
-export function CashFlowComparisonView() {
+export function CashFlowComparisonView({ auto = false, embedded = false, defaultMonths = "3" }: { auto?: boolean; embedded?: boolean; defaultMonths?: string } = {}) {
   const { format } = useUserCurrency();
   const [loading, setLoading] = useState(false);
-  const [months, setMonths] = useState("3");
+  const [months, setMonths] = useState(defaultMonths);
   const [summary, setSummary] = useState<SummaryRow[]>([]);
   const [insights, setInsights] = useState<string[]>([]);
   const [ranAt, setRanAt] = useState<Date | null>(null);
 
-  const run = async () => {
+  const run = async (silent = false) => {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("compare-cashflow-actuals", {
@@ -38,16 +38,19 @@ export function CashFlowComparisonView() {
       setSummary((data as any).summary ?? []);
       setInsights((data as any).insights ?? []);
       setRanAt(new Date());
-      if (((data as any).summary ?? []).length === 0) {
-        toast.info((data as any).message || "Nothing to compare yet — upload bank actuals first.");
-      } else {
-        toast.success("AI mapping complete");
+      if (!silent) {
+        if (((data as any).summary ?? []).length === 0) {
+          toast.info((data as any).message || "Nothing to compare yet — upload bank actuals first.");
+        } else {
+          toast.success("AI mapping complete");
+        }
       }
     } catch (e: any) {
-      toast.error(e?.message || "Comparison failed");
+      if (!silent) toast.error(e?.message || "Comparison failed");
     } finally {
       setLoading(false);
     }
+
   };
 
   const totals = summary.reduce(
