@@ -197,6 +197,43 @@ export function ActualExpensesView() {
     }
   };
 
+  const runEnrich = async () => {
+    setEnriching(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("enrich-transactions", { body: {} });
+      if (error) throw error;
+      setEnrichProposals(data?.proposals || []);
+      setEnrichSummary(data?.summary || null);
+      setEnrichOpen(true);
+      if ((data?.proposals?.length ?? 0) === 0) {
+        toast.message("Nothing left to enrich");
+      }
+    } catch (e: any) {
+      toast.error(e?.message ?? "Enrichment failed");
+    } finally {
+      setEnriching(false);
+    }
+  };
+
+  const applyEnrichment = async (selected: EnrichmentProposal[], createRules: boolean) => {
+    setApplyingEnrich(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("apply-enrichment-summary", {
+        body: { proposals: selected, createRules },
+      });
+      if (error) throw error;
+      qc.invalidateQueries({ queryKey: ["actual_expenses"] });
+      toast.success(
+        `Applied ${data?.applied ?? 0} mappings · ${data?.rules_created ?? 0} new rules · ${data?.new_cashflow_lines ?? 0} new budget lines`
+      );
+      setEnrichOpen(false);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to apply");
+    } finally {
+      setApplyingEnrich(false);
+    }
+  };
+
   const finexerConfigured = !!getSetting("finexer_api_key");
 
   const handleFinexerSync = async () => {
