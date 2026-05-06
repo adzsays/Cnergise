@@ -259,6 +259,15 @@ export function FinanceDashboardView() {
           </div>
         </Card>
       </div>
+
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-primary" />
+          <h2 className="font-semibold">Budget vs Actuals (AI)</h2>
+        </div>
+        <p className="text-xs text-muted-foreground">Cash flow lines act as your budget; bank transactions are matched automatically to surface variance.</p>
+        <CashFlowComparisonView auto embedded />
+      </div>
     </div>
   );
 }
