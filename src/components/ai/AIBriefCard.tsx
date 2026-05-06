@@ -65,10 +65,17 @@ export function AIBriefCard({ scope, title }: { scope: Scope; title?: string }) 
     },
   });
 
+  const [lastRefreshAt, setLastRefreshAt] = useState(0);
+  const COOLDOWN_MS = 60_000;
   const regenerate = useMutation({
     mutationFn: async () => {
+      const since = Date.now() - lastRefreshAt;
+      if (since < COOLDOWN_MS) {
+        throw new Error(`Please wait ${Math.ceil((COOLDOWN_MS - since) / 1000)}s before refreshing again`);
+      }
       const { data, error } = await supabase.functions.invoke("ai-insights", { body: { scope, force: true } });
       if (error) throw error;
+      setLastRefreshAt(Date.now());
       return data;
     },
     onSuccess: () => {
