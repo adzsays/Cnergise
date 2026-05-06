@@ -10,7 +10,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Upload, Link2, Loader2, Trash2, Search, Sparkles, Settings2 } from "lucide-react";
+import { Upload, Link2, Loader2, Trash2, Search, Sparkles, Settings2, Wand2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -18,6 +18,7 @@ import { useSystemSettings } from "@/hooks/useSystemSettings";
 import { fmtMoney } from "@/hooks/useInvoicing";
 import { useFinancialData } from "@/contexts/FinancialDataContext";
 import { MappingRulesDialog } from "./MappingRulesDialog";
+import { EnrichmentReviewDialog, type EnrichmentProposal, type EnrichmentSummary } from "./EnrichmentReviewDialog";
 
 type ActualExpense = {
   id: string;
@@ -69,6 +70,11 @@ export function ActualExpensesView() {
   const [search, setSearch] = useState("");
   const [syncing, setSyncing] = useState(false);
   const [classifying, setClassifying] = useState(false);
+  const [enriching, setEnriching] = useState(false);
+  const [applyingEnrich, setApplyingEnrich] = useState(false);
+  const [enrichOpen, setEnrichOpen] = useState(false);
+  const [enrichProposals, setEnrichProposals] = useState<EnrichmentProposal[]>([]);
+  const [enrichSummary, setEnrichSummary] = useState<EnrichmentSummary | null>(null);
   const [rulesOpen, setRulesOpen] = useState(false);
   const { getSetting } = useSystemSettings();
   const { transactions } = useFinancialData() as any;
@@ -191,6 +197,43 @@ export function ActualExpensesView() {
     }
   };
 
+  const runEnrich = async () => {
+    setEnriching(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("enrich-transactions", { body: {} });
+      if (error) throw error;
+      setEnrichProposals(data?.proposals || []);
+      setEnrichSummary(data?.summary || null);
+      setEnrichOpen(true);
+      if ((data?.proposals?.length ?? 0) === 0) {
+        toast.message("Nothing left to enrich");
+      }
+    } catch (e: any) {
+      toast.error(e?.message ?? "Enrichment failed");
+    } finally {
+      setEnriching(false);
+    }
+  };
+
+  const applyEnrichment = async (selected: EnrichmentProposal[], createRules: boolean) => {
+    setApplyingEnrich(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("apply-enrichment-summary", {
+        body: { proposals: selected, createRules },
+      });
+      if (error) throw error;
+      qc.invalidateQueries({ queryKey: ["actual_expenses"] });
+      toast.success(
+        `Applied ${data?.applied ?? 0} mappings · ${data?.rules_created ?? 0} new rules · ${data?.new_cashflow_lines ?? 0} new budget lines`
+      );
+      setEnrichOpen(false);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to apply");
+    } finally {
+      setApplyingEnrich(false);
+    }
+  };
+
   const finexerConfigured = !!getSetting("finexer_api_key");
 
   const handleFinexerSync = async () => {
@@ -310,6 +353,10 @@ export function ActualExpensesView() {
             <Button onClick={() => runClassify(false)} disabled={classifying}>
               {classifying ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Sparkles className="h-4 w-4 mr-1" />}
               Auto-classify
+            </Button>
+            <Button variant="secondary" onClick={runEnrich} disabled={enriching}>
+              {enriching ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Wand2 className="h-4 w-4 mr-1" />}
+              Deep enrich
             </Button>
             <Button variant="outline" onClick={() => setRulesOpen(true)}>
               <Settings2 className="h-4 w-4 mr-1" /> Rules
@@ -495,6 +542,15 @@ export function ActualExpensesView() {
       </AlertDialog>
 
       <MappingRulesDialog open={rulesOpen} onOpenChange={setRulesOpen} cashflowOptions={cashflowOptions} />
+
+      <EnrichmentReviewDialog
+        open={enrichOpen}
+        onOpenChange={setEnrichOpen}
+        proposals={enrichProposals}
+        summary={enrichSummary}
+        onApply={applyEnrichment}
+        applying={applyingEnrich}
+      />
     </div>
   );
 }
