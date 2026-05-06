@@ -49,12 +49,12 @@ const Finances = () => {
   return (
     <FinancialDataProvider>
       <SidebarProvider defaultOpen={false}>
-        <div className="flex min-h-[100dvh] w-full overflow-hidden bg-background pt-[env(safe-area-inset-top)]">
+        <div className="flex h-[100dvh] w-full overflow-hidden bg-background pt-[env(safe-area-inset-top)]">
           <AppSidebar />
           <SidebarRail />
           
-          <SidebarInset>
-            <div className="flex h-full flex-col">
+          <SidebarInset className="!min-h-0 h-full overflow-hidden">
+            <div className="flex h-full flex-col min-h-0">
               
               <TopBar title="Finance" />
 
