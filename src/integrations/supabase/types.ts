@@ -64,11 +64,15 @@ export type Database = {
           account_provider: string | null
           amount: number
           category: string | null
+          cost_centre: string | null
           created_at: string
           currency: string
           description: string | null
           external_id: string
           id: string
+          mapped_cashflow_id: string | null
+          mapping_confidence: number | null
+          mapping_source: string | null
           merchant: string | null
           notes: string | null
           posted_on: string
@@ -85,11 +89,15 @@ export type Database = {
           account_provider?: string | null
           amount: number
           category?: string | null
+          cost_centre?: string | null
           created_at?: string
           currency?: string
           description?: string | null
           external_id?: string
           id?: string
+          mapped_cashflow_id?: string | null
+          mapping_confidence?: number | null
+          mapping_source?: string | null
           merchant?: string | null
           notes?: string | null
           posted_on: string
@@ -106,11 +114,15 @@ export type Database = {
           account_provider?: string | null
           amount?: number
           category?: string | null
+          cost_centre?: string | null
           created_at?: string
           currency?: string
           description?: string | null
           external_id?: string
           id?: string
+          mapped_cashflow_id?: string | null
+          mapping_confidence?: number | null
+          mapping_source?: string | null
           merchant?: string | null
           notes?: string | null
           posted_on?: string
@@ -122,7 +134,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "actual_expenses_mapped_cashflow_id_fkey"
+            columns: ["mapped_cashflow_id"]
+            isOneToOne: false
+            referencedRelation: "financial_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ai_brief_questions: {
         Row: {
@@ -776,6 +796,72 @@ export type Database = {
             columns: ["space_id"]
             isOneToOne: false
             referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cashflow_mapping_rules: {
+        Row: {
+          account_id: string | null
+          cashflow_id: string | null
+          cost_centre: string | null
+          created_at: string
+          id: string
+          last_applied_at: string | null
+          match_type: string
+          match_value: string
+          max_amount: number | null
+          min_amount: number | null
+          priority: number
+          times_applied: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_id?: string | null
+          cashflow_id?: string | null
+          cost_centre?: string | null
+          created_at?: string
+          id?: string
+          last_applied_at?: string | null
+          match_type?: string
+          match_value: string
+          max_amount?: number | null
+          min_amount?: number | null
+          priority?: number
+          times_applied?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string | null
+          cashflow_id?: string | null
+          cost_centre?: string | null
+          created_at?: string
+          id?: string
+          last_applied_at?: string | null
+          match_type?: string
+          match_value?: string
+          max_amount?: number | null
+          min_amount?: number | null
+          priority?: number
+          times_applied?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cashflow_mapping_rules_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cashflow_mapping_rules_cashflow_id_fkey"
+            columns: ["cashflow_id"]
+            isOneToOne: false
+            referencedRelation: "financial_transactions"
             referencedColumns: ["id"]
           },
         ]
@@ -4128,6 +4214,7 @@ export type Database = {
         }
         Returns: number
       }
+      normalize_txn_text: { Args: { _text: string }; Returns: string }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
