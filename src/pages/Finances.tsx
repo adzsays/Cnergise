@@ -101,7 +101,7 @@ const Finances = () => {
                   <TabsContent value="expenses" className="mt-0"><ActualExpensesView /></TabsContent>
                   <TabsContent value="accounting" className="mt-0"><AccountingGroupsView /></TabsContent>
                   <TabsContent value="invoices" className="mt-0"><InvoicingSection /></TabsContent>
-                  <TabsContent value="compare" className="mt-0"><CashFlowComparisonView /></TabsContent>
+                  
                 </Tabs>
               </div>
             </div>
