@@ -4,13 +4,20 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Upload, Link2, Loader2, Trash2, Search } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Upload, Link2, Loader2, Trash2, Search, Sparkles, Settings2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useSystemSettings } from "@/hooks/useSystemSettings";
 import { fmtMoney } from "@/hooks/useInvoicing";
+import { useFinancialData } from "@/contexts/FinancialDataContext";
+import { MappingRulesDialog } from "./MappingRulesDialog";
 
 type ActualExpense = {
   id: string;
@@ -27,9 +34,12 @@ type ActualExpense = {
   status: string | null;
   source: string;
   external_id: string | null;
+  mapped_cashflow_id: string | null;
+  mapping_source: string | null;
+  mapping_confidence: number | null;
+  cost_centre: string | null;
 };
 
-// Excel serial date -> ISO date
 const excelDateToISO = (v: any): string => {
   if (v == null || v === "") return new Date().toISOString().slice(0, 10);
   if (typeof v === "number") {
@@ -49,13 +59,35 @@ const num = (v: any): number => {
   return isNaN(n) ? 0 : n;
 };
 
+const sourceBadgeVariant = (s: string | null) =>
+  s === "rule" ? "default" : s === "manual" ? "secondary" : s === "ai" ? "outline" : "outline";
+
 export function ActualExpensesView() {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState("");
   const [syncing, setSyncing] = useState(false);
+  const [classifying, setClassifying] = useState(false);
+  const [rulesOpen, setRulesOpen] = useState(false);
   const { getSetting } = useSystemSettings();
+  const { transactions } = useFinancialData() as any;
+
+  // Pending change for the bulk-apply prompt
+  const [pendingChange, setPendingChange] = useState<{
+    expense: ActualExpense;
+    cashflow_id: string;
+    cashflow_label: string;
+    similar_count: number;
+  } | null>(null);
+
+  const cashflowOptions = useMemo(() => {
+    return (transactions || []).map((t: any) => ({
+      id: t.id,
+      label: `${t.type === "income" ? "+" : "−"} ${t.subcategory || t.category} (${t.cost_centre || "—"})`,
+      cost_centre: t.cost_centre,
+    }));
+  }, [transactions]);
 
   const { data: expenses = [], isLoading } = useQuery({
     queryKey: ["actual_expenses"],
@@ -75,7 +107,6 @@ export function ActualExpensesView() {
       const user = (await supabase.auth.getUser()).data.user;
       if (!user) throw new Error("Not signed in");
       const payload = rows.map((r) => ({ ...r, user_id: user.id }));
-      // chunk to avoid payload limits
       for (let i = 0; i < payload.length; i += 500) {
         const chunk = payload.slice(i, i + 500);
         const { error } = await supabase
@@ -115,11 +146,9 @@ export function ActualExpensesView() {
         const description = r["Description"] ?? r["Narrative"] ?? r["Details"] ?? null;
         const ext = `${posted_on}|${amount}|${(description ?? merchant ?? "").toString().slice(0, 80)}`;
         return {
-          posted_on,
-          amount,
+          posted_on, amount,
           currency: r["Currency"] ?? "GBP",
-          merchant,
-          description,
+          merchant, description,
           category: r["Category"] ?? null,
           sub_type: r["Sub Type"] ?? r["SubType"] ?? null,
           notes: r["Notes"] ?? null,
@@ -132,11 +161,33 @@ export function ActualExpensesView() {
         };
       });
       await bulkInsert.mutateAsync(parsed);
+      // Auto-classify after import
+      runClassify(true);
     } catch (e: any) {
       toast.error(e?.message ?? "Failed to import");
     } finally {
       setBusy(false);
       if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
+  const runClassify = async (silent = false) => {
+    setClassifying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("classify-transactions", {
+        body: { onlyUnmapped: true },
+      });
+      if (error) throw error;
+      qc.invalidateQueries({ queryKey: ["actual_expenses"] });
+      if (!silent) {
+        toast.success(`Auto-mapped ${data?.matched ?? 0} via rules, ${data?.ai_classified ?? 0} via AI`);
+      } else if ((data?.matched ?? 0) + (data?.ai_classified ?? 0) > 0) {
+        toast.message(`Auto-classified ${(data?.matched ?? 0) + (data?.ai_classified ?? 0)} transactions`);
+      }
+    } catch (e: any) {
+      toast.error(e?.message ?? "Classification failed");
+    } finally {
+      setClassifying(false);
     }
   };
 
@@ -149,10 +200,65 @@ export function ActualExpensesView() {
     }
     setSyncing(true);
     try {
-      // Placeholder hookup for future Finexer edge function
       toast.info("Finexer sync will be available once the connector is enabled.");
     } finally {
       setSyncing(false);
+    }
+  };
+
+  // Compute "similar" count for the bulk-apply prompt by matching merchant text
+  const onChangeMapping = (e: ActualExpense, newCashflowId: string) => {
+    if (newCashflowId === "__none__") {
+      // single update, clear mapping
+      supabase
+        .from("actual_expenses" as any)
+        .update({ mapped_cashflow_id: null, mapping_source: null, mapping_confidence: null })
+        .eq("id", e.id)
+        .then(() => qc.invalidateQueries({ queryKey: ["actual_expenses"] }));
+      return;
+    }
+    const matchKey = (e.merchant || e.description || "").trim();
+    const norm = (s: string) => s.toLowerCase().replace(/[^a-z ]+/g, " ").replace(/\s+/g, " ").trim();
+    const target = norm(matchKey);
+    const similar_count = expenses.filter((x) =>
+      x.id !== e.id && norm(`${x.merchant ?? ""} ${x.description ?? ""}`).includes(target)
+    ).length;
+    const cf = cashflowOptions.find((c: any) => c.id === newCashflowId);
+    setPendingChange({
+      expense: e,
+      cashflow_id: newCashflowId,
+      cashflow_label: cf?.label || "—",
+      similar_count,
+    });
+  };
+
+  const confirmMapping = async (applyToSimilar: boolean) => {
+    if (!pendingChange) return;
+    const { expense, cashflow_id } = pendingChange;
+    const cf = cashflowOptions.find((c: any) => c.id === cashflow_id);
+    const matchValue = (expense.merchant || expense.description || "").trim();
+    try {
+      const { data, error } = await supabase.functions.invoke("apply-mapping-rule", {
+        body: {
+          transaction_id: expense.id,
+          cashflow_id,
+          cost_centre: cf?.cost_centre ?? null,
+          apply_to_similar: applyToSimilar,
+          match_value: matchValue,
+          match_type: "description_contains",
+        },
+      });
+      if (error) throw error;
+      qc.invalidateQueries({ queryKey: ["actual_expenses"] });
+      if (applyToSimilar) {
+        toast.success(`Updated ${data?.bulk_count ?? 1} transactions and saved a rule`);
+      } else {
+        toast.success("Updated transaction");
+      }
+    } catch (err: any) {
+      toast.error(err?.message ?? "Failed to apply mapping");
+    } finally {
+      setPendingChange(null);
     }
   };
 
@@ -169,20 +275,24 @@ export function ActualExpensesView() {
   const totals = useMemo(() => {
     const inflow = filtered.filter((e) => e.amount > 0).reduce((s, e) => s + Number(e.amount), 0);
     const outflow = filtered.filter((e) => e.amount < 0).reduce((s, e) => s + Number(e.amount), 0);
-    return { inflow, outflow, net: inflow + outflow };
+    const mapped = filtered.filter((e) => e.mapped_cashflow_id).length;
+    return { inflow, outflow, net: inflow + outflow, mapped, unmapped: filtered.length - mapped };
   }, [filtered]);
+
+  const cashflowLabel = (id: string | null) =>
+    id ? cashflowOptions.find((c: any) => c.id === id)?.label || "—" : "—";
 
   return (
     <div className="space-y-4">
       <Card className="p-4">
         <div className="flex flex-wrap gap-3 items-center justify-between">
           <div>
-            <h3 className="font-semibold">Actual expenses</h3>
+            <h3 className="font-semibold">Bank Account Transactions</h3>
             <p className="text-sm text-muted-foreground">
-              Upload a bank export (Excel/CSV) or sync via Finexer. Expected columns: Date, Merchant Name, Description, Amount, Category, Notes, Account Provider, Account Name, Status, Sub Type.
+              Upload a bank export, then let rules + AI classify each line against your Cash Flow budget.
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <input
               ref={fileRef}
               type="file"
@@ -192,16 +302,23 @@ export function ActualExpensesView() {
             />
             <Button variant="outline" onClick={() => fileRef.current?.click()} disabled={busy}>
               {busy ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Upload className="h-4 w-4 mr-1" />}
-              Upload Excel
+              Upload
             </Button>
             <Button variant="secondary" onClick={handleFinexerSync} disabled={syncing}>
-              <Link2 className="h-4 w-4 mr-1" /> Sync Finexer
+              <Link2 className="h-4 w-4 mr-1" /> Finexer
+            </Button>
+            <Button onClick={() => runClassify(false)} disabled={classifying}>
+              {classifying ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Sparkles className="h-4 w-4 mr-1" />}
+              Auto-classify
+            </Button>
+            <Button variant="outline" onClick={() => setRulesOpen(true)}>
+              <Settings2 className="h-4 w-4 mr-1" /> Rules
             </Button>
           </div>
         </div>
       </Card>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Card className="p-4">
           <div className="text-xs text-muted-foreground">Inflow</div>
           <div className="text-xl font-semibold tabular-nums">{fmtMoney(totals.inflow, "GBP")}</div>
@@ -213,6 +330,12 @@ export function ActualExpensesView() {
         <Card className="p-4">
           <div className="text-xs text-muted-foreground">Net</div>
           <div className="text-xl font-semibold tabular-nums">{fmtMoney(totals.net, "GBP")}</div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-xs text-muted-foreground">Mapped</div>
+          <div className="text-xl font-semibold tabular-nums">
+            {totals.mapped}<span className="text-sm text-muted-foreground"> / {filtered.length}</span>
+          </div>
         </Card>
       </div>
 
@@ -231,37 +354,54 @@ export function ActualExpensesView() {
           <div className="p-8 text-center text-sm text-muted-foreground">Loading…</div>
         ) : filtered.length === 0 ? (
           <div className="p-8 text-center text-sm text-muted-foreground">
-            No expenses yet. Upload your bank statement to get started.
+            No transactions yet. Upload your bank statement to get started.
           </div>
         ) : (
           <>
-            {/* Mobile: stacked cards */}
+            {/* Mobile */}
             <div className="md:hidden divide-y">
               {filtered.slice(0, 200).map((e) => (
-                <div key={e.id} className="p-3 flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium truncate">{e.merchant || e.description || "—"}</span>
+                <div key={e.id} className="p-3 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium truncate">{e.merchant || e.description || "—"}</div>
+                      <div className="text-xs text-muted-foreground truncate">{e.description}</div>
+                      <div className="text-[10px] text-muted-foreground tabular-nums">{e.posted_on}</div>
                     </div>
-                    <div className="text-xs text-muted-foreground truncate">{e.description}</div>
-                    <div className="mt-1 flex items-center gap-1.5 flex-wrap">
-                      <span className="text-[10px] text-muted-foreground tabular-nums">{e.posted_on}</span>
-                      {e.category && <Badge variant="secondary" className="text-[10px] py-0 h-4">{e.category}</Badge>}
-                      {e.account_provider && <span className="text-[10px] text-muted-foreground">· {e.account_provider}</span>}
+                    <div className="text-right shrink-0">
+                      <div className={`text-sm font-semibold tabular-nums ${e.amount < 0 ? "text-destructive" : "text-green-600"}`}>
+                        {fmtMoney(e.amount, e.currency)}
+                      </div>
+                      <Button size="icon" variant="ghost" className="h-6 w-6 mt-1" onClick={() => remove.mutate(e.id)}>
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
                     </div>
                   </div>
-                  <div className="text-right shrink-0">
-                    <div className={`text-sm font-semibold tabular-nums ${e.amount < 0 ? "text-destructive" : "text-green-600"}`}>
-                      {fmtMoney(e.amount, e.currency)}
-                    </div>
-                    <Button size="icon" variant="ghost" className="h-6 w-6 mt-1" onClick={() => remove.mutate(e.id)}>
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
+                  <div className="flex items-center gap-1.5">
+                    <Select
+                      value={e.mapped_cashflow_id ?? "__none__"}
+                      onValueChange={(v) => onChangeMapping(e, v)}
+                    >
+                      <SelectTrigger className="h-7 text-xs flex-1">
+                        <SelectValue placeholder="Unmapped" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">— Unmapped —</SelectItem>
+                        {cashflowOptions.map((c: any) => (
+                          <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {e.mapping_source && (
+                      <Badge variant={sourceBadgeVariant(e.mapping_source)} className="text-[9px] py-0 h-4 capitalize">
+                        {e.mapping_source}
+                      </Badge>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
-            {/* Desktop: table */}
+            {/* Desktop */}
             <div className="hidden md:block overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -269,25 +409,46 @@ export function ActualExpensesView() {
                     <TableHead>Date</TableHead>
                     <TableHead>Merchant</TableHead>
                     <TableHead>Description</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Account</TableHead>
                     <TableHead className="text-right">Amount</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead className="min-w-[220px]">Budget Line</TableHead>
+                    <TableHead>Source</TableHead>
+                    <TableHead>Account</TableHead>
                     <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filtered.slice(0, 500).map((e) => (
                     <TableRow key={e.id}>
-                      <TableCell className="whitespace-nowrap">{e.posted_on}</TableCell>
-                      <TableCell className="max-w-[180px] truncate" title={e.merchant ?? ""}>{e.merchant}</TableCell>
-                      <TableCell className="max-w-[260px] truncate" title={e.description ?? ""}>{e.description}</TableCell>
-                      <TableCell>{e.category && <Badge variant="secondary">{e.category}</Badge>}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{e.account_provider}</TableCell>
-                      <TableCell className={`text-right tabular-nums ${e.amount < 0 ? "text-destructive" : "text-green-600"}`}>
+                      <TableCell className="whitespace-nowrap text-xs">{e.posted_on}</TableCell>
+                      <TableCell className="max-w-[160px] truncate text-xs" title={e.merchant ?? ""}>{e.merchant}</TableCell>
+                      <TableCell className="max-w-[220px] truncate text-xs" title={e.description ?? ""}>{e.description}</TableCell>
+                      <TableCell className={`text-right tabular-nums text-xs ${e.amount < 0 ? "text-destructive" : "text-green-600"}`}>
                         {fmtMoney(e.amount, e.currency)}
                       </TableCell>
-                      <TableCell>{e.status && <Badge variant="outline">{e.status}</Badge>}</TableCell>
+                      <TableCell>
+                        <Select
+                          value={e.mapped_cashflow_id ?? "__none__"}
+                          onValueChange={(v) => onChangeMapping(e, v)}
+                        >
+                          <SelectTrigger className="h-7 text-xs">
+                            <SelectValue placeholder="Unmapped" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="__none__">— Unmapped —</SelectItem>
+                            {cashflowOptions.map((c: any) => (
+                              <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        {e.mapping_source && (
+                          <Badge variant={sourceBadgeVariant(e.mapping_source)} className="text-[10px] capitalize">
+                            {e.mapping_source}
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{e.account_provider}</TableCell>
                       <TableCell>
                         <Button size="icon" variant="ghost" onClick={() => remove.mutate(e.id)}>
                           <Trash2 className="h-3.5 w-3.5" />
@@ -306,6 +467,34 @@ export function ActualExpensesView() {
           </>
         )}
       </Card>
+
+      {/* Bulk-apply prompt */}
+      <AlertDialog open={!!pendingChange} onOpenChange={(o) => !o && setPendingChange(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apply to similar transactions?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Map <span className="font-medium">{pendingChange?.expense.merchant || pendingChange?.expense.description}</span>{" "}
+              to <span className="font-medium">{pendingChange?.cashflow_label}</span>.
+              {pendingChange && pendingChange.similar_count > 0 ? (
+                <> Found <span className="font-semibold">{pendingChange.similar_count}</span> similar past transactions.
+                  Saving as a rule will also auto-map future matches.</>
+              ) : (
+                <> No similar past transactions found. Saving a rule will only affect future matches.</>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingChange(null)}>Cancel</AlertDialogCancel>
+            <Button variant="outline" onClick={() => confirmMapping(false)}>Just this one</Button>
+            <AlertDialogAction onClick={() => confirmMapping(true)}>
+              Apply to all & save rule
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <MappingRulesDialog open={rulesOpen} onOpenChange={setRulesOpen} cashflowOptions={cashflowOptions} />
     </div>
   );
 }
