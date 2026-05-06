@@ -31,12 +31,21 @@ export function AIBriefCard({ scope, title }: { scope: Scope; title?: string }) 
   const { toast } = useToast();
   const [answer, setAnswer] = useState("");
 
+  // Do NOT auto-fetch — only load cached briefs (no AI call). User must click Generate/Refresh.
   const { data, isLoading, refetch, isFetching } = useQuery({
-    queryKey: ["ai-brief", scope],
+    queryKey: ["ai-brief", scope, "cached-only"],
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke("ai-insights", { body: { scope } });
-      if (error) throw error;
-      return data as { brief: Brief; cached: boolean };
+      const today = new Date().toISOString().slice(0, 10);
+      const { data: rows } = await supabase
+        .from("ai_briefs")
+        .select("*")
+        .eq("scope", scope)
+        .eq("generated_for_date", today)
+        .is("dismissed_at", null)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      const brief = (rows?.[0] ?? null) as unknown as Brief | null;
+      return { brief, cached: true } as { brief: Brief | null; cached: boolean };
     },
     staleTime: 5 * 60_000,
     retry: false,

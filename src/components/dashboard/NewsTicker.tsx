@@ -42,14 +42,8 @@ export function NewsTicker() {
     }
   };
 
-  useEffect(() => {
-    if (isActive) {
-      fetchNews();
-      // Refresh every 15 minutes while active
-      const interval = setInterval(fetchNews, 15 * 60 * 1000);
-      return () => clearInterval(interval);
-    }
-  }, [isActive]);
+  // Do not auto-fetch news on mount — user must explicitly trigger via refresh button.
+  // (Removed auto-fetch + 15min interval to avoid unnecessary AI/Perplexity costs.)
 
   // Auto-rotate headlines
   useEffect(() => {

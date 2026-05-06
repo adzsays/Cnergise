@@ -13,29 +13,9 @@ export function useListeningAgentScanner() {
   const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
-
-    const scan = async () => {
-      try {
-        const { data: u } = await supabase.auth.getUser();
-        if (!u.user || cancelled) return;
-        const last = Number(localStorage.getItem(STORAGE_KEY) ?? 0);
-        if (Date.now() - last < INTERVAL_MS) return;
-        localStorage.setItem(STORAGE_KEY, String(Date.now()));
-        await supabase.functions.invoke("listening-agent-scan", { body: {} });
-      } catch (e) {
-        // silent
-        console.warn("listening-agent-scan invoke failed", e);
-      }
-    };
-
-    // initial run shortly after login
-    const t0 = window.setTimeout(scan, 4000);
-    timerRef.current = window.setInterval(scan, INTERVAL_MS);
-
+    // Auto-scan disabled to avoid unnecessary AI costs.
+    // Listening Agent now only runs when explicitly triggered from its settings UI.
     return () => {
-      cancelled = true;
-      window.clearTimeout(t0);
       if (timerRef.current) window.clearInterval(timerRef.current);
     };
   }, []);
