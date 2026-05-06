@@ -243,13 +243,12 @@ Deno.serve(async (req) => {
       break;
     }
 
-    await logServiceUsage(admin, {
-      user_id: user.id,
-      service: "lovable_ai",
+    await logServiceUsage({
+      service: "lovable-ai",
+      operation: MODEL,
       function_name: "cross-data-assistant",
-      model: MODEL,
-      duration_ms: Date.now() - started,
-      metadata: { tools: toolsUsed },
+      user_id: user.id,
+      metadata: { tools: toolsUsed, duration_ms: Date.now() - started },
     }).catch(() => {});
 
     return new Response(JSON.stringify({ reply: finalText, tools_used: toolsUsed }), {
