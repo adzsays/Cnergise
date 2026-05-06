@@ -542,6 +542,15 @@ export function ActualExpensesView() {
       </AlertDialog>
 
       <MappingRulesDialog open={rulesOpen} onOpenChange={setRulesOpen} cashflowOptions={cashflowOptions} />
+
+      <EnrichmentReviewDialog
+        open={enrichOpen}
+        onOpenChange={setEnrichOpen}
+        proposals={enrichProposals}
+        summary={enrichSummary}
+        onApply={applyEnrichment}
+        applying={applyingEnrich}
+      />
     </div>
   );
 }
