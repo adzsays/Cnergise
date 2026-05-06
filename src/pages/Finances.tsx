@@ -102,7 +102,6 @@ const Finances = () => {
                   <TabsContent value="cashflow" className="mt-0"><CashFlowView /></TabsContent>
                   <TabsContent value="balances" className="mt-0"><BalancesView /></TabsContent>
                   <TabsContent value="credit" className="mt-0"><CreditScoreView /></TabsContent>
-                  <TabsContent value="receipts" className="mt-0"><ReceiptsView /></TabsContent>
                   <TabsContent value="expenses" className="mt-0"><ActualExpensesView /></TabsContent>
                   <TabsContent value="accounting" className="mt-0"><AccountingGroupsView /></TabsContent>
                   <TabsContent value="invoices" className="mt-0"><InvoicingSection /></TabsContent>
