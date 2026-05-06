@@ -49,7 +49,6 @@ const navItems = [
   { icon: Share2, label: "Social Listener", href: "/social", featureKey: "social" },
   { icon: Activity, label: "Health", href: "/health", featureKey: "health" },
   { icon: Wallet, label: "Finance", href: "/finances", featureKey: "finance" },
-  { icon: FileText, label: "Invoices", href: "/invoices", featureKey: "invoicing" },
   { icon: Briefcase, label: "Trading Strategies", href: "/portfolio", featureKey: "portfolio" },
   { icon: CalendarDays, label: "Calendar", href: "/calendar", featureKey: "calendar" },
   { icon: MessageSquare, label: "Chat", href: "/chat", featureKey: "chat" },
