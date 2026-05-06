@@ -53,6 +53,12 @@ export function CashFlowComparisonView({ auto = false, embedded = false, default
 
   };
 
+  useEffect(() => {
+    if (auto) run(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auto, months]);
+
+
   const totals = summary.reduce(
     (acc, r) => {
       acc.planned += r.planned_monthly;
