@@ -10,7 +10,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Upload, Link2, Loader2, Trash2, Search, Sparkles, Settings2 } from "lucide-react";
+import { Upload, Link2, Loader2, Trash2, Search, Sparkles, Settings2, Wand2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -18,6 +18,7 @@ import { useSystemSettings } from "@/hooks/useSystemSettings";
 import { fmtMoney } from "@/hooks/useInvoicing";
 import { useFinancialData } from "@/contexts/FinancialDataContext";
 import { MappingRulesDialog } from "./MappingRulesDialog";
+import { EnrichmentReviewDialog, type EnrichmentProposal, type EnrichmentSummary } from "./EnrichmentReviewDialog";
 
 type ActualExpense = {
   id: string;
