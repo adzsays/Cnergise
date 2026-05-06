@@ -10,6 +10,12 @@ type Mode = "assistant" | "echo";
 
 const MAX_RECORD_MS = 60_000;
 
+// Browser SpeechRecognition (free, on-device — no AI billing)
+function getSpeechRecognition(): any | null {
+  if (typeof window === "undefined") return null;
+  return (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition || null;
+}
+
 export function VoiceAssistant() {
   const [mode, setMode] = useState<Mode>("assistant");
   const [isRecording, setIsRecording] = useState(false);
@@ -19,6 +25,9 @@ export function VoiceAssistant() {
   const [response, setResponse] = useState("");
   const [isExpanded, setIsExpanded] = useState(false);
 
+  // Web Speech (used in Echo mode — free)
+  const recognitionRef = useRef<any | null>(null);
+  // MediaRecorder (used in Assistant mode — sends audio to AI for transcription)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
@@ -35,7 +44,10 @@ export function VoiceAssistant() {
     }
   }, []);
 
-  useEffect(() => () => cleanupStream(), [cleanupStream]);
+  useEffect(() => () => {
+    cleanupStream();
+    try { recognitionRef.current?.stop(); } catch {}
+  }, [cleanupStream]);
 
   const pickMimeType = () => {
     const candidates = [
@@ -50,42 +62,83 @@ export function VoiceAssistant() {
     return "";
   };
 
-  const handleStart = async () => {
+  // ---------- ECHO MODE: Web Speech API (free, no AI) ----------
+  const startEchoRecording = () => {
+    const SR = getSpeechRecognition();
+    if (!SR) {
+      toast.error("Voice input not supported on this browser — please type instead");
+      return;
+    }
+    setIsExpanded(true);
+    setTranscript("");
+    setResponse("");
+    try {
+      const rec = new SR();
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.lang = navigator.language || "en-GB";
+      let finalText = "";
+      rec.onresult = (event: any) => {
+        let interim = "";
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const res = event.results[i];
+          if (res.isFinal) finalText += res[0].transcript + " ";
+          else interim += res[0].transcript;
+        }
+        setTranscript((finalText + interim).trim());
+      };
+      rec.onerror = (e: any) => {
+        console.error("SpeechRecognition error:", e);
+        if (e?.error === "not-allowed") toast.error("Microphone blocked — allow access");
+        else if (e?.error !== "no-speech" && e?.error !== "aborted") toast.error("Voice input error");
+        setIsRecording(false);
+      };
+      rec.onend = () => {
+        setIsRecording(false);
+        if (stopTimerRef.current) { clearTimeout(stopTimerRef.current); stopTimerRef.current = null; }
+      };
+      recognitionRef.current = rec;
+      rec.start();
+      setIsRecording(true);
+      stopTimerRef.current = setTimeout(() => {
+        try { recognitionRef.current?.stop(); } catch {}
+        toast.info("Auto-stopped after 60s");
+      }, MAX_RECORD_MS);
+    } catch (e: any) {
+      console.error(e);
+      toast.error("Could not start voice input");
+      setIsRecording(false);
+    }
+  };
+
+  const stopEchoRecording = () => {
+    try { recognitionRef.current?.stop(); } catch {}
+    setIsRecording(false);
+  };
+
+  // ---------- ASSISTANT MODE: MediaRecorder + AI transcription ----------
+  const startAssistantRecording = async () => {
     if (isRecording) return;
     setIsExpanded(true);
     setTranscript("");
     setResponse("");
-
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-          channelCount: 1,
-        },
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 },
       });
       streamRef.current = stream;
-
       const mimeType = pickMimeType();
       const mr = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
       mediaRecorderRef.current = mr;
       chunksRef.current = [];
-
-      mr.ondataavailable = (e) => {
-        if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
-      };
+      mr.ondataavailable = (e) => { if (e.data && e.data.size > 0) chunksRef.current.push(e.data); };
       mr.onstop = async () => {
         const blob = new Blob(chunksRef.current, { type: mr.mimeType || "audio/webm" });
         cleanupStream();
         setIsRecording(false);
-        if (blob.size < 800) {
-          toast.error("Didn't catch that — try again");
-          return;
-        }
+        if (blob.size < 800) { toast.error("Didn't catch that — try again"); return; }
         await transcribeAndProcess(blob);
       };
-
       mr.start();
       setIsRecording(true);
       stopTimerRef.current = setTimeout(() => {
@@ -102,30 +155,22 @@ export function VoiceAssistant() {
     }
   };
 
-  const handleStop = () => {
-    if (mediaRecorderRef.current?.state === "recording") {
-      mediaRecorderRef.current.stop();
-    }
+  const stopAssistantRecording = () => {
+    if (mediaRecorderRef.current?.state === "recording") mediaRecorderRef.current.stop();
   };
+
+  const handleStart = () => (mode === "echo" ? startEchoRecording() : startAssistantRecording());
+  const handleStop = () => (mode === "echo" ? stopEchoRecording() : stopAssistantRecording());
 
   const transcribeAndProcess = async (blob: Blob) => {
     setIsTranscribing(true);
     try {
       const fd = new FormData();
       fd.append("audio", blob, `voice.${(blob.type.split("/")[1] || "webm").split(";")[0]}`);
-
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast.error("Please sign in");
-        return;
-      }
-
+      if (!session) { toast.error("Please sign in"); return; }
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/echo-transcribe-audio`;
-      const resp = await fetch(url, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${session.access_token}` },
-        body: fd,
-      });
+      const resp = await fetch(url, { method: "POST", headers: { Authorization: `Bearer ${session.access_token}` }, body: fd });
       if (!resp.ok) {
         const errBody = await resp.json().catch(() => ({}));
         if (resp.status === 429) toast.error("Rate limited, please wait");
@@ -134,10 +179,7 @@ export function VoiceAssistant() {
         return;
       }
       const { transcript: text } = await resp.json();
-      if (!text || !text.trim()) {
-        toast.info("No speech detected");
-        return;
-      }
+      if (!text || !text.trim()) { toast.info("No speech detected"); return; }
       setTranscript(text);
       await dispatch(text);
     } catch (e: any) {
@@ -152,40 +194,25 @@ export function VoiceAssistant() {
     setIsProcessing(true);
     try {
       if (mode === "echo") {
-        const { data, error } = await supabase.functions.invoke("echo-classify-entry", {
-          body: { text },
-        });
-        if (error) throw error;
-        const classified: any[] = data?.entries || [];
-        if (classified.length === 0) {
-          setResponse("Nothing to log from that.");
-          return;
-        }
+        // No AI — save raw entry. User can classify later via the Classify button.
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error("Not signed in");
         const today = new Date().toISOString().split("T")[0];
-        const time = new Date().toLocaleTimeString("en-GB", {
-          hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit",
-        });
-        const rows = classified.map((e) => ({
+        const time = new Date().toLocaleTimeString("en-GB", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" });
+        const { error: insErr } = await supabase.from("echo_entries").insert({
           user_id: user.id,
-          type: e.type,
-          title: e.title,
-          description: e.description ?? null,
-          amount: e.amount ?? null,
-          unit: e.unit ?? null,
-          goal_id: e.goal_id || null,
-          project_id: e.project_id || null,
-          task_id: e.task_id || null,
+          type: "unclassified",
+          title: text.slice(0, 80),
+          description: text.length > 80 ? text : null,
           raw_voice_text: text,
           entry_date: today,
           entry_time: time,
-        }));
-        const { error: insErr } = await supabase.from("echo_entries").insert(rows);
+          metadata: { classified: false },
+        });
         if (insErr) throw insErr;
-        const msg = `Logged ${rows.length} ${rows.length === 1 ? "entry" : "entries"} to Echo`;
+        const msg = "Saved — tap 'Classify' on the entry to categorise it";
         setResponse(msg);
-        toast.success(msg);
+        toast.success("Saved to Echo");
         window.dispatchEvent(new CustomEvent("echo:entries-updated"));
       } else {
         const { data: { session } } = await supabase.auth.getSession();
@@ -269,7 +296,7 @@ export function VoiceAssistant() {
           <div className="p-3 space-y-2">
             <p className="text-[11px] text-muted-foreground">
               {mode === "echo"
-                ? "Say what happened — auto-logged to your daily journal."
+                ? "Say what happened — saved as a note. Classify later to avoid AI cost."
                 : "Say what to do — creates tasks, events, goals, drafts."}
             </p>
 
