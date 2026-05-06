@@ -111,7 +111,7 @@ async function callLovableAI(scope: Scope, ctx: Record<string, unknown>) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
+      model: "google/gemini-3-flash-preview",
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: userMessage },
@@ -183,7 +183,7 @@ Deno.serve(async (req) => {
       body: result.body,
       actions: result.actions ?? [],
       confidence: result.confidence ?? 0.5,
-      model: "google/gemini-2.5-flash",
+      model: "google/gemini-3-flash-preview",
     }).select().single();
     if (error) throw error;
 

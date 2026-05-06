@@ -8,6 +8,7 @@ import { DashboardWidget, MetricCard } from "@/components/ui/DashboardWidget";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { VoiceAssistant } from "@/components/VoiceAssistant";
+import { CrossDataAssistant } from "@/components/ai/CrossDataAssistant";
 import { NewsTicker } from "@/components/dashboard/NewsTicker";
 import { FloatingAIBrief } from "@/components/ai/FloatingAIBrief";
 import { supabase } from "@/integrations/supabase/client";
@@ -397,6 +398,7 @@ const Index = () => {
         </SidebarInset>
         <VoiceAssistant />
         <FloatingAIBrief scope="today" title="Today AI brief" />
+        <CrossDataAssistant />
       </div>
     </SidebarProvider>
   );
