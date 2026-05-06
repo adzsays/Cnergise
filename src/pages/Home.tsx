@@ -398,6 +398,7 @@ const Index = () => {
         </SidebarInset>
         <VoiceAssistant />
         <FloatingAIBrief scope="today" title="Today AI brief" />
+        <CrossDataAssistant />
       </div>
     </SidebarProvider>
   );
