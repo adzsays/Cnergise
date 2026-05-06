@@ -468,6 +468,19 @@ export default function EchoView() {
                           </div>
                           {!isEditing && (
                             <div className="flex items-center gap-1">
+                              {entry.type === "unclassified" && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-6 px-2 text-[10px] gap-1"
+                                  onClick={() => classifyEntry(entry)}
+                                  disabled={classifyingId === entry.id}
+                                  title="Classify with AI (uses credit)"
+                                >
+                                  {classifyingId === entry.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3" />}
+                                  Classify
+                                </Button>
+                              )}
                               <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => startEdit(entry)}>
                                 <Pencil className="w-3 h-3" />
                               </Button>
