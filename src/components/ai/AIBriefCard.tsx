@@ -44,7 +44,7 @@ export function AIBriefCard({ scope, title }: { scope: Scope; title?: string }) 
         .is("dismissed_at", null)
         .order("created_at", { ascending: false })
         .limit(1);
-      const brief = (rows?.[0] ?? null) as Brief | null;
+      const brief = (rows?.[0] ?? null) as unknown as Brief | null;
       return { brief, cached: true } as { brief: Brief | null; cached: boolean };
     },
     staleTime: 5 * 60_000,
