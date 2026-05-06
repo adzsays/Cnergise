@@ -70,6 +70,11 @@ export function ActualExpensesView() {
   const [search, setSearch] = useState("");
   const [syncing, setSyncing] = useState(false);
   const [classifying, setClassifying] = useState(false);
+  const [enriching, setEnriching] = useState(false);
+  const [applyingEnrich, setApplyingEnrich] = useState(false);
+  const [enrichOpen, setEnrichOpen] = useState(false);
+  const [enrichProposals, setEnrichProposals] = useState<EnrichmentProposal[]>([]);
+  const [enrichSummary, setEnrichSummary] = useState<EnrichmentSummary | null>(null);
   const [rulesOpen, setRulesOpen] = useState(false);
   const { getSetting } = useSystemSettings();
   const { transactions } = useFinancialData() as any;
