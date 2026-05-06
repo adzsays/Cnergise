@@ -92,8 +92,16 @@ const Finances = () => {
 
                   <TabsContent value="dashboard" className="mt-0"><FinanceDashboardView /></TabsContent>
                   <TabsContent value="cashflow" className="mt-0"><CashFlowView /></TabsContent>
-                  <TabsContent value="balances" className="mt-0"><BalancesView /></TabsContent>
-                  <TabsContent value="credit" className="mt-0"><CreditScoreView /></TabsContent>
+                  <TabsContent value="balances" className="mt-0">
+                    <InnerTabs defaultValue="accounts" className="space-y-4">
+                      <InnerTabsList>
+                        <InnerTabsTrigger value="accounts"><Scale className="h-4 w-4 mr-1" />Balances</InnerTabsTrigger>
+                        <InnerTabsTrigger value="credit"><CreditCard className="h-4 w-4 mr-1" />Credit Score</InnerTabsTrigger>
+                      </InnerTabsList>
+                      <InnerTabsContent value="accounts"><BalancesView /></InnerTabsContent>
+                      <InnerTabsContent value="credit"><CreditScoreView /></InnerTabsContent>
+                    </InnerTabs>
+                  </TabsContent>
                   <TabsContent value="expenses" className="mt-0"><ActualExpensesView /></TabsContent>
                   <TabsContent value="accounting" className="mt-0"><AccountingGroupsView /></TabsContent>
                   <TabsContent value="invoices" className="mt-0"><InvoicingSection /></TabsContent>
