@@ -354,6 +354,10 @@ export function ActualExpensesView() {
               {classifying ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Sparkles className="h-4 w-4 mr-1" />}
               Auto-classify
             </Button>
+            <Button variant="secondary" onClick={runEnrich} disabled={enriching}>
+              {enriching ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Wand2 className="h-4 w-4 mr-1" />}
+              Deep enrich
+            </Button>
             <Button variant="outline" onClick={() => setRulesOpen(true)}>
               <Settings2 className="h-4 w-4 mr-1" /> Rules
             </Button>
