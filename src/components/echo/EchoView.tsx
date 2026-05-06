@@ -22,6 +22,7 @@ import {
   Pencil,
   Check,
   Trash2,
+  Wand2,
 } from "lucide-react";
 import { format, addDays, subDays, parseISO } from "date-fns";
 import { useUserCurrency } from "@/hooks/useUserCurrency";
@@ -268,6 +269,67 @@ export default function EchoView() {
     fetchAllEntries();
   };
 
+  const [classifyingId, setClassifyingId] = useState<string | null>(null);
+
+  const classifyEntry = async (entry: EchoEntry) => {
+    const text = entry.raw_voice_text || entry.description || entry.title;
+    if (!text?.trim()) { toast.error("Nothing to classify"); return; }
+    setClassifyingId(entry.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("echo-classify-entry", {
+        body: { text: text.trim(), goals, projects, tasks },
+      });
+      if (error) throw error;
+      const classified = data?.entries || [];
+      if (classified.length === 0) { toast.info("AI couldn't classify this"); return; }
+
+      // Replace original with first result, then insert any extras
+      const first = classified[0];
+      const { error: upErr } = await supabase.from("echo_entries").update({
+        type: first.type,
+        title: first.title,
+        description: first.description ?? null,
+        amount: first.amount ?? null,
+        unit: first.unit ?? null,
+        goal_id: first.goal_id || null,
+        project_id: first.project_id || null,
+        task_id: first.task_id || null,
+        metadata: { classified: true },
+      }).eq("id", entry.id);
+      if (upErr) throw upErr;
+
+      if (classified.length > 1) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const extras = classified.slice(1).map((e: any) => ({
+            user_id: user.id,
+            type: e.type,
+            title: e.title,
+            description: e.description ?? null,
+            amount: e.amount ?? null,
+            unit: e.unit ?? null,
+            goal_id: e.goal_id || null,
+            project_id: e.project_id || null,
+            task_id: e.task_id || null,
+            raw_voice_text: text.trim(),
+            entry_date: entry.entry_date,
+            entry_time: entry.entry_time,
+            metadata: { classified: true },
+          }));
+          await supabase.from("echo_entries").insert(extras);
+        }
+      }
+
+      toast.success(`Classified into ${classified.length} ${classified.length === 1 ? "entry" : "entries"}`);
+      fetchEntries();
+      fetchAllEntries();
+    } catch (e: any) {
+      toast.error(e.message ?? "Classify failed");
+    } finally {
+      setClassifyingId(null);
+    }
+  };
+
   const entryTypes = Array.from(new Set(entries.map((e) => e.type))).sort();
   const filteredEntries = typeFilter === "all" ? entries : entries.filter((e) => e.type === typeFilter);
 
@@ -406,6 +468,19 @@ export default function EchoView() {
                           </div>
                           {!isEditing && (
                             <div className="flex items-center gap-1">
+                              {entry.type === "unclassified" && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-6 px-2 text-[10px] gap-1"
+                                  onClick={() => classifyEntry(entry)}
+                                  disabled={classifyingId === entry.id}
+                                  title="Classify with AI (uses credit)"
+                                >
+                                  {classifyingId === entry.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3" />}
+                                  Classify
+                                </Button>
+                              )}
                               <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => startEdit(entry)}>
                                 <Pencil className="w-3 h-3" />
                               </Button>
