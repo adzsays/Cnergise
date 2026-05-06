@@ -167,8 +167,8 @@ export function ActualExpensesView() {
         };
       });
       await bulkInsert.mutateAsync(parsed);
-      // Auto-classify after import
-      runClassify(true);
+      // Do not auto-run AI classify after import — user must click "Auto-classify".
+      toast.message("Import complete. Click 'Auto-classify' to run AI mapping.");
     } catch (e: any) {
       toast.error(e?.message ?? "Failed to import");
     } finally {
