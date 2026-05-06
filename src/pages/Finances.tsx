@@ -18,7 +18,7 @@ import { BillingEntityManager } from "@/components/invoices/BillingEntityManager
 import { ServiceManager } from "@/components/invoices/ServiceManager";
 
 import { LayoutDashboard, TrendingUp, CreditCard, Scale, Receipt, Wallet, Sparkles, FolderTree, FileText, Users, Building2, Briefcase, ListChecks } from "lucide-react";
-import { AIBriefCard } from "@/components/ai/AIBriefCard";
+import { FloatingAIBrief } from "@/components/ai/FloatingAIBrief";
 import { Tabs as InnerTabs, TabsContent as InnerTabsContent, TabsList as InnerTabsList, TabsTrigger as InnerTabsTrigger } from "@/components/ui/tabs";
 
 const InvoicingSection = () => {
@@ -59,7 +59,7 @@ const Finances = () => {
               <TopBar title="Finance" />
 
               <div className="flex-1 overflow-auto p-3 md:p-6 space-y-4">
-                <AIBriefCard scope="finance" title="Finance AI brief" />
+                
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
                   <div className="overflow-x-auto -mx-3 px-3 md:mx-0 md:px-0">
                     <TabsList className="bg-muted/50 inline-flex h-auto gap-0.5 md:gap-1 p-1 md:p-1.5 rounded-lg md:rounded-xl min-w-max">
@@ -110,6 +110,7 @@ const Finances = () => {
               </div>
             </div>
           </SidebarInset>
+          <FloatingAIBrief scope="finance" title="Finance AI brief" />
         </div>
       </SidebarProvider>
     </FinancialDataProvider>

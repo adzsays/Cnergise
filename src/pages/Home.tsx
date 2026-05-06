@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { VoiceAssistant } from "@/components/VoiceAssistant";
 import { NewsTicker } from "@/components/dashboard/NewsTicker";
-import { AIBriefCard } from "@/components/ai/AIBriefCard";
+import { FloatingAIBrief } from "@/components/ai/FloatingAIBrief";
 import { supabase } from "@/integrations/supabase/client";
 import { useCalendarEvents } from "@/hooks/useCalendarEvents";
 import { useUserCurrency } from "@/hooks/useUserCurrency";
@@ -37,8 +37,16 @@ const Index = () => {
   const monthStart = useMemo(() => startOfMonth(new Date()), []);
   const monthEnd = useMemo(() => endOfMonth(new Date()), []);
 
-  // Today's events
-  const { data: todayEvents = [] } = useCalendarEvents(todayStart, todayEnd);
+  // Today's events (only upcoming — drop ones whose end_time is already in the past)
+  const { data: todayEventsRaw = [] } = useCalendarEvents(todayStart, todayEnd);
+  const todayEvents = useMemo(() => {
+    const now = Date.now();
+    return todayEventsRaw.filter((e: any) => {
+      if (e.all_day) return true;
+      const end = e.end_time ? new Date(e.end_time).getTime() : new Date(e.start_time).getTime();
+      return end >= now;
+    });
+  }, [todayEventsRaw]);
 
   // Tasks due today / open
   const { data: tasks = [] } = useQuery({
@@ -388,6 +396,7 @@ const Index = () => {
           </div>
         </SidebarInset>
         <VoiceAssistant />
+        <FloatingAIBrief scope="today" title="Today AI brief" />
       </div>
     </SidebarProvider>
   );

@@ -14,7 +14,7 @@ import { useGoals } from "@/hooks/useGoals";
 import { Target, FolderKanban, CheckSquare, BarChart3, Mic, X } from "lucide-react";
 import { useCurrentSpace } from "@/contexts/SpaceContext";
 import { VoiceAssistant } from "@/components/VoiceAssistant";
-import { AIBriefCard } from "@/components/ai/AIBriefCard";
+import { FloatingAIBrief } from "@/components/ai/FloatingAIBrief";
 
 export default function Plan() {
   const [tab, setTab] = useState("goals");
@@ -53,7 +53,7 @@ export default function Plan() {
                   </p>
                 </Card>
 
-                <AIBriefCard scope="plan" title="Plan AI brief" />
+                
 
                 <Tabs value={tab} onValueChange={(v) => { setTab(v); if (v !== "projects") setFocusGoalId(null); }}>
                   <div className="overflow-x-auto -mx-3 px-3 md:mx-0 md:px-0">
@@ -113,6 +113,7 @@ export default function Plan() {
         </SidebarInset>
 
         <VoiceAssistant />
+        <FloatingAIBrief scope="plan" title="Plan AI brief" />
       </div>
     </SidebarProvider>
   );
