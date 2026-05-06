@@ -95,7 +95,7 @@ const App = () => (
                 <Route path="/monitoring" element={<AuthGuard><Monitoring /></AuthGuard>} />
                 <Route path="/learning" element={<AuthGuard><FeatureGate featureKey="learning"><Learning /></FeatureGate></AuthGuard>} />
                 <Route path="/echo" element={<Navigate to="/plan" replace />} />
-                <Route path="/invoices" element={<AuthGuard><FeatureGate featureKey="invoicing"><Invoices /></FeatureGate></AuthGuard>} />
+                <Route path="/invoices" element={<Navigate to="/finances" replace />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
