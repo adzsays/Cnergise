@@ -22,6 +22,7 @@ import {
   Pencil,
   Check,
   Trash2,
+  Wand2,
 } from "lucide-react";
 import { format, addDays, subDays, parseISO } from "date-fns";
 import { useUserCurrency } from "@/hooks/useUserCurrency";
