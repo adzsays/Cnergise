@@ -90,7 +90,7 @@ export function CashFlowComparisonView({ auto = false, embedded = false, default
                 <SelectItem value="12">Last 12 months</SelectItem>
               </SelectContent>
             </Select>
-            <Button onClick={run} disabled={loading}>
+            <Button onClick={() => run(false)} disabled={loading}>
               {loading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Sparkles className="h-4 w-4 mr-1" />}
               Run AI comparison
             </Button>
