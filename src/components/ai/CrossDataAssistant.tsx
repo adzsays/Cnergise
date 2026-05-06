@@ -34,8 +34,10 @@ export function CrossDataAssistant() {
     setInput("");
     setLoading(true);
     try {
+      // Cap history to last 10 turns to keep token cost bounded
+      const trimmed = next.slice(-10).map((m) => ({ role: m.role, content: m.content }));
       const { data, error } = await supabase.functions.invoke("cross-data-assistant", {
-        body: { messages: next.map((m) => ({ role: m.role, content: m.content })) },
+        body: { messages: trimmed },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
