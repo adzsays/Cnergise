@@ -18,8 +18,10 @@ import { VoiceAssistant } from "@/components/VoiceAssistant";
 
 const TaskManagement = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [showTaskUploadDialog, setShowTaskUploadDialog] = useState(false);
   const { deleteAllTasks } = useTasks();
+  const tabParam = searchParams.get("tab") || "dashboard";
 
   const handleSignOut = async () => {
     try {
