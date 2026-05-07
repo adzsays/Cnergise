@@ -113,7 +113,7 @@ const TaskManagement = () => {
             </header>
 
             <main className="flex-1 overflow-auto p-3 md:p-6">
-              <Tabs defaultValue="dashboard" className="space-y-4 md:space-y-6">
+              <Tabs value={tabParam} onValueChange={(v) => setSearchParams((p) => { p.set("tab", v); return p; })} className="space-y-4 md:space-y-6">
                 <div className="overflow-x-auto -mx-3 px-3 md:mx-0 md:px-0">
                   <TabsList className="bg-muted/50 p-1 inline-flex min-w-max">
                     <TabsTrigger value="dashboard" className="text-xs md:text-sm px-2 md:px-3 data-[state=active]:bg-background">Dashboard</TabsTrigger>
