@@ -64,6 +64,7 @@ const App = () => (
         <SpaceProvider>
           <Toaster />
           <Sonner />
+          <PWAUpdatePrompt />
           <BrowserRouter>
             <Suspense fallback={<RouteFallback />}>
               <Routes>
