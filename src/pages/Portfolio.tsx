@@ -11,7 +11,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function Portfolio() {
-  const [activeTab, setActiveTab] = React.useState("strategies");
+  const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
+  const [activeTab, setActiveTab] = React.useState(params.get("tab") || "strategies");
   const [riskBand, setRiskBand] = useState<string | undefined>();
 
   useEffect(() => {

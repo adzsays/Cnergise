@@ -44,7 +44,8 @@ const InvoicingSection = () => {
 };
 
 const Finances = () => {
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
+  const [activeTab, setActiveTab] = useState(params.get("tab") || "dashboard");
 
   return (
     <FinancialDataProvider>

@@ -28,7 +28,8 @@ const STEPS_GOAL = 10000;
 const WATER_GOAL = 2.5;
 
 export default function Health() {
-  const [activeTab, setActiveTab] = React.useState("overview");
+  const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
+  const [activeTab, setActiveTab] = React.useState(params.get("tab") || "overview");
 
   const { data: metrics = [], isLoading } = useQuery({
     queryKey: ["health-metrics"],
