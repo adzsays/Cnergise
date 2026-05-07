@@ -11,7 +11,8 @@ import { BillingEntityManager } from "@/components/invoices/BillingEntityManager
 import { ServiceManager } from "@/components/invoices/ServiceManager";
 
 const Invoices = () => {
-  const [tab, setTab] = useState("list");
+  const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
+  const [tab, setTab] = useState(params.get("tab") || "list");
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const openEditor = (id: string | null) => {
