@@ -62,11 +62,57 @@ type SortDir = "asc" | "desc";
 const STATUS_OPTIONS: Task["status"][] = ["todo", "in_progress", "done"];
 const PRIORITY_OPTIONS: Task["priority"][] = ["low", "medium", "high"];
 
-export function TaskList() {
-  const { tasks, isLoading, updateTask, deleteTask } = useTasks();
+export type TaskListFilters = {
+  status?: string | null; // 'todo' | 'in_progress' | 'done' | 'open' | 'overdue'
+  projectId?: string | null;
+  assigneeId?: string | null;
+  goalId?: string | null;
+};
+
+export function TaskList({ externalFilters, onClearFilters }: { externalFilters?: TaskListFilters; onClearFilters?: () => void } = {}) {
+  const { tasks: rawTasks, isLoading, updateTask, deleteTask } = useTasks();
   const { projects } = useProjects();
   const { teams } = useTeams();
   const { teamMembers } = useTeamMembers();
+
+  const tasks = useMemo(() => {
+    if (!externalFilters) return rawTasks;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    let projectIds: Set<string> | null = null;
+    if (externalFilters.goalId) {
+      projectIds = new Set(projects.filter(p => (p as any).goal_id === externalFilters.goalId).map(p => p.id));
+    }
+    return rawTasks.filter(t => {
+      if (externalFilters.projectId && t.project_id !== externalFilters.projectId) return false;
+      if (projectIds && (!t.project_id || !projectIds.has(t.project_id))) return false;
+      if (externalFilters.assigneeId && t.assigned_to !== externalFilters.assigneeId) return false;
+      const s = externalFilters.status;
+      if (s) {
+        if (s === "open" && t.status === "done") return false;
+        else if (s === "overdue") {
+          if (t.status === "done") return false;
+          if (!t.due_date || new Date(t.due_date) >= today) return false;
+        } else if (s !== "open" && s !== "overdue" && t.status !== s) return false;
+      }
+      return true;
+    });
+  }, [rawTasks, externalFilters, projects]);
+
+  const activeFilterChips = useMemo(() => {
+    if (!externalFilters) return [] as string[];
+    const chips: string[] = [];
+    if (externalFilters.status) chips.push(`Status: ${externalFilters.status.replace("_", " ")}`);
+    if (externalFilters.projectId) {
+      const p = projects.find(x => x.id === externalFilters.projectId);
+      if (p) chips.push(`Project: ${p.name}`);
+    }
+    if (externalFilters.assigneeId) {
+      const m = teamMembers.find(x => x.id === externalFilters.assigneeId);
+      if (m) chips.push(`Person: ${m.name}`);
+    }
+    if (externalFilters.goalId) chips.push("Filtered by goal");
+    return chips;
+  }, [externalFilters, projects, teamMembers]);
 
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
