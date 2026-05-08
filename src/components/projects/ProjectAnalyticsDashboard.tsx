@@ -1,46 +1,65 @@
-import React, { useState } from "react";
-import { useProjectMetrics } from "@/hooks/useProjectMetrics";
-import { useProjects } from "@/hooks/useProjects";
+import React, { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { useProjectMetrics, ProjectMetricsFilters } from "@/hooks/useProjectMetrics";
+import { useTeams } from "@/hooks/useTeams";
+import { useCurrentSpace } from "@/contexts/SpaceContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { SleekChart } from "@/components/ui/SleekChart";
-import { 
-  FolderKanban, 
-  Users, 
-  CheckCircle2, 
-  Clock,
-  Target,
-  TrendingUp,
-  Layers
+import {
+  FolderKanban, CheckCircle2, Clock, Layers, AlertTriangle, Target, X,
 } from "lucide-react";
 
 const COLORS = {
-  primary: "hsl(var(--primary))",
-  success: "hsl(var(--success))",
-  warning: "hsl(142 76% 36%)",
-  info: "hsl(199 89% 48%)",
-  muted: "hsl(var(--muted-foreground))",
-  todo: "hsl(var(--muted-foreground))",
-  inProgress: "hsl(199 89% 48%)",
   done: "hsl(142 76% 36%)",
+  info: "hsl(199 89% 48%)",
+  warning: "hsl(38 92% 50%)",
 };
 
-const PIE_COLORS = ["hsl(199 89% 48%)", "hsl(142 76% 36%)", "hsl(45 93% 47%)", "hsl(var(--muted-foreground))"];
+type Props = {
+  filters?: ProjectMetricsFilters;
+  onFiltersChange?: (f: ProjectMetricsFilters) => void;
+  /** Called when a metric card is clicked. Receives the filter to push to Tasks. */
+  onDrillDown?: (drill: { status?: string; projectId?: string }) => void;
+};
 
-export function ProjectAnalyticsDashboard() {
-  const { metrics, isLoading } = useProjectMetrics();
-  const { projects } = useProjects();
-  const [selectedProject, setSelectedProject] = useState<string>("all");
+export function ProjectAnalyticsDashboard({ filters: extFilters, onFiltersChange, onDrillDown }: Props = {}) {
+  const navigate = useNavigate();
+  const { currentSpace } = useCurrentSpace();
+  const [localFilters, setLocalFilters] = React.useState<ProjectMetricsFilters>({});
+  const filters = extFilters ?? localFilters;
+  const setFilters = (f: ProjectMetricsFilters) => {
+    if (onFiltersChange) onFiltersChange(f);
+    else setLocalFilters(f);
+  };
+
+  const { metrics, goals, projects, teamMembers, isLoading } = useProjectMetrics(filters);
+  const { teams } = useTeams();
+
+  const goalProjects = useMemo(() => {
+    if (!filters.goalId) return projects;
+    return projects.filter(p => (p as any).goal_id === filters.goalId);
+  }, [filters.goalId, projects]);
+
+  const drill = (params: { status?: string; projectId?: string }) => {
+    if (onDrillDown) return onDrillDown(params);
+    const sp = new URLSearchParams();
+    sp.set("tab", "tasks");
+    if (filters.goalId) sp.set("goal", filters.goalId);
+    if (params.projectId || filters.projectId) sp.set("project", (params.projectId || filters.projectId)!);
+    if (filters.assigneeId) sp.set("assignee", filters.assigneeId);
+    if (params.status) sp.set("status", params.status);
+    navigate(`/plan?${sp.toString()}`);
+  };
 
   if (isLoading) {
     return (
       <div className="space-y-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map(i => (
-            <Skeleton key={i} className="h-24" />
-          ))}
+          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-24" />)}
         </div>
         <Skeleton className="h-80" />
       </div>
@@ -54,225 +73,207 @@ export function ProjectAnalyticsDashboard() {
     { name: "Archived", value: metrics.projectsBreakdown.archived },
   ].filter(d => d.value > 0);
 
+  const hasAnyFilter = !!(filters.goalId || filters.projectId || filters.assigneeId);
+  const isEmpty = metrics.totalProjects === 0 && metrics.totalTasks === 0;
+
   return (
     <div className="space-y-4 md:space-y-6">
-      {/* Header with project selector */}
+      {/* Header + filters */}
       <div className="flex flex-col gap-3">
-        <div>
-          <h2 className="text-xl md:text-2xl font-semibold tracking-tight">Project Analytics</h2>
-          <p className="text-xs md:text-sm text-muted-foreground">Track progress and performance across your projects</p>
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h2 className="text-xl md:text-2xl font-semibold tracking-tight">Plan Analytics</h2>
+            <p className="text-xs md:text-sm text-muted-foreground">
+              Real-time view of your goals, projects and tasks{currentSpace ? ` in ${currentSpace.name}` : ""}.
+            </p>
+          </div>
+          {hasAnyFilter && (
+            <Button variant="ghost" size="sm" onClick={() => setFilters({})}>
+              <X className="h-3.5 w-3.5 mr-1" /> Clear filters
+            </Button>
+          )}
         </div>
-        <div className="flex items-center">
-          <Select value={selectedProject} onValueChange={setSelectedProject}>
-            <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder="All Projects" />
-            </SelectTrigger>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <Select value={filters.goalId || "all"} onValueChange={(v) => setFilters({ ...filters, goalId: v === "all" ? null : v, projectId: null })}>
+            <SelectTrigger><SelectValue placeholder="All goals" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Projects</SelectItem>
-              {projects.map(p => (
-                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-              ))}
+              <SelectItem value="all">All goals</SelectItem>
+              {goals.map(g => <SelectItem key={g.id} value={g.id}>🎯 {g.title}</SelectItem>)}
+            </SelectContent>
+          </Select>
+
+          <Select value={filters.projectId || "all"} onValueChange={(v) => setFilters({ ...filters, projectId: v === "all" ? null : v })}>
+            <SelectTrigger><SelectValue placeholder="All projects" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All projects</SelectItem>
+              {goalProjects.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+
+          <Select value={filters.assigneeId || "all"} onValueChange={(v) => setFilters({ ...filters, assigneeId: v === "all" ? null : v })}>
+            <SelectTrigger><SelectValue placeholder="All people" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All people</SelectItem>
+              {teamMembers.map(m => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
       </div>
 
-      {/* Key Metrics */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard 
-          icon={<FolderKanban className="h-5 w-5" />}
-          label="Total Projects"
-          value={metrics.totalProjects}
-          badge={`${metrics.projectsBreakdown.active} active`}
-        />
-        <MetricCard 
-          icon={<Layers className="h-5 w-5" />}
-          label="Total Tasks"
-          value={metrics.totalTasks}
-          badge={`${metrics.todoTasks} pending`}
-        />
-        <MetricCard 
-          icon={<CheckCircle2 className="h-5 w-5" />}
-          label="Completed"
-          value={metrics.completedTasks}
-          badge={`${metrics.overallCompletion}%`}
-          badgeVariant="success"
-        />
-        <MetricCard 
-          icon={<Clock className="h-5 w-5" />}
-          label="In Progress"
-          value={metrics.inProgressTasks}
-          badge="active"
-        />
-      </div>
-
-      {/* Progress Chart & Status Pie */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
-        <div className="lg:col-span-2">
-          <SleekChart
-            kind="line"
-            data={metrics.progressOverTime}
-            xKey="month"
-            series={[
-              { key: "tasksTarget", label: "Target", hsl: "199 89% 48%" },
-              { key: "tasksCompleted", label: "Completed", hsl: "142 76% 36%" },
-            ]}
-            title="Progress Over Time"
-            subtitle="Tasks target vs completed"
-            compactHeight={140}
-            expandedHeight={360}
-          />
-        </div>
-
-        <SleekChart
-          kind="pie"
-          data={projectStatusData}
-          xKey="name"
-          series={[{ key: "value", label: "Projects" }]}
-          title="Project Status"
-          subtitle="Status breakdown"
-          compactHeight={140}
-        />
-      </div>
-
-      {/* Completion Gauges & Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6">
-        <GaugeCard 
-          title="% Complete" 
-          value={metrics.overallCompletion} 
-          subtitle="Overall Progress"
-        />
-        <GaugeCard 
-          title="% Target" 
-          value={Math.min(metrics.overallCompletion + 15, 100)} 
-          subtitle="vs Target"
-        />
-        <Card className="border-border/50 col-span-2 md:col-span-1">
-          <CardHeader className="pb-2 px-3 md:px-6">
-            <CardTitle className="text-sm md:text-base font-medium">Summary</CardTitle>
-          </CardHeader>
-          <CardContent className="px-3 md:px-6">
-            <div className="grid grid-cols-4 md:grid-cols-2 gap-2 md:gap-4">
-              <div className="text-center p-2 md:p-3 bg-muted/30 rounded-lg">
-                <div className="text-lg md:text-2xl font-bold">{metrics.totalProjects}</div>
-                <div className="text-[10px] md:text-xs text-muted-foreground">Projects</div>
-              </div>
-              <div className="text-center p-2 md:p-3 bg-muted/30 rounded-lg">
-                <div className="text-lg md:text-2xl font-bold">{metrics.teamStats.totalTeams}</div>
-                <div className="text-[10px] md:text-xs text-muted-foreground">Teams</div>
-              </div>
-              <div className="text-center p-2 md:p-3 bg-muted/30 rounded-lg">
-                <div className="text-lg md:text-2xl font-bold">{metrics.totalTasks}</div>
-                <div className="text-[10px] md:text-xs text-muted-foreground">Tasks</div>
-              </div>
-              <div className="text-center p-2 md:p-3 bg-muted/30 rounded-lg">
-                <div className="text-lg md:text-2xl font-bold">{metrics.teamStats.totalSpaces}</div>
-                <div className="text-[10px] md:text-xs text-muted-foreground">Spaces</div>
-              </div>
-            </div>
-          </CardContent>
+      {isEmpty ? (
+        <Card className="p-8 text-center text-sm text-muted-foreground">
+          No projects or tasks match these filters yet. Try clearing filters or create a new goal/project to get started.
         </Card>
-      </div>
+      ) : (
+        <>
+          {/* Clickable Key Metrics */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
+            <MetricCard icon={<FolderKanban className="h-5 w-5" />} label="Projects" value={metrics.totalProjects}
+              badge={`${metrics.projectsBreakdown.active} active`} onClick={() => drill({})} />
+            <MetricCard icon={<Layers className="h-5 w-5" />} label="Open Tasks" value={metrics.todoTasks + metrics.inProgressTasks}
+              badge={`${metrics.totalTasks} total`} onClick={() => drill({ status: "open" })} />
+            <MetricCard icon={<Clock className="h-5 w-5" />} label="In Progress" value={metrics.inProgressTasks}
+              onClick={() => drill({ status: "in_progress" })} />
+            <MetricCard icon={<CheckCircle2 className="h-5 w-5" />} label="Completed" value={metrics.completedTasks}
+              badge={`${metrics.overallCompletion}%`} badgeVariant="success" onClick={() => drill({ status: "done" })} />
+            <MetricCard icon={<AlertTriangle className="h-5 w-5" />} label="Overdue" value={metrics.overdueTasks}
+              badgeVariant={metrics.overdueTasks > 0 ? "warning" : "secondary"}
+              onClick={() => drill({ status: "overdue" })} />
+          </div>
 
-      {/* Status by Project Bar Chart */}
-      <SleekChart
-        kind="bar"
-        data={metrics.statusByProject}
-        xKey="project"
-        stacked
-        series={[
-          { key: "todo", label: "Todo", hsl: "215 16% 47%" },
-          { key: "inProgress", label: "In Progress", hsl: "199 89% 48%" },
-          { key: "done", label: "Done", hsl: "142 76% 36%" },
-        ]}
-        title="Task Status by Project"
-        subtitle="Stacked breakdown per project"
-        compactHeight={160}
-        expandedHeight={380}
-      />
+          {/* Charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+            <div className="lg:col-span-2">
+              <SleekChart
+                kind="line"
+                data={metrics.progressOverTime}
+                xKey="month"
+                series={[
+                  { key: "tasksTarget", label: "Created", hsl: "199 89% 48%" },
+                  { key: "tasksCompleted", label: "Completed", hsl: "142 76% 36%" },
+                ]}
+                title="Tasks Created vs Completed"
+                subtitle="Last 6 months (real data)"
+                compactHeight={140}
+                expandedHeight={360}
+              />
+            </div>
+
+            {projectStatusData.length > 0 && (
+              <SleekChart
+                kind="pie"
+                data={projectStatusData}
+                xKey="name"
+                series={[{ key: "value", label: "Projects" }]}
+                title="Project Status"
+                subtitle="Status breakdown"
+                compactHeight={140}
+              />
+            )}
+          </div>
+
+          {/* Summary */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+            <SummaryStat label="Goals" value={goals.length} icon={<Target className="h-4 w-4" />} />
+            <SummaryStat label="Teams" value={teams.length} />
+            <SummaryStat label="People" value={teamMembers.length} />
+            <SummaryStat label="Avg Completion" value={`${metrics.overallCompletion}%`} accent={metrics.overallCompletion >= 70 ? "success" : metrics.overallCompletion >= 40 ? "info" : "warning"} />
+          </div>
+
+          {/* Status by Project (clickable bars) */}
+          {metrics.statusByProject.length > 0 && (
+            <Card className="border-border/50">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm md:text-base">Tasks by Project</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <SleekChart
+                  kind="bar"
+                  data={metrics.statusByProject}
+                  xKey="project"
+                  stacked
+                  series={[
+                    { key: "todo", label: "Todo", hsl: "215 16% 47%" },
+                    { key: "inProgress", label: "In Progress", hsl: "199 89% 48%" },
+                    { key: "done", label: "Done", hsl: "142 76% 36%" },
+                  ]}
+                  title=""
+                  subtitle=""
+                  compactHeight={200}
+                  expandedHeight={380}
+                />
+                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                  {metrics.statusByProject.map(p => (
+                    <button
+                      key={p.projectId}
+                      onClick={() => drill({ projectId: p.projectId })}
+                      className="text-left text-xs px-2.5 py-1.5 rounded hover:bg-muted/60 flex items-center justify-between"
+                    >
+                      <span className="truncate font-medium">{p.project}</span>
+                      <span className="text-muted-foreground tabular-nums">
+                        {p.done}/{p.todo + p.inProgress + p.done}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </>
+      )}
     </div>
   );
 }
 
-// Metric Card Component
-function MetricCard({ 
-  icon, 
-  label, 
-  value, 
-  badge,
-  badgeVariant = "secondary"
-}: { 
-  icon: React.ReactNode; 
-  label: string; 
-  value: number | string;
-  badge?: string;
-  badgeVariant?: "secondary" | "success";
+function MetricCard({
+  icon, label, value, badge, badgeVariant = "secondary", onClick,
+}: {
+  icon: React.ReactNode; label: string; value: number | string;
+  badge?: string; badgeVariant?: "secondary" | "success" | "warning";
+  onClick?: () => void;
 }) {
+  const Wrapper: any = onClick ? "button" : "div";
   return (
-    <Card className="border-border/50">
-      <CardContent className="p-3 md:p-4">
-        <div className="flex items-start justify-between">
-          <div className="p-1.5 md:p-2 bg-primary/10 rounded-lg text-primary">
-            {icon}
+    <Wrapper
+      type={onClick ? "button" : undefined}
+      onClick={onClick}
+      className={`text-left w-full ${onClick ? "transition hover:shadow-md hover:border-primary/40 cursor-pointer" : ""}`}
+    >
+      <Card className="border-border/50 h-full">
+        <CardContent className="p-3 md:p-4">
+          <div className="flex items-start justify-between">
+            <div className="p-1.5 md:p-2 bg-primary/10 rounded-lg text-primary">{icon}</div>
+            {badge && (
+              <Badge
+                variant="secondary"
+                className={`text-[10px] md:text-xs ${
+                  badgeVariant === "success" ? "bg-success/10 text-success border-0" :
+                  badgeVariant === "warning" ? "bg-amber-500/10 text-amber-600 border-0" : ""
+                }`}
+              >{badge}</Badge>
+            )}
           </div>
-          {badge && (
-            <Badge 
-              variant="secondary" 
-              className={`text-[10px] md:text-xs ${badgeVariant === "success" ? "bg-success/10 text-success border-0" : ""}`}
-            >
-              {badge}
-            </Badge>
-          )}
-        </div>
-        <div className="mt-2 md:mt-3">
-          <div className="text-lg md:text-2xl font-bold">{value}</div>
-          <div className="text-xs md:text-sm text-muted-foreground">{label}</div>
-        </div>
-      </CardContent>
-    </Card>
+          <div className="mt-2 md:mt-3">
+            <div className="text-lg md:text-2xl font-bold">{value}</div>
+            <div className="text-xs md:text-sm text-muted-foreground">{label}</div>
+          </div>
+        </CardContent>
+      </Card>
+    </Wrapper>
   );
 }
 
-// Gauge Card Component
-function GaugeCard({ 
-  title, 
-  value, 
-  subtitle 
-}: { 
-  title: string; 
-  value: number; 
-  subtitle: string;
-}) {
-  const circumference = 2 * Math.PI * 45;
-  const strokeDashoffset = circumference - (value / 100) * circumference;
-  
+function SummaryStat({ label, value, icon, accent }: { label: string; value: number | string; icon?: React.ReactNode; accent?: "success" | "info" | "warning" }) {
+  const color = accent === "success" ? COLORS.done : accent === "warning" ? COLORS.warning : accent === "info" ? COLORS.info : undefined;
   return (
     <Card className="border-border/50">
-      <CardContent className="p-3 md:p-6 flex flex-col items-center">
-        <div className="text-xs md:text-sm font-medium text-muted-foreground mb-1 md:mb-2">{title}</div>
-        <div className="relative scale-75 md:scale-100">
-          <svg width="120" height="80" viewBox="0 0 120 80">
-            <path
-              d="M 10 70 A 50 50 0 0 1 110 70"
-              fill="none"
-              stroke="hsl(var(--muted))"
-              strokeWidth="8"
-              strokeLinecap="round"
-            />
-            <path
-              d="M 10 70 A 50 50 0 0 1 110 70"
-              fill="none"
-              stroke={value >= 70 ? COLORS.done : value >= 40 ? COLORS.info : COLORS.warning}
-              strokeWidth="8"
-              strokeLinecap="round"
-              strokeDasharray={`${(value / 100) * 157} 157`}
-            />
-          </svg>
-          <div className="absolute inset-0 flex items-center justify-center pt-4">
-            <span className="text-lg md:text-2xl font-bold">{value}%</span>
-          </div>
+      <CardContent className="p-3 md:p-4 flex items-center justify-between">
+        <div>
+          <div className="text-xs text-muted-foreground">{label}</div>
+          <div className="text-lg md:text-xl font-semibold" style={color ? { color } : undefined}>{value}</div>
         </div>
-        <div className="text-[10px] md:text-xs text-muted-foreground mt-0 md:mt-1">{subtitle}</div>
+        {icon && <div className="text-muted-foreground">{icon}</div>}
       </CardContent>
     </Card>
   );
