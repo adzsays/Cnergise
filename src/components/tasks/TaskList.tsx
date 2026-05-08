@@ -333,6 +333,19 @@ export function TaskList({ externalFilters, onClearFilters }: { externalFilters?
 
   return (
     <div className="space-y-3">
+      {activeFilterChips.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 rounded-md border bg-muted/30 px-3 py-2 text-xs">
+          <span className="font-medium">Filtered:</span>
+          {activeFilterChips.map((c, i) => (
+            <Badge key={i} variant="secondary" className="text-[10px]">{c}</Badge>
+          ))}
+          {onClearFilters && (
+            <Button variant="ghost" size="sm" className="h-6 ml-auto" onClick={onClearFilters}>
+              <Trash2 className="h-3 w-3 mr-1" /> Clear
+            </Button>
+          )}
+        </div>
+      )}
       {/* Toolbar — sticky so Import/Export are always visible */}
       <div className="sticky top-0 z-30 -mx-3 md:mx-0 px-3 md:px-0 py-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70 flex flex-wrap items-center justify-between gap-2 border-b">
         <p className="text-xs md:text-sm text-muted-foreground">
