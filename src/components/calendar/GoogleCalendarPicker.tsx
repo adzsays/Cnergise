@@ -35,8 +35,21 @@ type GAccount = {
   error?: string;
 };
 
-export function GoogleCalendarPicker({ trigger }: { trigger?: React.ReactNode }) {
-  const [open, setOpen] = useState(false);
+export function GoogleCalendarPicker({
+  trigger,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+}: {
+  trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (v: boolean) => void;
+}) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = (v: boolean) => {
+    setInternalOpen(v);
+    controlledOnOpenChange?.(v);
+  };
   // selections keyed by `${account_id}::${calendar_id}`
   const [selections, setSelections] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
