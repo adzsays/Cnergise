@@ -37,6 +37,7 @@ export default function Calendar() {
   const [date, setDate] = useState<Date>(new Date());
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [manageCalsOpen, setManageCalsOpen] = useState(false);
 
   const openEvent = (e: CalendarEvent) => { setSelectedEvent(e); setDialogOpen(true); };
   const openNew = () => { setSelectedEvent(null); setDialogOpen(true); };
