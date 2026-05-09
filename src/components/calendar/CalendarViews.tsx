@@ -118,6 +118,7 @@ export function MonthView({ date, events, onSelectDate, onSelectEvent, colorMap 
           );
         })}
       </div>
+      </div>
     </div>
   );
 }
