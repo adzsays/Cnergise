@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Calendar as CalendarIcon, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import { GoogleCalendarConnect } from "@/components/calendar/GoogleCalendarConnect";
+import { SyncedCalendarsCard } from "@/components/calendar/SyncedCalendarsCard";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCalendarEvents, CalendarEvent } from "@/hooks/useCalendarEvents";
 import { useCalendarSubscriptions } from "@/hooks/useCalendarSubscriptions";
@@ -18,6 +19,7 @@ import {
   ScheduleView,
 } from "@/components/calendar/CalendarViews";
 import { EventDialog } from "@/components/calendar/EventDialog";
+import { GoogleCalendarPicker } from "@/components/calendar/GoogleCalendarPicker";
 
 function startOfDay(d: Date) {
   const x = new Date(d);
