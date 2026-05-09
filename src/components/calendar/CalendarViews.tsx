@@ -65,7 +65,8 @@ export function MonthView({ date, events, onSelectDate, onSelectEvent, colorMap 
   const month = date.getMonth();
 
   return (
-    <div className="rounded-md border bg-card overflow-hidden">
+    <div className="-mx-4 overflow-x-auto md:mx-0">
+      <div className="min-w-[640px] rounded-md border bg-card overflow-hidden mx-4 md:mx-0 md:min-w-0">
       <div className="grid grid-cols-7 border-b bg-muted/40 text-xs font-medium text-muted-foreground">
         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
           <div key={d} className="p-2 text-center">{d}</div>
@@ -117,6 +118,7 @@ export function MonthView({ date, events, onSelectDate, onSelectEvent, colorMap 
           );
         })}
       </div>
+      </div>
     </div>
   );
 }
@@ -130,7 +132,8 @@ export function WeekView({ date, events, onSelectEvent, colorMap }: ViewProps) {
   const today = startOfDay(new Date()).getTime();
 
   return (
-    <div className="grid grid-cols-7 gap-2">
+    <div className="-mx-4 overflow-x-auto md:mx-0">
+      <div className="grid grid-cols-7 gap-2 min-w-[700px] px-4 md:min-w-0 md:px-0">
       {days.map((d) => {
         const isToday = startOfDay(d).getTime() === today;
         const dayEvents = eventsOnDate(events, d);
@@ -170,6 +173,7 @@ export function WeekView({ date, events, onSelectEvent, colorMap }: ViewProps) {
           </div>
         );
       })}
+      </div>
     </div>
   );
 }
