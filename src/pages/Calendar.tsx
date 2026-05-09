@@ -186,40 +186,43 @@ export default function Calendar() {
                     <div className="lg:col-span-2">
                       <MonthView date={date} events={events} colorMap={colorMap} onSelectEvent={openEvent} onSelectDate={(d) => { setDate(d); setActiveTab("day"); }} />
                     </div>
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-base">Today</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        {todayEvents.length > 0 ? (
-                          <div className="space-y-2">
-                            {todayEvents.map((event) => (
-                              <button
-                                type="button"
-                                key={event.id}
-                                onClick={() => openEvent(event)}
-                                className="w-full text-left border rounded-md p-3 hover:bg-accent/40 transition-colors"
-                              >
-                                <h3 className="font-medium text-sm">{event.title}</h3>
-                                <p className="text-xs text-muted-foreground">
-                                  {event.all_day
-                                    ? "All day"
-                                    : `${new Date(event.start_time).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} – ${new Date(event.end_time).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`}
-                                </p>
-                                {event.location && (
-                                  <p className="text-xs text-muted-foreground">{event.location}</p>
-                                )}
-                              </button>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="flex flex-col items-center justify-center h-32 text-muted-foreground">
-                            <CalendarIcon className="h-8 w-8 mb-2 opacity-20" />
-                            <p className="text-xs">No events today</p>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
+                    <div className="space-y-4">
+                      <Card>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-base">Today</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          {todayEvents.length > 0 ? (
+                            <div className="space-y-2">
+                              {todayEvents.map((event) => (
+                                <button
+                                  type="button"
+                                  key={event.id}
+                                  onClick={() => openEvent(event)}
+                                  className="w-full text-left border rounded-md p-3 hover:bg-accent/40 transition-colors"
+                                >
+                                  <h3 className="font-medium text-sm">{event.title}</h3>
+                                  <p className="text-xs text-muted-foreground">
+                                    {event.all_day
+                                      ? "All day"
+                                      : `${new Date(event.start_time).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} – ${new Date(event.end_time).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`}
+                                  </p>
+                                  {event.location && (
+                                    <p className="text-xs text-muted-foreground">{event.location}</p>
+                                  )}
+                                </button>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center justify-center h-32 text-muted-foreground">
+                              <CalendarIcon className="h-8 w-8 mb-2 opacity-20" />
+                              <p className="text-xs">No events today</p>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                      <SyncedCalendarsCard onManage={() => setManageCalsOpen(true)} />
+                    </div>
                   </div>
                 </TabsContent>
 
@@ -232,7 +235,14 @@ export default function Calendar() {
                 </TabsContent>
 
                 <TabsContent value="schedule" className="mt-0">
-                  <ScheduleView events={events} colorMap={colorMap} onSelectEvent={openEvent} />
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2">
+                      <ScheduleView events={events} colorMap={colorMap} onSelectEvent={openEvent} />
+                    </div>
+                    <div className="space-y-4">
+                      <SyncedCalendarsCard onManage={() => setManageCalsOpen(true)} />
+                    </div>
+                  </div>
                 </TabsContent>
               </Tabs>
 
@@ -243,6 +253,12 @@ export default function Calendar() {
                 defaultDate={date}
                 subscriptions={subscriptions}
                 accounts={accounts}
+              />
+
+              <GoogleCalendarPicker
+                trigger={null}
+                open={manageCalsOpen}
+                onOpenChange={setManageCalsOpen}
               />
             </div>
           </div>
