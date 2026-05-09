@@ -132,7 +132,8 @@ export function WeekView({ date, events, onSelectEvent, colorMap }: ViewProps) {
   const today = startOfDay(new Date()).getTime();
 
   return (
-    <div className="grid grid-cols-7 gap-2">
+    <div className="-mx-4 overflow-x-auto md:mx-0">
+      <div className="grid grid-cols-7 gap-2 min-w-[700px] px-4 md:min-w-0 md:px-0">
       {days.map((d) => {
         const isToday = startOfDay(d).getTime() === today;
         const dayEvents = eventsOnDate(events, d);
