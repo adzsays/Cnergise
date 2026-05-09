@@ -1,15 +1,16 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { SidebarProvider, SidebarInset, SidebarRail, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { NavigationTabs } from "@/components/NavigationTabs";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { PlusCircle, Calendar as CalendarIcon, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import { GoogleCalendarConnect } from "@/components/calendar/GoogleCalendarConnect";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCalendarEvents, CalendarEvent } from "@/hooks/useCalendarEvents";
 import { useCalendarSubscriptions } from "@/hooks/useCalendarSubscriptions";
+import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
 import {
   MonthView,
   WeekView,
@@ -47,9 +48,26 @@ export default function Calendar() {
 
   const { data: events = [], isLoading } = useCalendarEvents(rangeStart, rangeEnd);
   const { data: subData } = useCalendarSubscriptions();
+  const { connections, sync, isConnected } = useGoogleCalendar();
   const colorMap = subData?.colorMap ?? {};
   const subscriptions = subData?.subscriptions ?? [];
   const accounts = subData?.accounts ?? [];
+
+  // Auto-sync on mount if any account is stale (>5 min) or never synced
+  const autoSyncedRef = useRef(false);
+  useEffect(() => {
+    if (autoSyncedRef.current || !isConnected || connections.length === 0) return;
+    const STALE_MS = 5 * 60 * 1000;
+    const now = Date.now();
+    const stale = connections.some((c) => {
+      if (!c.last_sync_at) return true;
+      return now - new Date(c.last_sync_at).getTime() > STALE_MS;
+    });
+    if (stale && !sync.isPending) {
+      autoSyncedRef.current = true;
+      sync.mutate();
+    }
+  }, [isConnected, connections, sync]);
 
   const todayEvents = useMemo(() => {
     const today = startOfDay(new Date()).getTime();
@@ -105,6 +123,22 @@ export default function Calendar() {
                 <TooltipProvider delayDuration={150}>
                   <div className="flex items-center gap-0.5">
                     <GoogleCalendarConnect compact />
+                    {isConnected && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => sync.mutate()}
+                            disabled={sync.isPending}
+                            className="h-8 w-8"
+                          >
+                            <RefreshCw className={`h-4 w-4 ${sync.isPending ? "animate-spin" : ""}`} />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Sync now</TooltipContent>
+                      </Tooltip>
+                    )}
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button variant="ghost" size="icon" onClick={openNew} className="h-8 w-8">
