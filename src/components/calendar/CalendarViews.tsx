@@ -173,6 +173,7 @@ export function WeekView({ date, events, onSelectEvent, colorMap }: ViewProps) {
           </div>
         );
       })}
+      </div>
     </div>
   );
 }
