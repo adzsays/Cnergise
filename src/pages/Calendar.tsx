@@ -48,9 +48,26 @@ export default function Calendar() {
 
   const { data: events = [], isLoading } = useCalendarEvents(rangeStart, rangeEnd);
   const { data: subData } = useCalendarSubscriptions();
+  const { connections, sync, isConnected } = useGoogleCalendar();
   const colorMap = subData?.colorMap ?? {};
   const subscriptions = subData?.subscriptions ?? [];
   const accounts = subData?.accounts ?? [];
+
+  // Auto-sync on mount if any account is stale (>5 min) or never synced
+  const autoSyncedRef = useRef(false);
+  useEffect(() => {
+    if (autoSyncedRef.current || !isConnected || connections.length === 0) return;
+    const STALE_MS = 5 * 60 * 1000;
+    const now = Date.now();
+    const stale = connections.some((c) => {
+      if (!c.last_sync_at) return true;
+      return now - new Date(c.last_sync_at).getTime() > STALE_MS;
+    });
+    if (stale && !sync.isPending) {
+      autoSyncedRef.current = true;
+      sync.mutate();
+    }
+  }, [isConnected, connections, sync]);
 
   const todayEvents = useMemo(() => {
     const today = startOfDay(new Date()).getTime();
