@@ -97,10 +97,12 @@ const Finances = () => {
                   <TabsContent value="cashflow" className="mt-0"><CashFlowView /></TabsContent>
                   <TabsContent value="balances" className="mt-0">
                     <InnerTabs defaultValue="accounts" className="space-y-4">
-                      <InnerTabsList>
-                        <InnerTabsTrigger value="accounts"><Scale className="h-4 w-4 mr-1" />Balances</InnerTabsTrigger>
-                        <InnerTabsTrigger value="credit"><CreditCard className="h-4 w-4 mr-1" />Credit Score</InnerTabsTrigger>
-                      </InnerTabsList>
+                      <div className="overflow-x-auto -mx-3 px-3 md:mx-0 md:px-0 scrollbar-none">
+                        <InnerTabsList className="inline-flex w-max">
+                          <InnerTabsTrigger value="accounts" className="text-xs sm:text-sm"><Scale className="h-4 w-4 mr-1" />Balances</InnerTabsTrigger>
+                          <InnerTabsTrigger value="credit" className="text-xs sm:text-sm"><CreditCard className="h-4 w-4 mr-1" />Credit Score</InnerTabsTrigger>
+                        </InnerTabsList>
+                      </div>
                       <InnerTabsContent value="accounts"><BalancesView /></InnerTabsContent>
                       <InnerTabsContent value="credit"><CreditScoreView /></InnerTabsContent>
                     </InnerTabs>
