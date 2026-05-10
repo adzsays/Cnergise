@@ -80,11 +80,13 @@ export function MonthView({ date, events, onSelectDate, onSelectEvent, colorMap 
   const month = date.getMonth();
 
   return (
-    <div className="-mx-4 overflow-x-auto md:mx-0">
-      <div className="min-w-[640px] rounded-md border bg-card overflow-hidden mx-4 md:mx-0 md:min-w-0">
-      <div className="grid grid-cols-7 border-b bg-muted/40 text-xs font-medium text-muted-foreground">
-        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-          <div key={d} className="p-2 text-center">{d}</div>
+    <div className="rounded-md border bg-card overflow-hidden">
+      <div className="grid grid-cols-7 border-b bg-muted/40 text-[10px] sm:text-xs font-medium text-muted-foreground">
+        {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
+          <div key={i} className="p-1 sm:p-2 text-center">
+            <span className="sm:hidden">{d}</span>
+            <span className="hidden sm:inline">{["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][i]}</span>
+          </div>
         ))}
       </div>
       <div className="grid grid-cols-7 grid-rows-6">
@@ -99,19 +101,19 @@ export function MonthView({ date, events, onSelectDate, onSelectEvent, colorMap 
               key={d.toISOString()}
               onClick={() => onSelectDate?.(d)}
               className={cn(
-                "min-h-[88px] cursor-pointer border-b border-r p-1.5 text-left align-top transition-colors hover:bg-accent/40",
+                "min-h-[60px] sm:min-h-[88px] cursor-pointer border-b border-r p-1 sm:p-1.5 text-left align-top transition-colors hover:bg-accent/40 overflow-hidden",
                 !inMonth && "bg-muted/20 text-muted-foreground",
               )}
             >
               <div
                 className={cn(
-                  "mb-1 inline-flex h-6 w-6 items-center justify-center rounded-full text-xs",
+                  "mb-0.5 sm:mb-1 inline-flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full text-[10px] sm:text-xs",
                   isToday && "bg-primary text-primary-foreground font-semibold",
                 )}
               >
                 {d.getDate()}
               </div>
-              <div className="space-y-1">
+              <div className="space-y-0.5 sm:space-y-1 hidden sm:block">
                 {dayEvents.map((ev) => (
                   <button
                     type="button"
@@ -129,10 +131,22 @@ export function MonthView({ date, events, onSelectDate, onSelectEvent, colorMap 
                   <div className="text-[11px] text-muted-foreground">+{more} more</div>
                 )}
               </div>
+              {/* Mobile: just show dots for events */}
+              <div className="sm:hidden flex flex-wrap gap-0.5 mt-1">
+                {all.slice(0, 4).map((ev) => {
+                  const c = eventColor(ev, colorMap);
+                  return (
+                    <span
+                      key={ev.id}
+                      className="h-1.5 w-1.5 rounded-full bg-primary"
+                      style={c ? { backgroundColor: c } : undefined}
+                    />
+                  );
+                })}
+              </div>
             </div>
           );
         })}
-      </div>
       </div>
     </div>
   );
@@ -147,49 +161,90 @@ export function WeekView({ date, events, onSelectEvent, colorMap }: ViewProps) {
   const today = startOfDay(new Date()).getTime();
 
   return (
-    <div className="-mx-4 overflow-x-auto md:mx-0">
-      <div className="grid grid-cols-7 gap-2 min-w-[700px] px-4 md:min-w-0 md:px-0">
-      {days.map((d) => {
-        const isToday = startOfDay(d).getTime() === today;
-        const dayEvents = eventsOnDate(events, d);
-        return (
-          <div key={d.toISOString()} className="rounded-md border bg-card">
-            <div
-              className={cn(
-                "border-b px-2 py-1.5 text-center text-xs",
-                isToday && "bg-primary/10 text-primary font-semibold",
+    <>
+      {/* Mobile: vertical stack of days */}
+      <div className="space-y-2 md:hidden">
+        {days.map((d) => {
+          const isToday = startOfDay(d).getTime() === today;
+          const dayEvents = eventsOnDate(events, d);
+          return (
+            <div key={d.toISOString()} className="rounded-md border bg-card">
+              <div
+                className={cn(
+                  "flex items-center justify-between border-b px-3 py-1.5 text-xs",
+                  isToday && "bg-primary/10 text-primary font-semibold",
+                )}
+              >
+                <span>{d.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" })}</span>
+                <span className="text-muted-foreground">{dayEvents.length} {dayEvents.length === 1 ? "event" : "events"}</span>
+              </div>
+              {dayEvents.length > 0 && (
+                <div className="space-y-1 p-2">
+                  {dayEvents.map((ev) => (
+                    <button
+                      type="button"
+                      key={ev.id}
+                      onClick={() => onSelectEvent?.(ev)}
+                      style={eventStyle(ev, colorMap)}
+                      className="block w-full text-left rounded bg-primary/10 px-2 py-1 text-xs text-primary hover:opacity-80"
+                    >
+                      <div className="font-medium truncate">{ev.title}</div>
+                      {!ev.all_day && (
+                        <div className="text-[10px] opacity-80">
+                          {fmtTime(new Date(ev.start_time))} – {fmtTime(new Date(ev.end_time))}
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
               )}
-            >
-              <div>{d.toLocaleDateString([], { weekday: "short" })}</div>
-              <div className="text-base font-medium text-foreground">{d.getDate()}</div>
             </div>
-            <div className="space-y-1 p-1.5 min-h-[200px]">
-              {dayEvents.length === 0 ? (
-                <p className="text-[11px] text-muted-foreground text-center pt-4">—</p>
-              ) : (
-                dayEvents.map((ev) => (
-                  <button
-                    type="button"
-                    key={ev.id}
-                    onClick={() => onSelectEvent?.(ev)}
-                    style={eventStyle(ev, colorMap)}
-                    className="block w-full text-left rounded bg-primary/10 px-1.5 py-1 text-[11px] text-primary hover:opacity-80"
-                  >
-                    <div className="font-medium truncate">{ev.title}</div>
-                    {!ev.all_day && (
-                      <div className="text-[10px] opacity-80">
-                        {fmtTime(new Date(ev.start_time))}
-                      </div>
-                    )}
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-        );
-      })}
+          );
+        })}
       </div>
-    </div>
+      {/* Desktop: 7-column grid */}
+      <div className="hidden md:grid grid-cols-7 gap-2">
+        {days.map((d) => {
+          const isToday = startOfDay(d).getTime() === today;
+          const dayEvents = eventsOnDate(events, d);
+          return (
+            <div key={d.toISOString()} className="rounded-md border bg-card">
+              <div
+                className={cn(
+                  "border-b px-2 py-1.5 text-center text-xs",
+                  isToday && "bg-primary/10 text-primary font-semibold",
+                )}
+              >
+                <div>{d.toLocaleDateString([], { weekday: "short" })}</div>
+                <div className="text-base font-medium text-foreground">{d.getDate()}</div>
+              </div>
+              <div className="space-y-1 p-1.5 min-h-[200px]">
+                {dayEvents.length === 0 ? (
+                  <p className="text-[11px] text-muted-foreground text-center pt-4">—</p>
+                ) : (
+                  dayEvents.map((ev) => (
+                    <button
+                      type="button"
+                      key={ev.id}
+                      onClick={() => onSelectEvent?.(ev)}
+                      style={eventStyle(ev, colorMap)}
+                      className="block w-full text-left rounded bg-primary/10 px-1.5 py-1 text-[11px] text-primary hover:opacity-80"
+                    >
+                      <div className="font-medium truncate">{ev.title}</div>
+                      {!ev.all_day && (
+                        <div className="text-[10px] opacity-80">
+                          {fmtTime(new Date(ev.start_time))}
+                        </div>
+                      )}
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </>
   );
 }
 
@@ -201,13 +256,13 @@ export function DayView({ date, events, onSelectEvent, colorMap }: ViewProps) {
 
   return (
     <div className="rounded-md border bg-card">
-      <div className="border-b px-3 py-2 text-sm font-medium">
-        {date.toLocaleDateString([], {
-          weekday: "long",
-          month: "long",
-          day: "numeric",
-          year: "numeric",
-        })}
+      <div className="border-b px-3 py-2 text-xs sm:text-sm font-medium">
+        <span className="sm:hidden">
+          {date.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" })}
+        </span>
+        <span className="hidden sm:inline">
+          {date.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
+        </span>
       </div>
       {allDayEvents.length > 0 && (
         <div className="border-b bg-muted/20 px-3 py-2 space-y-1">
@@ -237,8 +292,8 @@ export function DayView({ date, events, onSelectEvent, colorMap }: ViewProps) {
             return s.getHours() === h && s.toDateString() === date.toDateString();
           });
           return (
-            <div key={h} className="grid grid-cols-[60px_1fr] min-h-[44px]">
-              <div className="border-r px-2 py-1 text-xs text-muted-foreground">
+            <div key={h} className="grid grid-cols-[44px_1fr] sm:grid-cols-[60px_1fr] min-h-[44px]">
+              <div className="border-r px-1.5 sm:px-2 py-1 text-[10px] sm:text-xs text-muted-foreground">
                 {slotStart.toLocaleTimeString([], { hour: "numeric" })}
               </div>
               <div className="space-y-1 p-1">
@@ -314,21 +369,26 @@ export function ScheduleView({ events, onSelectEvent, colorMap }: { events: Cale
                   <button
                     type="button"
                     onClick={() => onSelectEvent?.(ev)}
-                    className="flex w-full items-start gap-3 px-3 py-2 text-left text-sm hover:bg-accent/40"
+                    className="flex w-full items-start gap-2 sm:gap-3 px-2 sm:px-3 py-2 text-left text-sm hover:bg-accent/40"
                   >
                     <span
-                      className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full"
+                      className="mt-1.5 h-2 w-2 sm:h-2.5 sm:w-2.5 shrink-0 rounded-full"
                       style={{ backgroundColor: c ?? "hsl(var(--primary))" }}
                     />
-                    <div className="w-24 shrink-0 text-xs text-muted-foreground">
+                    <div className="w-14 sm:w-24 shrink-0 text-[10px] sm:text-xs text-muted-foreground leading-tight">
                       {ev.all_day
                         ? "All day"
-                        : `${fmtTime(new Date(ev.start_time))} – ${fmtTime(new Date(ev.end_time))}`}
+                        : (
+                          <>
+                            <div>{fmtTime(new Date(ev.start_time))}</div>
+                            <div className="hidden sm:inline">– {fmtTime(new Date(ev.end_time))}</div>
+                          </>
+                        )}
                     </div>
-                    <div className="min-w-0">
-                      <p className="truncate font-medium">{ev.title}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium text-xs sm:text-sm">{ev.title}</p>
                       {ev.location && (
-                        <p className="text-xs text-muted-foreground truncate">{ev.location}</p>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{ev.location}</p>
                       )}
                     </div>
                   </button>

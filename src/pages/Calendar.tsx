@@ -155,7 +155,7 @@ export default function Calendar() {
               }
             />
 
-            <div className="flex-1 overflow-auto p-4 md:p-6">
+            <div className="flex-1 overflow-auto p-2 sm:p-4 md:p-6">
               {activeTab !== "schedule" && (
                 <div className="mb-3 flex items-center justify-between">
                   <div className="flex items-center gap-2">
