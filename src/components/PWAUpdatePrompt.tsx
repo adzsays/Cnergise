@@ -9,10 +9,17 @@ export function PWAUpdatePrompt() {
     updateServiceWorker,
   } = useRegisterSW({
     onRegisteredSW(swUrl, reg) {
-      // Poll for new SW every 60 minutes
-      if (reg) {
-        setInterval(() => reg.update().catch(() => {}), 60 * 60 * 1000);
-      }
+      if (!reg) return;
+      // Immediate check on startup
+      reg.update().catch(() => {});
+      // Poll every 5 minutes while app is open
+      setInterval(() => reg.update().catch(() => {}), 5 * 60 * 1000);
+      // Re-check whenever the app regains focus or becomes visible
+      const check = () => reg.update().catch(() => {});
+      window.addEventListener("focus", check);
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") check();
+      });
     },
   });
 
