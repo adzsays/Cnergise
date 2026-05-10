@@ -91,11 +91,13 @@ export default function Learning() {
 
               {/* Main Content */}
               <Tabs defaultValue="courses" className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <TabsList>
-                    <TabsTrigger value="courses">My Courses</TabsTrigger>
-                    <TabsTrigger value="providers">Providers</TabsTrigger>
-                  </TabsList>
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 scrollbar-none">
+                    <TabsList className="inline-flex w-max">
+                      <TabsTrigger value="courses" className="text-xs sm:text-sm">My Courses</TabsTrigger>
+                      <TabsTrigger value="providers" className="text-xs sm:text-sm">Providers</TabsTrigger>
+                    </TabsList>
+                  </div>
                   <AddCourseDialog />
                 </div>
 
