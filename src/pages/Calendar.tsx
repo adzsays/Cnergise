@@ -5,7 +5,7 @@ import { NavigationTabs } from "@/components/NavigationTabs";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Calendar as CalendarIcon, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
+import { PlusCircle, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { GoogleCalendarConnect } from "@/components/calendar/GoogleCalendarConnect";
 import { SyncedCalendarsCard } from "@/components/calendar/SyncedCalendarsCard";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -126,22 +126,6 @@ export default function Calendar() {
                 <TooltipProvider delayDuration={150}>
                   <div className="flex items-center gap-0.5">
                     <GoogleCalendarConnect compact />
-                    {isConnected && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => sync.mutate()}
-                            disabled={sync.isPending}
-                            className="h-8 w-8"
-                          >
-                            <RefreshCw className={`h-4 w-4 ${sync.isPending ? "animate-spin" : ""}`} />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Sync now</TooltipContent>
-                      </Tooltip>
-                    )}
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button variant="ghost" size="icon" onClick={openNew} className="h-8 w-8">
