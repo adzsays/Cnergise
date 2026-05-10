@@ -158,6 +158,7 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        <AISidebarPanel />
       </SidebarContent>
 
       <SidebarFooter className="p-2">
