@@ -18,7 +18,7 @@ import { BillingEntityManager } from "@/components/invoices/BillingEntityManager
 import { ServiceManager } from "@/components/invoices/ServiceManager";
 
 import { LayoutDashboard, TrendingUp, CreditCard, Scale, Receipt, Wallet, Sparkles, FolderTree, FileText, Users, Building2, Briefcase, ListChecks } from "lucide-react";
-import { FloatingAIBrief } from "@/components/ai/FloatingAIBrief";
+
 import { Tabs as InnerTabs, TabsContent as InnerTabsContent, TabsList as InnerTabsList, TabsTrigger as InnerTabsTrigger } from "@/components/ui/tabs";
 
 const InvoicingSection = () => {
