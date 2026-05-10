@@ -214,11 +214,23 @@ const Index = () => {
     return { spendToday, spendMonth };
   }, [txns, todayStart, todayEnd]);
 
-  // Project next 14 days of recurring payments & income
+  // Project next 14 days of recurring payments & income (with business-day adjustment)
   const upcomingCashflow = useMemo(() => {
     const now = new Date();
+    const fromDay = startOfDay(now);
     const horizon = addDays(now, 14);
     const items: Array<{ id: string; date: Date; amount: number; label: string; kind: "income" | "expense" }> = [];
+
+    const stepNext = (cur: Date, freq: string): Date | null => {
+      switch (freq) {
+        case "daily": return addDays(cur, 1);
+        case "weekly": return addDays(cur, 7);
+        case "monthly": return new Date(cur.getFullYear(), cur.getMonth() + 1, cur.getDate());
+        case "quarterly": return new Date(cur.getFullYear(), cur.getMonth() + 3, cur.getDate());
+        case "yearly": return new Date(cur.getFullYear() + 1, cur.getMonth(), cur.getDate());
+        default: return null;
+      }
+    };
 
     const addOccurrences = (t: any) => {
       if (!t.start_date) return;
@@ -227,22 +239,18 @@ const Index = () => {
       const amount = Math.abs(Number(t.monthly ?? t.amount) || 0);
       const kind: "income" | "expense" = isIncome(t) ? "income" : "expense";
       const label = t.subcategory || t.category || "Recurring";
-      const stepDays =
-        t.frequency === "daily" ? 1 :
-        t.frequency === "weekly" ? 7 :
-        t.frequency === "monthly" ? 30 :
-        t.frequency === "quarterly" ? 91 :
-        t.frequency === "yearly" ? 365 : 0;
-      if (!stepDays) return;
 
-      // walk forward from start_date until we land in [now, horizon]
       let cur = new Date(start);
       let guard = 0;
-      while (cur < now && guard++ < 400) cur = addDays(cur, stepDays);
-      while (cur <= horizon && guard++ < 50) {
+      while (cur <= horizon && guard++ < 1000) {
         if (end && cur > end) break;
-        items.push({ id: `${t.id}-${cur.getTime()}`, date: new Date(cur), amount, label, kind });
-        cur = addDays(cur, stepDays);
+        const adjusted = getNextBusinessDay(cur);
+        if (adjusted >= fromDay && adjusted <= horizon) {
+          items.push({ id: `${t.id}-${adjusted.getTime()}`, date: adjusted, amount, label, kind });
+        }
+        const nxt = stepNext(cur, t.frequency);
+        if (!nxt) break;
+        cur = nxt;
       }
     };
 
