@@ -111,7 +111,6 @@ const Finances = () => {
               </div>
             </div>
           </SidebarInset>
-          <FloatingAIBrief scope="finance" title="Finance AI brief" />
         </div>
       </SidebarProvider>
     </FinancialDataProvider>
