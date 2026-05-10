@@ -25,10 +25,35 @@ function fmtTime(d: Date) {
   return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
+function ymdLocal(d: Date) {
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+function ymdUTC(iso: string) {
+  const d = new Date(iso);
+  return `${d.getUTCFullYear()}-${d.getUTCMonth()}-${d.getUTCDate()}`;
+}
+
 function eventsOnDate(events: CalendarEvent[], date: Date) {
   const start = startOfDay(date).getTime();
   const end = addDays(date, 1).getTime();
+  const cellLocalKey = ymdLocal(date);
   return events.filter((e) => {
+    if (e.all_day) {
+      // Google all-day: start/end are date-only (UTC midnight), end is exclusive.
+      // Compare by calendar date in UTC against the cell's local date to avoid
+      // timezone bleed-over (e.g. an event ending May 10 00:00 UTC showing on May 10).
+      const sKey = ymdUTC(e.start_time);
+      const endDate = new Date(e.end_time);
+      // Inclusive last day = end - 1 day
+      const lastDay = new Date(Date.UTC(
+        endDate.getUTCFullYear(),
+        endDate.getUTCMonth(),
+        endDate.getUTCDate() - 1,
+      ));
+      const eKey = `${lastDay.getUTCFullYear()}-${lastDay.getUTCMonth()}-${lastDay.getUTCDate()}`;
+      // Treat the cell's *local* y-m-d as the calendar date for comparison
+      return cellLocalKey >= sKey && cellLocalKey <= eKey;
+    }
     const s = new Date(e.start_time).getTime();
     const en = new Date(e.end_time).getTime();
     return s < end && en > start;
