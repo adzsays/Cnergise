@@ -36,23 +36,21 @@ function ymdUTC(iso: string) {
 function eventsOnDate(events: CalendarEvent[], date: Date) {
   const start = startOfDay(date).getTime();
   const end = addDays(date, 1).getTime();
-  const cellLocalKey = ymdLocal(date);
+  // The cell represents this calendar date (year/month/day) in local time.
+  const cellY = date.getFullYear(), cellM = date.getMonth(), cellD = date.getDate();
+  const cellNum = cellY * 10000 + cellM * 100 + cellD;
   return events.filter((e) => {
     if (e.all_day) {
-      // Google all-day: start/end are date-only (UTC midnight), end is exclusive.
-      // Compare by calendar date in UTC against the cell's local date to avoid
-      // timezone bleed-over (e.g. an event ending May 10 00:00 UTC showing on May 10).
-      const sKey = ymdUTC(e.start_time);
-      const endDate = new Date(e.end_time);
-      // Inclusive last day = end - 1 day
-      const lastDay = new Date(Date.UTC(
-        endDate.getUTCFullYear(),
-        endDate.getUTCMonth(),
-        endDate.getUTCDate() - 1,
-      ));
-      const eKey = `${lastDay.getUTCFullYear()}-${lastDay.getUTCMonth()}-${lastDay.getUTCDate()}`;
-      // Treat the cell's *local* y-m-d as the calendar date for comparison
-      return cellLocalKey >= sKey && cellLocalKey <= eKey;
+      // Google all-day: dates are UTC midnights and end is *exclusive*.
+      // Compare by calendar date so a tz offset doesn't bleed into the next cell.
+      const s = new Date(e.start_time);
+      const en = new Date(e.end_time);
+      const sNum = s.getUTCFullYear() * 10000 + s.getUTCMonth() * 100 + s.getUTCDate();
+      // Last inclusive day = end - 1 day
+      const lastMs = en.getTime() - 24 * 3600 * 1000;
+      const last = new Date(lastMs);
+      const eNum = last.getUTCFullYear() * 10000 + last.getUTCMonth() * 100 + last.getUTCDate();
+      return cellNum >= sNum && cellNum <= eNum;
     }
     const s = new Date(e.start_time).getTime();
     const en = new Date(e.end_time).getTime();
