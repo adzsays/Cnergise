@@ -143,6 +143,7 @@ Deno.serve(async (req) => {
     }
 
     let totalSynced = 0, totalDeleted = 0;
+    const accountErrors: Array<{ email: string; reauth: boolean; message: string }> = [];
 
     for (const rawConn of connections) {
       try {
@@ -205,14 +206,23 @@ Deno.serve(async (req) => {
         }
 
         await admin.from("google_calendar_connections")
-          .update({ last_sync_at: new Date().toISOString() })
+          .update({ last_sync_at: new Date().toISOString(), last_sync_error: null })
           .eq("id", conn.id);
       } catch (err) {
-        console.error("Account sync error", rawConn.google_email, err);
+        const msg = String((err as Error)?.message || err);
+        const reauth = msg.startsWith("REAUTH_REQUIRED");
+        console.error("Account sync error", rawConn.google_email, msg);
+        accountErrors.push({ email: rawConn.google_email, reauth, message: msg });
       }
     }
 
-    return new Response(JSON.stringify({ synced: totalSynced, deleted: totalDeleted, accounts: connections.length }), {
+    return new Response(JSON.stringify({
+      synced: totalSynced,
+      deleted: totalDeleted,
+      accounts: connections.length,
+      errors: accountErrors,
+      reauthRequired: accountErrors.filter((e) => e.reauth).map((e) => e.email),
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
