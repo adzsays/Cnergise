@@ -101,9 +101,9 @@ const Contacts = () => {
         <SidebarInset>
           <div className="flex h-full flex-col">
             <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-              <div className="flex h-16 items-center justify-between px-6">
+              <div className="flex h-14 sm:h-16 items-center justify-between px-3 sm:px-6">
                 <div>
-                  <h1 className="text-2xl font-bold gradient-heading">Contacts</h1>
+                  <h1 className="text-lg sm:text-2xl font-bold gradient-heading truncate">Contacts</h1>
                   <p className="text-sm text-muted-foreground">
                     Manage your contacts and connections
                   </p>

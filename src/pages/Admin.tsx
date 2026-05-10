@@ -65,7 +65,7 @@ export default function Admin() {
         <div className="flex-1 p-8">
           <div className="max-w-7xl mx-auto space-y-6">
             <div>
-              <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+              <h1 className="text-xl sm:text-3xl font-bold">Admin Dashboard</h1>
               <p className="text-muted-foreground mt-2">Manage users and their roles</p>
             </div>
 
