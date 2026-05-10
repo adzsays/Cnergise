@@ -1891,6 +1891,7 @@ export type Database = {
           google_email: string | null
           id: string
           last_sync_at: string | null
+          last_sync_error: string | null
           primary_calendar_id: string | null
           refresh_token: string
           scope: string | null
@@ -1905,6 +1906,7 @@ export type Database = {
           google_email?: string | null
           id?: string
           last_sync_at?: string | null
+          last_sync_error?: string | null
           primary_calendar_id?: string | null
           refresh_token: string
           scope?: string | null
@@ -1919,6 +1921,7 @@ export type Database = {
           google_email?: string | null
           id?: string
           last_sync_at?: string | null
+          last_sync_error?: string | null
           primary_calendar_id?: string | null
           refresh_token?: string
           scope?: string | null

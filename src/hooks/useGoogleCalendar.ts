@@ -10,6 +10,7 @@ export type GCalConnection = {
   google_email: string | null;
   last_sync_at: string | null;
   primary_calendar_id: string | null;
+  last_sync_error: string | null;
 };
 
 export function useGoogleCalendar() {
@@ -23,7 +24,7 @@ export function useGoogleCalendar() {
       if (!user) return [];
       const { data } = await supabase
         .from("google_calendar_connections")
-        .select("id, google_email, last_sync_at, primary_calendar_id")
+        .select("id, google_email, last_sync_at, primary_calendar_id, last_sync_error")
         .eq("user_id", user.id)
         .order("created_at", { ascending: true });
       return (data ?? []) as GCalConnection[];
@@ -62,7 +63,16 @@ export function useGoogleCalendar() {
       return data;
     },
     onSuccess: (d: any) => {
-      toast({ title: "Synced", description: `${d?.synced ?? 0} events across ${d?.accounts ?? 0} account(s)` });
+      const reauth: string[] = d?.reauthRequired ?? [];
+      if (reauth.length > 0) {
+        toast({
+          title: "Reconnect required",
+          description: `Google sign-in expired for: ${reauth.join(", ")}. Click Connect to re-authorize.`,
+          variant: "destructive",
+        });
+      } else {
+        toast({ title: "Synced", description: `${d?.synced ?? 0} events across ${d?.accounts ?? 0} account(s)` });
+      }
       qc.invalidateQueries({ queryKey: ["gcal-connections"] });
       qc.invalidateQueries({ queryKey: ["calendar-events"] });
     },

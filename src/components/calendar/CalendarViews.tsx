@@ -28,7 +28,22 @@ function fmtTime(d: Date) {
 function eventsOnDate(events: CalendarEvent[], date: Date) {
   const start = startOfDay(date).getTime();
   const end = addDays(date, 1).getTime();
+  // The cell represents this calendar date (year/month/day) in local time.
+  const cellY = date.getFullYear(), cellM = date.getMonth(), cellD = date.getDate();
+  const cellNum = cellY * 10000 + cellM * 100 + cellD;
   return events.filter((e) => {
+    if (e.all_day) {
+      // Google all-day: dates are UTC midnights and end is *exclusive*.
+      // Compare by calendar date so a tz offset doesn't bleed into the next cell.
+      const s = new Date(e.start_time);
+      const en = new Date(e.end_time);
+      const sNum = s.getUTCFullYear() * 10000 + s.getUTCMonth() * 100 + s.getUTCDate();
+      // Last inclusive day = end - 1 day
+      const lastMs = en.getTime() - 24 * 3600 * 1000;
+      const last = new Date(lastMs);
+      const eNum = last.getUTCFullYear() * 10000 + last.getUTCMonth() * 100 + last.getUTCDate();
+      return cellNum >= sNum && cellNum <= eNum;
+    }
     const s = new Date(e.start_time).getTime();
     const en = new Date(e.end_time).getTime();
     return s < end && en > start;
