@@ -1,119 +1,64 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useCalendarSubscriptions } from "@/hooks/useCalendarSubscriptions";
+import { Card, CardContent } from "@/components/ui/card";
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
-import { AlertTriangle, CalendarX, Loader2, RefreshCw } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+/**
+ * On the main calendar screen this card ONLY renders when there is a sync
+ * problem (reauth required or last sync error). Healthy state is hidden;
+ * detailed sync status lives in the Manage Calendars dialog.
+ */
 export function SyncedCalendarsCard({ onManage }: { onManage?: () => void }) {
-  const { data: subData, isLoading: subsLoading } = useCalendarSubscriptions();
-  const { connections, sync, connect, isConnected } = useGoogleCalendar();
+  const { connections, connect } = useGoogleCalendar();
 
-  const subscriptions = subData?.subscriptions ?? [];
-  const accounts = subData?.accounts ?? [];
+  const issues = connections
+    .map((c) => {
+      const err = c.last_sync_error;
+      if (!err) return null;
+      const needsReauth = /refresh|invalid_grant|REAUTH/i.test(err);
+      return { conn: c, err, needsReauth };
+    })
+    .filter((x): x is { conn: typeof connections[number]; err: string; needsReauth: boolean } => !!x);
 
-  if (!isConnected && connections.length === 0) {
-    return (
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Synced Calendars</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-center justify-center h-24 text-muted-foreground gap-2">
-            <CalendarX className="h-6 w-6 opacity-30" />
-            <p className="text-xs">No Google accounts connected.</p>
-            {onManage && (
-              <Button size="sm" variant="outline" onClick={onManage}>
-                Connect account
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  if (issues.length === 0) return null;
 
   return (
-    <Card>
-      <CardHeader className="pb-2 flex flex-row items-center justify-between">
-        <CardTitle className="text-base">Synced Calendars</CardTitle>
-        {onManage && (
-          <Button size="sm" variant="ghost" onClick={onManage} className="h-7 text-xs">
-            Manage
-          </Button>
-        )}
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {accounts.map((account) => {
-          const accountCals = subscriptions.filter(
-            (s) => s.account_id === account.id && s.enabled
-          );
-          const conn = connections.find((c) => c.google_email === account.google_email);
-          const lastSync = conn?.last_sync_at;
-          const syncError = conn?.last_sync_error;
-          const needsReauth = !!syncError && /refresh|invalid_grant|REAUTH/i.test(syncError);
-
-          return (
-            <div key={account.id} className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium truncate">{account.google_email}</p>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-6 w-6"
-                  onClick={() => sync.mutate()}
-                  disabled={sync.isPending}
-                >
-                  <RefreshCw className={`h-3 w-3 ${sync.isPending ? "animate-spin" : ""}`} />
-                </Button>
-              </div>
-              {needsReauth ? (
-                <div className="flex items-start gap-2 rounded border border-destructive/40 bg-destructive/5 p-2">
-                  <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[11px] text-destructive font-medium">Sign-in expired — events won't update.</p>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-6 mt-1 text-[11px] px-2"
-                      onClick={() => connect.mutate()}
-                      disabled={connect.isPending}
-                    >
-                      Reconnect
-                    </Button>
-                  </div>
-                </div>
-              ) : lastSync ? (
-                <p className="text-[10px] text-muted-foreground">
-                  Last synced: {new Date(lastSync).toLocaleString([], { dateStyle: "short", timeStyle: "short" })}
-                </p>
-              ) : null}
-              <div className="space-y-1">
-                {accountCals.length > 0 ? (
-                  accountCals.map((cal) => (
-                    <div key={cal.id} className="flex items-center gap-2 text-xs">
-                      <span
-                        className="h-2.5 w-2.5 shrink-0 rounded-full border"
-                        style={{ backgroundColor: cal.background_color || "#9ca3af" }}
-                      />
-                      <span className="truncate">{cal.summary}</span>
-                      {cal.is_primary && (
-                        <span className="text-[10px] text-muted-foreground shrink-0">(primary)</span>
-                      )}
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-xs text-muted-foreground">No calendars enabled.</p>
+    <Card className="border-destructive/40 bg-destructive/5">
+      <CardContent className="space-y-3 pt-4">
+        {issues.map(({ conn, err, needsReauth }) => (
+          <div key={conn.id} className="flex items-start gap-2">
+            <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0 space-y-1">
+              <p className="text-xs font-medium truncate">{conn.google_email}</p>
+              <p className="text-[11px] text-destructive">
+                {needsReauth ? "Sign-in expired — events won't update." : err}
+              </p>
+              <div className="flex gap-2 pt-0.5">
+                {needsReauth ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-6 text-[11px] px-2"
+                    onClick={() => connect.mutate()}
+                    disabled={connect.isPending}
+                  >
+                    Reconnect
+                  </Button>
+                ) : null}
+                {onManage && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 text-[11px] px-2"
+                    onClick={onManage}
+                  >
+                    Manage
+                  </Button>
                 )}
               </div>
             </div>
-          );
-        })}
-
-        {subsLoading && (
-          <div className="flex items-center justify-center py-4">
-            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
           </div>
-        )}
+        ))}
       </CardContent>
     </Card>
   );
