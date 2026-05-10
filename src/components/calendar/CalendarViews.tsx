@@ -369,21 +369,26 @@ export function ScheduleView({ events, onSelectEvent, colorMap }: { events: Cale
                   <button
                     type="button"
                     onClick={() => onSelectEvent?.(ev)}
-                    className="flex w-full items-start gap-3 px-3 py-2 text-left text-sm hover:bg-accent/40"
+                    className="flex w-full items-start gap-2 sm:gap-3 px-2 sm:px-3 py-2 text-left text-sm hover:bg-accent/40"
                   >
                     <span
-                      className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full"
+                      className="mt-1.5 h-2 w-2 sm:h-2.5 sm:w-2.5 shrink-0 rounded-full"
                       style={{ backgroundColor: c ?? "hsl(var(--primary))" }}
                     />
-                    <div className="w-24 shrink-0 text-xs text-muted-foreground">
+                    <div className="w-14 sm:w-24 shrink-0 text-[10px] sm:text-xs text-muted-foreground leading-tight">
                       {ev.all_day
                         ? "All day"
-                        : `${fmtTime(new Date(ev.start_time))} – ${fmtTime(new Date(ev.end_time))}`}
+                        : (
+                          <>
+                            <div>{fmtTime(new Date(ev.start_time))}</div>
+                            <div className="hidden sm:inline">– {fmtTime(new Date(ev.end_time))}</div>
+                          </>
+                        )}
                     </div>
-                    <div className="min-w-0">
-                      <p className="truncate font-medium">{ev.title}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium text-xs sm:text-sm">{ev.title}</p>
                       {ev.location && (
-                        <p className="text-xs text-muted-foreground truncate">{ev.location}</p>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{ev.location}</p>
                       )}
                     </div>
                   </button>
