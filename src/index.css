@@ -324,5 +324,12 @@
   .stagger-2 { animation-delay: 80ms; }
   .stagger-3 { animation-delay: 120ms; }
   .stagger-4 { animation-delay: 160ms; }
+
+  /* Hide scrollbars while keeping scroll behavior (mobile tab strips, ticker rows) */
+  .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+  .scrollbar-none::-webkit-scrollbar { display: none; }
+
+  /* Prevent root from ever scrolling sideways on mobile */
+  html, body { overflow-x: hidden; max-width: 100vw; }
 }
 
