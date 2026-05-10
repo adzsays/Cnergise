@@ -337,12 +337,12 @@ export function DayView({
 
 export function ScheduleView({ events, onSelectEvent, colorMap }: { events: CalendarEvent[]; onSelectEvent?: (e: CalendarEvent) => void; colorMap?: Record<string, string> }) {
   const grouped = useMemo(() => {
-    const todayStart = startOfDay(new Date()).getTime();
+    const now = Date.now();
     const map = new Map<string, CalendarEvent[]>();
     for (const e of events) {
       const endMs = new Date(e.end_time).getTime();
-      // Only include events that haven't ended yet (today or future)
-      if (endMs < todayStart) continue;
+      // Only include events that haven't ended yet
+      if (endMs < now) continue;
       const k = startOfDay(new Date(e.start_time)).toISOString();
       const arr = map.get(k) ?? [];
       arr.push(e);
