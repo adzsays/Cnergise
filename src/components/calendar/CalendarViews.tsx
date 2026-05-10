@@ -80,11 +80,13 @@ export function MonthView({ date, events, onSelectDate, onSelectEvent, colorMap 
   const month = date.getMonth();
 
   return (
-    <div className="-mx-4 overflow-x-auto md:mx-0">
-      <div className="min-w-[640px] rounded-md border bg-card overflow-hidden mx-4 md:mx-0 md:min-w-0">
-      <div className="grid grid-cols-7 border-b bg-muted/40 text-xs font-medium text-muted-foreground">
-        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-          <div key={d} className="p-2 text-center">{d}</div>
+    <div className="rounded-md border bg-card overflow-hidden">
+      <div className="grid grid-cols-7 border-b bg-muted/40 text-[10px] sm:text-xs font-medium text-muted-foreground">
+        {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
+          <div key={i} className="p-1 sm:p-2 text-center">
+            <span className="sm:hidden">{d}</span>
+            <span className="hidden sm:inline">{["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][i]}</span>
+          </div>
         ))}
       </div>
       <div className="grid grid-cols-7 grid-rows-6">
@@ -99,19 +101,19 @@ export function MonthView({ date, events, onSelectDate, onSelectEvent, colorMap 
               key={d.toISOString()}
               onClick={() => onSelectDate?.(d)}
               className={cn(
-                "min-h-[88px] cursor-pointer border-b border-r p-1.5 text-left align-top transition-colors hover:bg-accent/40",
+                "min-h-[60px] sm:min-h-[88px] cursor-pointer border-b border-r p-1 sm:p-1.5 text-left align-top transition-colors hover:bg-accent/40 overflow-hidden",
                 !inMonth && "bg-muted/20 text-muted-foreground",
               )}
             >
               <div
                 className={cn(
-                  "mb-1 inline-flex h-6 w-6 items-center justify-center rounded-full text-xs",
+                  "mb-0.5 sm:mb-1 inline-flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full text-[10px] sm:text-xs",
                   isToday && "bg-primary text-primary-foreground font-semibold",
                 )}
               >
                 {d.getDate()}
               </div>
-              <div className="space-y-1">
+              <div className="space-y-0.5 sm:space-y-1 hidden sm:block">
                 {dayEvents.map((ev) => (
                   <button
                     type="button"
@@ -129,10 +131,22 @@ export function MonthView({ date, events, onSelectDate, onSelectEvent, colorMap 
                   <div className="text-[11px] text-muted-foreground">+{more} more</div>
                 )}
               </div>
+              {/* Mobile: just show dots for events */}
+              <div className="sm:hidden flex flex-wrap gap-0.5 mt-1">
+                {all.slice(0, 4).map((ev) => {
+                  const c = eventColor(ev, colorMap);
+                  return (
+                    <span
+                      key={ev.id}
+                      className="h-1.5 w-1.5 rounded-full bg-primary"
+                      style={c ? { backgroundColor: c } : undefined}
+                    />
+                  );
+                })}
+              </div>
             </div>
           );
         })}
-      </div>
       </div>
     </div>
   );
