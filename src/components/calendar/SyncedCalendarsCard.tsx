@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 
 export function SyncedCalendarsCard({ onManage }: { onManage?: () => void }) {
   const { data: subData, isLoading: subsLoading } = useCalendarSubscriptions();
-  const { connections, sync, isConnected } = useGoogleCalendar();
+  const { connections, sync, connect, isConnected } = useGoogleCalendar();
 
   const subscriptions = subData?.subscriptions ?? [];
   const accounts = subData?.accounts ?? [];
