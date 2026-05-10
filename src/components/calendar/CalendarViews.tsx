@@ -256,13 +256,13 @@ export function DayView({ date, events, onSelectEvent, colorMap }: ViewProps) {
 
   return (
     <div className="rounded-md border bg-card">
-      <div className="border-b px-3 py-2 text-sm font-medium">
-        {date.toLocaleDateString([], {
-          weekday: "long",
-          month: "long",
-          day: "numeric",
-          year: "numeric",
-        })}
+      <div className="border-b px-3 py-2 text-xs sm:text-sm font-medium">
+        <span className="sm:hidden">
+          {date.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" })}
+        </span>
+        <span className="hidden sm:inline">
+          {date.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
+        </span>
       </div>
       {allDayEvents.length > 0 && (
         <div className="border-b bg-muted/20 px-3 py-2 space-y-1">
