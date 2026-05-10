@@ -335,20 +335,18 @@ export function DayView({
   );
 }
 
-export function ScheduleView({ events, onSelectEvent, colorMap }: { events: CalendarEvent[]; onSelectEvent?: (e: CalendarEvent) => void; colorMap?: Record<string, string> }) {
+export function ScheduleView({ events, onSelectEvent, colorMap, selectedEventId }: { events: CalendarEvent[]; onSelectEvent?: (e: CalendarEvent) => void; colorMap?: Record<string, string>; selectedEventId?: string | null }) {
   const grouped = useMemo(() => {
     const now = Date.now();
     const map = new Map<string, CalendarEvent[]>();
     for (const e of events) {
       const endMs = new Date(e.end_time).getTime();
-      // Only include events that haven't ended yet
       if (endMs < now) continue;
       const k = startOfDay(new Date(e.start_time)).toISOString();
       const arr = map.get(k) ?? [];
       arr.push(e);
       map.set(k, arr);
     }
-    // Sort days ascending and events within day by start time
     const out = Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
     for (const [, items] of out) {
       items.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
@@ -378,12 +376,16 @@ export function ScheduleView({ events, onSelectEvent, colorMap }: { events: Cale
           <ul className="divide-y">
             {items.map((ev) => {
               const c = eventColor(ev, colorMap);
+              const isSelected = selectedEventId === ev.id;
               return (
                 <li key={ev.id}>
                   <button
                     type="button"
                     onClick={() => onSelectEvent?.(ev)}
-                    className="flex w-full items-start gap-2 sm:gap-3 px-2 sm:px-3 py-2 text-left text-sm hover:bg-accent/40"
+                    className={cn(
+                      "flex w-full items-start gap-2 sm:gap-3 px-2 sm:px-3 py-2 text-left text-sm hover:bg-accent/40 transition-colors",
+                      isSelected && "bg-accent/60",
+                    )}
                   >
                     <span
                       className="mt-1.5 h-2 w-2 sm:h-2.5 sm:w-2.5 shrink-0 rounded-full"
