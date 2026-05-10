@@ -105,7 +105,7 @@ const Index = () => {
       if (!user) return [];
       const { data } = await supabase
         .from("financial_transactions")
-        .select("id, category, subcategory, amount, monthly, type, frequency, start_date, end_date")
+        .select("id, category, subcategory, amount, monthly, type, frequency, start_date, end_date, date")
         .eq("user_id", user.id)
         .neq("frequency", "one-time")
         .not("frequency", "is", null);
@@ -233,8 +233,10 @@ const Index = () => {
     };
 
     const addOccurrences = (t: any) => {
-      if (!t.start_date) return;
-      const start = new Date(t.start_date);
+      const anchor = t.start_date ?? (t.date ? Number(t.date) : null);
+      if (anchor == null) return;
+      const start = new Date(anchor);
+      if (isNaN(start.getTime())) return;
       const end = t.end_date ? new Date(t.end_date) : null;
       const amount = Math.abs(Number(t.monthly ?? t.amount) || 0);
       const kind: "income" | "expense" = isIncome(t) ? "income" : "expense";
