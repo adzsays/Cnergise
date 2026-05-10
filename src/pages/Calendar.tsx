@@ -263,11 +263,59 @@ export default function Calendar() {
                 </TabsContent>
 
                 <TabsContent value="schedule" className="mt-0">
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className="lg:col-span-2">
-                      <ScheduleView events={events} colorMap={colorMap} onSelectEvent={openEvent} />
-                    </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+                    <ScheduleView
+                      events={events}
+                      colorMap={colorMap}
+                      selectedEventId={dayDetailEvent?.id ?? null}
+                      onSelectEvent={(e) => setDayDetailEvent(e)}
+                    />
                     <div className="space-y-4">
+                      {dayDetailEvent ? (
+                        <Card>
+                          <CardHeader className="pb-2 flex-row items-start justify-between gap-2 space-y-0">
+                            <div className="min-w-0">
+                              <CardTitle className="text-base truncate">{dayDetailEvent.title}</CardTitle>
+                              <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {new Date(dayDetailEvent.start_time).toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" })}
+                                {!dayDetailEvent.all_day && (
+                                  <> · {new Date(dayDetailEvent.start_time).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} – {new Date(dayDetailEvent.end_time).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</>
+                                )}
+                              </p>
+                            </div>
+                            <Button size="sm" variant="outline" onClick={() => openEvent(dayDetailEvent)} className="h-8">
+                              <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
+                            </Button>
+                          </CardHeader>
+                          <CardContent className="space-y-3 text-sm">
+                            {dayDetailEvent.location && (
+                              <p className="flex items-start gap-2 text-muted-foreground">
+                                <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
+                                <span>{dayDetailEvent.location}</span>
+                              </p>
+                            )}
+                            {dayDetailEvent.meeting_url && (
+                              <a
+                                href={dayDetailEvent.meeting_url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-2 text-primary hover:underline"
+                              >
+                                <Video className="h-4 w-4" /> Join meeting
+                              </a>
+                            )}
+                            {dayDetailEvent.description && (
+                              <p className="whitespace-pre-wrap text-foreground/90">{dayDetailEvent.description}</p>
+                            )}
+                          </CardContent>
+                        </Card>
+                      ) : (
+                        <div className="rounded-md border bg-card p-8 text-center text-sm text-muted-foreground">
+                          <CalendarIcon className="h-8 w-8 mb-2 opacity-20 mx-auto" />
+                          <p>Select an event to see details</p>
+                        </div>
+                      )}
                       <SyncedCalendarsCard onManage={() => setManageCalsOpen(true)} />
                     </div>
                   </div>
