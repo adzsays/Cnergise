@@ -63,7 +63,16 @@ export function useGoogleCalendar() {
       return data;
     },
     onSuccess: (d: any) => {
-      toast({ title: "Synced", description: `${d?.synced ?? 0} events across ${d?.accounts ?? 0} account(s)` });
+      const reauth: string[] = d?.reauthRequired ?? [];
+      if (reauth.length > 0) {
+        toast({
+          title: "Reconnect required",
+          description: `Google sign-in expired for: ${reauth.join(", ")}. Click Connect to re-authorize.`,
+          variant: "destructive",
+        });
+      } else {
+        toast({ title: "Synced", description: `${d?.synced ?? 0} events across ${d?.accounts ?? 0} account(s)` });
+      }
       qc.invalidateQueries({ queryKey: ["gcal-connections"] });
       qc.invalidateQueries({ queryKey: ["calendar-events"] });
     },
