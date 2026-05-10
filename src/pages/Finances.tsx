@@ -27,13 +27,15 @@ const InvoicingSection = () => {
   const openEditor = (id: string | null) => { setEditingId(id); setTab("editor"); };
   return (
     <InnerTabs value={tab} onValueChange={setTab} className="space-y-4">
-      <InnerTabsList>
-        <InnerTabsTrigger value="list"><ListChecks className="h-4 w-4 mr-1" />Invoices</InnerTabsTrigger>
-        <InnerTabsTrigger value="editor"><FileText className="h-4 w-4 mr-1" />Editor</InnerTabsTrigger>
-        <InnerTabsTrigger value="customers"><Users className="h-4 w-4 mr-1" />Customers</InnerTabsTrigger>
-        <InnerTabsTrigger value="services"><Briefcase className="h-4 w-4 mr-1" />Services</InnerTabsTrigger>
-        <InnerTabsTrigger value="entities"><Building2 className="h-4 w-4 mr-1" />Billing entities</InnerTabsTrigger>
-      </InnerTabsList>
+      <div className="overflow-x-auto -mx-3 px-3 md:mx-0 md:px-0 scrollbar-none">
+        <InnerTabsList className="inline-flex w-max">
+          <InnerTabsTrigger value="list" className="text-xs sm:text-sm"><ListChecks className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Invoices</span></InnerTabsTrigger>
+          <InnerTabsTrigger value="editor" className="text-xs sm:text-sm"><FileText className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Editor</span></InnerTabsTrigger>
+          <InnerTabsTrigger value="customers" className="text-xs sm:text-sm"><Users className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Customers</span></InnerTabsTrigger>
+          <InnerTabsTrigger value="services" className="text-xs sm:text-sm"><Briefcase className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Services</span></InnerTabsTrigger>
+          <InnerTabsTrigger value="entities" className="text-xs sm:text-sm"><Building2 className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Billing</span></InnerTabsTrigger>
+        </InnerTabsList>
+      </div>
       <InnerTabsContent value="list"><InvoiceList onEdit={(id) => openEditor(id)} onNew={() => openEditor(null)} /></InnerTabsContent>
       <InnerTabsContent value="editor"><InvoiceEditor invoiceId={editingId} onSaved={(id) => setEditingId(id)} /></InnerTabsContent>
       <InnerTabsContent value="customers"><CustomerManager /></InnerTabsContent>
