@@ -232,9 +232,9 @@ export function DayView({ date, events, onSelectEvent, colorMap }: ViewProps) {
           const slotEnd = new Date(slotStart);
           slotEnd.setHours(h + 1);
           const inSlot = timedEvents.filter((e) => {
-            const s = new Date(e.start_time).getTime();
-            const en = new Date(e.end_time).getTime();
-            return s < slotEnd.getTime() && en > slotStart.getTime();
+            const s = new Date(e.start_time);
+            // Only render in the slot matching the event's start hour
+            return s.getHours() === h && s.toDateString() === date.toDateString();
           });
           return (
             <div key={h} className="grid grid-cols-[60px_1fr] min-h-[44px]">
