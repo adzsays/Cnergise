@@ -126,22 +126,6 @@ export default function Calendar() {
                 <TooltipProvider delayDuration={150}>
                   <div className="flex items-center gap-0.5">
                     <GoogleCalendarConnect compact />
-                    {isConnected && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => sync.mutate()}
-                            disabled={sync.isPending}
-                            className="h-8 w-8"
-                          >
-                            <RefreshCw className={`h-4 w-4 ${sync.isPending ? "animate-spin" : ""}`} />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Sync now</TooltipContent>
-                      </Tooltip>
-                    )}
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button variant="ghost" size="icon" onClick={openNew} className="h-8 w-8">
