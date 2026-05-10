@@ -196,6 +196,8 @@ export function WeekView({ date, events, onSelectEvent, colorMap }: ViewProps) {
 export function DayView({ date, events, onSelectEvent, colorMap }: ViewProps) {
   const hours = Array.from({ length: 24 }, (_, i) => i);
   const dayEvents = eventsOnDate(events, date);
+  const allDayEvents = dayEvents.filter((e) => e.all_day);
+  const timedEvents = dayEvents.filter((e) => !e.all_day);
 
   return (
     <div className="rounded-md border bg-card">
@@ -207,13 +209,29 @@ export function DayView({ date, events, onSelectEvent, colorMap }: ViewProps) {
           year: "numeric",
         })}
       </div>
+      {allDayEvents.length > 0 && (
+        <div className="border-b bg-muted/20 px-3 py-2 space-y-1">
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground">All day</div>
+          {allDayEvents.map((ev) => (
+            <button
+              type="button"
+              key={ev.id}
+              onClick={() => onSelectEvent?.(ev)}
+              style={eventStyle(ev, colorMap)}
+              className="block w-full text-left rounded bg-primary/10 px-2 py-1 text-xs text-primary hover:opacity-80"
+            >
+              <div className="font-medium truncate">{ev.title}</div>
+            </button>
+          ))}
+        </div>
+      )}
       <div className="divide-y">
         {hours.map((h) => {
           const slotStart = new Date(date);
           slotStart.setHours(h, 0, 0, 0);
           const slotEnd = new Date(slotStart);
           slotEnd.setHours(h + 1);
-          const inSlot = dayEvents.filter((e) => {
+          const inSlot = timedEvents.filter((e) => {
             const s = new Date(e.start_time).getTime();
             const en = new Date(e.end_time).getTime();
             return s < slotEnd.getTime() && en > slotStart.getTime();
