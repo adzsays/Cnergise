@@ -140,7 +140,6 @@ export default function Plan() {
         </SidebarInset>
 
         <VoiceAssistant />
-        <FloatingAIBrief scope="plan" title="Plan AI brief" />
       </div>
     </SidebarProvider>
   );
