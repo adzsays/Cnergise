@@ -730,6 +730,7 @@ export function TaskList({ externalFilters, onClearFilters }: { externalFilters?
             </div>
           </div>
         </div>
+        </>
       )}
 
       <EditTaskDialog
