@@ -47,9 +47,10 @@ export function SyncedCalendarsCard({ onManage }: { onManage?: () => void }) {
           const accountCals = subscriptions.filter(
             (s) => s.account_id === account.id && s.enabled
           );
-          const lastSync = connections.find(
-            (c) => c.google_email === account.google_email
-          )?.last_sync_at;
+          const conn = connections.find((c) => c.google_email === account.google_email);
+          const lastSync = conn?.last_sync_at;
+          const syncError = conn?.last_sync_error;
+          const needsReauth = !!syncError && /refresh|invalid_grant|REAUTH/i.test(syncError);
 
           return (
             <div key={account.id} className="space-y-1.5">
@@ -65,11 +66,27 @@ export function SyncedCalendarsCard({ onManage }: { onManage?: () => void }) {
                   <RefreshCw className={`h-3 w-3 ${sync.isPending ? "animate-spin" : ""}`} />
                 </Button>
               </div>
-              {lastSync && (
+              {needsReauth ? (
+                <div className="flex items-start gap-2 rounded border border-destructive/40 bg-destructive/5 p-2">
+                  <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] text-destructive font-medium">Sign-in expired — events won't update.</p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-6 mt-1 text-[11px] px-2"
+                      onClick={() => connect.mutate()}
+                      disabled={connect.isPending}
+                    >
+                      Reconnect
+                    </Button>
+                  </div>
+                </div>
+              ) : lastSync ? (
                 <p className="text-[10px] text-muted-foreground">
                   Last synced: {new Date(lastSync).toLocaleString([], { dateStyle: "short", timeStyle: "short" })}
                 </p>
-              )}
+              ) : null}
               <div className="space-y-1">
                 {accountCals.length > 0 ? (
                   accountCals.map((cal) => (
