@@ -1,0 +1,1 @@
+ALTER TABLE public.google_calendar_connections ADD COLUMN IF NOT EXISTS last_sync_error TEXT;
