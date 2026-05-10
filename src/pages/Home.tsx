@@ -364,8 +364,9 @@ const Index = () => {
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-2 xl:grid-cols-3 md:gap-6">
-                {/* Events */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+                {/* LEFT COLUMN: Events + Tasks */}
+                <div className="space-y-3 sm:space-y-4">
                 <DashboardWidget
                   title={eventsCardTitle}
                   action={
@@ -400,117 +401,6 @@ const Index = () => {
                     </div>
                   )}
                 </DashboardWidget>
-
-                {/* Upcoming Payments */}
-                <DashboardWidget
-                  title="Upcoming payments"
-                  action={
-                    <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => navigate("/finances?tab=cashflow")}>
-                      Cash flow
-                    </Button>
-                  }
-                >
-                  {upcomingPayments.length === 0 ? (
-                    <p className="text-sm text-muted-foreground py-4 text-center">No recurring payments in the next 14 days.</p>
-                  ) : (
-                    <div className="space-y-3">
-                      {upcomingPayments.slice(0, 5).map((p) => (
-                        <button
-                          key={p.id}
-                          onClick={() => navigate("/finances?tab=cashflow")}
-                          className="w-full flex items-center justify-between py-2 border-b border-border last:border-0 hover:bg-muted/50 -mx-2 px-2 rounded transition-colors text-left"
-                        >
-                          <div className="flex items-center gap-3 min-w-0">
-                            <ArrowDownCircle className="h-4 w-4 text-destructive shrink-0" />
-                            <div className="min-w-0">
-                              <p className="text-sm font-medium truncate">{p.label}</p>
-                              <p className="text-xs text-muted-foreground">{format(p.date, "EEE MMM d")}</p>
-                            </div>
-                          </div>
-                          <span className="text-sm font-medium tabular-nums">{formatMoney(p.amount)}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </DashboardWidget>
-
-                {/* Upcoming Income */}
-                <DashboardWidget
-                  title="Upcoming income"
-                  action={
-                    <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => navigate("/finances?tab=cashflow")}>
-                      Cash flow
-                    </Button>
-                  }
-                >
-                  {upcomingIncome.length === 0 ? (
-                    <p className="text-sm text-muted-foreground py-4 text-center">No recurring income scheduled.</p>
-                  ) : (
-                    <div className="space-y-3">
-                      {upcomingIncome.slice(0, 5).map((p) => (
-                        <button
-                          key={p.id}
-                          onClick={() => navigate("/finances?tab=cashflow")}
-                          className="w-full flex items-center justify-between py-2 border-b border-border last:border-0 hover:bg-muted/50 -mx-2 px-2 rounded transition-colors text-left"
-                        >
-                          <div className="flex items-center gap-3 min-w-0">
-                            <ArrowUpCircle className="h-4 w-4 text-success shrink-0" />
-                            <div className="min-w-0">
-                              <p className="text-sm font-medium truncate">{p.label}</p>
-                              <p className="text-xs text-muted-foreground">{format(p.date, "EEE MMM d")}</p>
-                            </div>
-                          </div>
-                          <span className="text-sm font-medium tabular-nums">{formatMoney(p.amount)}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </DashboardWidget>
-
-                {/* Invoice chasers */}
-                <DashboardWidget
-                  title="Invoice chasers"
-                  action={
-                    <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => navigate("/finances?tab=invoices")}>
-                      All invoices
-                    </Button>
-                  }
-                >
-                  {outstandingInvoices.length === 0 ? (
-                    <p className="text-sm text-muted-foreground py-4 text-center">No outstanding invoices.</p>
-                  ) : (
-                    <div className="space-y-3">
-                      {outstandingInvoices.slice(0, 5).map((inv: any) => {
-                        const overdue = inv.due_date && new Date(inv.due_date) < todayStart;
-                        return (
-                          <button
-                            key={inv.id}
-                            onClick={() => navigate("/finances?tab=invoices")}
-                            className="w-full flex items-center justify-between py-2 border-b border-border last:border-0 hover:bg-muted/50 -mx-2 px-2 rounded transition-colors text-left"
-                          >
-                            <div className="flex items-center gap-3 min-w-0">
-                              <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
-                              <div className="min-w-0">
-                                <p className="text-sm font-medium truncate">
-                                  {inv.invoice_number} · {inv.client_name ?? "—"}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  {inv.due_date ? `Due ${format(new Date(inv.due_date), "MMM d")}` : "No due date"}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2 shrink-0">
-                              <span className="text-sm font-medium tabular-nums">{formatMoney(Number(inv.balance_due ?? 0))}</span>
-                              {overdue && <Badge variant="destructive" className="text-[10px]">Chase</Badge>}
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </DashboardWidget>
-
-                {/* Open tasks */}
                 <DashboardWidget
                   title="Open tasks"
                   action={
@@ -546,43 +436,116 @@ const Index = () => {
                     </div>
                   )}
                 </DashboardWidget>
+                </div>
 
-                {/* Trading goals */}
+                {/* RIGHT AREA: Payments / Income / Health / Strategy */}
+                <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <DashboardWidget
-                  title="Trading goals"
+                  title="Upcoming payments"
                   action={
-                    <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => navigate("/goals")}>
-                      All goals
+                    <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => navigate("/finances?tab=cashflow")}>
+                      Cash flow
                     </Button>
                   }
                 >
-                  {tradingGoals.length === 0 ? (
-                    <p className="text-sm text-muted-foreground py-4 text-center">No active trading goals.</p>
+                  {upcomingPayments.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-4 text-center">No recurring payments in the next 14 days.</p>
                   ) : (
-                    <div className="space-y-4">
-                      {tradingGoals.map((goal: any) => (
+                    <div className="space-y-3">
+                      {upcomingPayments.slice(0, 5).map((p) => (
                         <button
-                          key={goal.id}
-                          onClick={() => navigate("/goals")}
-                          className="w-full text-left hover:bg-muted/50 -mx-2 px-2 py-1 rounded transition-colors"
+                          key={p.id}
+                          onClick={() => navigate("/finances?tab=cashflow")}
+                          className="w-full flex items-center justify-between py-2 border-b border-border last:border-0 hover:bg-muted/50 -mx-2 px-2 rounded transition-colors text-left"
                         >
-                          <div className="flex items-center justify-between mb-1">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <Target className="h-4 w-4 text-primary shrink-0" />
-                              <span className="text-sm font-medium truncate">{goal.title}</span>
+                          <div className="flex items-center gap-3 min-w-0">
+                            <ArrowDownCircle className="h-4 w-4 text-destructive shrink-0" />
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium truncate">{p.label}</p>
+                              <p className="text-xs text-muted-foreground">{format(p.date, "EEE MMM d")}</p>
                             </div>
-                            <span className="text-xs text-muted-foreground shrink-0 ml-2">{goal.progress ?? 0}%</span>
                           </div>
-                          <div className="w-full bg-muted rounded-full h-2">
-                            <div className="bg-primary h-2 rounded-full transition-all" style={{ width: `${Math.min(100, goal.progress ?? 0)}%` }} />
-                          </div>
+                          <span className="text-sm font-medium tabular-nums">{formatMoney(p.amount)}</span>
                         </button>
                       ))}
                     </div>
                   )}
                 </DashboardWidget>
-
-                {/* Trade signals & strategy momentum */}
+                <DashboardWidget
+                  title="Upcoming income"
+                  action={
+                    <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => navigate("/finances?tab=cashflow")}>
+                      Cash flow
+                    </Button>
+                  }
+                >
+                  {upcomingIncome.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-4 text-center">No recurring income scheduled.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {upcomingIncome.slice(0, 5).map((p) => (
+                        <button
+                          key={p.id}
+                          onClick={() => navigate("/finances?tab=cashflow")}
+                          className="w-full flex items-center justify-between py-2 border-b border-border last:border-0 hover:bg-muted/50 -mx-2 px-2 rounded transition-colors text-left"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <ArrowUpCircle className="h-4 w-4 text-success shrink-0" />
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium truncate">{p.label}</p>
+                              <p className="text-xs text-muted-foreground">{format(p.date, "EEE MMM d")}</p>
+                            </div>
+                          </div>
+                          <span className="text-sm font-medium tabular-nums">{formatMoney(p.amount)}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </DashboardWidget>
+                <DashboardWidget
+                  title="Health check-in"
+                  action={
+                    <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => navigate("/health")}>
+                      Open health
+                    </Button>
+                  }
+                >
+                  <button
+                    onClick={() => navigate("/health")}
+                    className="w-full text-left hover:bg-muted/50 -mx-2 px-2 py-2 rounded transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${healthStale ? "bg-destructive/10 text-destructive" : "bg-success/10 text-success"}`}>
+                        {healthStale ? <AlertTriangle className="h-5 w-5" /> : <Activity className="h-5 w-5" />}
+                      </div>
+                      <div className="min-w-0">
+                        {lastHealth ? (
+                          <>
+                            <p className="text-sm font-medium">
+                              Last sync {healthDaysAgo === 0 ? "today" : `${healthDaysAgo}d ago`}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {lastHealth.steps ? `${lastHealth.steps.toLocaleString()} steps` : "—"}
+                              {lastHealth.sleep_minutes ? ` · ${(lastHealth.sleep_minutes / 60).toFixed(1)}h sleep` : ""}
+                              {healthStale ? " · refresh recommended" : ""}
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-sm font-medium">No health data yet</p>
+                            <p className="text-xs text-muted-foreground">Connect a source to start tracking.</p>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    {healthStale && (
+                      <div className="mt-3 flex items-center gap-1 text-xs text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        <span>Update at least weekly for accurate trends.</span>
+                      </div>
+                    )}
+                  </button>
+                </DashboardWidget>
                 <DashboardWidget
                   title="Strategy signals & momentum"
                   action={
@@ -647,51 +610,83 @@ const Index = () => {
                     </div>
                   )}
                 </DashboardWidget>
+                </div>
+              </div>
 
-                {/* Health */}
+              <div className="mt-3 sm:mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
                 <DashboardWidget
-                  title="Health check-in"
+                  title="Invoice chasers"
                   action={
-                    <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => navigate("/health")}>
-                      Open health
+                    <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => navigate("/finances?tab=invoices")}>
+                      All invoices
                     </Button>
                   }
                 >
-                  <button
-                    onClick={() => navigate("/health")}
-                    className="w-full text-left hover:bg-muted/50 -mx-2 px-2 py-2 rounded transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${healthStale ? "bg-destructive/10 text-destructive" : "bg-success/10 text-success"}`}>
-                        {healthStale ? <AlertTriangle className="h-5 w-5" /> : <Activity className="h-5 w-5" />}
-                      </div>
-                      <div className="min-w-0">
-                        {lastHealth ? (
-                          <>
-                            <p className="text-sm font-medium">
-                              Last sync {healthDaysAgo === 0 ? "today" : `${healthDaysAgo}d ago`}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {lastHealth.steps ? `${lastHealth.steps.toLocaleString()} steps` : "—"}
-                              {lastHealth.sleep_minutes ? ` · ${(lastHealth.sleep_minutes / 60).toFixed(1)}h sleep` : ""}
-                              {healthStale ? " · refresh recommended" : ""}
-                            </p>
-                          </>
-                        ) : (
-                          <>
-                            <p className="text-sm font-medium">No health data yet</p>
-                            <p className="text-xs text-muted-foreground">Connect a source to start tracking.</p>
-                          </>
-                        )}
-                      </div>
+                  {outstandingInvoices.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-4 text-center">No outstanding invoices.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {outstandingInvoices.slice(0, 5).map((inv: any) => {
+                        const overdue = inv.due_date && new Date(inv.due_date) < todayStart;
+                        return (
+                          <button
+                            key={inv.id}
+                            onClick={() => navigate("/finances?tab=invoices")}
+                            className="w-full flex items-center justify-between py-2 border-b border-border last:border-0 hover:bg-muted/50 -mx-2 px-2 rounded transition-colors text-left"
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium truncate">
+                                  {inv.invoice_number} · {inv.client_name ?? "—"}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {inv.due_date ? `Due ${format(new Date(inv.due_date), "MMM d")}` : "No due date"}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span className="text-sm font-medium tabular-nums">{formatMoney(Number(inv.balance_due ?? 0))}</span>
+                              {overdue && <Badge variant="destructive" className="text-[10px]">Chase</Badge>}
+                            </div>
+                          </button>
+                        );
+                      })}
                     </div>
-                    {healthStale && (
-                      <div className="mt-3 flex items-center gap-1 text-xs text-muted-foreground">
-                        <Clock className="h-3 w-3" />
-                        <span>Update at least weekly for accurate trends.</span>
-                      </div>
-                    )}
-                  </button>
+                  )}
+                </DashboardWidget>
+                <DashboardWidget
+                  title="Trading goals"
+                  action={
+                    <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => navigate("/goals")}>
+                      All goals
+                    </Button>
+                  }
+                >
+                  {tradingGoals.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-4 text-center">No active trading goals.</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {tradingGoals.map((goal: any) => (
+                        <button
+                          key={goal.id}
+                          onClick={() => navigate("/goals")}
+                          className="w-full text-left hover:bg-muted/50 -mx-2 px-2 py-1 rounded transition-colors"
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <Target className="h-4 w-4 text-primary shrink-0" />
+                              <span className="text-sm font-medium truncate">{goal.title}</span>
+                            </div>
+                            <span className="text-xs text-muted-foreground shrink-0 ml-2">{goal.progress ?? 0}%</span>
+                          </div>
+                          <div className="w-full bg-muted rounded-full h-2">
+                            <div className="bg-primary h-2 rounded-full transition-all" style={{ width: `${Math.min(100, goal.progress ?? 0)}%` }} />
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </DashboardWidget>
               </div>
             </main>
