@@ -16,19 +16,31 @@ async function refreshAccessToken(refreshToken: string) {
       grant_type: "refresh_token",
     }),
   });
-  return res.json();
+  const json = await res.json();
+  return { ok: res.ok, status: res.status, json };
 }
 
 async function ensureValidToken(admin: any, conn: any) {
   if (new Date(conn.token_expires_at).getTime() < Date.now() + 60_000) {
-    const refreshed = await refreshAccessToken(conn.refresh_token);
-    if (!refreshed.access_token) throw new Error("Token refresh failed");
-    const newExpiry = new Date(Date.now() + (refreshed.expires_in ?? 3600) * 1000).toISOString();
+    if (!conn.refresh_token) {
+      throw new Error("REAUTH_REQUIRED:no_refresh_token");
+    }
+    const r = await refreshAccessToken(conn.refresh_token);
+    if (!r.ok || !r.json?.access_token) {
+      const errCode = r.json?.error || "unknown";
+      // Mark connection as needing re-auth
+      await admin.from("google_calendar_connections").update({
+        last_sync_error: `Token refresh failed: ${errCode} (${r.status})`,
+      }).eq("id", conn.id);
+      throw new Error(`REAUTH_REQUIRED:${errCode}`);
+    }
+    const newExpiry = new Date(Date.now() + (r.json.expires_in ?? 3600) * 1000).toISOString();
     await admin.from("google_calendar_connections").update({
-      access_token: refreshed.access_token,
+      access_token: r.json.access_token,
       token_expires_at: newExpiry,
+      last_sync_error: null,
     }).eq("id", conn.id);
-    return { ...conn, access_token: refreshed.access_token };
+    return { ...conn, access_token: r.json.access_token };
   }
   return conn;
 }
