@@ -133,15 +133,31 @@ export function GoogleCalendarPicker({
             <div className="space-y-4">
               {(data ?? []).map((account) => (
                 <div key={account.account_id} className="rounded-lg border">
-                  <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/30">
-                    <div className="min-w-0">
+                  <div className="flex items-center justify-between gap-2 px-3 py-2 border-b bg-muted/30">
+                    <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold truncate">{account.email}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground truncate">
                         {account.error
                           ? `Error: ${account.error}`
-                          : `${account.calendars.length} calendar(s)`}
+                          : (() => {
+                              const conn = connections.find((c) => c.google_email === account.email);
+                              const last = conn?.last_sync_at;
+                              return last
+                                ? `Last synced ${new Date(last).toLocaleString([], { dateStyle: "short", timeStyle: "short" })}`
+                                : `${account.calendars.length} calendar(s)`;
+                            })()}
                       </p>
                     </div>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7"
+                      onClick={() => sync.mutate()}
+                      disabled={sync.isPending}
+                      title="Sync now"
+                    >
+                      <RefreshCw className={`h-3.5 w-3.5 ${sync.isPending ? "animate-spin" : ""}`} />
+                    </Button>
                     <Button
                       size="sm"
                       variant="ghost"
