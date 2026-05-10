@@ -377,7 +377,48 @@ export function TaskList({ externalFilters, onClearFilters }: { externalFilters?
           No tasks found. Import a CSV, generate from a Project with AI, or create one manually.
         </div>
       ) : (
-        <div className="border rounded-lg">
+        <>
+        {/* Mobile card list */}
+        <div className="md:hidden space-y-2">
+          {sortedTasks.map((task) => {
+            const pct = task.completion_percent ?? 0;
+            return (
+              <div key={task.id} className="border rounded-lg p-3 bg-card space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-sm truncate">{task.title}</p>
+                    <p className="text-[11px] text-muted-foreground truncate">
+                      {projectMap[task.project_id ?? ""] || "No project"}
+                      {task.due_date ? ` · Due ${formatDate(task.due_date)}` : ""}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(task)}>
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDelete(task.id)}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <Badge variant="outline" className="text-[10px]">{getStatusLabel(task.status)}</Badge>
+                  <Badge variant="outline" className={cn("text-[10px]", getPriorityColor(task.priority))}>{task.priority}</Badge>
+                  {task.assigned_to && memberMap[task.assigned_to] && (
+                    <Badge variant="secondary" className="text-[10px]">{memberMap[task.assigned_to]}</Badge>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Progress value={pct} className="h-1.5 flex-1" />
+                  <span className="text-[10px] tabular-nums w-8 text-right text-muted-foreground">{pct}%</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Desktop table */}
+        <div className="hidden md:block border rounded-lg">
           <div className="max-h-[calc(100vh-360px)] overflow-auto">
             <div className="min-w-[1100px]">
               <Table className="text-xs">
@@ -689,6 +730,7 @@ export function TaskList({ externalFilters, onClearFilters }: { externalFilters?
             </div>
           </div>
         </div>
+        </>
       )}
 
       <EditTaskDialog
