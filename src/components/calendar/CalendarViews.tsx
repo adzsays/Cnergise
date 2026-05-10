@@ -335,7 +335,58 @@ export function DayView({
   );
 }
 
-export function ScheduleView({ events, onSelectEvent, colorMap }: { events: CalendarEvent[]; onSelectEvent?: (e: CalendarEvent) => void; colorMap?: Record<string, string> }) {
+export function ScheduleView({ events, onSelectEvent, colorMap, selectedEventId }: { events: CalendarEvent[]; onSelectEvent?: (e: CalendarEvent) => void; colorMap?: Record<string, string>; selectedEventId?: string | null }) {
+  const grouped = useMemo(() => {
+    const now = Date.now();
+    const map = new Map<string, CalendarEvent[]>();
+    for (const e of events) {
+      const endMs = new Date(e.end_time).getTime();
+      if (endMs < now) continue;
+      const k = startOfDay(new Date(e.start_time)).toISOString();
+      const arr = map.get(k) ?? [];
+      arr.push(e);
+      map.set(k, arr);
+    }
+    const out = Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
+    for (const [, items] of out) {
+      items.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+    }
+    return out;
+  }, [events]);
+
+  if (grouped.length === 0) {
+    return (
+      <div className="rounded-md border bg-card p-10 text-center text-sm text-muted-foreground">
+        No upcoming events.
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {grouped.map(([day, items]) => (
+        <div key={day} className="rounded-md border bg-card">
+          <div className="border-b bg-muted/30 px-3 py-2 text-sm font-medium">
+            {new Date(day).toLocaleDateString([], {
+              weekday: "long",
+              month: "short",
+              day: "numeric",
+            })}
+          </div>
+          <ul className="divide-y">
+            {items.map((ev) => {
+              const c = eventColor(ev, colorMap);
+              const isSelected = selectedEventId === ev.id;
+              return (
+                <li key={ev.id}>
+                  <button
+                    type="button"
+                    onClick={() => onSelectEvent?.(ev)}
+                    className={cn(
+                      "flex w-full items-start gap-2 sm:gap-3 px-2 sm:px-3 py-2 text-left text-sm hover:bg-accent/40 transition-colors",
+                      isSelected && "bg-accent/60",
+                    )}
+                  >
   const grouped = useMemo(() => {
     const now = Date.now();
     const map = new Map<string, CalendarEvent[]>();
