@@ -54,7 +54,7 @@ export function GoogleCalendarPicker({
   const [selections, setSelections] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
   const qc = useQueryClient();
-  const { connect, disconnect } = useGoogleCalendar();
+  const { connect, disconnect, sync, connections } = useGoogleCalendar();
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["gcal-list"],
