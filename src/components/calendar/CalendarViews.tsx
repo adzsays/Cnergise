@@ -292,8 +292,8 @@ export function DayView({ date, events, onSelectEvent, colorMap }: ViewProps) {
             return s.getHours() === h && s.toDateString() === date.toDateString();
           });
           return (
-            <div key={h} className="grid grid-cols-[60px_1fr] min-h-[44px]">
-              <div className="border-r px-2 py-1 text-xs text-muted-foreground">
+            <div key={h} className="grid grid-cols-[44px_1fr] sm:grid-cols-[60px_1fr] min-h-[44px]">
+              <div className="border-r px-1.5 sm:px-2 py-1 text-[10px] sm:text-xs text-muted-foreground">
                 {slotStart.toLocaleTimeString([], { hour: "numeric" })}
               </div>
               <div className="space-y-1 p-1">
