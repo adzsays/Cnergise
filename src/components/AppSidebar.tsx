@@ -39,6 +39,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import cnergiseLogo from "@/assets/cnergise-logo.png";
 import { useAppFeatures, useMySubscriptions, hasActiveAccess } from "@/hooks/useFeatures";
+import { AISidebarPanel } from "@/components/ai/AISidebarPanel";
 
 // Map of route -> feature key (only for opt-in modules; core/system items omitted)
 const navItems = [
