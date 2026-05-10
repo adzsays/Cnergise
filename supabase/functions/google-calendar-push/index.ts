@@ -44,11 +44,24 @@ function buildBody(event: any, opts: { addMeet?: boolean } = {}) {
     location: event.location ?? undefined,
   };
   if (event.all_day) {
-    body.start = { date: event.start_time.slice(0, 10) };
-    body.end = { date: event.end_time.slice(0, 10) };
+    const startDate = event.start_time.slice(0, 10);
+    let endDate = event.end_time.slice(0, 10);
+    // Google requires end.date to be strictly after start.date for all-day events
+    if (endDate <= startDate) {
+      const d = new Date(`${startDate}T00:00:00Z`);
+      d.setUTCDate(d.getUTCDate() + 1);
+      endDate = d.toISOString().slice(0, 10);
+    }
+    body.start = { date: startDate };
+    body.end = { date: endDate };
   } else {
+    let endTime = event.end_time;
+    // Google requires end > start for timed events
+    if (new Date(endTime).getTime() <= new Date(event.start_time).getTime()) {
+      endTime = new Date(new Date(event.start_time).getTime() + 30 * 60 * 1000).toISOString();
+    }
     body.start = { dateTime: event.start_time };
-    body.end = { dateTime: event.end_time };
+    body.end = { dateTime: endTime };
   }
   if (opts.addMeet) {
     body.conferenceData = {
