@@ -33,10 +33,10 @@ export default function Portfolio() {
         <SidebarInset>
           <div className="flex h-full flex-col">
             <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-              <div className="flex h-16 items-center justify-between px-4 md:px-6">
-                <div className="flex items-center gap-3">
-                  <SidebarTrigger className="md:hidden h-9 w-9" />
-                  <h1 className="text-2xl font-bold gradient-heading">Trading Strategies</h1>
+              <div className="flex h-14 sm:h-16 items-center justify-between px-3 sm:px-4 md:px-6">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                  <SidebarTrigger className="md:hidden h-8 w-8 sm:h-9 sm:w-9" />
+                  <h1 className="text-lg sm:text-2xl font-bold gradient-heading truncate">Trading Strategies</h1>
                 </div>
               </div>
             </header>
