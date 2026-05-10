@@ -14,7 +14,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { CalendarRange, Loader2, Plus, Unlink } from "lucide-react";
+import { CalendarRange, Loader2, Plus, RefreshCw, Unlink } from "lucide-react";
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
 
 type GCalendar = {
