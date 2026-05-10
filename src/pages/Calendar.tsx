@@ -5,7 +5,7 @@ import { NavigationTabs } from "@/components/NavigationTabs";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Calendar as CalendarIcon, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
+import { PlusCircle, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { GoogleCalendarConnect } from "@/components/calendar/GoogleCalendarConnect";
 import { SyncedCalendarsCard } from "@/components/calendar/SyncedCalendarsCard";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
