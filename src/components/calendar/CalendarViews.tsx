@@ -161,49 +161,90 @@ export function WeekView({ date, events, onSelectEvent, colorMap }: ViewProps) {
   const today = startOfDay(new Date()).getTime();
 
   return (
-    <div className="-mx-4 overflow-x-auto md:mx-0">
-      <div className="grid grid-cols-7 gap-2 min-w-[700px] px-4 md:min-w-0 md:px-0">
-      {days.map((d) => {
-        const isToday = startOfDay(d).getTime() === today;
-        const dayEvents = eventsOnDate(events, d);
-        return (
-          <div key={d.toISOString()} className="rounded-md border bg-card">
-            <div
-              className={cn(
-                "border-b px-2 py-1.5 text-center text-xs",
-                isToday && "bg-primary/10 text-primary font-semibold",
+    <>
+      {/* Mobile: vertical stack of days */}
+      <div className="space-y-2 md:hidden">
+        {days.map((d) => {
+          const isToday = startOfDay(d).getTime() === today;
+          const dayEvents = eventsOnDate(events, d);
+          return (
+            <div key={d.toISOString()} className="rounded-md border bg-card">
+              <div
+                className={cn(
+                  "flex items-center justify-between border-b px-3 py-1.5 text-xs",
+                  isToday && "bg-primary/10 text-primary font-semibold",
+                )}
+              >
+                <span>{d.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" })}</span>
+                <span className="text-muted-foreground">{dayEvents.length} {dayEvents.length === 1 ? "event" : "events"}</span>
+              </div>
+              {dayEvents.length > 0 && (
+                <div className="space-y-1 p-2">
+                  {dayEvents.map((ev) => (
+                    <button
+                      type="button"
+                      key={ev.id}
+                      onClick={() => onSelectEvent?.(ev)}
+                      style={eventStyle(ev, colorMap)}
+                      className="block w-full text-left rounded bg-primary/10 px-2 py-1 text-xs text-primary hover:opacity-80"
+                    >
+                      <div className="font-medium truncate">{ev.title}</div>
+                      {!ev.all_day && (
+                        <div className="text-[10px] opacity-80">
+                          {fmtTime(new Date(ev.start_time))} – {fmtTime(new Date(ev.end_time))}
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
               )}
-            >
-              <div>{d.toLocaleDateString([], { weekday: "short" })}</div>
-              <div className="text-base font-medium text-foreground">{d.getDate()}</div>
             </div>
-            <div className="space-y-1 p-1.5 min-h-[200px]">
-              {dayEvents.length === 0 ? (
-                <p className="text-[11px] text-muted-foreground text-center pt-4">—</p>
-              ) : (
-                dayEvents.map((ev) => (
-                  <button
-                    type="button"
-                    key={ev.id}
-                    onClick={() => onSelectEvent?.(ev)}
-                    style={eventStyle(ev, colorMap)}
-                    className="block w-full text-left rounded bg-primary/10 px-1.5 py-1 text-[11px] text-primary hover:opacity-80"
-                  >
-                    <div className="font-medium truncate">{ev.title}</div>
-                    {!ev.all_day && (
-                      <div className="text-[10px] opacity-80">
-                        {fmtTime(new Date(ev.start_time))}
-                      </div>
-                    )}
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-        );
-      })}
+          );
+        })}
       </div>
-    </div>
+      {/* Desktop: 7-column grid */}
+      <div className="hidden md:grid grid-cols-7 gap-2">
+        {days.map((d) => {
+          const isToday = startOfDay(d).getTime() === today;
+          const dayEvents = eventsOnDate(events, d);
+          return (
+            <div key={d.toISOString()} className="rounded-md border bg-card">
+              <div
+                className={cn(
+                  "border-b px-2 py-1.5 text-center text-xs",
+                  isToday && "bg-primary/10 text-primary font-semibold",
+                )}
+              >
+                <div>{d.toLocaleDateString([], { weekday: "short" })}</div>
+                <div className="text-base font-medium text-foreground">{d.getDate()}</div>
+              </div>
+              <div className="space-y-1 p-1.5 min-h-[200px]">
+                {dayEvents.length === 0 ? (
+                  <p className="text-[11px] text-muted-foreground text-center pt-4">—</p>
+                ) : (
+                  dayEvents.map((ev) => (
+                    <button
+                      type="button"
+                      key={ev.id}
+                      onClick={() => onSelectEvent?.(ev)}
+                      style={eventStyle(ev, colorMap)}
+                      className="block w-full text-left rounded bg-primary/10 px-1.5 py-1 text-[11px] text-primary hover:opacity-80"
+                    >
+                      <div className="font-medium truncate">{ev.title}</div>
+                      {!ev.all_day && (
+                        <div className="text-[10px] opacity-80">
+                          {fmtTime(new Date(ev.start_time))}
+                        </div>
+                      )}
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </>
   );
 }
 
