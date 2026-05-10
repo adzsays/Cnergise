@@ -105,7 +105,7 @@ const Index = () => {
       if (!user) return [];
       const { data } = await supabase
         .from("financial_transactions")
-        .select("id, category, subcategory, amount, monthly, type, frequency, start_date, end_date")
+        .select("id, category, subcategory, amount, monthly, type, frequency, start_date, end_date, date")
         .eq("user_id", user.id)
         .neq("frequency", "one-time")
         .not("frequency", "is", null);
