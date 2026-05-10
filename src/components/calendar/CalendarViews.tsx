@@ -25,14 +25,6 @@ function fmtTime(d: Date) {
   return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
-function ymdLocal(d: Date) {
-  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-}
-function ymdUTC(iso: string) {
-  const d = new Date(iso);
-  return `${d.getUTCFullYear()}-${d.getUTCMonth()}-${d.getUTCDate()}`;
-}
-
 function eventsOnDate(events: CalendarEvent[], date: Date) {
   const start = startOfDay(date).getTime();
   const end = addDays(date, 1).getTime();
