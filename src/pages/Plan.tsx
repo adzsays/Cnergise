@@ -15,7 +15,6 @@ import { useGoals } from "@/hooks/useGoals";
 import { BarChart3, Target, FolderKanban, CheckSquare, Mic, X } from "lucide-react";
 import { useCurrentSpace } from "@/contexts/SpaceContext";
 import { VoiceAssistant } from "@/components/VoiceAssistant";
-import { FloatingAIBrief } from "@/components/ai/FloatingAIBrief";
 
 export default function Plan() {
   const [searchParams, setSearchParams] = useSearchParams();
