@@ -56,18 +56,20 @@ const SocialMedia = () => {
               </div>
             </header>
 
-            <div className="flex-1 overflow-auto p-4 md:p-6">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                <TabsList>
-                  <TabsTrigger value="impact" className="gap-2">
-                    <Sparkles className="h-4 w-4" />
-                    What needs you
-                  </TabsTrigger>
-                  <TabsTrigger value="news" className="gap-2">
-                    <Newspaper className="h-4 w-4" />
-                    News
-                  </TabsTrigger>
-                </TabsList>
+            <div className="flex-1 overflow-auto p-3 sm:p-4 md:p-6">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
+                <div className="overflow-x-auto -mx-3 px-3 md:mx-0 md:px-0 scrollbar-none">
+                  <TabsList className="inline-flex w-max">
+                    <TabsTrigger value="impact" className="gap-2 text-xs sm:text-sm">
+                      <Sparkles className="h-4 w-4" />
+                      <span>What needs you</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="news" className="gap-2 text-xs sm:text-sm">
+                      <Newspaper className="h-4 w-4" />
+                      News
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
 
                 <TabsContent value="impact">
                   <ImpactInbox />

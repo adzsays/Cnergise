@@ -97,17 +97,19 @@ export default function Health() {
           <div className="flex h-full flex-col">
             <TopBar title="Health" />
 
-            <div className="flex-1 overflow-auto p-4 md:p-6 space-y-6">
+            <div className="flex-1 overflow-auto p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
               <HealthSourceHub />
 
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <div className="flex items-center justify-between mb-6 gap-2 flex-wrap">
-                  <TabsList className="bg-muted/50">
-                    <TabsTrigger value="overview" className="text-sm">Overview</TabsTrigger>
-                    <TabsTrigger value="activity" className="text-sm">Activity</TabsTrigger>
-                    <TabsTrigger value="nutrition" className="text-sm">Nutrition</TabsTrigger>
-                    <TabsTrigger value="sleep" className="text-sm">Sleep</TabsTrigger>
-                  </TabsList>
+                <div className="flex items-center justify-between mb-4 sm:mb-6 gap-2 flex-wrap">
+                  <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 scrollbar-none flex-1">
+                    <TabsList className="bg-muted/50 inline-flex w-max">
+                      <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
+                      <TabsTrigger value="activity" className="text-xs sm:text-sm">Activity</TabsTrigger>
+                      <TabsTrigger value="nutrition" className="text-xs sm:text-sm">Nutrition</TabsTrigger>
+                      <TabsTrigger value="sleep" className="text-xs sm:text-sm">Sleep</TabsTrigger>
+                    </TabsList>
+                  </div>
                 </div>
 
                 <TabsContent value="overview" className="mt-0">

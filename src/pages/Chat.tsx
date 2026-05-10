@@ -207,7 +207,7 @@ const Chat = () => {
               {selectedChannel ? (
                 <>
                   {/* Channel Header */}
-                  <div className="h-16 border-b flex items-center px-6 bg-background/95 backdrop-blur">
+                  <div className="h-14 sm:h-16 border-b flex items-center px-3 sm:px-6 bg-background/95 backdrop-blur">
                     <Hash className="h-5 w-5 text-muted-foreground mr-2" />
                     <div>
                       <h1 className="font-semibold">{selectedChannel.name}</h1>

@@ -47,7 +47,8 @@ export function NavigationTabs({
 
   return (
     <div className="flex flex-col w-full">
-      <header className="flex items-center justify-end px-4 py-2 border-b">
+      {/* Desktop-only secondary header */}
+      <header className="hidden md:flex items-center justify-end px-4 py-2 border-b">
         <div className="flex items-center gap-2">
           <div className="relative w-64">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -66,21 +67,20 @@ export function NavigationTabs({
           </Button>
         </div>
       </header>
-      
+
       <div className="flex items-center border-b">
-        <nav className="flex">
+        <nav className="flex flex-1 overflow-x-auto scrollbar-none">
           {tabs.map((tab) => {
-            const isActive = tab.value === activeTab || 
+            const isActive = tab.value === activeTab ||
               (tab.href && location.pathname === tab.href);
-            
-            // Fix TypeScript error by properly handling Link vs button
+
             if (tab.href) {
               return (
                 <Link
                   key={tab.value}
                   to={tab.href}
                   className={cn(
-                    "inline-flex h-10 items-center justify-center border-b-2 px-4 text-sm font-medium transition-colors hover:text-foreground",
+                    "inline-flex h-10 items-center justify-center border-b-2 px-3 sm:px-4 text-xs sm:text-sm font-medium whitespace-nowrap transition-colors hover:text-foreground",
                     isActive
                       ? "border-primary text-foreground"
                       : "border-transparent text-muted-foreground hover:border-muted"
@@ -95,7 +95,7 @@ export function NavigationTabs({
                   key={tab.value}
                   onClick={() => onTabChange?.(tab.value)}
                   className={cn(
-                    "inline-flex h-10 items-center justify-center border-b-2 px-4 text-sm font-medium transition-colors hover:text-foreground",
+                    "inline-flex h-10 items-center justify-center border-b-2 px-3 sm:px-4 text-xs sm:text-sm font-medium whitespace-nowrap transition-colors hover:text-foreground",
                     isActive
                       ? "border-primary text-foreground"
                       : "border-transparent text-muted-foreground hover:border-muted"
@@ -107,37 +107,40 @@ export function NavigationTabs({
             }
           })}
         </nav>
-        
-        <div className="ml-auto flex items-center gap-2 pr-4">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Layout className="mr-2 h-4 w-4" />
-                View
-                <ChevronDown className="ml-2 h-3 w-3" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>
-                <Layout className="mr-2 h-4 w-4" />
-                Cards
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <List className="mr-2 h-4 w-4" />
-                List
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Columns className="mr-2 h-4 w-4" />
-                Table
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          
-          <Button variant="outline" size="sm">
-            <Filter className="mr-2 h-4 w-4" />
-            Filters
-          </Button>
-          
+
+        <div className="ml-auto flex items-center gap-1 sm:gap-2 pr-2 sm:pr-4 shrink-0">
+          {/* Desktop-only View / Filters menus */}
+          <div className="hidden md:flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Layout className="mr-2 h-4 w-4" />
+                  View
+                  <ChevronDown className="ml-2 h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>
+                  <Layout className="mr-2 h-4 w-4" />
+                  Cards
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <List className="mr-2 h-4 w-4" />
+                  List
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Columns className="mr-2 h-4 w-4" />
+                  Table
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <Button variant="outline" size="sm">
+              <Filter className="mr-2 h-4 w-4" />
+              Filters
+            </Button>
+          </div>
+
           {actions}
         </div>
       </div>

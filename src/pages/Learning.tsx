@@ -28,7 +28,7 @@ export default function Learning() {
         <SidebarInset>
           <TopBar title="Learning" />
           
-          <main className="flex-1 overflow-auto p-6">
+          <main className="flex-1 overflow-auto p-3 sm:p-6">
             <div className="max-w-7xl mx-auto space-y-6">
               {/* Stats Cards */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -91,11 +91,13 @@ export default function Learning() {
 
               {/* Main Content */}
               <Tabs defaultValue="courses" className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <TabsList>
-                    <TabsTrigger value="courses">My Courses</TabsTrigger>
-                    <TabsTrigger value="providers">Providers</TabsTrigger>
-                  </TabsList>
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 scrollbar-none">
+                    <TabsList className="inline-flex w-max">
+                      <TabsTrigger value="courses" className="text-xs sm:text-sm">My Courses</TabsTrigger>
+                      <TabsTrigger value="providers" className="text-xs sm:text-sm">Providers</TabsTrigger>
+                    </TabsList>
+                  </div>
                   <AddCourseDialog />
                 </div>
 

@@ -15,7 +15,7 @@ export default function Echo() {
           <main className="flex-1 overflow-y-auto p-4 md:p-6">
             <div className="max-w-6xl mx-auto">
               <header className="mb-4">
-                <h1 className="text-2xl font-semibold tracking-tight">Echo</h1>
+                <h1 className="text-lg sm:text-2xl font-semibold tracking-tight">Echo</h1>
                 <p className="text-sm text-muted-foreground">
                   Speak or jot your day — Echo auto-categorises it.
                 </p>
