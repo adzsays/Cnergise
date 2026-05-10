@@ -1,14 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { SidebarProvider, SidebarInset, SidebarRail, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { NavigationTabs } from "@/components/NavigationTabs";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { PlusCircle, Calendar as CalendarIcon, ChevronLeft, ChevronRight, MapPin, Clock, Pencil, Video } from "lucide-react";
 import { GoogleCalendarConnect } from "@/components/calendar/GoogleCalendarConnect";
 import { SyncedCalendarsCard } from "@/components/calendar/SyncedCalendarsCard";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCalendarEvents, CalendarEvent } from "@/hooks/useCalendarEvents";
 import { useCalendarSubscriptions } from "@/hooks/useCalendarSubscriptions";
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
@@ -33,16 +32,17 @@ function addDays(d: Date, n: number) {
 }
 
 export default function Calendar() {
-  const [activeTab, setActiveTab] = useState("schedule");
+  const [view, setView] = useState<"schedule" | "day" | "week" | "month">("schedule");
   const [date, setDate] = useState<Date>(new Date());
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [dialogDefaultDate, setDialogDefaultDate] = useState<Date | undefined>(undefined);
+  const [dayDetailEvent, setDayDetailEvent] = useState<CalendarEvent | null>(null);
   const [manageCalsOpen, setManageCalsOpen] = useState(false);
 
-  const openEvent = (e: CalendarEvent) => { setSelectedEvent(e); setDialogOpen(true); };
-  const openNew = () => { setSelectedEvent(null); setDialogOpen(true); };
+  const openEvent = (e: CalendarEvent) => { setSelectedEvent(e); setDialogDefaultDate(undefined); setDialogOpen(true); };
+  const openNew = (d?: Date) => { setSelectedEvent(null); setDialogDefaultDate(d ?? date); setDialogOpen(true); };
 
-  // Fetch a wide enough range to cover all views
   const { rangeStart, rangeEnd } = useMemo(() => {
     const start = new Date(date.getFullYear(), date.getMonth() - 1, 1);
     const end = new Date(date.getFullYear(), date.getMonth() + 2, 0, 23, 59, 59);
@@ -56,7 +56,6 @@ export default function Calendar() {
   const subscriptions = subData?.subscriptions ?? [];
   const accounts = subData?.accounts ?? [];
 
-  // Auto-sync on mount if any account is stale (>5 min) or never synced
   const autoSyncedRef = useRef(false);
   useEffect(() => {
     if (autoSyncedRef.current || !isConnected || connections.length === 0) return;
@@ -74,27 +73,27 @@ export default function Calendar() {
 
   const todayEvents = useMemo(() => {
     const today = startOfDay(new Date()).getTime();
-    return events.filter(
-      (e) => startOfDay(new Date(e.start_time)).getTime() === today,
-    );
+    return events.filter((e) => startOfDay(new Date(e.start_time)).getTime() === today);
   }, [events]);
 
   const navigate = (dir: -1 | 1) => {
-    if (activeTab === "day") setDate((d) => addDays(d, dir));
-    else if (activeTab === "week") setDate((d) => addDays(d, dir * 7));
+    if (view === "day") setDate((d) => addDays(d, dir));
+    else if (view === "week") setDate((d) => addDays(d, dir * 7));
     else setDate((d) => new Date(d.getFullYear(), d.getMonth() + dir, 1));
   };
 
   const headerLabel = useMemo(() => {
-    if (activeTab === "day")
+    if (view === "day")
       return date.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
-    if (activeTab === "week") {
+    if (view === "week") {
       const ws = addDays(date, -date.getDay());
       const we = addDays(ws, 6);
       return `${ws.toLocaleDateString([], { month: "short", day: "numeric" })} – ${we.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}`;
     }
-    return date.toLocaleDateString([], { month: "long", year: "numeric" });
-  }, [activeTab, date]);
+    if (view === "month")
+      return date.toLocaleDateString([], { month: "long", year: "numeric" });
+    return "";
+  }, [view, date]);
 
   return (
     <SidebarProvider defaultOpen={false}>
@@ -105,42 +104,33 @@ export default function Calendar() {
         <SidebarInset>
           <div className="flex h-full flex-col">
             <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-              <div className="flex h-14 items-center justify-between px-4 md:px-6">
-                <div className="flex items-center gap-3">
+              <div className="flex h-14 items-center justify-between gap-2 px-3 md:px-6">
+                <div className="flex items-center gap-2 min-w-0">
                   <SidebarTrigger className="md:hidden h-9 w-9" />
-                  <h1 className="text-lg font-semibold tracking-tight">Calendar</h1>
+                  <h1 className="text-lg font-semibold tracking-tight truncate">Calendar</h1>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Select value={view} onValueChange={(v) => setView(v as typeof view)}>
+                    <SelectTrigger className="h-8 w-[120px] text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="schedule">Schedule</SelectItem>
+                      <SelectItem value="day">Day</SelectItem>
+                      <SelectItem value="week">Week</SelectItem>
+                      <SelectItem value="month">Month</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <GoogleCalendarConnect compact />
+                  <Button variant="ghost" size="icon" onClick={() => openNew()} className="h-8 w-8" title="New event">
+                    <PlusCircle className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             </header>
 
-            <NavigationTabs
-              activeTab={activeTab}
-              onTabChange={setActiveTab}
-              tabs={[
-                { value: "schedule", label: "Schedule" },
-                { value: "day", label: "Day" },
-                { value: "week", label: "Week" },
-                { value: "month", label: "Month" },
-              ]}
-              actions={
-                <TooltipProvider delayDuration={150}>
-                  <div className="flex items-center gap-0.5">
-                    <GoogleCalendarConnect compact />
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" onClick={openNew} className="h-8 w-8">
-                          <PlusCircle className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>New event</TooltipContent>
-                    </Tooltip>
-                  </div>
-                </TooltipProvider>
-              }
-            />
-
             <div className="flex-1 overflow-auto p-2 sm:p-4 md:p-6">
-              {activeTab !== "schedule" && (
+              {view !== "schedule" && (
                 <div className="mb-3 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Button size="icon" variant="outline" onClick={() => navigate(-1)} className="h-8 w-8">
@@ -150,7 +140,7 @@ export default function Calendar() {
                       size="sm"
                       variant="ghost"
                       onClick={() => setDate(new Date())}
-                      className="min-w-[180px] justify-center text-sm font-medium"
+                      className="min-w-[160px] justify-center text-sm font-medium"
                     >
                       {headerLabel}
                     </Button>
@@ -158,17 +148,15 @@ export default function Calendar() {
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
-                  {isLoading && (
-                    <div className="text-xs text-muted-foreground">loading…</div>
-                  )}
+                  {isLoading && <div className="text-xs text-muted-foreground">loading…</div>}
                 </div>
               )}
 
-              <Tabs value={activeTab} className="w-full">
+              <Tabs value={view} className="w-full">
                 <TabsContent value="month" className="mt-0">
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2">
-                      <MonthView date={date} events={events} colorMap={colorMap} onSelectEvent={openEvent} onSelectDate={(d) => { setDate(d); setActiveTab("day"); }} />
+                      <MonthView date={date} events={events} colorMap={colorMap} onSelectEvent={openEvent} onSelectDate={(d) => { setDate(d); setView("day"); }} />
                     </div>
                     <div className="space-y-4">
                       <Card>
@@ -215,7 +203,63 @@ export default function Calendar() {
                 </TabsContent>
 
                 <TabsContent value="day" className="mt-0">
-                  <DayView date={date} events={events} colorMap={colorMap} onSelectEvent={openEvent} />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <DayView
+                      date={date}
+                      events={events}
+                      colorMap={colorMap}
+                      selectedEventId={dayDetailEvent?.id ?? null}
+                      onSelectEvent={(e) => setDayDetailEvent(e)}
+                      onSlotClick={(slot) => openNew(slot)}
+                    />
+                    <div>
+                      {dayDetailEvent ? (
+                        <Card>
+                          <CardHeader className="pb-2 flex-row items-start justify-between gap-2 space-y-0">
+                            <div className="min-w-0">
+                              <CardTitle className="text-base truncate">{dayDetailEvent.title}</CardTitle>
+                              <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {dayDetailEvent.all_day
+                                  ? "All day"
+                                  : `${new Date(dayDetailEvent.start_time).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} – ${new Date(dayDetailEvent.end_time).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`}
+                              </p>
+                            </div>
+                            <Button size="sm" variant="outline" onClick={() => openEvent(dayDetailEvent)} className="h-8">
+                              <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
+                            </Button>
+                          </CardHeader>
+                          <CardContent className="space-y-3 text-sm">
+                            {dayDetailEvent.location && (
+                              <p className="flex items-start gap-2 text-muted-foreground">
+                                <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
+                                <span>{dayDetailEvent.location}</span>
+                              </p>
+                            )}
+                            {dayDetailEvent.meeting_url && (
+                              <a
+                                href={dayDetailEvent.meeting_url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-2 text-primary hover:underline"
+                              >
+                                <Video className="h-4 w-4" /> Join meeting
+                              </a>
+                            )}
+                            {dayDetailEvent.description && (
+                              <p className="whitespace-pre-wrap text-foreground/90">{dayDetailEvent.description}</p>
+                            )}
+                          </CardContent>
+                        </Card>
+                      ) : (
+                        <div className="rounded-md border bg-card p-8 text-center text-sm text-muted-foreground h-full flex flex-col items-center justify-center">
+                          <CalendarIcon className="h-8 w-8 mb-2 opacity-20" />
+                          <p>Select an event to see details</p>
+                          <p className="text-xs mt-1">or click an empty slot to create one</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </TabsContent>
 
                 <TabsContent value="schedule" className="mt-0">
@@ -234,7 +278,7 @@ export default function Calendar() {
                 open={dialogOpen}
                 onOpenChange={setDialogOpen}
                 event={selectedEvent}
-                defaultDate={date}
+                defaultDate={dialogDefaultDate ?? date}
                 subscriptions={subscriptions}
                 accounts={accounts}
               />

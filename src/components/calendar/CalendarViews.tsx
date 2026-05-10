@@ -248,7 +248,17 @@ export function WeekView({ date, events, onSelectEvent, colorMap }: ViewProps) {
   );
 }
 
-export function DayView({ date, events, onSelectEvent, colorMap }: ViewProps) {
+export function DayView({
+  date,
+  events,
+  onSelectEvent,
+  onSlotClick,
+  selectedEventId,
+  colorMap,
+}: ViewProps & {
+  onSlotClick?: (slotStart: Date) => void;
+  selectedEventId?: string | null;
+}) {
   const hours = Array.from({ length: 24 }, (_, i) => i);
   const dayEvents = eventsOnDate(events, date);
   const allDayEvents = dayEvents.filter((e) => e.all_day);
@@ -256,59 +266,63 @@ export function DayView({ date, events, onSelectEvent, colorMap }: ViewProps) {
 
   return (
     <div className="rounded-md border bg-card">
-      <div className="border-b px-3 py-2 text-xs sm:text-sm font-medium">
-        <span className="sm:hidden">
-          {date.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" })}
-        </span>
-        <span className="hidden sm:inline">
-          {date.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
-        </span>
+      <div className="border-b px-3 py-1.5 text-xs font-medium">
+        {date.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" })}
       </div>
       {allDayEvents.length > 0 && (
-        <div className="border-b bg-muted/20 px-3 py-2 space-y-1">
-          <div className="text-[10px] uppercase tracking-wide text-muted-foreground">All day</div>
+        <div className="border-b bg-muted/20 px-2 py-1.5 space-y-1">
+          <div className="text-[9px] uppercase tracking-wide text-muted-foreground">All day</div>
           {allDayEvents.map((ev) => (
             <button
               type="button"
               key={ev.id}
               onClick={() => onSelectEvent?.(ev)}
               style={eventStyle(ev, colorMap)}
-              className="block w-full text-left rounded bg-primary/10 px-2 py-1 text-xs text-primary hover:opacity-80"
+              className={cn(
+                "block w-full text-left rounded bg-primary/10 px-2 py-0.5 text-[11px] text-primary hover:opacity-80",
+                selectedEventId === ev.id && "ring-2 ring-primary",
+              )}
             >
               <div className="font-medium truncate">{ev.title}</div>
             </button>
           ))}
         </div>
       )}
-      <div className="divide-y">
+      <div className="divide-y max-h-[70vh] overflow-y-auto">
         {hours.map((h) => {
           const slotStart = new Date(date);
           slotStart.setHours(h, 0, 0, 0);
-          const slotEnd = new Date(slotStart);
-          slotEnd.setHours(h + 1);
           const inSlot = timedEvents.filter((e) => {
             const s = new Date(e.start_time);
-            // Only render in the slot matching the event's start hour
             return s.getHours() === h && s.toDateString() === date.toDateString();
           });
           return (
-            <div key={h} className="grid grid-cols-[44px_1fr] sm:grid-cols-[60px_1fr] min-h-[44px]">
-              <div className="border-r px-1.5 sm:px-2 py-1 text-[10px] sm:text-xs text-muted-foreground">
+            <div
+              key={h}
+              onClick={() => inSlot.length === 0 && onSlotClick?.(slotStart)}
+              className={cn(
+                "grid grid-cols-[40px_1fr] min-h-[28px]",
+                inSlot.length === 0 && onSlotClick && "cursor-pointer hover:bg-accent/30",
+              )}
+            >
+              <div className="border-r px-1 py-0.5 text-[9px] text-muted-foreground">
                 {slotStart.toLocaleTimeString([], { hour: "numeric" })}
               </div>
-              <div className="space-y-1 p-1">
+              <div className="space-y-0.5 p-0.5">
                 {inSlot.map((ev) => (
                   <button
                     type="button"
                     key={ev.id}
-                    onClick={() => onSelectEvent?.(ev)}
+                    onClick={(e) => { e.stopPropagation(); onSelectEvent?.(ev); }}
                     style={eventStyle(ev, colorMap)}
-                    className="block w-full text-left rounded bg-primary/10 px-2 py-1 text-xs text-primary hover:opacity-80"
+                    className={cn(
+                      "block w-full text-left rounded bg-primary/10 px-1.5 py-0.5 text-[11px] text-primary hover:opacity-80",
+                      selectedEventId === ev.id && "ring-2 ring-primary",
+                    )}
                   >
-                    <div className="font-medium">{ev.title}</div>
-                    <div className="text-[10px] opacity-80">
+                    <div className="font-medium truncate">{ev.title}</div>
+                    <div className="text-[9px] opacity-80 truncate">
                       {fmtTime(new Date(ev.start_time))} – {fmtTime(new Date(ev.end_time))}
-                      {ev.location ? ` · ${ev.location}` : ""}
                     </div>
                   </button>
                 ))}
