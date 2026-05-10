@@ -54,15 +54,9 @@ export function GoogleCalendarConnect({ compact = false }: GoogleCalendarConnect
 
         <GoogleCalendarPicker
           trigger={
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button size="icon" variant="ghost" className="h-8 w-8">
-                  {/* Using inline svg to avoid extra import */}
-                  <CalendarIcon />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Manage calendars</TooltipContent>
-            </Tooltip>
+            <Button size="icon" variant="ghost" className="h-8 w-8" title="Manage calendars">
+              <CalendarIcon />
+            </Button>
           }
         />
       </div>
