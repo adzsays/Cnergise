@@ -371,18 +371,18 @@ const Auth = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-20 pb-20 px-4 sm:px-6 lg:px-8">
+      <section className="pt-16 pb-12 sm:pt-20 sm:pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
-            <Sparkles className="w-4 h-4" />
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-primary/10 text-primary text-xs sm:text-sm font-medium mb-5 sm:mb-6">
+            <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             Private beta · By invitation only
           </div>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight tracking-tight">
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-5 sm:mb-6 leading-tight tracking-tight">
             Simplify Your Life,
             <br />
             <span className="text-primary">Amplify Your Potential</span>
           </h1>
-          <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
+          <p className="text-base sm:text-xl text-muted-foreground max-w-3xl mx-auto mb-7 sm:mb-8">
             Cnergise brings together tasks, goals, health, finances, and investments in one intelligent platform.
             Access is currently limited to invited members — request an invite or sign in with the credentials we sent you.
           </p>
