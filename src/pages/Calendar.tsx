@@ -156,7 +156,7 @@ export default function Calendar() {
                 <TabsContent value="month" className="mt-0">
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2">
-                      <MonthView date={date} events={events} colorMap={colorMap} onSelectEvent={openEvent} onSelectDate={(d) => { setDate(d); setView("day"); }} />
+                      <MonthView date={date} events={events} colorMap={colorMap} onSelectEvent={openEvent} onSelectDate={(d) => setDate(d)} />
                     </div>
                     <div className="space-y-4">
                       <Card>

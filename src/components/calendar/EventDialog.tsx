@@ -263,24 +263,59 @@ export function EventDialog({ open, onOpenChange, event, defaultDate, subscripti
             <Label htmlFor="allday" className="cursor-pointer">All day</Label>
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <Label>Start</Label>
-              <Input
-                type={allDay ? "date" : "datetime-local"}
-                value={startStr}
-                onChange={(e) => setStartStr(e.target.value)}
-              />
+          {allDay ? (
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label>Start</Label>
+                <Input type="date" value={startStr} onChange={(e) => setStartStr(e.target.value)} />
+              </div>
+              <div>
+                <Label>End</Label>
+                <Input type="date" value={endStr} onChange={(e) => setEndStr(e.target.value)} />
+              </div>
             </div>
-            <div>
-              <Label>End</Label>
-              <Input
-                type={allDay ? "date" : "datetime-local"}
-                value={endStr}
-                onChange={(e) => setEndStr(e.target.value)}
-              />
+          ) : (
+            <div className="space-y-2">
+              <div className="grid grid-cols-[1fr_auto] gap-2 items-end">
+                <div>
+                  <Label>Start date</Label>
+                  <Input
+                    type="date"
+                    value={startStr.slice(0, 10)}
+                    onChange={(e) => setStartStr(`${e.target.value}T${startStr.slice(11) || "09:00"}`)}
+                  />
+                </div>
+                <div>
+                  <Label>Time</Label>
+                  <Input
+                    type="time"
+                    className="w-[110px]"
+                    value={startStr.slice(11, 16)}
+                    onChange={(e) => setStartStr(`${startStr.slice(0, 10) || toDateInput(new Date().toISOString())}T${e.target.value}`)}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-[1fr_auto] gap-2 items-end">
+                <div>
+                  <Label>End date</Label>
+                  <Input
+                    type="date"
+                    value={endStr.slice(0, 10)}
+                    onChange={(e) => setEndStr(`${e.target.value}T${endStr.slice(11) || "10:00"}`)}
+                  />
+                </div>
+                <div>
+                  <Label>Time</Label>
+                  <Input
+                    type="time"
+                    className="w-[110px]"
+                    value={endStr.slice(11, 16)}
+                    onChange={(e) => setEndStr(`${endStr.slice(0, 10) || toDateInput(new Date().toISOString())}T${e.target.value}`)}
+                  />
+                </div>
+              </div>
             </div>
-          </div>
+          )}
 
           <div>
             <Label>Location</Label>
