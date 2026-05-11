@@ -212,7 +212,7 @@ export default function Calendar() {
                       onSelectEvent={(e) => setDayDetailEvent(e)}
                       onSlotClick={(slot) => openNew(slot)}
                     />
-                    <div>
+                    <div className={dayDetailEvent ? "sticky top-14 z-10 md:static bg-background" : ""}>
                       {dayDetailEvent ? (
                         <Card>
                           <CardHeader className="pb-2 flex-row items-start justify-between gap-2 space-y-0">
