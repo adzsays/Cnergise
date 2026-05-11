@@ -548,12 +548,12 @@ const Auth = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-primary/10 via-accent/5 to-background">
+      <section className="py-12 sm:py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-primary/10 via-accent/5 to-background">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-6">
+          <h2 className="text-2xl sm:text-4xl font-bold text-foreground mb-4 sm:mb-6">
             {loginAccess ? "Ready to Transform Your Life?" : "Something Big Is Coming"}
           </h2>
-          <p className="text-lg text-muted-foreground mb-8">
+          <p className="text-base sm:text-lg text-muted-foreground mb-6 sm:mb-8">
             {loginAccess
               ? "Join thousands who have simplified their daily routines and achieved more with less stress."
               : "Cnergise is launching soon to a small group of invited users. Check back shortly."}
