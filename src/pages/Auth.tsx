@@ -582,13 +582,13 @@ const Auth = () => {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-4 sm:px-6 lg:px-8 border-t border-border">
+      <footer className="py-8 sm:py-12 px-4 sm:px-6 lg:px-8 border-t border-border">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <img src={cnergiseLogo} alt="Cnergise" className="w-20 h-20 object-contain" />
+            <img src={cnergiseLogo} alt="Cnergise" className="w-10 h-10 sm:w-14 sm:h-14 object-contain" />
             <span className="font-semibold text-foreground">Cnergise</span>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground text-center">
             © 2025 Cnergise. All rights reserved.
           </p>
         </div>
