@@ -325,22 +325,24 @@ const Auth = () => {
     <div className="min-h-[100dvh] bg-background">
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border pt-[env(safe-area-inset-top)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-14">
-            <div className="flex items-center gap-2">
-              <img src={cnergiseLogo} alt="Cnergise" className="h-20 w-20 object-contain" />
-              <span className="text-lg font-semibold tracking-tight text-foreground">Cnergise</span>
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-14 gap-2">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <img src={cnergiseLogo} alt="Cnergise" className="h-10 w-10 sm:h-14 sm:w-14 object-contain shrink-0" />
+              <span className="text-base sm:text-lg font-semibold tracking-tight text-foreground truncate">Cnergise</span>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
               {loginAccess ? (
                 <>
                   <Button
                     variant="ghost"
+                    size="sm"
                     onClick={() => { setAuthTab("signin"); setShowAuthModal(true); }}
                   >
                     Sign In
                   </Button>
                   <Button
+                    size="sm"
                     onClick={() => { setAuthTab("signup"); setShowAuthModal(true); }}
                     className="bg-primary hover:bg-primary/90"
                   >
@@ -369,18 +371,18 @@ const Auth = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-20 pb-20 px-4 sm:px-6 lg:px-8">
+      <section className="pt-16 pb-12 sm:pt-20 sm:pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
-            <Sparkles className="w-4 h-4" />
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-primary/10 text-primary text-xs sm:text-sm font-medium mb-5 sm:mb-6">
+            <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             Private beta · By invitation only
           </div>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight tracking-tight">
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-5 sm:mb-6 leading-tight tracking-tight">
             Simplify Your Life,
             <br />
             <span className="text-primary">Amplify Your Potential</span>
           </h1>
-          <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
+          <p className="text-base sm:text-xl text-muted-foreground max-w-3xl mx-auto mb-7 sm:mb-8">
             Cnergise brings together tasks, goals, health, finances, and investments in one intelligent platform.
             Access is currently limited to invited members — request an invite or sign in with the credentials we sent you.
           </p>
@@ -458,13 +460,13 @@ const Auth = () => {
       </section>
 
       {/* Features Grid */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-muted/30">
+      <section className="py-12 sm:py-20 px-4 sm:px-6 lg:px-8 bg-muted/30">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
+          <div className="text-center mb-10 sm:mb-16">
+            <h2 className="text-2xl sm:text-4xl font-bold text-foreground mb-3 sm:mb-4">
               Everything You Need, One Place
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
               Stop juggling multiple apps. Cnergise integrates all aspects of your personal and professional life.
             </p>
           </div>
@@ -488,18 +490,18 @@ const Auth = () => {
       </section>
 
       {/* AI Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
+      <section className="py-12 sm:py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 items-center">
             <div>
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 text-accent text-sm font-medium mb-6">
-                <Brain className="w-4 h-4" />
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-accent/10 text-accent text-xs sm:text-sm font-medium mb-5 sm:mb-6">
+                <Brain className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 Powered by AI
               </div>
-              <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-6">
+              <h2 className="text-2xl sm:text-4xl font-bold text-foreground mb-4 sm:mb-6">
                 Your Personal AI Assistant
               </h2>
-              <p className="text-lg text-muted-foreground mb-8">
+              <p className="text-base sm:text-lg text-muted-foreground mb-6 sm:mb-8">
                 Our AI learns your patterns, anticipates your needs, and proactively suggests optimizations. 
                 From scheduling meetings to tracking expenses, let intelligence work for you.
               </p>
@@ -546,12 +548,12 @@ const Auth = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-primary/10 via-accent/5 to-background">
+      <section className="py-12 sm:py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-primary/10 via-accent/5 to-background">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-6">
+          <h2 className="text-2xl sm:text-4xl font-bold text-foreground mb-4 sm:mb-6">
             {loginAccess ? "Ready to Transform Your Life?" : "Something Big Is Coming"}
           </h2>
-          <p className="text-lg text-muted-foreground mb-8">
+          <p className="text-base sm:text-lg text-muted-foreground mb-6 sm:mb-8">
             {loginAccess
               ? "Join thousands who have simplified their daily routines and achieved more with less stress."
               : "Cnergise is launching soon to a small group of invited users. Check back shortly."}
@@ -580,13 +582,13 @@ const Auth = () => {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-4 sm:px-6 lg:px-8 border-t border-border">
+      <footer className="py-8 sm:py-12 px-4 sm:px-6 lg:px-8 border-t border-border">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <img src={cnergiseLogo} alt="Cnergise" className="w-20 h-20 object-contain" />
+            <img src={cnergiseLogo} alt="Cnergise" className="w-10 h-10 sm:w-14 sm:h-14 object-contain" />
             <span className="font-semibold text-foreground">Cnergise</span>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground text-center">
             © 2025 Cnergise. All rights reserved.
           </p>
         </div>
