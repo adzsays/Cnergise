@@ -203,7 +203,7 @@ export default function Calendar() {
                 </TabsContent>
 
                 <TabsContent value="day" className="mt-0">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${dayDetailEvent ? "flex flex-col-reverse md:grid" : ""}`}>
                     <DayView
                       date={date}
                       events={events}
