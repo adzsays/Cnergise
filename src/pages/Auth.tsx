@@ -490,18 +490,18 @@ const Auth = () => {
       </section>
 
       {/* AI Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
+      <section className="py-12 sm:py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 items-center">
             <div>
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 text-accent text-sm font-medium mb-6">
-                <Brain className="w-4 h-4" />
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-accent/10 text-accent text-xs sm:text-sm font-medium mb-5 sm:mb-6">
+                <Brain className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 Powered by AI
               </div>
-              <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-6">
+              <h2 className="text-2xl sm:text-4xl font-bold text-foreground mb-4 sm:mb-6">
                 Your Personal AI Assistant
               </h2>
-              <p className="text-lg text-muted-foreground mb-8">
+              <p className="text-base sm:text-lg text-muted-foreground mb-6 sm:mb-8">
                 Our AI learns your patterns, anticipates your needs, and proactively suggests optimizations. 
                 From scheduling meetings to tracking expenses, let intelligence work for you.
               </p>
