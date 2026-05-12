@@ -102,13 +102,32 @@ export function ActualExpensesView() {
     similar_count: number;
   } | null>(null);
 
+  // Independent fetch of cash-flow lines (don't rely solely on FinancialDataContext, which can
+  // fail with an auth-lock AbortError and leave `transactions` empty — that would make the Budget
+  // Line Select render the placeholder for classified rows even though they ARE mapped).
+  const { data: cashflowLines = [] } = useQuery({
+    queryKey: ["actual_expenses", "cashflow_options"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("financial_transactions")
+        .select("id, type, category, subcategory, cost_centre");
+      if (error) throw error;
+      return data ?? [];
+    },
+    retry: 3,
+    staleTime: 60_000,
+  });
+
   const cashflowOptions = useMemo(() => {
-    return (transactions || []).map((t: any) => ({
+    const map = new Map<string, any>();
+    for (const t of (cashflowLines as any[])) map.set(t.id, t);
+    for (const t of (transactions || []) as any[]) if (!map.has(t.id)) map.set(t.id, t);
+    return Array.from(map.values()).map((t: any) => ({
       id: t.id,
       label: `${t.type === "income" ? "+" : "−"} ${t.subcategory || t.category} (${t.cost_centre || "—"})`,
       cost_centre: t.cost_centre,
     }));
-  }, [transactions]);
+  }, [cashflowLines, transactions]);
 
   // Fetch ALL expenses (paged through Supabase 1000-row limit)
   const { data: expenses = [], isLoading } = useQuery({
