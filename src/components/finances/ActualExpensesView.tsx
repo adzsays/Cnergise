@@ -10,7 +10,10 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Upload, Link2, Loader2, Trash2, Search, Sparkles, Settings2, Wand2 } from "lucide-react";
+import {
+  Upload, Link2, Loader2, Trash2, Search, Sparkles, Settings2, Wand2,
+  ArrowUp, ArrowDown, ArrowUpDown, AlertCircle, CheckCircle2,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -19,6 +22,7 @@ import { fmtMoney } from "@/hooks/useInvoicing";
 import { useFinancialData } from "@/contexts/FinancialDataContext";
 import { MappingRulesDialog } from "./MappingRulesDialog";
 import { EnrichmentReviewDialog, type EnrichmentProposal, type EnrichmentSummary } from "./EnrichmentReviewDialog";
+import { cn } from "@/lib/utils";
 
 type ActualExpense = {
   id: string;
@@ -63,7 +67,13 @@ const num = (v: any): number => {
 const sourceBadgeVariant = (s: string | null) =>
   s === "rule" ? "default" : s === "manual" ? "secondary" : s === "ai" ? "outline" : "outline";
 
-const PAGE_SIZE = 50;
+const norm = (s: string | null | undefined) =>
+  (s ?? "").toLowerCase().replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
+
+const PAGE_SIZE = 100;
+const FETCH_CHUNK = 1000;
+
+type SortKey = "posted_on" | "merchant" | "description" | "amount" | "mapped" | "account";
 
 export function ActualExpensesView() {
   const fileRef = useRef<HTMLInputElement | null>(null);
@@ -78,11 +88,13 @@ export function ActualExpensesView() {
   const [enrichProposals, setEnrichProposals] = useState<EnrichmentProposal[]>([]);
   const [enrichSummary, setEnrichSummary] = useState<EnrichmentSummary | null>(null);
   const [rulesOpen, setRulesOpen] = useState(false);
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [unclVisible, setUnclVisible] = useState(PAGE_SIZE);
+  const [clsVisible, setClsVisible] = useState(PAGE_SIZE);
+  const [sortKey, setSortKey] = useState<SortKey>("posted_on");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const { getSetting } = useSystemSettings();
-  const { transactions } = useFinancialData() as any;
+  const { transactions, accounts } = useFinancialData() as any;
 
-  // Pending change for the bulk-apply prompt
   const [pendingChange, setPendingChange] = useState<{
     expense: ActualExpense;
     cashflow_id: string;
@@ -98,16 +110,27 @@ export function ActualExpensesView() {
     }));
   }, [transactions]);
 
+  // Fetch ALL expenses (paged through Supabase 1000-row limit)
   const { data: expenses = [], isLoading } = useQuery({
-    queryKey: ["actual_expenses"],
+    queryKey: ["actual_expenses", "all"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("actual_expenses" as any)
-        .select("*")
-        .order("posted_on", { ascending: false })
-        .limit(1000);
-      if (error) throw error;
-      return (data ?? []) as unknown as ActualExpense[];
+      const all: ActualExpense[] = [];
+      let from = 0;
+      // Hard upper bound to avoid pathological loops
+      for (let i = 0; i < 50; i++) {
+        const to = from + FETCH_CHUNK - 1;
+        const { data, error } = await supabase
+          .from("actual_expenses" as any)
+          .select("*")
+          .order("posted_on", { ascending: false })
+          .range(from, to);
+        if (error) throw error;
+        const batch = (data ?? []) as unknown as ActualExpense[];
+        all.push(...batch);
+        if (batch.length < FETCH_CHUNK) break;
+        from += FETCH_CHUNK;
+      }
+      return all;
     },
   });
 
@@ -170,7 +193,6 @@ export function ActualExpensesView() {
         };
       });
       await bulkInsert.mutateAsync(parsed);
-      // Do not auto-run AI classify after import — user must click "Auto-classify".
       toast.message("Import complete. Click 'Auto-classify' to run AI mapping.");
     } catch (e: any) {
       toast.error(e?.message ?? "Failed to import");
@@ -252,10 +274,8 @@ export function ActualExpensesView() {
     }
   };
 
-  // Compute "similar" count for the bulk-apply prompt by matching merchant text
   const onChangeMapping = (e: ActualExpense, newCashflowId: string) => {
     if (newCashflowId === "__none__") {
-      // single update, clear mapping
       supabase
         .from("actual_expenses" as any)
         .update({ mapped_cashflow_id: null, mapping_source: null, mapping_confidence: null })
@@ -264,7 +284,6 @@ export function ActualExpensesView() {
       return;
     }
     const matchKey = (e.merchant || e.description || "").trim();
-    const norm = (s: string) => s.toLowerCase().replace(/[^a-z ]+/g, " ").replace(/\s+/g, " ").trim();
     const target = norm(matchKey);
     const similar_count = expenses.filter((x) =>
       x.id !== e.id && norm(`${x.merchant ?? ""} ${x.description ?? ""}`).includes(target)
@@ -308,6 +327,57 @@ export function ActualExpensesView() {
     }
   };
 
+  // ---- Bank account matching + running balance ----
+  // Match an expense to a financial_account by name or provider (case-insensitive substring).
+  const bankAccounts = useMemo(
+    () => (accounts || []).filter((a: any) => (a.type || "").toLowerCase() === "asset"),
+    [accounts]
+  );
+
+  const accountKeyForExpense = (e: ActualExpense): string | null => {
+    const candidates = [e.account_name, e.account_provider].filter(Boolean) as string[];
+    if (candidates.length === 0) return null;
+    for (const acc of bankAccounts) {
+      const accNorm = norm(acc.name);
+      for (const c of candidates) {
+        const cn = norm(c);
+        if (cn && (cn === accNorm || cn.includes(accNorm) || accNorm.includes(cn))) {
+          return acc.id;
+        }
+      }
+    }
+    // Fallback: group by raw account_name string so they at least share a running ledger
+    return `__txt:${norm(candidates[0])}`;
+  };
+
+  // Running balance per account: sort that account's expenses ascending by date,
+  // start from opening_balance (if matched & posted_on >= opening_balance_date) and accumulate.
+  const balanceByExpenseId = useMemo(() => {
+    const map = new Map<string, number>();
+    const groups = new Map<string, ActualExpense[]>();
+    for (const e of expenses) {
+      const k = accountKeyForExpense(e) ?? "__none";
+      if (!groups.has(k)) groups.set(k, []);
+      groups.get(k)!.push(e);
+    }
+    for (const [key, list] of groups) {
+      const acc = bankAccounts.find((a: any) => a.id === key);
+      const openingBal = acc?.opening_balance ? Number(acc.opening_balance) : 0;
+      const openingDate = acc?.opening_balance_date || null;
+      const sorted = [...list].sort((a, b) =>
+        a.posted_on === b.posted_on ? a.id.localeCompare(b.id) : a.posted_on.localeCompare(b.posted_on)
+      );
+      let running = openingBal;
+      for (const e of sorted) {
+        if (!openingDate || e.posted_on >= openingDate) {
+          running += Number(e.amount) || 0;
+        }
+        map.set(e.id, running);
+      }
+    }
+    return map;
+  }, [expenses, bankAccounts]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return expenses;
@@ -318,19 +388,253 @@ export function ActualExpensesView() {
     );
   }, [expenses, search]);
 
-  // Reset pagination when the filter or dataset changes
-  React.useEffect(() => { setVisibleCount(PAGE_SIZE); }, [search, expenses.length]);
-  const visible = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
+  const sortFn = (a: ActualExpense, b: ActualExpense) => {
+    const dir = sortDir === "asc" ? 1 : -1;
+    const get = (e: ActualExpense): string | number => {
+      switch (sortKey) {
+        case "posted_on": return e.posted_on;
+        case "amount": return Number(e.amount);
+        case "merchant": return (e.merchant || "").toLowerCase();
+        case "description": return (e.description || "").toLowerCase();
+        case "mapped": return e.mapped_cashflow_id ? 1 : 0;
+        case "account": return (e.account_name || e.account_provider || "").toLowerCase();
+      }
+    };
+    const av = get(a), bv = get(b);
+    if (av < bv) return -1 * dir;
+    if (av > bv) return 1 * dir;
+    return 0;
+  };
+
+  const unclassified = useMemo(
+    () => filtered.filter((e) => !e.mapped_cashflow_id).sort(sortFn),
+    [filtered, sortKey, sortDir]
+  );
+  const classified = useMemo(
+    () => filtered.filter((e) => !!e.mapped_cashflow_id).sort(sortFn),
+    [filtered, sortKey, sortDir]
+  );
+
+  React.useEffect(() => { setUnclVisible(PAGE_SIZE); setClsVisible(PAGE_SIZE); }, [search, expenses.length]);
 
   const totals = useMemo(() => {
     const inflow = filtered.filter((e) => e.amount > 0).reduce((s, e) => s + Number(e.amount), 0);
     const outflow = filtered.filter((e) => e.amount < 0).reduce((s, e) => s + Number(e.amount), 0);
-    const mapped = filtered.filter((e) => e.mapped_cashflow_id).length;
+    const mapped = classified.length;
     return { inflow, outflow, net: inflow + outflow, mapped, unmapped: filtered.length - mapped };
-  }, [filtered]);
+  }, [filtered, classified]);
 
   const cashflowLabel = (id: string | null) =>
     id ? cashflowOptions.find((c: any) => c.id === id)?.label || "—" : "—";
+
+  // --- Reconciliation panel state ---
+  const [reconAccountId, setReconAccountId] = useState<string>("");
+  const [reconDate, setReconDate] = useState<string>(new Date().toISOString().slice(0, 10));
+  const [reconExpected, setReconExpected] = useState<string>("");
+
+  const reconResult = useMemo(() => {
+    if (!reconAccountId || !reconDate) return null;
+    const acc = bankAccounts.find((a: any) => a.id === reconAccountId);
+    if (!acc) return null;
+    const openingBal = acc.opening_balance ? Number(acc.opening_balance) : 0;
+    const openingDate = acc.opening_balance_date || null;
+    const accExpenses = expenses.filter((e) => accountKeyForExpense(e) === reconAccountId);
+    const upTo = accExpenses.filter((e) => e.posted_on <= reconDate &&
+      (!openingDate || e.posted_on >= openingDate));
+    const sumAfterOpening = upTo.reduce((s, e) => s + Number(e.amount), 0);
+    const calculated = openingBal + sumAfterOpening;
+    const expected = parseFloat(reconExpected);
+    const diff = isNaN(expected) ? null : calculated - expected;
+    const unmappedInRange = upTo.filter((e) => !e.mapped_cashflow_id).length;
+    return {
+      accountName: acc.name,
+      currency: acc.currency || "GBP",
+      openingBal,
+      openingDate,
+      txnCount: upTo.length,
+      calculated,
+      expected: isNaN(expected) ? null : expected,
+      diff,
+      unmappedInRange,
+    };
+  }, [reconAccountId, reconDate, reconExpected, expenses, bankAccounts]);
+
+  const SortHead = ({ k, label, align = "left", className = "" }: {
+    k: SortKey; label: string; align?: "left" | "right"; className?: string;
+  }) => {
+    const active = sortKey === k;
+    const Icon = active ? (sortDir === "asc" ? ArrowUp : ArrowDown) : ArrowUpDown;
+    return (
+      <TableHead className={cn(align === "right" && "text-right", className)}>
+        <button
+          type="button"
+          onClick={() => {
+            if (active) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+            else { setSortKey(k); setSortDir("desc"); }
+          }}
+          className={cn(
+            "inline-flex items-center gap-1 hover:text-foreground transition-colors",
+            align === "right" && "flex-row-reverse",
+            active && "text-foreground"
+          )}
+        >
+          {label}
+          <Icon className="h-3 w-3 opacity-60" />
+        </button>
+      </TableHead>
+    );
+  };
+
+  const renderDesktopRows = (rows: ActualExpense[]) => rows.map((e) => {
+    const bal = balanceByExpenseId.get(e.id);
+    return (
+      <TableRow key={e.id}>
+        <TableCell className="whitespace-nowrap text-xs">{e.posted_on}</TableCell>
+        <TableCell className="max-w-[160px] truncate text-xs" title={e.merchant ?? ""}>{e.merchant}</TableCell>
+        <TableCell className="max-w-[220px] truncate text-xs" title={e.description ?? ""}>{e.description}</TableCell>
+        <TableCell className={`text-right tabular-nums text-xs ${e.amount < 0 ? "text-destructive" : "text-green-600"}`}>
+          {fmtMoney(e.amount, e.currency)}
+        </TableCell>
+        <TableCell className="text-right tabular-nums text-xs text-muted-foreground">
+          {bal != null ? fmtMoney(bal, e.currency) : "—"}
+        </TableCell>
+        <TableCell>
+          <Select
+            value={e.mapped_cashflow_id ?? "__none__"}
+            onValueChange={(v) => onChangeMapping(e, v)}
+          >
+            <SelectTrigger className="h-7 text-xs">
+              <SelectValue placeholder="Unmapped" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__none__">— Unmapped —</SelectItem>
+              {cashflowOptions.map((c: any) => (
+                <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </TableCell>
+        <TableCell>
+          {e.mapping_source && (
+            <Badge variant={sourceBadgeVariant(e.mapping_source)} className="text-[10px] capitalize">
+              {e.mapping_source}
+            </Badge>
+          )}
+        </TableCell>
+        <TableCell className="text-xs text-muted-foreground">{e.account_name || e.account_provider}</TableCell>
+        <TableCell>
+          <Button size="icon" variant="ghost" onClick={() => remove.mutate(e.id)}>
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        </TableCell>
+      </TableRow>
+    );
+  });
+
+  const renderMobileRows = (rows: ActualExpense[]) => rows.map((e) => {
+    const bal = balanceByExpenseId.get(e.id);
+    return (
+      <div key={e.id} className="p-3 space-y-2">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-medium truncate">{e.merchant || e.description || "—"}</div>
+            <div className="text-xs text-muted-foreground truncate">{e.description}</div>
+            <div className="text-[10px] text-muted-foreground tabular-nums">
+              {e.posted_on} · {e.account_name || e.account_provider || "—"}
+            </div>
+          </div>
+          <div className="text-right shrink-0">
+            <div className={`text-sm font-semibold tabular-nums ${e.amount < 0 ? "text-destructive" : "text-green-600"}`}>
+              {fmtMoney(e.amount, e.currency)}
+            </div>
+            {bal != null && (
+              <div className="text-[10px] text-muted-foreground tabular-nums">
+                Bal: {fmtMoney(bal, e.currency)}
+              </div>
+            )}
+            <Button size="icon" variant="ghost" className="h-6 w-6 mt-1" onClick={() => remove.mutate(e.id)}>
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <Select value={e.mapped_cashflow_id ?? "__none__"} onValueChange={(v) => onChangeMapping(e, v)}>
+            <SelectTrigger className="h-7 text-xs flex-1">
+              <SelectValue placeholder="Unmapped" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__none__">— Unmapped —</SelectItem>
+              {cashflowOptions.map((c: any) => (
+                <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {e.mapping_source && (
+            <Badge variant={sourceBadgeVariant(e.mapping_source)} className="text-[9px] py-0 h-4 capitalize">
+              {e.mapping_source}
+            </Badge>
+          )}
+        </div>
+      </div>
+    );
+  });
+
+  const renderSection = (
+    title: string,
+    rows: ActualExpense[],
+    visibleCount: number,
+    setVisible: (n: number | ((c: number) => number)) => void,
+    emptyHint: string,
+    accent?: "warn"
+  ) => {
+    const slice = rows.slice(0, visibleCount);
+    return (
+      <Card>
+        <div className={cn(
+          "p-3 border-b flex items-center gap-2 flex-wrap",
+          accent === "warn" && "bg-amber-500/5"
+        )}>
+          {accent === "warn"
+            ? <AlertCircle className="h-4 w-4 text-amber-600" />
+            : <CheckCircle2 className="h-4 w-4 text-green-600" />}
+          <h3 className="font-semibold text-sm">{title}</h3>
+          <Badge variant="outline" className="text-[10px]">{rows.length}</Badge>
+        </div>
+        {rows.length === 0 ? (
+          <div className="p-6 text-center text-xs text-muted-foreground">{emptyHint}</div>
+        ) : (
+          <>
+            <div className="md:hidden divide-y">{renderMobileRows(slice)}</div>
+            <div className="hidden md:block overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <SortHead k="posted_on" label="Date" />
+                    <SortHead k="merchant" label="Merchant" />
+                    <SortHead k="description" label="Description" />
+                    <SortHead k="amount" label="Amount" align="right" />
+                    <TableHead className="text-right">Balance</TableHead>
+                    <SortHead k="mapped" label="Budget Line" className="min-w-[220px]" />
+                    <TableHead>Source</TableHead>
+                    <SortHead k="account" label="Account" />
+                    <TableHead></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>{renderDesktopRows(slice)}</TableBody>
+              </Table>
+            </div>
+            {visibleCount < rows.length && (
+              <div className="p-3 text-center border-t">
+                <Button variant="outline" size="sm" onClick={() => setVisible((c: number) => c + PAGE_SIZE)}>
+                  Load more ({rows.length - visibleCount} remaining)
+                </Button>
+              </div>
+            )}
+          </>
+        )}
+      </Card>
+    );
+  };
 
   return (
     <div className="space-y-4">
@@ -393,6 +697,87 @@ export function ActualExpensesView() {
         </Card>
       </div>
 
+      {/* Reconciliation panel */}
+      <Card className="p-4">
+        <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
+          <div>
+            <h3 className="font-semibold text-sm">Reconciliation</h3>
+            <p className="text-xs text-muted-foreground">
+              Compare a bank's actual balance on a date against the calculated balance from your transactions.
+            </p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div>
+            <label className="text-xs text-muted-foreground">Account</label>
+            <Select value={reconAccountId} onValueChange={setReconAccountId}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Select bank account" />
+              </SelectTrigger>
+              <SelectContent>
+                {bankAccounts.length === 0 ? (
+                  <SelectItem value="__none__" disabled>No bank accounts — add one in Accounts</SelectItem>
+                ) : (
+                  bankAccounts.map((a: any) => (
+                    <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground">As-of Date</label>
+            <Input type="date" value={reconDate} onChange={(e) => setReconDate(e.target.value)} className="h-9" />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground">Expected Balance</label>
+            <Input
+              type="number"
+              step="0.01"
+              placeholder="From your bank app"
+              value={reconExpected}
+              onChange={(e) => setReconExpected(e.target.value)}
+              className="h-9"
+            />
+          </div>
+          <div className="flex items-end">
+            <div className="w-full text-xs space-y-1">
+              {reconResult ? (
+                <>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Opening:</span>
+                    <span className="tabular-nums">{fmtMoney(reconResult.openingBal, reconResult.currency)}{reconResult.openingDate ? ` (${reconResult.openingDate})` : ""}</span>
+                  </div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Calculated:</span>
+                    <span className="font-semibold tabular-nums">{fmtMoney(reconResult.calculated, reconResult.currency)}</span>
+                  </div>
+                  {reconResult.diff != null && (
+                    <div className={cn(
+                      "flex justify-between font-semibold",
+                      Math.abs(reconResult.diff) < 0.01 ? "text-green-600" : "text-amber-600"
+                    )}>
+                      <span>Variance:</span>
+                      <span className="tabular-nums">{fmtMoney(reconResult.diff, reconResult.currency)}</span>
+                    </div>
+                  )}
+                  <div className="text-[10px] text-muted-foreground">
+                    {reconResult.txnCount} txns · {reconResult.unmappedInRange} unmapped
+                  </div>
+                </>
+              ) : (
+                <div className="text-muted-foreground">Pick an account & date to reconcile.</div>
+              )}
+            </div>
+          </div>
+        </div>
+        {reconResult && reconResult.diff != null && Math.abs(reconResult.diff) >= 0.01 && (
+          <div className="mt-3 p-2 rounded bg-amber-500/10 text-xs text-amber-700 dark:text-amber-300">
+            Calculated is {reconResult.diff > 0 ? "higher" : "lower"} than expected by{" "}
+            <span className="font-semibold">{fmtMoney(Math.abs(reconResult.diff), reconResult.currency)}</span>.
+            Check for missing transactions, duplicate entries, or an incorrect opening balance.
+          </div>
+        )}
+      </Card>
+
       <Card>
         <div className="p-3 border-b flex items-center gap-2">
           <Search className="h-4 w-4 text-muted-foreground" />
@@ -404,127 +789,34 @@ export function ActualExpensesView() {
           />
           <span className="ml-auto text-xs text-muted-foreground">{filtered.length} of {expenses.length}</span>
         </div>
-        {isLoading ? (
-          <div className="p-8 text-center text-sm text-muted-foreground">Loading…</div>
-        ) : filtered.length === 0 ? (
-          <div className="p-8 text-center text-sm text-muted-foreground">
-            No transactions yet. Upload your bank statement to get started.
-          </div>
-        ) : (
-          <>
-            {/* Mobile */}
-            <div className="md:hidden divide-y">
-              {visible.map((e) => (
-                <div key={e.id} className="p-3 space-y-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium truncate">{e.merchant || e.description || "—"}</div>
-                      <div className="text-xs text-muted-foreground truncate">{e.description}</div>
-                      <div className="text-[10px] text-muted-foreground tabular-nums">{e.posted_on}</div>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <div className={`text-sm font-semibold tabular-nums ${e.amount < 0 ? "text-destructive" : "text-green-600"}`}>
-                        {fmtMoney(e.amount, e.currency)}
-                      </div>
-                      <Button size="icon" variant="ghost" className="h-6 w-6 mt-1" onClick={() => remove.mutate(e.id)}>
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Select
-                      value={e.mapped_cashflow_id ?? "__none__"}
-                      onValueChange={(v) => onChangeMapping(e, v)}
-                    >
-                      <SelectTrigger className="h-7 text-xs flex-1">
-                        <SelectValue placeholder="Unmapped" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__none__">— Unmapped —</SelectItem>
-                        {cashflowOptions.map((c: any) => (
-                          <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {e.mapping_source && (
-                      <Badge variant={sourceBadgeVariant(e.mapping_source)} className="text-[9px] py-0 h-4 capitalize">
-                        {e.mapping_source}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-            {/* Desktop */}
-            <div className="hidden md:block overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Merchant</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                    <TableHead className="min-w-[220px]">Budget Line</TableHead>
-                    <TableHead>Source</TableHead>
-                    <TableHead>Account</TableHead>
-                    <TableHead></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {visible.map((e) => (
-                    <TableRow key={e.id}>
-                      <TableCell className="whitespace-nowrap text-xs">{e.posted_on}</TableCell>
-                      <TableCell className="max-w-[160px] truncate text-xs" title={e.merchant ?? ""}>{e.merchant}</TableCell>
-                      <TableCell className="max-w-[220px] truncate text-xs" title={e.description ?? ""}>{e.description}</TableCell>
-                      <TableCell className={`text-right tabular-nums text-xs ${e.amount < 0 ? "text-destructive" : "text-green-600"}`}>
-                        {fmtMoney(e.amount, e.currency)}
-                      </TableCell>
-                      <TableCell>
-                        <Select
-                          value={e.mapped_cashflow_id ?? "__none__"}
-                          onValueChange={(v) => onChangeMapping(e, v)}
-                        >
-                          <SelectTrigger className="h-7 text-xs">
-                            <SelectValue placeholder="Unmapped" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="__none__">— Unmapped —</SelectItem>
-                            {cashflowOptions.map((c: any) => (
-                              <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        {e.mapping_source && (
-                          <Badge variant={sourceBadgeVariant(e.mapping_source)} className="text-[10px] capitalize">
-                            {e.mapping_source}
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{e.account_provider}</TableCell>
-                      <TableCell>
-                        <Button size="icon" variant="ghost" onClick={() => remove.mutate(e.id)}>
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-            {visibleCount < filtered.length && (
-              <div className="p-3 text-center border-t">
-                <Button variant="outline" size="sm" onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}>
-                  Load more ({filtered.length - visibleCount} remaining)
-                </Button>
-              </div>
-            )}
-          </>
-        )}
       </Card>
 
-      {/* Bulk-apply prompt */}
+      {isLoading ? (
+        <Card className="p-8 text-center text-sm text-muted-foreground">Loading…</Card>
+      ) : filtered.length === 0 ? (
+        <Card className="p-8 text-center text-sm text-muted-foreground">
+          No transactions yet. Upload your bank statement to get started.
+        </Card>
+      ) : (
+        <>
+          {renderSection(
+            "Unclassified — needs allocation",
+            unclassified,
+            unclVisible,
+            setUnclVisible,
+            "All transactions are classified.",
+            "warn"
+          )}
+          {renderSection(
+            "Classified transactions",
+            classified,
+            clsVisible,
+            setClsVisible,
+            "No classified transactions yet."
+          )}
+        </>
+      )}
+
       <AlertDialog open={!!pendingChange} onOpenChange={(o) => !o && setPendingChange(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
