@@ -63,6 +63,8 @@ const num = (v: any): number => {
 const sourceBadgeVariant = (s: string | null) =>
   s === "rule" ? "default" : s === "manual" ? "secondary" : s === "ai" ? "outline" : "outline";
 
+const PAGE_SIZE = 50;
+
 export function ActualExpensesView() {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const qc = useQueryClient();
@@ -76,6 +78,7 @@ export function ActualExpensesView() {
   const [enrichProposals, setEnrichProposals] = useState<EnrichmentProposal[]>([]);
   const [enrichSummary, setEnrichSummary] = useState<EnrichmentSummary | null>(null);
   const [rulesOpen, setRulesOpen] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const { getSetting } = useSystemSettings();
   const { transactions } = useFinancialData() as any;
 
@@ -315,6 +318,10 @@ export function ActualExpensesView() {
     );
   }, [expenses, search]);
 
+  // Reset pagination when the filter or dataset changes
+  React.useEffect(() => { setVisibleCount(PAGE_SIZE); }, [search, expenses.length]);
+  const visible = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
+
   const totals = useMemo(() => {
     const inflow = filtered.filter((e) => e.amount > 0).reduce((s, e) => s + Number(e.amount), 0);
     const outflow = filtered.filter((e) => e.amount < 0).reduce((s, e) => s + Number(e.amount), 0);
@@ -407,7 +414,7 @@ export function ActualExpensesView() {
           <>
             {/* Mobile */}
             <div className="md:hidden divide-y">
-              {filtered.slice(0, 200).map((e) => (
+              {visible.map((e) => (
                 <div key={e.id} className="p-3 space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
@@ -464,7 +471,7 @@ export function ActualExpensesView() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.slice(0, 500).map((e) => (
+                  {visible.map((e) => (
                     <TableRow key={e.id}>
                       <TableCell className="whitespace-nowrap text-xs">{e.posted_on}</TableCell>
                       <TableCell className="max-w-[160px] truncate text-xs" title={e.merchant ?? ""}>{e.merchant}</TableCell>
@@ -506,9 +513,11 @@ export function ActualExpensesView() {
                 </TableBody>
               </Table>
             </div>
-            {filtered.length > 500 && (
-              <div className="p-3 text-center text-xs text-muted-foreground border-t">
-                Showing first 500 of {filtered.length} — refine search to see more.
+            {visibleCount < filtered.length && (
+              <div className="p-3 text-center border-t">
+                <Button variant="outline" size="sm" onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}>
+                  Load more ({filtered.length - visibleCount} remaining)
+                </Button>
               </div>
             )}
           </>
