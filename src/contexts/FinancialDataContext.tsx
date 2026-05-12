@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { projectAmortization, RateTerm } from '@/utils/loanAmortization';
@@ -253,27 +253,36 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
     return (data || []) as unknown as RateTerm[];
   };
 
-  const refreshData = async () => {
-    setLoading(true);
-    const [transactionsData, accountsData, physicalData, rateTermsData] = await Promise.all([
-      fetchTransactions(),
-      fetchAccounts(),
-      fetchPhysicalAssets(),
-      fetchRateTerms(),
-    ]);
-    setTransactions(transactionsData);
-    setAccounts(accountsData);
-    setPhysicalAssets(physicalData);
-    setRateTerms(rateTermsData);
+  const hasLoadedRef = useRef(false);
+  const inFlightRef = useRef<Promise<void> | null>(null);
+  const refreshData = useCallback(async () => {
+    if (inFlightRef.current) return inFlightRef.current;
+    // Only show full-page loading on the very first load. Subsequent refreshes
+    // (realtime, post-mutation) update silently to keep tab switching snappy.
+    if (!hasLoadedRef.current) setLoading(true);
+    const p = (async () => {
+      const [transactionsData, accountsData, physicalData, rateTermsData] = await Promise.all([
+        fetchTransactions(),
+        fetchAccounts(),
+        fetchPhysicalAssets(),
+        fetchRateTerms(),
+      ]);
+      setTransactions(transactionsData);
+      setAccounts(accountsData);
+      setPhysicalAssets(physicalData);
+      setRateTerms(rateTermsData);
 
-    // Discover any extra groups already in the data so the selector shows them.
-    const groupSet = new Set<string>(['Personal', 'Corential']);
-    transactionsData.forEach((t) => t.group_name && groupSet.add(t.group_name));
-    accountsData.forEach((a) => a.group_name && groupSet.add(a.group_name));
-    setAvailableGroups(Array.from(groupSet));
+      const groupSet = new Set<string>(['Personal', 'Corential']);
+      transactionsData.forEach((t) => t.group_name && groupSet.add(t.group_name));
+      accountsData.forEach((a) => a.group_name && groupSet.add(a.group_name));
+      setAvailableGroups(Array.from(groupSet));
 
-    setLoading(false);
-  };
+      hasLoadedRef.current = true;
+      setLoading(false);
+    })();
+    inFlightRef.current = p;
+    try { await p; } finally { inFlightRef.current = null; }
+  }, []);
 
   // ---- Adapter: build the SourceBalanceSheet shape from our existing tables.
   const balanceSheet = useMemo<SourceBalanceSheet>(() => {
@@ -689,15 +698,24 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
   useEffect(() => {
     refreshData();
 
+    // Debounce realtime refreshes so a burst of changes (e.g. bulk import,
+    // cascading updates) collapses into a single refetch instead of 4×N.
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const debouncedRefresh = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => { refreshData(); }, 400);
+    };
+
     const channel = supabase
       .channel('financial-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'financial_transactions' }, () => refreshData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'financial_accounts' }, () => refreshData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'physical_assets' }, () => refreshData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'loan_rate_terms' }, () => refreshData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'financial_transactions' }, debouncedRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'financial_accounts' }, debouncedRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'physical_assets' }, debouncedRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'loan_rate_terms' }, debouncedRefresh)
       .subscribe();
 
     return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
       supabase.removeChannel(channel);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
