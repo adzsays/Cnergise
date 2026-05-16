@@ -61,6 +61,14 @@ const Finances = () => {
   const legacy = params.get("tab");
   const initialView = params.get("view") || legacy || "dashboard";
   const [secondaryView, setSecondaryView] = useState<string>(initialView);
+  const [navCollapsed, setNavCollapsed] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("finance:nav-collapsed") === "1";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("finance:nav-collapsed", navCollapsed ? "1" : "0");
+  }, [navCollapsed]);
 
   // Reflect choice in URL without reload
   useEffect(() => {
@@ -69,6 +77,8 @@ const Finances = () => {
     url.searchParams.delete("tab");
     window.history.replaceState({}, "", url.toString());
   }, [secondaryView]);
+
+  const allItems = [{ value: "dashboard", label: "Dashboard", icon: LayoutDashboard }, ...VIEWS];
 
   return (
     <FinancialDataProvider>
@@ -84,28 +94,41 @@ const Finances = () => {
 
               <div className="flex-1 overflow-hidden flex min-h-0">
                 {/* Finance sub-nav rail */}
-                <aside className="hidden md:flex flex-col w-48 lg:w-56 shrink-0 border-r bg-muted/30 overflow-y-auto p-3 gap-1">
-                  <div className="px-2 pb-2 text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Finance</div>
-                  <button
-                    onClick={() => setSecondaryView("dashboard")}
-                    className={`flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-left transition-colors ${secondaryView === "dashboard" ? "bg-primary/10 text-primary font-medium" : "hover:bg-muted text-foreground"}`}
-                  >
-                    <LayoutDashboard className="h-4 w-4" />Dashboard
-                  </button>
-                  {VIEWS.map(v => {
-                    const Icon = v.icon;
-                    const active = secondaryView === v.value;
-                    return (
+                <TooltipProvider delayDuration={100}>
+                  <aside className={`hidden md:flex flex-col shrink-0 border-r bg-muted/30 overflow-y-auto p-2 gap-1 transition-[width] duration-200 ${navCollapsed ? "w-14" : "w-48 lg:w-56"}`}>
+                    <div className={`flex items-center ${navCollapsed ? "justify-center" : "justify-between"} px-1 pb-1`}>
+                      {!navCollapsed && <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium px-1">Finance</span>}
                       <button
-                        key={v.value}
-                        onClick={() => setSecondaryView(v.value)}
-                        className={`flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-left transition-colors ${active ? "bg-primary/10 text-primary font-medium" : "hover:bg-muted text-foreground"}`}
+                        onClick={() => setNavCollapsed(c => !c)}
+                        className="p-1 rounded-md hover:bg-muted text-muted-foreground"
+                        aria-label={navCollapsed ? "Expand navigation" : "Collapse navigation"}
                       >
-                        <Icon className="h-4 w-4" />{v.label}
+                        {navCollapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
                       </button>
-                    );
-                  })}
-                </aside>
+                    </div>
+                    {allItems.map(v => {
+                      const Icon = v.icon;
+                      const active = secondaryView === v.value;
+                      const btn = (
+                        <button
+                          key={v.value}
+                          onClick={() => setSecondaryView(v.value)}
+                          className={`flex items-center gap-2 rounded-md ${navCollapsed ? "justify-center px-0 py-2" : "px-2.5 py-2"} text-sm text-left transition-colors ${active ? "bg-primary/10 text-primary font-medium" : "hover:bg-muted text-foreground"}`}
+                          aria-label={v.label}
+                        >
+                          <Icon className="h-4 w-4 shrink-0" />
+                          {!navCollapsed && <span className="truncate">{v.label}</span>}
+                        </button>
+                      );
+                      return navCollapsed ? (
+                        <Tooltip key={v.value}>
+                          <TooltipTrigger asChild>{btn}</TooltipTrigger>
+                          <TooltipContent side="right">{v.label}</TooltipContent>
+                        </Tooltip>
+                      ) : btn;
+                    })}
+                  </aside>
+                </TooltipProvider>
 
                 <div className="flex-1 overflow-auto p-3 md:p-6 space-y-4 md:space-y-6 min-w-0">
                   {/* Mobile sub-nav: horizontal scroll chips */}
