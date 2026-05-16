@@ -58,7 +58,7 @@ const Finances = () => {
   const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
   // Legacy ?tab= support — map to ?view=
   const legacy = params.get("tab");
-  const initialView = params.get("view") || (legacy && legacy !== "dashboard" ? legacy : "cashflow");
+  const initialView = params.get("view") || legacy || "dashboard";
   const [secondaryView, setSecondaryView] = useState<string>(initialView);
 
   // Reflect choice in URL without reload
