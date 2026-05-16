@@ -1980,6 +1980,54 @@ export type Database = {
         }
         Relationships: []
       }
+      health_goals: {
+        Row: {
+          baseline_value: number | null
+          created_at: string
+          goal_type: Database["public"]["Enums"]["health_goal_type"]
+          id: string
+          is_active: boolean
+          linked_plan_goal_id: string | null
+          notes: string | null
+          target_date: string | null
+          target_unit: string | null
+          target_value: number | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          baseline_value?: number | null
+          created_at?: string
+          goal_type?: Database["public"]["Enums"]["health_goal_type"]
+          id?: string
+          is_active?: boolean
+          linked_plan_goal_id?: string | null
+          notes?: string | null
+          target_date?: string | null
+          target_unit?: string | null
+          target_value?: number | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          baseline_value?: number | null
+          created_at?: string
+          goal_type?: Database["public"]["Enums"]["health_goal_type"]
+          id?: string
+          is_active?: boolean
+          linked_plan_goal_id?: string | null
+          notes?: string | null
+          target_date?: string | null
+          target_unit?: string | null
+          target_value?: number | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       health_metrics: {
         Row: {
           active_minutes: number | null
@@ -2043,6 +2091,42 @@ export type Database = {
           user_id?: string
           water_ml?: number | null
           weight_kg?: number | null
+        }
+        Relationships: []
+      }
+      health_vitals: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          recorded_at: string
+          unit: string | null
+          updated_at: string
+          user_id: string
+          value: number
+          vital_type: Database["public"]["Enums"]["vital_type"]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          recorded_at?: string
+          unit?: string | null
+          updated_at?: string
+          user_id: string
+          value: number
+          vital_type: Database["public"]["Enums"]["vital_type"]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          recorded_at?: string
+          unit?: string | null
+          updated_at?: string
+          user_id?: string
+          value?: number
+          vital_type?: Database["public"]["Enums"]["vital_type"]
         }
         Relationships: []
       }
@@ -2786,6 +2870,42 @@ export type Database = {
           },
         ]
       }
+      mood_log: {
+        Row: {
+          created_at: string
+          energy_score: number | null
+          id: string
+          logged_at: string
+          mood_score: number | null
+          notes: string | null
+          stress_score: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          energy_score?: number | null
+          id?: string
+          logged_at?: string
+          mood_score?: number | null
+          notes?: string | null
+          stress_score?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          energy_score?: number | null
+          id?: string
+          logged_at?: string
+          mood_score?: number | null
+          notes?: string | null
+          stress_score?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notification_preferences: {
         Row: {
           created_at: string
@@ -2831,6 +2951,63 @@ export type Database = {
           updated_at?: string
           user_id?: string
           web_push_enabled?: boolean
+        }
+        Relationships: []
+      }
+      nutrition_log: {
+        Row: {
+          calories: number | null
+          carbs_g: number | null
+          created_at: string
+          fat_g: number | null
+          fiber_g: number | null
+          food_name: string
+          id: string
+          logged_at: string
+          meal_type: Database["public"]["Enums"]["meal_type"]
+          notes: string | null
+          protein_g: number | null
+          servings: number | null
+          source: string | null
+          updated_at: string
+          user_id: string
+          water_ml: number | null
+        }
+        Insert: {
+          calories?: number | null
+          carbs_g?: number | null
+          created_at?: string
+          fat_g?: number | null
+          fiber_g?: number | null
+          food_name: string
+          id?: string
+          logged_at?: string
+          meal_type?: Database["public"]["Enums"]["meal_type"]
+          notes?: string | null
+          protein_g?: number | null
+          servings?: number | null
+          source?: string | null
+          updated_at?: string
+          user_id: string
+          water_ml?: number | null
+        }
+        Update: {
+          calories?: number | null
+          carbs_g?: number | null
+          created_at?: string
+          fat_g?: number | null
+          fiber_g?: number | null
+          food_name?: string
+          id?: string
+          logged_at?: string
+          meal_type?: Database["public"]["Enums"]["meal_type"]
+          notes?: string | null
+          protein_g?: number | null
+          servings?: number | null
+          source?: string | null
+          updated_at?: string
+          user_id?: string
+          water_ml?: number | null
         }
         Relationships: []
       }
@@ -4229,6 +4406,32 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      health_goal_type:
+        | "weight_loss"
+        | "weight_gain"
+        | "maintain"
+        | "strength"
+        | "endurance"
+        | "nutrition"
+        | "sleep"
+        | "custom"
+      meal_type: "breakfast" | "lunch" | "dinner" | "snack" | "drink"
+      vital_type:
+        | "bp_systolic"
+        | "bp_diastolic"
+        | "glucose"
+        | "cholesterol_total"
+        | "cholesterol_ldl"
+        | "cholesterol_hdl"
+        | "triglycerides"
+        | "resting_hr"
+        | "hrv"
+        | "spo2"
+        | "body_temp"
+        | "body_fat_pct"
+        | "muscle_mass_kg"
+        | "waist_cm"
+        | "custom"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -4357,6 +4560,34 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      health_goal_type: [
+        "weight_loss",
+        "weight_gain",
+        "maintain",
+        "strength",
+        "endurance",
+        "nutrition",
+        "sleep",
+        "custom",
+      ],
+      meal_type: ["breakfast", "lunch", "dinner", "snack", "drink"],
+      vital_type: [
+        "bp_systolic",
+        "bp_diastolic",
+        "glucose",
+        "cholesterol_total",
+        "cholesterol_ldl",
+        "cholesterol_hdl",
+        "triglycerides",
+        "resting_hr",
+        "hrv",
+        "spo2",
+        "body_temp",
+        "body_fat_pct",
+        "muscle_mass_kg",
+        "waist_cm",
+        "custom",
+      ],
     },
   },
 } as const

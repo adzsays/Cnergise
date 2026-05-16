@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowDownRight, ArrowUpRight, Sparkles, TrendingUp, Wallet, Target } from 'lucide-react';
 import { SleekChart } from '@/components/ui/SleekChart';
+import { SnoopInsights } from './SnoopInsights';
 
 
 const formatCurrency = (n: number) =>
@@ -216,6 +217,9 @@ export function FinanceDashboardView() {
         valueFormatter={(v) => formatCompact(v)}
         compactHeight={120}
       />
+
+      {/* Snoop-style insights */}
+      <SnoopInsights />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="p-4">

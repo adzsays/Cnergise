@@ -1,58 +1,87 @@
-## Goal
-Enable classification of bank transactions against budgeted cash flow items using a learned rule system, so reconciliation becomes automatic and AI is only invoked for truly new transactions.
+## Goals
 
-## Concept
-1. **Account → Cost Centre mapping**: Each bank account has a default cost centre. New transactions imported from that account inherit it.
-2. **Transaction → Cash Flow mapping (rules)**: A persistent rules table maps a transaction "fingerprint" (merchant/description pattern + optional amount range + account) to a specific cash flow line.
-3. **Classification flow** (per transaction):
-   - First check existing rules → instant assignment.
-   - If no rule matches and external context helps, call AI (Lovable AI / Gemini) once with transaction details + optional Perplexity web lookup → returns suggested cash flow line + confidence.
-   - Store suggestion as `ai_mapped_cashflow_id` with `mapping_source = 'ai' | 'rule' | 'manual'`.
-4. **User correction**: User changes the mapping inline on the transaction row. Dialog asks: "Apply to all similar transactions (past + future)?" If yes → upsert rule + bulk update matching rows.
-5. **Future imports**: Rule engine runs first; AI only for unmatched residue.
+1. **Finance** — Replace 6-tab nav with a pinned Dashboard + view dropdown. Dashboard becomes the Snoop-style command centre.
+2. **Health** — Goal-linked weight loss, food/nutrition logging, full marker set (body comp, activity, sleep, vitals, mood).
+3. **Cross-app flow** — Stop siloing. Goals on `/plan` drive Health targets; Health and Finance both surface on `/home`; one transaction = one source of truth (no duplicate UI lists).
 
-## Database changes
-- Add `default_cost_centre` to `financial_accounts` (already partially supported via account.cost_centre).
-- Add `mapped_cashflow_id uuid`, `mapping_source text` ('rule'|'ai'|'manual'|null), `mapping_confidence numeric` to `financial_transactions`.
-- New table `cashflow_mapping_rules`:
-  - `user_id, match_type` ('description_contains'|'description_exact'|'merchant'),
-  - `match_value text` (normalized),
-  - `account_id uuid` (optional scope),
-  - `min_amount numeric` (optional), `max_amount numeric` (optional),
-  - `cashflow_id uuid` → `financial_transactions.id` (the budgeted line),
-  - `cost_centre text`,
-  - `priority int`,
-  - `times_applied int`, `last_applied_at timestamptz`.
-- Index on `(user_id, match_type, match_value)`.
-- RLS: user owns their rules.
+---
 
-## Edge function: `classify-transactions`
-Input: array of transaction IDs (or "all unclassified for user").
-Steps per txn:
-1. Apply rules (SQL lookup, ranked by priority + specificity).
-2. For unmatched, batch-call Lovable AI (`google/gemini-3-flash-preview`) with the user's existing cash flow lines as the candidate list + transaction description/amount/merchant. Use tool calling for structured output: `{ cashflow_id, confidence, reasoning }`.
-3. Optional Perplexity enrichment for unknown merchants (only when AI confidence < 0.5).
-4. Update transactions with mapping fields.
+## 1. Finance refactor
 
-## Frontend changes
-- **`InlineTransactionsTable`** (bank transactions view): add column **"Budget Line"** showing the mapped cash flow line as a Select. Badge shows source (Rule/AI/Manual). On change → modal:
-  - "Apply to similar transactions?" with preview count.
-  - Yes → call edge function `apply-mapping-rule` (creates rule + bulk updates).
-  - No → single update, marks `mapping_source='manual'`.
-- **`AccountDialog`**: ensure `cost_centre` field is prominent (already exists) — label as "Default Cost Centre" + tooltip "Applied to new transactions from this account".
-- **New button "Auto-classify"** on transactions tab → runs `classify-transactions` for all unmapped.
-- **Rules manager** (small dialog accessible from transactions toolbar): list rules, edit/delete.
-- **`FinanceDashboardView` / `CashFlowComparisonView`**: switch comparison logic to group actuals by `mapped_cashflow_id` instead of fuzzy AI matching at compare-time. Falls back to existing AI compare for unmapped.
+### Navigation
+- `src/pages/Finances.tsx`: keep **Dashboard** as the always-visible top section. Below it, a single `Select` ("View: Forecast / Inputs / Transactions / Accounting / Invoices") swaps the secondary view. Persist choice in URL `?view=`.
+- Remove the horizontal tab strip.
 
-## Files to touch
-- `supabase/migrations/...` — schema + RLS.
-- `supabase/functions/classify-transactions/index.ts` — new.
-- `supabase/functions/apply-mapping-rule/index.ts` — new (creates rule, bulk update).
-- `src/components/finances/InlineTransactionsTable.tsx` — Budget Line column + bulk dialog.
-- `src/components/finances/MappingRulesDialog.tsx` — new manager.
-- `src/components/finances/CashFlowComparisonView.tsx` — prefer mapped_cashflow_id.
-- `src/contexts/FinancialDataContext.tsx` — expose mapping helpers.
+### Snoop-style Dashboard (`FinanceDashboardView.tsx`)
+Add four new modules built from existing `financial_transactions` + `actual_expenses` + `cashflow_lines` (no schema change needed for most):
 
-## Notes
-- Rule matching is case-insensitive, trimmed, normalized (strip card-suffix digits, dates).
-- Cash flow lines are the income/expense rows already in `financial_transactions` where they represent the budget — use existing `frequency`/`monthly` semantics. If you need a separate flag, we'll add `is_budget boolean default true` for budget rows vs imported actuals (actuals will have `mapped_cashflow_id` set, budget rows won't).
+1. **Cash flow graph (hero)** — 90-day rolling line: balance, income, spend. Reuses `SleekChart`.
+2. **Safe-to-spend** — `current balance − upcoming recurring (cashflow_lines until next payday) − scheduled bills`. Big number + breakdown chip row.
+3. **Spending by merchant/category** — donut + top-5 merchants this month vs last (group `actual_expenses` by normalised `merchant`/`category`).
+4. **Recurring subscriptions** — detect any merchant with ≥3 charges in last 90d at similar amount; list with monthly cost + "next charge" date + cancel-reminder action.
+5. **Smart insights strip** — auto-generated nudges (e.g. "Dining +32% vs last month", "Duplicate charge: Amazon £24.99 twice on 12 May"). Pure client-side rules over `actual_expenses`.
+
+### What stays untouched
+Inputs (account opening balances), Transactions tab (the sortable split UI from last iteration), Accounting, Invoices — only reachable via the new dropdown.
+
+---
+
+## 2. Health upgrade
+
+### Schema (one migration)
+New tables, RLS = owner-only:
+- `health_goals` (user_id, goal_type enum: weight_loss/weight_gain/maintain/strength/endurance/custom, target_value, target_unit, target_date, baseline_value, linked_goal_id → goals)
+- `nutrition_log` (user_id, logged_at, meal_type, food_name, calories, protein_g, carbs_g, fat_g, water_ml, source)
+- `health_vitals` (user_id, recorded_at, vital_type enum: bp_sys/bp_dia/glucose/cholesterol_ldl/hdl/triglycerides/resting_hr/hrv/spo2/body_temp, value, unit, notes)
+- `mood_log` (user_id, logged_at, mood_score 1-10, stress_score 1-10, energy_score 1-10, notes)
+- Extend `health_metrics` with `weight_kg`, `body_fat_pct`, `muscle_mass_kg` if missing.
+
+### UI (`src/pages/Health.tsx` rebuild)
+Pinned **Today** dashboard + view dropdown (Goals / Food / Activity & Sleep / Vitals & Labs / Mood). Today shows:
+- Active goal progress ring (e.g. "−2.4 kg / −5 kg")
+- Calories in vs out, macro split bar
+- Steps, active minutes, sleep last night, resting HR
+- Latest BP/glucose if entered in last 7d
+- Mood/stress quick check-in
+
+New components: `GoalsCard`, `FoodLogQuickAdd` (search common foods + manual macros), `VitalsLogger`, `MoodCheckin`. Reuse `SleekChart` for trends.
+
+Goal linkage: a `health_goals` row optionally points at a `goals` row on `/plan`, so the same "Lose 5 kg" goal shows progress in both places.
+
+---
+
+## 3. Cross-app seamless flow
+
+### De-duplicate surfaces
+- `/home` (Today): widgets read from the **same hooks** as their source pages — no parallel fetches. Add a `useFinanceSummary()` hook (balance, safe-to-spend, top insight) and `useHealthToday()` hook used by both `/home` and the respective pages.
+- Remove the old hard-coded `FinanceSection.tsx` mock data; point it at real hooks or delete in favour of the new dashboard widget.
+
+### Contextual links
+- Goal card on `/plan` of type "health" → click jumps to `/health?goal=<id>` highlighting that goal.
+- Finance insight "Dining +32%" → click jumps to `/finances?view=transactions&category=dining`.
+- Health "Calories over budget today" → click jumps to `/finances?view=transactions&category=groceries` (only if a grocery txn ran today). Optional, keep simple.
+
+### Unified metadata
+Log new health/finance significant events to `unified_metadata` so the existing notification center + AI search pick them up automatically (e.g. "Recurring subscription detected", "Weight goal milestone hit").
+
+---
+
+## Technical notes
+
+- All charts via `SleekChart` (mobile-first rule).
+- Currency formatting via `useUserCurrency` (GBP default).
+- Recurring detection is pure client-side over already-fetched `actual_expenses` — no edge function needed v1.
+- Safe-to-spend computed from `cashflow_lines` (already fetched in `FinancialDataContext`).
+- No changes to auth, RLS templates follow existing pattern (`auth.uid() = user_id`).
+- Tab strip removal won't break deep links: keep `?tab=` → `?view=` redirect in `Finances.tsx`.
+
+### Sequence
+1. DB migration for Health tables.
+2. Finance: nav refactor + Dashboard modules.
+3. Health: rebuild page + new components.
+4. Cross-app: shared hooks, dedupe `/home`, contextual links.
+
+### Out of scope (this PR)
+- Bank-feed-powered subscription auto-cancel (just a reminder).
+- Wearable integrations beyond what Health Source Hub already does.
+- Refund automation — flag only.
