@@ -46,9 +46,28 @@ const InvoicingSection = () => {
   );
 };
 
+const VIEWS = [
+  { value: "cashflow", label: "Forecast", icon: TrendingUp },
+  { value: "balances", label: "Inputs & Balances", icon: Scale },
+  { value: "expenses", label: "Bank Transactions", icon: Wallet },
+  { value: "accounting", label: "Accounting", icon: FolderTree },
+  { value: "invoices", label: "Invoices", icon: FileText },
+] as const;
+
 const Finances = () => {
   const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
-  const [activeTab, setActiveTab] = useState(params.get("tab") || "dashboard");
+  // Legacy ?tab= support — map to ?view=
+  const legacy = params.get("tab");
+  const initialView = params.get("view") || (legacy && legacy !== "dashboard" ? legacy : "cashflow");
+  const [secondaryView, setSecondaryView] = useState<string>(initialView);
+
+  // Reflect choice in URL without reload
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("view", secondaryView);
+    url.searchParams.delete("tab");
+    window.history.replaceState({}, "", url.toString());
+  }, [secondaryView]);
 
   return (
     <FinancialDataProvider>
@@ -62,41 +81,37 @@ const Finances = () => {
               
               <TopBar title="Finance" />
 
-              <div className="flex-1 overflow-auto p-3 md:p-6 space-y-4">
-                
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
-                  <div className="overflow-x-auto -mx-3 px-3 md:mx-0 md:px-0">
-                    <TabsList className="bg-muted/50 inline-flex h-auto gap-0.5 md:gap-1 p-1 md:p-1.5 rounded-lg md:rounded-xl min-w-max">
-                      <TabsTrigger value="dashboard" className="text-xs md:text-sm rounded-md md:rounded-lg px-2 md:px-3 py-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                        <LayoutDashboard className="h-3.5 w-3.5 md:h-4 md:w-4 md:mr-2" />
-                        <span className="hidden md:inline">Dashboard</span>
-                      </TabsTrigger>
-                      <TabsTrigger value="cashflow" className="text-xs md:text-sm rounded-md md:rounded-lg px-2 md:px-3 py-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                        <TrendingUp className="h-3.5 w-3.5 md:h-4 md:w-4 md:mr-2" />
-                        <span className="hidden md:inline">Forecast</span>
-                      </TabsTrigger>
-                      <TabsTrigger value="balances" className="text-xs md:text-sm rounded-md md:rounded-lg px-2 md:px-3 py-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                        <Scale className="h-3.5 w-3.5 md:h-4 md:w-4 md:mr-2" />
-                        <span className="hidden md:inline">Inputs</span>
-                      </TabsTrigger>
-                      <TabsTrigger value="expenses" className="text-xs md:text-sm rounded-md md:rounded-lg px-2 md:px-3 py-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                        <Wallet className="h-3.5 w-3.5 md:h-4 md:w-4 md:mr-2" />
-                        <span className="hidden md:inline">Bank Account Transactions</span>
-                      </TabsTrigger>
-                      <TabsTrigger value="accounting" className="text-xs md:text-sm rounded-md md:rounded-lg px-2 md:px-3 py-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                        <FolderTree className="h-3.5 w-3.5 md:h-4 md:w-4 md:mr-2" />
-                        <span className="hidden md:inline">Accounting</span>
-                      </TabsTrigger>
-                      <TabsTrigger value="invoices" className="text-xs md:text-sm rounded-md md:rounded-lg px-2 md:px-3 py-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                        <FileText className="h-3.5 w-3.5 md:h-4 md:w-4 md:mr-2" />
-                        <span className="hidden md:inline">Invoices</span>
-                      </TabsTrigger>
-                    </TabsList>
-                  </div>
+              <div className="flex-1 overflow-auto p-3 md:p-6 space-y-4 md:space-y-6">
 
-                  <TabsContent value="dashboard" className="mt-0"><FinanceDashboardView /></TabsContent>
-                  <TabsContent value="cashflow" className="mt-0"><CashFlowView /></TabsContent>
-                  <TabsContent value="balances" className="mt-0">
+                {/* Pinned Dashboard — always visible */}
+                <FinanceDashboardView />
+
+                {/* Secondary view dropdown */}
+                <div className="flex items-center justify-between gap-3 pt-2 border-t">
+                  <div>
+                    <h2 className="text-base md:text-lg font-semibold">More tools</h2>
+                    <p className="text-xs text-muted-foreground">Pick a view to drill in</p>
+                  </div>
+                  <Select value={secondaryView} onValueChange={setSecondaryView}>
+                    <SelectTrigger className="w-[200px] md:w-[240px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {VIEWS.map(v => {
+                        const Icon = v.icon;
+                        return (
+                          <SelectItem key={v.value} value={v.value}>
+                            <span className="flex items-center gap-2"><Icon className="h-4 w-4" />{v.label}</span>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  {secondaryView === "cashflow" && <CashFlowView />}
+                  {secondaryView === "balances" && (
                     <InnerTabs defaultValue="accounts" className="space-y-4">
                       <div className="overflow-x-auto -mx-3 px-3 md:mx-0 md:px-0 scrollbar-none">
                         <InnerTabsList className="inline-flex w-max">
@@ -107,12 +122,12 @@ const Finances = () => {
                       <InnerTabsContent value="accounts"><BalancesView /></InnerTabsContent>
                       <InnerTabsContent value="credit"><CreditScoreView /></InnerTabsContent>
                     </InnerTabs>
-                  </TabsContent>
-                  <TabsContent value="expenses" className="mt-0"><ActualExpensesView /></TabsContent>
-                  <TabsContent value="accounting" className="mt-0"><AccountingGroupsView /></TabsContent>
-                  <TabsContent value="invoices" className="mt-0"><InvoicingSection /></TabsContent>
-                  
-                </Tabs>
+                  )}
+                  {secondaryView === "expenses" && <ActualExpensesView />}
+                  {secondaryView === "accounting" && <AccountingGroupsView />}
+                  {secondaryView === "invoices" && <InvoicingSection />}
+                </div>
+
               </div>
             </div>
           </SidebarInset>
