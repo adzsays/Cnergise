@@ -5,6 +5,30 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+async function signState(payload: Record<string, unknown>) {
+  const payloadB64 = btoa(JSON.stringify(payload));
+  const secret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sigBuf = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payloadB64));
+  const sigB64 = btoa(String.fromCharCode(...new Uint8Array(sigBuf)));
+  return `${payloadB64}.${sigB64}`;
+}
+
+async function buildGoogleAuthUrl(userId: string, callbackUrl: string, retryRefresh = false) {
+  const state = await signState({ uid: userId, cb: callbackUrl, ts: Date.now(), retryRefresh });
+  const params = new URLSearchParams({
+    client_id: Deno.env.get("GOOGLE_CALENDAR_CLIENT_ID")!,
+    redirect_uri: `${Deno.env.get("SUPABASE_URL")}/functions/v1/google-calendar-oauth-callback`,
+    response_type: "code",
+    scope: "https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/userinfo.email",
+    access_type: "offline",
+    prompt: "consent select_account",
+    include_granted_scopes: "true",
+    state,
+  });
+  return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -40,6 +64,7 @@ Deno.serve(async (req) => {
       return new Response("Disallowed redirect", { status: 400 });
     }
     const cb: string = cbRaw;
+    const retryRefresh = Boolean(state.retryRefresh);
 
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
@@ -79,12 +104,23 @@ Deno.serve(async (req) => {
 
     const refreshToken = tokens.refresh_token || existing?.refresh_token;
 
+    if (!tokens.refresh_token && existing?.id && !retryRefresh) {
+      await admin.from("google_calendar_connections").delete().eq("id", existing.id);
+      const freshAuthUrl = await buildGoogleAuthUrl(userId, cbRaw, true);
+      return Response.redirect(freshAuthUrl, 302);
+    }
+
+    if (!refreshToken) {
+      return new Response("Google did not return a refresh token. Please remove this app from your Google account's third-party access list, then connect again.", { status: 400 });
+    }
+
     if (existing?.id) {
       await admin.from("google_calendar_connections").update({
         access_token: tokens.access_token,
         refresh_token: refreshToken,
         token_expires_at: expiresAt,
         scope: tokens.scope,
+        last_sync_error: null,
         updated_at: new Date().toISOString(),
       }).eq("id", existing.id);
     } else {
@@ -95,6 +131,7 @@ Deno.serve(async (req) => {
         refresh_token: refreshToken,
         token_expires_at: expiresAt,
         scope: tokens.scope,
+        last_sync_error: null,
       });
     }
 
