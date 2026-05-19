@@ -64,6 +64,7 @@ Deno.serve(async (req) => {
       return new Response("Disallowed redirect", { status: 400 });
     }
     const cb: string = cbRaw;
+    const retryRefresh = Boolean(state.retryRefresh);
 
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
@@ -103,12 +104,23 @@ Deno.serve(async (req) => {
 
     const refreshToken = tokens.refresh_token || existing?.refresh_token;
 
+    if (!tokens.refresh_token && existing?.id && !retryRefresh) {
+      await admin.from("google_calendar_connections").delete().eq("id", existing.id);
+      const freshAuthUrl = await buildGoogleAuthUrl(userId, cbRaw, true);
+      return Response.redirect(freshAuthUrl, 302);
+    }
+
+    if (!refreshToken) {
+      return new Response("Google did not return a refresh token. Please remove this app from your Google account's third-party access list, then connect again.", { status: 400 });
+    }
+
     if (existing?.id) {
       await admin.from("google_calendar_connections").update({
         access_token: tokens.access_token,
         refresh_token: refreshToken,
         token_expires_at: expiresAt,
         scope: tokens.scope,
+        last_sync_error: null,
         updated_at: new Date().toISOString(),
       }).eq("id", existing.id);
     } else {
@@ -119,6 +131,7 @@ Deno.serve(async (req) => {
         refresh_token: refreshToken,
         token_expires_at: expiresAt,
         scope: tokens.scope,
+        last_sync_error: null,
       });
     }
 
