@@ -117,10 +117,33 @@ Deno.serve(async (req) => {
         .maybeSingle();
       if (!sess) return json({ error: "session not found" }, 404);
 
+      // Per-session total cap
+      const { count: totalMsgs } = await sb
+        .from("visitor_chat_messages")
+        .select("id", { count: "exact", head: true })
+        .eq("session_id", sess.id)
+        .eq("role", "visitor");
+      if ((totalMsgs ?? 0) >= MAX_MESSAGES_PER_SESSION) {
+        return json({ error: "Message limit reached for this session. Please email us instead." }, 429);
+      }
+
+      // Per-session per-minute cap (burst protection)
+      const oneMinAgo = new Date(Date.now() - 60 * 1000).toISOString();
+      const { count: recentMsgs } = await sb
+        .from("visitor_chat_messages")
+        .select("id", { count: "exact", head: true })
+        .eq("session_id", sess.id)
+        .eq("role", "visitor")
+        .gte("created_at", oneMinAgo);
+      if ((recentMsgs ?? 0) >= MAX_MESSAGES_PER_SESSION_PER_MIN) {
+        return json({ error: "Sending too quickly. Please wait a moment." }, 429);
+      }
+
       // optionally update email
       if (body.email && !sess.visitor_email) {
         await sb.from("visitor_chat_sessions").update({ visitor_email: body.email }).eq("id", sess.id);
       }
+
 
       await sb.from("visitor_chat_messages").insert({
         session_id: sess.id,
