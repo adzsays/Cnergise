@@ -115,7 +115,7 @@ async function syncCalendar(admin: any, userId: string, accessToken: string, cal
 
 export async function syncAllForUser(admin: any, userId: string) {
   const { data: connections } = await admin
-    .from("google_calendar_connections")
+    .from("google_calendar_connections_decrypted")
     .select("*")
     .eq("user_id", userId);
 
