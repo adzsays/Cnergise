@@ -281,6 +281,12 @@ export function InlineTransactionsTable() {
           <Button size="sm" variant="outline" onClick={() => handleAddRow('expense')} className="text-destructive">
             <ArrowUpCircle className="h-3.5 w-3.5 mr-1" /> Add Expense
           </Button>
+          <Button size="sm" variant="outline" onClick={() => handleAddRow('asset')} className="text-primary">
+            <ArrowLeftRight className="h-3.5 w-3.5 mr-1" /> Add Asset
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => handleAddRow('liability')}>
+            <Building2 className="h-3.5 w-3.5 mr-1" /> Add Liability
+          </Button>
         </div>
       </div>
 
@@ -289,6 +295,7 @@ export function InlineTransactionsTable() {
           <thead>
             <tr className="text-muted-foreground uppercase text-[10px] tracking-wider border-b">
               <SortHeader k="type" label="Type" className="w-24" />
+              <th className="text-left py-2 px-2 font-medium w-24">Section</th>
               <SortHeader k="subcategory" label="Description" />
               <SortHeader k="monthly" label="Amount" align="right" />
               <SortHeader k="date" label="Recurring Date" />
