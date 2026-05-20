@@ -386,33 +386,33 @@ export function FinanceDashboardView() {
         </div>
       </div>
 
-      {/* Compact hero — Daily Net Flow */}
+      {/* Compact hero — period-aware Net Flow */}
       <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-primary via-primary to-primary/70 text-primary-foreground p-3 shadow-md">
         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top_right,white,transparent_60%)]" />
         <div className="relative flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-baseline gap-2">
             <div>
-              <p className="text-[10px] uppercase tracking-wider opacity-80">Daily Net Flow {costCentre !== 'all' && `· ${costCentre}`}</p>
+              <p className="text-[10px] uppercase tracking-wider opacity-80">{PERIOD_LABEL[period]} Net Flow {costCentre !== 'all' && `· ${costCentre}`}</p>
               <div className="flex items-baseline gap-1.5 mt-0.5">
-                <span className="text-2xl font-bold">{formatCurrency(dailyNet)}</span>
-                <span className="text-[11px] opacity-80">/day</span>
+                <span className="text-2xl font-bold">{formatCurrency(kpis.net)}</span>
+                <span className="text-[11px] opacity-80">/{period === 'daily' ? 'day' : period === 'weekly' ? 'wk' : 'mo'}</span>
               </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <div className="rounded-md bg-white/10 backdrop-blur px-2.5 py-1.5">
-              <div className="flex items-center gap-1 text-[10px] opacity-90"><ArrowUpRight className="h-3 w-3" />Income/day</div>
-              <p className="text-sm font-semibold">{formatCurrency(dailyAvgIncome)}</p>
+              <div className="flex items-center gap-1 text-[10px] opacity-90"><ArrowUpRight className="h-3 w-3" />Income/{period === 'daily' ? 'day' : period === 'weekly' ? 'wk' : 'mo'}</div>
+              <p className="text-sm font-semibold">{formatCurrency(kpis.avgIncome)}</p>
             </div>
             <div className="rounded-md bg-white/10 backdrop-blur px-2.5 py-1.5">
-              <div className="flex items-center gap-1 text-[10px] opacity-90"><ArrowDownRight className="h-3 w-3" />Spend/day</div>
-              <p className="text-sm font-semibold">{formatCurrency(dailyAvgExpense)}</p>
+              <div className="flex items-center gap-1 text-[10px] opacity-90"><ArrowDownRight className="h-3 w-3" />Spend/{period === 'daily' ? 'day' : period === 'weekly' ? 'wk' : 'mo'}</div>
+              <p className="text-sm font-semibold">{formatCurrency(kpis.avgExpense)}</p>
             </div>
           </div>
         </div>
       </Card>
 
-      {/* KPI strip — combined month + forecast */}
+      {/* KPI strip */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
         <Card className="p-3"><div className="flex items-center gap-1.5 text-[10px] text-muted-foreground"><Wallet className="h-3 w-3" />Cash (Bank)</div><p className="text-sm font-semibold mt-0.5">{formatCompact(liquidCash)}</p></Card>
         <Card className="p-3"><div className="flex items-center gap-1.5 text-[10px] text-muted-foreground"><TrendingUp className="h-3 w-3" />Saving</div><p className="text-sm font-semibold mt-0.5">{savingsRate.toFixed(0)}%</p></Card>
@@ -421,38 +421,23 @@ export function FinanceDashboardView() {
         <Card className="p-3"><p className="text-[10px] uppercase tracking-wider text-muted-foreground">First Negative</p><p className={cn('text-sm font-semibold mt-0.5', kpis.firstNeg === 'Never' ? 'text-income' : 'text-expense')}>{kpis.firstNeg}</p></Card>
       </div>
 
-      {/* Two charts side-by-side at all sizes, compact-by-default expandable */}
-      <div className="grid grid-cols-2 gap-3">
-        <SleekChart
-          kind="area"
-          data={dailyData}
-          xKey="label"
-          series={[
-            { key: 'income', label: 'Income', color: 'income' },
-            { key: 'expense', label: 'Expense', color: 'expense' },
-          ]}
-          title="Daily Money Flow"
-          subtitle="This month, day by day"
-          valueFormatter={(v) => formatCompact(v)}
-          compactHeight={140}
-          expandedHeight={360}
-        />
-        <SleekChart
-          kind="area"
-          data={forecastChartData}
-          xKey="label"
-          series={[
-            { key: 'income', label: 'Income', color: 'income' },
-            { key: 'expense', label: 'Expenses', color: 'expense' },
-            { key: 'balance', label: 'Cash Balance', color: 'primary' },
-          ]}
-          title="Cash Forecast"
-          subtitle={`Per ${PERIOD_LABEL[period]} · projected balance`}
-          valueFormatter={(v) => formatCompact(Math.round(v))}
-          compactHeight={140}
-          expandedHeight={360}
-        />
-      </div>
+      {/* Cash Forecast chart — full width, monthly x-axis for readability */}
+      <SleekChart
+        kind="area"
+        data={monthlyForecast}
+        xKey="label"
+        series={[
+          { key: 'income', label: 'Income', color: 'income' },
+          { key: 'expense', label: 'Expenses', color: 'expense' },
+          { key: 'balance', label: 'Cash Balance', color: 'primary' },
+        ]}
+        title="Cash Forecast"
+        subtitle="12-month projection · monthly"
+        valueFormatter={(v) => formatCompact(Math.round(v))}
+        compactHeight={180}
+        expandedHeight={400}
+      />
+
 
       {/* Running cash balance table — collapsible */}
       <Collapsible defaultOpen={false}>
