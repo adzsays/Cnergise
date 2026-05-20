@@ -328,7 +328,9 @@ const Auth = () => {
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 overflow-visible">
           <div className="flex items-center justify-between h-12 sm:h-14 gap-2 overflow-visible">
             <div className="flex items-center min-w-0 overflow-visible">
-              <img src={cnergiseLogo} alt="Cnergise" className="h-20 sm:h-28 w-auto object-contain shrink-0 -my-4" />
+              <a href="/" aria-label="Go to home" className="flex items-center">
+                <img src={cnergiseLogo} alt="Cnergise" className="h-20 sm:h-28 w-auto object-contain shrink-0 -my-4" />
+              </a>
             </div>
             <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
               {loginAccess ? (
