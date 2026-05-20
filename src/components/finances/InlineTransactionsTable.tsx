@@ -102,12 +102,20 @@ export function InlineTransactionsTable() {
   };
 
   const sorted = useMemo(() => {
-    const filtered = filterCostCentre === 'all'
+    const q = searchQuery.trim().toLowerCase();
+    let filtered = filterCostCentre === 'all'
       ? transactions
       : transactions.filter((t: any) => (t.cost_centre || '').toLowerCase() === filterCostCentre.toLowerCase());
+    if (q) {
+      filtered = filtered.filter((t: any) => {
+        const hay = [t.subcategory, t.category, t.cost_centre, t.type, t.cash_flow_section, t.frequency]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        return hay.includes(q);
+      });
+    }
     const arr = [...filtered];
-    // Always group by type (income first, then expense). Within each group,
-    // newly added rows appear on top by default so they're easy to edit.
     if (!sortKey) {
       return arr.sort((a, b) => {
         if (a.type !== b.type) return a.type === 'income' ? -1 : 1;
@@ -116,8 +124,6 @@ export function InlineTransactionsTable() {
     }
     const dir = sortDir === 'asc' ? 1 : -1;
     return arr.sort((a, b) => {
-      // Keep type grouping even when a column sort is active
-      if (a.type !== b.type) return a.type === 'income' ? -1 : 1;
       const av = a[sortKey];
       const bv = b[sortKey];
       if (sortKey === 'monthly' || sortKey === 'date') {
@@ -129,10 +135,9 @@ export function InlineTransactionsTable() {
         if (as < bs) return -1 * dir;
         if (as > bs) return 1 * dir;
       }
-      // Tie-breaker: newest first
       return createdMs(b) - createdMs(a);
     });
-  }, [transactions, sortKey, sortDir, filterCostCentre]);
+  }, [transactions, sortKey, sortDir, filterCostCentre, searchQuery]);
 
   const SortHeader = ({ k, label, align = 'left', className = '' }: { k: SortKey; label: string; align?: 'left' | 'right'; className?: string }) => {
     const active = sortKey === k;
