@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FinancialDataProvider } from "@/contexts/FinancialDataContext";
 import { FinanceDashboardView } from "@/components/finances/FinanceDashboardView";
-import { CashFlowView } from "@/components/finances/CashFlowView";
+
 import { CreditScoreView } from "@/components/finances/CreditScoreView";
 import { BalancesView } from "@/components/finances/BalancesView";
 import { ActualExpensesView } from "@/components/finances/ActualExpensesView";
@@ -18,7 +18,7 @@ import { CustomerManager } from "@/components/invoices/CustomerManager";
 import { BillingEntityManager } from "@/components/invoices/BillingEntityManager";
 import { ServiceManager } from "@/components/invoices/ServiceManager";
 
-import { LayoutDashboard, TrendingUp, CreditCard, Scale, Receipt, Wallet, Sparkles, FolderTree, FileText, Users, Building2, Briefcase, ListChecks, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { LayoutDashboard, CreditCard, Scale, Wallet, FolderTree, FileText, Users, Building2, Briefcase, ListChecks, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { Tabs as InnerTabs, TabsContent as InnerTabsContent, TabsList as InnerTabsList, TabsTrigger as InnerTabsTrigger } from "@/components/ui/tabs";
@@ -48,7 +48,6 @@ const InvoicingSection = () => {
 };
 
 const VIEWS = [
-  { value: "cashflow", label: "Forecast", icon: TrendingUp },
   { value: "balances", label: "Inputs & Balances", icon: Scale },
   { value: "expenses", label: "Bank Transactions", icon: Wallet },
   { value: "accounting", label: "Accounting", icon: FolderTree },
@@ -57,9 +56,10 @@ const VIEWS = [
 
 const Finances = () => {
   const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
-  // Legacy ?tab= support — map to ?view=
+  // Legacy ?tab= support — map to ?view=. Forecast tab removed; redirect to dashboard.
   const legacy = params.get("tab");
-  const initialView = params.get("view") || legacy || "dashboard";
+  const requested = params.get("view") || legacy || "dashboard";
+  const initialView = requested === "cashflow" ? "dashboard" : requested;
   const [secondaryView, setSecondaryView] = useState<string>(initialView);
   const [navCollapsed, setNavCollapsed] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
@@ -157,7 +157,6 @@ const Finances = () => {
                   </div>
 
                   {secondaryView === "dashboard" && <FinanceDashboardView />}
-                  {secondaryView === "cashflow" && <CashFlowView />}
                   {secondaryView === "balances" && (
                     <InnerTabs defaultValue="accounts" className="space-y-4">
                       <div className="overflow-x-auto -mx-3 px-3 md:mx-0 md:px-0 scrollbar-none">
