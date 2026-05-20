@@ -326,44 +326,9 @@ const Auth = () => {
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border pt-[env(safe-area-inset-top)]">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 sm:h-20 gap-2">
+          <div className="flex items-center justify-center h-20 sm:h-28 gap-2">
             <div className="flex items-center min-w-0">
-              <img src={cnergiseLogo} alt="Cnergise" className="h-14 sm:h-20 w-auto object-contain shrink-0" />
-            </div>
-            <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-              {loginAccess ? (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => { setAuthTab("signin"); setShowAuthModal(true); }}
-                  >
-                    Sign In
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => { setAuthTab("signup"); setShowAuthModal(true); }}
-                    className="bg-primary hover:bg-primary/90"
-                  >
-                    Get Started
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <span className="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium">
-                    <Sparkles className="w-4 h-4" />
-                    Coming Soon
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => { setAuthTab("signin"); setShowAuthModal(true); }}
-                    className="text-muted-foreground hover:text-foreground"
-                  >
-                    Sign in
-                  </Button>
-                </>
-              )}
+              <img src={cnergiseLogo} alt="Cnergise" className="h-20 sm:h-28 w-auto object-contain shrink-0" />
             </div>
           </div>
         </div>
