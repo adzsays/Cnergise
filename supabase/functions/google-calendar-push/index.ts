@@ -20,7 +20,7 @@ async function refreshAccessToken(refreshToken: string) {
 }
 
 async function getValidConn(admin: any, userId: string, accountId?: string) {
-  let q = admin.from("google_calendar_connections").select("*").eq("user_id", userId);
+  let q = admin.from("google_calendar_connections_decrypted").select("*").eq("user_id", userId);
   if (accountId) q = q.eq("id", accountId);
   const { data: conn } = await q.maybeSingle();
   if (!conn) throw new Error("No matching Google Calendar connection");

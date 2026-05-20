@@ -115,7 +115,7 @@ async function syncCalendar(admin: any, userId: string, accessToken: string, cal
 
 export async function syncAllForUser(admin: any, userId: string) {
   const { data: connections } = await admin
-    .from("google_calendar_connections")
+    .from("google_calendar_connections_decrypted")
     .select("*")
     .eq("user_id", userId);
 
@@ -216,13 +216,13 @@ export async function renewExpiringChannels(admin: any) {
   for (const ch of channels ?? []) {
     try {
       const { data: rawConn } = await admin
-        .from("google_calendar_connections")
+        .from("google_calendar_connections_decrypted")
         .select("*")
         .eq("user_id", ch.user_id)
         .eq("id", ch.account_id)
         .maybeSingle();
       const conn = rawConn ?? (await admin
-        .from("google_calendar_connections").select("*").eq("user_id", ch.user_id).maybeSingle()).data;
+        .from("google_calendar_connections_decrypted").select("*").eq("user_id", ch.user_id).maybeSingle()).data;
       if (!conn) continue;
       const valid = await ensureValidToken(admin, conn);
 
