@@ -21,7 +21,7 @@ import {
   Users,
   Shield,
 } from "lucide-react";
-import cnergiseLogo from "@/assets/cnergise-logo.png";
+import cnergiseLogo from "@/assets/cnergise-icon.png";
 
 type SidebarItem = {
   icon: React.ElementType;

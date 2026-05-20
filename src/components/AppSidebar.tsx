@@ -37,7 +37,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import cnergiseLogo from "@/assets/cnergise-logo.png";
+import cnergiseLogo from "@/assets/cnergise-icon.png";
 import { useAppFeatures, useMySubscriptions, hasActiveAccess } from "@/hooks/useFeatures";
 import { AISidebarPanel } from "@/components/ai/AISidebarPanel";
 
