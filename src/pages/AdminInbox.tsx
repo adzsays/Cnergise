@@ -42,7 +42,7 @@ export default function AdminInbox() {
   useEffect(() => {
     loadSessions();
     const ch = supabase
-      .channel("admin-inbox")
+      .channel("visitor_chat_sessions_visitor_chat_messages_admin-inbox")
       .on("postgres_changes", { event: "*", schema: "public", table: "visitor_chat_sessions" }, loadSessions)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "visitor_chat_messages" }, (p) => {
         const m = p.new as any;

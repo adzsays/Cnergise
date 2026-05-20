@@ -114,24 +114,31 @@ export function useChatMessages(channelId?: string) {
   useEffect(() => {
     if (!channelId) return;
 
-    const channel = supabase
-      .channel(`messages-${channelId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'chat_messages',
-          filter: `channel_id=eq.${channelId}`
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['chat-messages', channelId] });
-        }
-      )
-      .subscribe();
+    let cancelled = false;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (cancelled || !user) return;
+      channel = supabase
+        .channel(`messages-${user.id}-${channelId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'chat_messages',
+            filter: `channel_id=eq.${channelId}`
+          },
+          () => {
+            queryClient.invalidateQueries({ queryKey: ['chat-messages', channelId] });
+          }
+        )
+        .subscribe();
+    });
 
     return () => {
-      supabase.removeChannel(channel);
+      cancelled = true;
+      if (channel) supabase.removeChannel(channel);
     };
   }, [channelId, queryClient]);
 

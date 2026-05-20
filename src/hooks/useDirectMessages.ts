@@ -89,20 +89,23 @@ export function useDMThreads() {
   // Realtime: refresh threads on any DM change involving this user
   useEffect(() => {
     let cancelled = false;
+    let ch: ReturnType<typeof supabase.channel> | null = null;
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (cancelled || !user) return;
-      const ch = supabase
-        .channel("dm-threads-realtime")
+      ch = supabase
+        .channel(`dm-threads-${user.id}`)
         .on(
           "postgres_changes",
           { event: "*", schema: "public", table: "direct_messages" },
           () => queryClient.invalidateQueries({ queryKey: ["dm-threads"] }),
         )
         .subscribe();
-      return () => { supabase.removeChannel(ch); };
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      if (ch) supabase.removeChannel(ch);
+    };
   }, [queryClient]);
 
   return { threads, isLoading };
@@ -148,18 +151,26 @@ export function useDMConversation(partnerId?: string) {
   // Realtime
   useEffect(() => {
     if (!partnerId) return;
-    const ch = supabase
-      .channel(`dm-${partnerId}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "direct_messages" },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["dm-conversation", partnerId] });
-          queryClient.invalidateQueries({ queryKey: ["dm-threads"] });
-        },
-      )
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    let cancelled = false;
+    let ch: ReturnType<typeof supabase.channel> | null = null;
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (cancelled || !user) return;
+      ch = supabase
+        .channel(`dm-${user.id}-${partnerId}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "direct_messages" },
+          () => {
+            queryClient.invalidateQueries({ queryKey: ["dm-conversation", partnerId] });
+            queryClient.invalidateQueries({ queryKey: ["dm-threads"] });
+          },
+        )
+        .subscribe();
+    });
+    return () => {
+      cancelled = true;
+      if (ch) supabase.removeChannel(ch);
+    };
   }, [partnerId, queryClient]);
 
   const sendMessage = useMutation({

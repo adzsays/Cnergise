@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logServiceUsage } from "../_shared/cost-tracking.ts";
+import { assertSafeExternalUrl } from "../_shared/network-security.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -44,6 +45,7 @@ serve(async (req) => {
     const baseUrl = conn.base_url || (conn.environment === "live"
       ? "https://api.alpaca.markets"
       : "https://paper-api.alpaca.markets");
+    const safeBaseUrl = assertSafeExternalUrl(baseUrl);
 
     const payload: any = { symbol, qty: String(qty), side, type, time_in_force };
     if (type === "limit" && limit_price) payload.limit_price = String(limit_price);
@@ -53,7 +55,7 @@ serve(async (req) => {
       payload.limit_price = String(limit_price);
     }
 
-    const res = await fetch(`${baseUrl}/v2/orders`, {
+    const res = await fetch(`${safeBaseUrl}/v2/orders`, {
       method: "POST",
       headers: {
         "APCA-API-KEY-ID": conn.api_key_id,
@@ -64,12 +66,16 @@ serve(async (req) => {
     });
 
     const text = await res.text();
-    if (!res.ok) return json({ error: `Alpaca ${res.status}: ${text.slice(0, 300)}` }, res.status);
+    if (!res.ok) {
+      console.error("alpaca-place-order upstream error", res.status, text);
+      return json({ error: "External service error" }, res.status);
+    }
 
     logServiceUsage({ service: "edge-function", operation: "invocation", units: 1, function_name: "alpaca-place-order", user_id: user.id });
 
     return json({ ok: true, source: "alpaca", order: JSON.parse(text) });
   } catch (e) {
+    console.error("alpaca-place-order error", e);
     return json({ error: "Internal server error" }, 500);
   }
 });

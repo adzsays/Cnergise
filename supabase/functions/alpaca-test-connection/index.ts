@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { assertSafeExternalUrl } from "../_shared/network-security.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -35,8 +36,9 @@ serve(async (req) => {
     const baseUrl = conn.base_url || (conn.environment === "live"
       ? "https://api.alpaca.markets"
       : "https://paper-api.alpaca.markets");
+    const safeBaseUrl = assertSafeExternalUrl(baseUrl);
 
-    const res = await fetch(`${baseUrl}/v2/account`, {
+    const res = await fetch(`${safeBaseUrl}/v2/account`, {
       headers: {
         "APCA-API-KEY-ID": conn.api_key_id,
         "APCA-API-SECRET-KEY": conn.api_secret,
@@ -45,10 +47,11 @@ serve(async (req) => {
 
     const body = await res.text();
     if (!res.ok) {
+      console.error("alpaca-test-connection upstream error", res.status, body);
       await supabase.from("alpaca_connections").update({
-        status: "error", last_error: `Alpaca ${res.status}: ${body.slice(0, 300)}`,
+        status: "error", last_error: `External service error (${res.status})`,
       }).eq("user_id", user.id);
-      return json({ ok: false, error: `Alpaca ${res.status}: ${body.slice(0, 200)}` });
+      return json({ ok: false, error: "External service error" });
     }
 
     const acct = JSON.parse(body);
@@ -61,6 +64,7 @@ serve(async (req) => {
       account: { id: acct.id, number: acct.account_number, status: acct.status, currency: acct.currency, equity: acct.equity, buying_power: acct.buying_power },
     });
   } catch (e) {
+    console.error("alpaca-test-connection error", e);
     return json({ ok: false, error: "Internal server error" }, 500);
   }
 });

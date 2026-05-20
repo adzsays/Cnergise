@@ -91,7 +91,8 @@ Generate the task list.`;
 
     if (!resp.ok) {
       const t = await resp.text();
-      return new Response(JSON.stringify({ error: "AI gateway error", detail: t }), {
+      console.error("generate-project-tasks AI gateway error", resp.status, t);
+      return new Response(JSON.stringify({ error: "External service error" }), {
         status: resp.status,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -111,6 +112,7 @@ Generate the task list.`;
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e: any) {
+    console.error("generate-project-tasks error", e);
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
