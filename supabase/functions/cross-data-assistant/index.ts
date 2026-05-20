@@ -203,12 +203,18 @@ Deno.serve(async (req) => {
     const { data: { user } } = await userClient.auth.getUser();
     if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-    const { messages = [] } = await req.json();
+    const { messages: rawMessages = [] } = await req.json();
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+
+    // Sanitize: only allow user/assistant roles, strip extra fields, enforce limits
+    const safeMessages = (Array.isArray(rawMessages) ? rawMessages : [])
+      .filter((m: any) => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
+      .slice(-20)
+      .map((m: any) => ({ role: m.role, content: String(m.content).slice(0, 2000) }));
 
     const convo: any[] = [
       { role: "system", content: SYSTEM_PROMPT },
-      ...messages,
+      ...safeMessages,
     ];
 
     let finalText = "";
