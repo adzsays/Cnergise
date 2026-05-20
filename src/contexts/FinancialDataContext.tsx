@@ -453,6 +453,20 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
       const groupName = transactionData.group_name || transactionData.group || 'Personal';
       const monthly = transactionData.monthly;
 
+      // Infer cash flow section from linked account when not explicitly provided
+      const inferSection = (): CashFlowSection => {
+        if (transactionData.cash_flow_section) return transactionData.cash_flow_section;
+        const acct = accounts.find((a) => a.name === transactionData.category);
+        if (acct) {
+          const isLiab = (acct.account_class || '').toLowerCase() === 'liability' ||
+                         (acct.type || '').toLowerCase() === 'liability';
+          if (isLiab) return 'financing';
+          const cat = (acct.category || '').toLowerCase();
+          if (/(invest|pension|crypto|broker)/.test(cat)) return 'investing';
+        }
+        return 'operating';
+      };
+
       const newRow = {
         user_id: user.id,
         date: transactionData.date || Date.now(),
@@ -468,6 +482,7 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
         projections: Array(12).fill(monthly),
         cost_centre: transactionData.cost_centre || 'General',
         frequency: transactionData.frequency || 'monthly',
+        cash_flow_section: inferSection(),
       };
 
       const { error } = await supabase.from('financial_transactions').insert(newRow);
