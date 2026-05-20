@@ -80,7 +80,8 @@ Deno.serve(async (req) => {
 
     const tokens = await tokenRes.json();
     if (!tokens.access_token) {
-      return new Response(`Token exchange failed: ${JSON.stringify(tokens)}`, { status: 400 });
+      console.error("Token exchange failed", tokens);
+      return new Response("Token exchange failed", { status: 400 });
     }
 
     const ui = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
