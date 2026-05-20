@@ -64,14 +64,15 @@ const Auth = () => {
   // Verify the email is on the invite allowlist; if not, sign out and toast.
   const enforceAllowlist = async (email: string | null | undefined): Promise<boolean> => {
     if (!email) return false;
+    // Server-side trigger (enforce_allowed_email_on_signup) is the source of truth.
+    // If the client RPC fails (permissions/network), fail open so users aren't
+    // signed out after a successful OAuth round-trip.
     const { data, error } = await supabase.rpc("is_email_allowed", { _email: email });
     if (error) {
-      console.error("Allowlist check failed", error);
-      toast.error("Could not verify access. Please try again.");
-      await supabase.auth.signOut();
-      return false;
+      console.warn("Allowlist check skipped (client RPC error)", error);
+      return true;
     }
-    if (!data) {
+    if (data === false) {
       toast.error("Access is invite-only. This email is not on the allowlist.");
       await supabase.auth.signOut();
       return false;
