@@ -83,7 +83,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r bg-sidebar">
-      <SidebarHeader className={cn("p-2", !isCollapsed && "p-3")}>
+      <SidebarHeader className={cn("p-2", !isCollapsed && "px-3 pt-2 pb-0")}>
         {isCollapsed ? (
           <div className="flex flex-col items-center gap-1">
             <Link to="/home" aria-label="Go to home" className="flex items-center justify-center">
@@ -100,9 +100,9 @@ export function AppSidebar() {
             </Button>
           </div>
         ) : (
-          <div className="flex items-center justify-between gap-2">
-            <Link to="/home" aria-label="Go to home" className="flex items-center gap-2 min-w-0 flex-1 hover:opacity-80 transition-opacity">
-              <img src={cnergiseFullLogo} alt="Cnergise" className="object-contain w-full h-auto max-h-24" />
+          <div className="flex items-center justify-between gap-2 -mb-3">
+            <Link to="/home" aria-label="Go to home" className="flex items-center gap-2 min-w-0 flex-1 hover:opacity-80 transition-opacity overflow-hidden">
+              <img src={cnergiseFullLogo} alt="Cnergise" className="object-contain w-full h-auto max-h-24 -my-3" />
             </Link>
             <Button
               variant="outline"
