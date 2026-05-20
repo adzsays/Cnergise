@@ -38,6 +38,11 @@ const SECTION_LABEL: Record<CashFlowSection, string> = {
   investing: 'Investing Activities',
   financing: 'Financing Activities',
 };
+const SECTION_SUMMARY_LABELS: Record<CashFlowSection, { inflow: string; outflow: string; net: string }> = {
+  operating: { inflow: 'Total Income', outflow: 'Total Expense', net: 'Net Profit / Loss' },
+  investing: { inflow: 'Asset Inflow (Sales)', outflow: 'Asset Outflow (Purchases)', net: 'Net Investing' },
+  financing: { inflow: 'Inflow (Borrowings)', outflow: 'Outflow (Repayments)', net: 'Net Financing' },
+};
 
 export function TableView() {
   const { transactions, balanceSheet, monthLabels, updateTransaction, updateTransactionName, updateTransactionDate, updateTransactionGroup, updateTransactionCategory, addTransaction, addGroup, availableGroups, group } = useFinancialData();
