@@ -11,7 +11,6 @@ import { SleekChart } from '@/components/ui/SleekChart';
 import { SnoopInsights } from './SnoopInsights';
 import { cn } from '@/lib/utils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Button } from '@/components/ui/button';
 import { ChevronDown } from 'lucide-react';
 
 type Period = 'daily' | 'weekly' | 'monthly';
