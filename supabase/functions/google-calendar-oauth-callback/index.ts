@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
 
     // Look up existing connection for this (user, email); preserve refresh_token if Google didn't return a new one
     const { data: existing } = await admin
-      .from("google_calendar_connections")
+      .from("google_calendar_connections_decrypted")
       .select("id, refresh_token")
       .eq("user_id", userId)
       .eq("google_email", ui.email)
