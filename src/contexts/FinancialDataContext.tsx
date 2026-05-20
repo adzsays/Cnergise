@@ -758,6 +758,7 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
     const today = new Date();
     const startMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const synthetic: FinancialTransaction[] = [];
+    const manualLoanIdsToHide = new Set<string>();
 
     accounts.forEach((a) => {
       if (a.type !== 'liability') return;
