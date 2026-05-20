@@ -81,10 +81,11 @@ export function InlineTransactionsTable() {
 
   const accountNames = useMemo(() => accounts.map((a) => a.name), [accounts]);
 
-  type SortKey = 'type' | 'subcategory' | 'monthly' | 'date' | 'cost_centre' | 'frequency' | 'end_date' | 'category';
+  type SortKey = 'type' | 'cash_flow_section' | 'subcategory' | 'monthly' | 'date' | 'cost_centre' | 'frequency' | 'end_date' | 'category';
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [filterCostCentre, setFilterCostCentre] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -101,12 +102,20 @@ export function InlineTransactionsTable() {
   };
 
   const sorted = useMemo(() => {
-    const filtered = filterCostCentre === 'all'
+    const q = searchQuery.trim().toLowerCase();
+    let filtered = filterCostCentre === 'all'
       ? transactions
       : transactions.filter((t: any) => (t.cost_centre || '').toLowerCase() === filterCostCentre.toLowerCase());
+    if (q) {
+      filtered = filtered.filter((t: any) => {
+        const hay = [t.subcategory, t.category, t.cost_centre, t.type, t.cash_flow_section, t.frequency]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        return hay.includes(q);
+      });
+    }
     const arr = [...filtered];
-    // Always group by type (income first, then expense). Within each group,
-    // newly added rows appear on top by default so they're easy to edit.
     if (!sortKey) {
       return arr.sort((a, b) => {
         if (a.type !== b.type) return a.type === 'income' ? -1 : 1;
@@ -115,8 +124,6 @@ export function InlineTransactionsTable() {
     }
     const dir = sortDir === 'asc' ? 1 : -1;
     return arr.sort((a, b) => {
-      // Keep type grouping even when a column sort is active
-      if (a.type !== b.type) return a.type === 'income' ? -1 : 1;
       const av = a[sortKey];
       const bv = b[sortKey];
       if (sortKey === 'monthly' || sortKey === 'date') {
@@ -128,10 +135,9 @@ export function InlineTransactionsTable() {
         if (as < bs) return -1 * dir;
         if (as > bs) return 1 * dir;
       }
-      // Tie-breaker: newest first
       return createdMs(b) - createdMs(a);
     });
-  }, [transactions, sortKey, sortDir, filterCostCentre]);
+  }, [transactions, sortKey, sortDir, filterCostCentre, searchQuery]);
 
   const SortHeader = ({ k, label, align = 'left', className = '' }: { k: SortKey; label: string; align?: 'left' | 'right'; className?: string }) => {
     const active = sortKey === k;
@@ -259,12 +265,17 @@ export function InlineTransactionsTable() {
               ))}
             </SelectContent>
           </Select>
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search items…"
+            className="h-8 w-[200px] text-xs"
+          />
           <ManageCostCentresDialog
             open={manageOpen}
             onOpenChange={setManageOpen}
             list={allCostCentres}
             onSave={async (next, renames) => {
-              // Apply renames to the DB first, then persist the new list
               for (const { from, to } of renames) {
                 if (from !== to) await renameCostCentreInDb(from, to);
               }
@@ -275,17 +286,8 @@ export function InlineTransactionsTable() {
               }
             }}
           />
-          <Button size="sm" variant="outline" onClick={() => handleAddRow('income')} className="text-success">
-            <ArrowDownCircle className="h-3.5 w-3.5 mr-1" /> Add Income
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => handleAddRow('expense')} className="text-destructive">
-            <ArrowUpCircle className="h-3.5 w-3.5 mr-1" /> Add Expense
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => handleAddRow('asset')} className="text-primary">
-            <ArrowLeftRight className="h-3.5 w-3.5 mr-1" /> Add Asset
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => handleAddRow('liability')}>
-            <Building2 className="h-3.5 w-3.5 mr-1" /> Add Liability
+          <Button size="sm" variant="outline" onClick={() => handleAddRow('expense')}>
+            <Plus className="h-3.5 w-3.5 mr-1" /> Add Row
           </Button>
         </div>
       </div>
@@ -295,7 +297,7 @@ export function InlineTransactionsTable() {
           <thead>
             <tr className="text-muted-foreground uppercase text-[10px] tracking-wider border-b">
               <SortHeader k="type" label="Type" className="w-24" />
-              <th className="text-left py-2 px-2 font-medium w-24">Section</th>
+              <SortHeader k="cash_flow_section" label="Class" className="w-28" />
               <SortHeader k="subcategory" label="Description" />
               <SortHeader k="monthly" label="Amount" align="right" />
               <SortHeader k="date" label="Recurring Date" />
@@ -310,7 +312,7 @@ export function InlineTransactionsTable() {
             {sorted.length === 0 ? (
               <tr>
                 <td colSpan={10} className="text-center py-6 text-muted-foreground">
-                  No transactions yet — click "Add Income", "Add Expense", "Add Asset" or "Add Liability" to start.
+                  No transactions yet — click "Add Row" to start.
                 </td>
               </tr>
             ) : (
@@ -355,15 +357,25 @@ export function InlineTransactionsTable() {
                     </Select>
                   </td>
                   <td className="py-1 px-2">
-                    <span
-                      className={cn(
-                        'inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider',
-                        sectionColor
-                      )}
-                      title="Auto-derived from Type: Income/Expense → Operating · Asset → Investing · Liability → Financing"
+                    <Select
+                      value={section}
+                      onValueChange={(v) => updateField(t.id, { cash_flow_section: v as any })}
                     >
-                      {sectionLabel(section)}
-                    </span>
+                      <SelectTrigger
+                        className={cn(
+                          'h-7 border-0 bg-transparent px-1 focus:ring-1 text-[10px] font-medium uppercase tracking-wider rounded-full',
+                          sectionColor
+                        )}
+                        title="Cash flow class — defaults from Type but you can override"
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="operating">Operating</SelectItem>
+                        <SelectItem value="investing">Investing</SelectItem>
+                        <SelectItem value="financing">Financing</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </td>
                   <td className="py-1 px-2">
                     <Input
