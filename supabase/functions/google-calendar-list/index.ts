@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
     const { data: connections } = await admin
-      .from("google_calendar_connections")
+      .from("google_calendar_connections_decrypted")
       .select("*")
       .eq("user_id", user.id)
       .order("created_at", { ascending: true });
