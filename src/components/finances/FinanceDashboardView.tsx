@@ -10,6 +10,8 @@ import { ArrowDownRight, ArrowUpRight, Sparkles, TrendingUp, Wallet, Target } fr
 import { SleekChart } from '@/components/ui/SleekChart';
 import { SnoopInsights } from './SnoopInsights';
 import { cn } from '@/lib/utils';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ChevronDown } from 'lucide-react';
 
 type Period = 'daily' | 'weekly' | 'monthly';
 const PERIOD_LABEL: Record<Period, string> = { daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly' };
@@ -364,8 +366,8 @@ export function FinanceDashboardView() {
         <Card className="p-3"><p className="text-[10px] uppercase tracking-wider text-muted-foreground">First Negative</p><p className={cn('text-sm font-semibold mt-0.5', kpis.firstNeg === 'Never' ? 'text-income' : 'text-expense')}>{kpis.firstNeg}</p></Card>
       </div>
 
-      {/* Two charts side-by-side, compact-by-default expandable */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+      {/* Two charts side-by-side at all sizes, compact-by-default expandable */}
+      <div className="grid grid-cols-2 gap-3">
         <SleekChart
           kind="area"
           data={dailyData}
@@ -397,50 +399,60 @@ export function FinanceDashboardView() {
         />
       </div>
 
-      {/* Running cash balance table — daily/weekly/monthly */}
-      <Card className="p-3">
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wide">
-              Running Cash Balance · {PERIOD_LABEL[period]}
-            </h3>
-            <p className="text-[10px] text-muted-foreground">
-              Projected cash position over time {costCentre !== 'all' && `· filtered by ${costCentre}`}
-              {period === 'daily' && ' · showing first 90 days'}
-            </p>
-          </div>
-        </div>
-        <div className="overflow-x-auto max-h-[420px] overflow-y-auto">
-          <table className="w-full text-xs">
-            <thead className="sticky top-0 bg-card z-10">
-              <tr className="text-muted-foreground uppercase text-[10px] tracking-wider border-b">
-                <th className="text-left py-2 px-2 font-medium">Period</th>
-                <th className="text-right py-2 px-2 font-medium">Income</th>
-                <th className="text-right py-2 px-2 font-medium">Expenses</th>
-                <th className="text-right py-2 px-2 font-medium">Net</th>
-                <th className="text-right py-2 px-2 font-medium">Running Balance</th>
-              </tr>
-            </thead>
-            <tbody>
-              {runningBalanceRows.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="text-center py-4 text-muted-foreground">No data to project.</td>
-                </tr>
-              ) : (
-                runningBalanceRows.map((r, idx) => (
-                  <tr key={idx} className="border-b border-border/40 hover:bg-muted/30">
-                    <td className="py-1.5 px-2">{r.label}</td>
-                    <td className="py-1.5 px-2 text-right tabular-nums text-income">{formatCompact(r.income)}</td>
-                    <td className="py-1.5 px-2 text-right tabular-nums text-expense">{formatCompact(r.expense)}</td>
-                    <td className={cn('py-1.5 px-2 text-right tabular-nums font-medium', r.net >= 0 ? 'text-income' : 'text-expense')}>{formatCompact(r.net)}</td>
-                    <td className={cn('py-1.5 px-2 text-right tabular-nums font-semibold', r.balance >= 0 ? 'text-primary' : 'text-destructive')}>{formatCompact(r.balance)}</td>
+      {/* Running cash balance table — collapsible */}
+      <Collapsible defaultOpen={false}>
+        <Card className="p-3">
+          <CollapsibleTrigger asChild>
+            <button
+              type="button"
+              className="w-full flex items-center justify-between gap-2 text-left group"
+            >
+              <div className="min-w-0">
+                <h3 className="text-sm font-semibold uppercase tracking-wide">
+                  Running Cash Balance · {PERIOD_LABEL[period]}
+                </h3>
+                <p className="text-[10px] text-muted-foreground truncate">
+                  Projected cash position over time {costCentre !== 'all' && `· filtered by ${costCentre}`}
+                  {period === 'daily' && ' · showing first 90 days'}
+                </p>
+              </div>
+              <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0 transition-transform group-data-[state=open]:rotate-180" />
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="mt-3 data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down overflow-hidden">
+            <div className="overflow-x-auto max-h-[420px] overflow-y-auto">
+              <table className="w-full text-xs">
+                <thead className="sticky top-0 bg-card z-10">
+                  <tr className="text-muted-foreground uppercase text-[10px] tracking-wider border-b">
+                    <th className="text-left py-2 px-2 font-medium">Period</th>
+                    <th className="text-right py-2 px-2 font-medium">Income</th>
+                    <th className="text-right py-2 px-2 font-medium">Expenses</th>
+                    <th className="text-right py-2 px-2 font-medium">Net</th>
+                    <th className="text-right py-2 px-2 font-medium">Running Balance</th>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+                </thead>
+                <tbody>
+                  {runningBalanceRows.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="text-center py-4 text-muted-foreground">No data to project.</td>
+                    </tr>
+                  ) : (
+                    runningBalanceRows.map((r, idx) => (
+                      <tr key={idx} className="border-b border-border/40 hover:bg-muted/30">
+                        <td className="py-1.5 px-2">{r.label}</td>
+                        <td className="py-1.5 px-2 text-right tabular-nums text-income">{formatCompact(r.income)}</td>
+                        <td className="py-1.5 px-2 text-right tabular-nums text-expense">{formatCompact(r.expense)}</td>
+                        <td className={cn('py-1.5 px-2 text-right tabular-nums font-medium', r.net >= 0 ? 'text-income' : 'text-expense')}>{formatCompact(r.net)}</td>
+                        <td className={cn('py-1.5 px-2 text-right tabular-nums font-semibold', r.balance >= 0 ? 'text-primary' : 'text-destructive')}>{formatCompact(r.balance)}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
 
       <SnoopInsights />
 
