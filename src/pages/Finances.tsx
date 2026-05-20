@@ -56,9 +56,10 @@ const VIEWS = [
 
 const Finances = () => {
   const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
-  // Legacy ?tab= support — map to ?view=
+  // Legacy ?tab= support — map to ?view=. Forecast tab removed; redirect to dashboard.
   const legacy = params.get("tab");
-  const initialView = params.get("view") || legacy || "dashboard";
+  const requested = params.get("view") || legacy || "dashboard";
+  const initialView = requested === "cashflow" ? "dashboard" : requested;
   const [secondaryView, setSecondaryView] = useState<string>(initialView);
   const [navCollapsed, setNavCollapsed] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
