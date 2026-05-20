@@ -115,6 +115,7 @@ Current holdings: ${JSON.stringify(positions || [])}`;
 
     return new Response(JSON.stringify({ signals: saved }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
-    return new Response(JSON.stringify({ error: (e as Error).message }), { status: 500, headers: corsHeaders });
+    console.error("ai-trading-signals error", e);
+    return new Response(JSON.stringify({ error: "Internal server error" }), { status: 500, headers: corsHeaders });
   }
 });
