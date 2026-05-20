@@ -248,33 +248,88 @@ export function FinanceDashboardView() {
     return rows;
   }, [filteredTx, liquidCash, period]);
 
-  // Forecast chart data (always shown across 12 months for context)
-  const forecastChartData = useMemo(() => {
-    if (period === 'monthly') return runningBalanceRows;
-    // For daily/weekly we still want a monthly-shaped chart for readability
+  // Forecast chart — always monthly aggregation for readable x-axis labels
+  const monthlyForecast = useMemo(() => {
     const today = new Date();
     const horizonStart = new Date(today.getFullYear(), today.getMonth(), 1);
-    const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const buckets: Record<string, { inc: number; exp: number; date: Date }> = {};
-    // Roll up rows from daily/weekly back into monthly for the chart
     const horizonEnd = new Date(horizonStart.getFullYear(), horizonStart.getMonth() + 12, 0);
-    const ms = horizonEnd.getTime() - horizonStart.getTime();
-    const totalDays = Math.floor(ms / 86400000) + 1;
+    const totalDays = Math.floor((horizonEnd.getTime() - horizonStart.getTime()) / 86400000) + 1;
+    type Day = { date: Date; income: number; expense: number };
+    const days: Day[] = [];
     for (let i = 0; i < totalDays; i++) {
       const d = new Date(horizonStart);
       d.setDate(d.getDate() + i);
-      const key = `${d.getFullYear()}-${d.getMonth()}`;
-      if (!buckets[key]) buckets[key] = { inc: 0, exp: 0, date: new Date(d.getFullYear(), d.getMonth(), 1) };
+      days.push({ date: d, income: 0, expense: 0 });
     }
-    // Distribute back from runningBalanceRows by their net contributions
-    let running = liquidCash;
-    const monthlyRows: any[] = [];
-    Object.values(buckets).sort((a, b) => a.date.getTime() - b.date.getTime()).forEach((b) => {
-      monthlyRows.push({ label: `${names[b.date.getMonth()]} ${b.date.getFullYear()}`, balance: running });
+    const dayIndex = (d: Date) =>
+      Math.floor((new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() - horizonStart.getTime()) / 86400000);
+    filteredTx.forEach((t: any) => {
+      const freq = (t.frequency || 'monthly').toLowerCase();
+      const amount = Math.abs(Number(t.amount) || Number(t.monthly) || 0);
+      if (!amount) return;
+      const baseDate = t.date ? new Date(Number(t.date)) : new Date();
+      const startBound = t.start_date ? new Date(t.start_date) : null;
+      const endBound = t.end_date ? new Date(t.end_date) : null;
+      const place = (d: Date) => {
+        if (d < horizonStart || d > horizonEnd) return;
+        if (startBound && d < startBound) return;
+        if (endBound && d > endBound) return;
+        const idx = dayIndex(d);
+        if (idx < 0 || idx >= days.length) return;
+        if (t.type === 'income') days[idx].income += amount;
+        else if (t.type === 'expense') days[idx].expense += amount;
+      };
+      if (freq === 'one-time' || freq === 'once') { place(baseDate); return; }
+      const step: { months?: number; days?: number } = (() => {
+        switch (freq) {
+          case 'daily': return { days: 1 };
+          case 'weekly': return { days: 7 };
+          case 'fortnightly': case 'bi-weekly': case 'biweekly': return { days: 14 };
+          case 'monthly': return { months: 1 };
+          case 'quarterly': return { months: 3 };
+          case 'half-yearly': case 'semi-annually': return { months: 6 };
+          case 'yearly': case 'annually': return { months: 12 };
+          default: return { months: 1 };
+        }
+      })();
+      let cursor = new Date(baseDate);
+      while (cursor < horizonStart) {
+        if (step.months) cursor.setMonth(cursor.getMonth() + step.months);
+        else if (step.days) cursor.setDate(cursor.getDate() + step.days);
+        else break;
+      }
+      let safety = 0;
+      while (cursor <= horizonEnd && safety < 2000) {
+        place(cursor);
+        const next = new Date(cursor);
+        if (step.months) next.setMonth(next.getMonth() + step.months);
+        else if (step.days) next.setDate(next.getDate() + step.days);
+        else break;
+        cursor = next;
+        safety++;
+      }
     });
-    // Simple fallback: just use computed running balance from rows when monthly
-    return runningBalanceRows.map((r) => ({ label: r.label, income: r.income, expense: r.expense, balance: r.balance }));
-  }, [runningBalanceRows, period, liquidCash]);
+    const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const buckets: Record<string, { inc: number; exp: number; date: Date }> = {};
+    days.forEach((d) => {
+      const key = `${d.date.getFullYear()}-${d.date.getMonth()}`;
+      if (!buckets[key]) buckets[key] = { inc: 0, exp: 0, date: new Date(d.date.getFullYear(), d.date.getMonth(), 1) };
+      buckets[key].inc += d.income;
+      buckets[key].exp += d.expense;
+    });
+    let running = liquidCash;
+    return Object.values(buckets)
+      .sort((a, b) => a.date.getTime() - b.date.getTime())
+      .map((b) => {
+        running += b.inc - b.exp;
+        return {
+          label: `${names[b.date.getMonth()]} ${String(b.date.getFullYear()).slice(2)}`,
+          income: Math.round(b.inc),
+          expense: Math.round(b.exp),
+          balance: Math.round(running),
+        };
+      });
+  }, [filteredTx, liquidCash]);
 
   const kpis = useMemo(() => {
     const incomeTotal = runningBalanceRows.reduce((s, r) => s + r.income, 0);
@@ -331,33 +386,33 @@ export function FinanceDashboardView() {
         </div>
       </div>
 
-      {/* Compact hero — Daily Net Flow */}
+      {/* Compact hero — period-aware Net Flow */}
       <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-primary via-primary to-primary/70 text-primary-foreground p-3 shadow-md">
         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top_right,white,transparent_60%)]" />
         <div className="relative flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-baseline gap-2">
             <div>
-              <p className="text-[10px] uppercase tracking-wider opacity-80">Daily Net Flow {costCentre !== 'all' && `· ${costCentre}`}</p>
+              <p className="text-[10px] uppercase tracking-wider opacity-80">{PERIOD_LABEL[period]} Net Flow {costCentre !== 'all' && `· ${costCentre}`}</p>
               <div className="flex items-baseline gap-1.5 mt-0.5">
-                <span className="text-2xl font-bold">{formatCurrency(dailyNet)}</span>
-                <span className="text-[11px] opacity-80">/day</span>
+                <span className="text-2xl font-bold">{formatCurrency(kpis.net)}</span>
+                <span className="text-[11px] opacity-80">/{period === 'daily' ? 'day' : period === 'weekly' ? 'wk' : 'mo'}</span>
               </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <div className="rounded-md bg-white/10 backdrop-blur px-2.5 py-1.5">
-              <div className="flex items-center gap-1 text-[10px] opacity-90"><ArrowUpRight className="h-3 w-3" />Income/day</div>
-              <p className="text-sm font-semibold">{formatCurrency(dailyAvgIncome)}</p>
+              <div className="flex items-center gap-1 text-[10px] opacity-90"><ArrowUpRight className="h-3 w-3" />Income/{period === 'daily' ? 'day' : period === 'weekly' ? 'wk' : 'mo'}</div>
+              <p className="text-sm font-semibold">{formatCurrency(kpis.avgIncome)}</p>
             </div>
             <div className="rounded-md bg-white/10 backdrop-blur px-2.5 py-1.5">
-              <div className="flex items-center gap-1 text-[10px] opacity-90"><ArrowDownRight className="h-3 w-3" />Spend/day</div>
-              <p className="text-sm font-semibold">{formatCurrency(dailyAvgExpense)}</p>
+              <div className="flex items-center gap-1 text-[10px] opacity-90"><ArrowDownRight className="h-3 w-3" />Spend/{period === 'daily' ? 'day' : period === 'weekly' ? 'wk' : 'mo'}</div>
+              <p className="text-sm font-semibold">{formatCurrency(kpis.avgExpense)}</p>
             </div>
           </div>
         </div>
       </Card>
 
-      {/* KPI strip — combined month + forecast */}
+      {/* KPI strip */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
         <Card className="p-3"><div className="flex items-center gap-1.5 text-[10px] text-muted-foreground"><Wallet className="h-3 w-3" />Cash (Bank)</div><p className="text-sm font-semibold mt-0.5">{formatCompact(liquidCash)}</p></Card>
         <Card className="p-3"><div className="flex items-center gap-1.5 text-[10px] text-muted-foreground"><TrendingUp className="h-3 w-3" />Saving</div><p className="text-sm font-semibold mt-0.5">{savingsRate.toFixed(0)}%</p></Card>
@@ -366,38 +421,23 @@ export function FinanceDashboardView() {
         <Card className="p-3"><p className="text-[10px] uppercase tracking-wider text-muted-foreground">First Negative</p><p className={cn('text-sm font-semibold mt-0.5', kpis.firstNeg === 'Never' ? 'text-income' : 'text-expense')}>{kpis.firstNeg}</p></Card>
       </div>
 
-      {/* Two charts side-by-side at all sizes, compact-by-default expandable */}
-      <div className="grid grid-cols-2 gap-3">
-        <SleekChart
-          kind="area"
-          data={dailyData}
-          xKey="label"
-          series={[
-            { key: 'income', label: 'Income', color: 'income' },
-            { key: 'expense', label: 'Expense', color: 'expense' },
-          ]}
-          title="Daily Money Flow"
-          subtitle="This month, day by day"
-          valueFormatter={(v) => formatCompact(v)}
-          compactHeight={140}
-          expandedHeight={360}
-        />
-        <SleekChart
-          kind="area"
-          data={forecastChartData}
-          xKey="label"
-          series={[
-            { key: 'income', label: 'Income', color: 'income' },
-            { key: 'expense', label: 'Expenses', color: 'expense' },
-            { key: 'balance', label: 'Cash Balance', color: 'primary' },
-          ]}
-          title="Cash Forecast"
-          subtitle={`Per ${PERIOD_LABEL[period]} · projected balance`}
-          valueFormatter={(v) => formatCompact(Math.round(v))}
-          compactHeight={140}
-          expandedHeight={360}
-        />
-      </div>
+      {/* Cash Forecast chart — full width, monthly x-axis for readability */}
+      <SleekChart
+        kind="area"
+        data={monthlyForecast}
+        xKey="label"
+        series={[
+          { key: 'income', label: 'Income', color: 'income' },
+          { key: 'expense', label: 'Expenses', color: 'expense' },
+          { key: 'balance', label: 'Cash Balance', color: 'primary' },
+        ]}
+        title="Cash Forecast"
+        subtitle="12-month projection · monthly"
+        valueFormatter={(v) => formatCompact(Math.round(v))}
+        compactHeight={180}
+        expandedHeight={400}
+      />
+
 
       {/* Running cash balance table — collapsible */}
       <Collapsible defaultOpen={false}>
