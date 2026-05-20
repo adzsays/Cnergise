@@ -774,7 +774,7 @@ const Auth = () => {
         <div className="mx-auto max-w-6xl flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
           <div className="flex items-center gap-3">
             <a href="/" aria-label="Go to home" className="shrink-0">
-              <img src={cnergiseLogo} alt="Cnergise" className="h-8 w-auto object-contain" />
+              <img src={cnergiseLogo} alt="Cnergise" className="h-20 sm:h-24 w-auto object-contain -my-8" />
             </a>
             <span>© {new Date().getFullYear()} Cnergise</span>
           </div>
