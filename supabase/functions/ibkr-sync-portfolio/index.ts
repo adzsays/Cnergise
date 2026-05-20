@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logServiceUsage } from "../_shared/cost-tracking.ts";
+import { assertSafeExternalUrl } from "../_shared/network-security.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -45,7 +46,7 @@ serve(async (req) => {
       try {
         // IBKR Client Portal Gateway — auth is via session cookie established by browser login.
         // Token is only used if user is on institutional OAuth 1.0a.
-        const url = `${conn.gateway_url.replace(/\/$/, "")}/portfolio/${conn.account_id || ""}/positions/0`;
+        const url = `${assertSafeExternalUrl(conn.gateway_url)}/portfolio/${conn.account_id || ""}/positions/0`;
         const res = await fetch(url, {
           headers: {
             Accept: "application/json",
@@ -64,12 +65,15 @@ serve(async (req) => {
           }));
           source = "ibkr";
         } else {
+          const text = await res.text();
+          console.error("ibkr-sync-portfolio upstream error", res.status, text);
           await supabase.from("ibkr_connections").update({
             status: "error",
-            last_error: `IBKR ${res.status}: ${await res.text()}`,
+            last_error: `External service error (${res.status})`,
           }).eq("user_id", user.id);
         }
       } catch (e) {
+        console.error("ibkr-sync-portfolio fetch error", e);
         await supabase.from("ibkr_connections").update({
           status: "error",
           last_error: "Internal server error",
@@ -109,6 +113,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
+    console.error("ibkr-sync-portfolio error", e);
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
