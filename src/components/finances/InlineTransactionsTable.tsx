@@ -357,15 +357,25 @@ export function InlineTransactionsTable() {
                     </Select>
                   </td>
                   <td className="py-1 px-2">
-                    <span
-                      className={cn(
-                        'inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider',
-                        sectionColor
-                      )}
-                      title="Auto-derived from Type: Income/Expense → Operating · Asset → Investing · Liability → Financing"
+                    <Select
+                      value={section}
+                      onValueChange={(v) => updateField(t.id, { cash_flow_section: v as any })}
                     >
-                      {sectionLabel(section)}
-                    </span>
+                      <SelectTrigger
+                        className={cn(
+                          'h-7 border-0 bg-transparent px-1 focus:ring-1 text-[10px] font-medium uppercase tracking-wider rounded-full',
+                          sectionColor
+                        )}
+                        title="Cash flow class — defaults from Type but you can override"
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="operating">Operating</SelectItem>
+                        <SelectItem value="investing">Investing</SelectItem>
+                        <SelectItem value="financing">Financing</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </td>
                   <td className="py-1 px-2">
                     <Input
