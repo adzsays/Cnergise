@@ -4358,13 +4358,147 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      google_calendar_connections_decrypted: {
+        Row: {
+          access_token: string | null
+          created_at: string | null
+          google_email: string | null
+          id: string | null
+          last_sync_at: string | null
+          last_sync_error: string | null
+          primary_calendar_id: string | null
+          refresh_token: string | null
+          scope: string | null
+          sync_token: string | null
+          token_expires_at: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          access_token?: never
+          created_at?: string | null
+          google_email?: string | null
+          id?: string | null
+          last_sync_at?: string | null
+          last_sync_error?: string | null
+          primary_calendar_id?: string | null
+          refresh_token?: never
+          scope?: string | null
+          sync_token?: string | null
+          token_expires_at?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          access_token?: never
+          created_at?: string | null
+          google_email?: string | null
+          id?: string | null
+          last_sync_at?: string | null
+          last_sync_error?: string | null
+          primary_calendar_id?: string | null
+          refresh_token?: never
+          scope?: string | null
+          sync_token?: string | null
+          token_expires_at?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_integrations_decrypted: {
+        Row: {
+          broker_account_id: string | null
+          broker_api_key: string | null
+          broker_api_secret: string | null
+          broker_name: string | null
+          calendar_oauth_token: string | null
+          calendar_provider: string | null
+          calendar_refresh_token: string | null
+          coursera_oauth_token: string | null
+          coursera_refresh_token: string | null
+          coursera_user_id: string | null
+          created_at: string | null
+          email_imap_host: string | null
+          email_imap_port: number | null
+          email_oauth_token: string | null
+          email_provider: string | null
+          email_smtp_host: string | null
+          email_smtp_password: string | null
+          email_smtp_port: number | null
+          email_smtp_user: string | null
+          id: string | null
+          telegram_bot_token: string | null
+          updated_at: string | null
+          user_id: string | null
+          whatsapp_access_token: string | null
+          whatsapp_phone_number_id: string | null
+        }
+        Insert: {
+          broker_account_id?: string | null
+          broker_api_key?: never
+          broker_api_secret?: never
+          broker_name?: string | null
+          calendar_oauth_token?: never
+          calendar_provider?: string | null
+          calendar_refresh_token?: never
+          coursera_oauth_token?: never
+          coursera_refresh_token?: never
+          coursera_user_id?: string | null
+          created_at?: string | null
+          email_imap_host?: string | null
+          email_imap_port?: number | null
+          email_oauth_token?: never
+          email_provider?: string | null
+          email_smtp_host?: string | null
+          email_smtp_password?: never
+          email_smtp_port?: number | null
+          email_smtp_user?: string | null
+          id?: string | null
+          telegram_bot_token?: never
+          updated_at?: string | null
+          user_id?: string | null
+          whatsapp_access_token?: never
+          whatsapp_phone_number_id?: string | null
+        }
+        Update: {
+          broker_account_id?: string | null
+          broker_api_key?: never
+          broker_api_secret?: never
+          broker_name?: string | null
+          calendar_oauth_token?: never
+          calendar_provider?: string | null
+          calendar_refresh_token?: never
+          coursera_oauth_token?: never
+          coursera_refresh_token?: never
+          coursera_user_id?: string | null
+          created_at?: string | null
+          email_imap_host?: string | null
+          email_imap_port?: number | null
+          email_oauth_token?: never
+          email_provider?: string | null
+          email_smtp_host?: string | null
+          email_smtp_password?: never
+          email_smtp_port?: number | null
+          email_smtp_user?: string | null
+          id?: string | null
+          telegram_bot_token?: never
+          updated_at?: string | null
+          user_id?: string | null
+          whatsapp_access_token?: never
+          whatsapp_phone_number_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      _app_credential_key: { Args: never; Returns: string }
+      decrypt_credential: { Args: { ciphertext: string }; Returns: string }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
       }
+      encrypt_credential: { Args: { plaintext: string }; Returns: string }
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
         Returns: number
