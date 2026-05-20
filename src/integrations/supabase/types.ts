@@ -4282,6 +4282,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          ip_address: string | null
           last_message_at: string
           page_url: string | null
           session_token: string
@@ -4295,6 +4296,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          ip_address?: string | null
           last_message_at?: string
           page_url?: string | null
           session_token: string
@@ -4308,6 +4310,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          ip_address?: string | null
           last_message_at?: string
           page_url?: string | null
           session_token?: string

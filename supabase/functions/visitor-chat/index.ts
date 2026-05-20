@@ -31,10 +31,40 @@ Deno.serve(async (req) => {
     const lovableKey = Deno.env.get("LOVABLE_API_KEY")!;
     const sb = createClient(supabaseUrl, serviceKey);
 
+    // Server-side enabled check (frontend flag can be bypassed)
+    const { data: enabledSetting } = await sb
+      .from("system_settings")
+      .select("value")
+      .eq("key", "visitor_chat_enabled")
+      .maybeSingle();
+    if (enabledSetting?.value !== "true") {
+      return json({ error: "visitor chat disabled" }, 403);
+    }
+
     const body = await req.json();
     const action = body.action as string;
 
+    // Identify caller IP for per-IP throttling
+    const ipHeader = req.headers.get("x-forwarded-for") ?? req.headers.get("cf-connecting-ip") ?? "";
+    const ip = ipHeader.split(",")[0].trim() || "unknown";
+
+    // Rate limit constants
+    const MAX_SESSIONS_PER_IP_PER_HOUR = 5;
+    const MAX_MESSAGES_PER_SESSION = 30;
+    const MAX_MESSAGES_PER_SESSION_PER_MIN = 6;
+
     if (action === "start") {
+      // Per-IP session creation cap (last 1h)
+      const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+      const { count: recentSessions } = await sb
+        .from("visitor_chat_sessions")
+        .select("id", { count: "exact", head: true })
+        .eq("ip_address", ip)
+        .gte("created_at", since);
+      if ((recentSessions ?? 0) >= MAX_SESSIONS_PER_IP_PER_HOUR) {
+        return json({ error: "Too many sessions started. Please try again later." }, 429);
+      }
+
       const session_token = crypto.randomUUID();
       const { data, error } = await sb
         .from("visitor_chat_sessions")
@@ -44,6 +74,7 @@ Deno.serve(async (req) => {
           visitor_email: body.email ?? null,
           page_url: body.page_url ?? null,
           user_agent: req.headers.get("user-agent") ?? null,
+          ip_address: ip,
         })
         .select("id, session_token, status")
         .single();
@@ -56,6 +87,7 @@ Deno.serve(async (req) => {
       });
       return json({ session_id: data.id, session_token: data.session_token, status: data.status });
     }
+
 
     if (action === "history") {
       const token = body.session_token as string;
@@ -85,10 +117,33 @@ Deno.serve(async (req) => {
         .maybeSingle();
       if (!sess) return json({ error: "session not found" }, 404);
 
+      // Per-session total cap
+      const { count: totalMsgs } = await sb
+        .from("visitor_chat_messages")
+        .select("id", { count: "exact", head: true })
+        .eq("session_id", sess.id)
+        .eq("role", "visitor");
+      if ((totalMsgs ?? 0) >= MAX_MESSAGES_PER_SESSION) {
+        return json({ error: "Message limit reached for this session. Please email us instead." }, 429);
+      }
+
+      // Per-session per-minute cap (burst protection)
+      const oneMinAgo = new Date(Date.now() - 60 * 1000).toISOString();
+      const { count: recentMsgs } = await sb
+        .from("visitor_chat_messages")
+        .select("id", { count: "exact", head: true })
+        .eq("session_id", sess.id)
+        .eq("role", "visitor")
+        .gte("created_at", oneMinAgo);
+      if ((recentMsgs ?? 0) >= MAX_MESSAGES_PER_SESSION_PER_MIN) {
+        return json({ error: "Sending too quickly. Please wait a moment." }, 429);
+      }
+
       // optionally update email
       if (body.email && !sess.visitor_email) {
         await sb.from("visitor_chat_sessions").update({ visitor_email: body.email }).eq("id", sess.id);
       }
+
 
       await sb.from("visitor_chat_messages").insert({
         session_id: sess.id,
