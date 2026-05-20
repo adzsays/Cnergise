@@ -38,6 +38,11 @@ const SECTION_LABEL: Record<CashFlowSection, string> = {
   investing: 'Investing Activities',
   financing: 'Financing Activities',
 };
+const SECTION_SUMMARY_LABELS: Record<CashFlowSection, { inflow: string; outflow: string; net: string }> = {
+  operating: { inflow: 'Total Income', outflow: 'Total Expense', net: 'Net Profit / Loss' },
+  investing: { inflow: 'Asset Inflow (Sales)', outflow: 'Asset Outflow (Purchases)', net: 'Net Investing' },
+  financing: { inflow: 'Inflow (Borrowings)', outflow: 'Outflow (Repayments)', net: 'Net Financing' },
+};
 
 export function TableView() {
   const { transactions, balanceSheet, monthLabels, updateTransaction, updateTransactionName, updateTransactionDate, updateTransactionGroup, updateTransactionCategory, addTransaction, addGroup, availableGroups, group } = useFinancialData();
@@ -169,11 +174,12 @@ export function TableView() {
     setNewGroupName('');
   };
 
-  // Per-section monthly totals and overall net change
-  const sectionTotals: Record<CashFlowSection, number[]> = {
-    operating: Array(12).fill(0),
-    investing: Array(12).fill(0),
-    financing: Array(12).fill(0),
+  // Per-section monthly totals split into inflow / outflow / net, and overall net change
+  const sectionInflow: Record<CashFlowSection, number[]> = {
+    operating: Array(12).fill(0), investing: Array(12).fill(0), financing: Array(12).fill(0),
+  };
+  const sectionOutflow: Record<CashFlowSection, number[]> = {
+    operating: Array(12).fill(0), investing: Array(12).fill(0), financing: Array(12).fill(0),
   };
   SECTION_ORDER.forEach((s) => {
     Object.values(bySection[s]).flat().forEach((t) => {
@@ -182,12 +188,19 @@ export function TableView() {
           const d = getTransactionDateInCurrentMonth(getRecurringDay(t.date));
           if (d < today) continue;
         }
-        sectionTotals[s][i] += t.projections[i] || 0;
+        const v = t.projections[i] || 0;
+        if (v >= 0) sectionInflow[s][i] += v;
+        else sectionOutflow[s][i] += v; // negative
       }
     });
   });
+  const sectionNet: Record<CashFlowSection, number[]> = {
+    operating: sectionInflow.operating.map((v, i) => v + sectionOutflow.operating[i]),
+    investing: sectionInflow.investing.map((v, i) => v + sectionOutflow.investing[i]),
+    financing: sectionInflow.financing.map((v, i) => v + sectionOutflow.financing[i]),
+  };
   const netChange = monthLabels.map((_, i) =>
-    sectionTotals.operating[i] + sectionTotals.investing[i] + sectionTotals.financing[i],
+    sectionNet.operating[i] + sectionNet.investing[i] + sectionNet.financing[i],
   );
 
   const initialCashBalance =
@@ -287,21 +300,33 @@ export function TableView() {
                     return (
                       <React.Fragment key={section}>
                         <TableRow className="bg-primary/15">
-                          <TableCell className="font-bold text-xs py-1 px-2">
+                          <TableCell colSpan={14} className="font-bold text-xs py-1 px-2">
                             <button onClick={() => toggleSection(section)} className="flex items-center gap-2 uppercase tracking-wide">
                               {sectionOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                               {SECTION_LABEL[section]}
                             </button>
                           </TableCell>
-                          <TableCell className={`text-right text-xs font-bold py-1 px-2 ${sectionTotals[section].reduce((s,n)=>s+n,0)/12 >= 0 ? 'text-income' : 'text-expense'}`}>
-                            £{Math.abs(Math.round(sectionTotals[section].reduce((s,n)=>s+n,0)/12)).toLocaleString()}
-                          </TableCell>
-                          {sectionTotals[section].map((v, i) => (
-                            <TableCell key={i} className={`text-right text-xs font-bold py-1 px-2 ${v >= 0 ? 'text-income' : 'text-expense'}`}>
-                              {v >= 0 ? '' : '-'}£{Math.abs(Math.round(v)).toLocaleString()}
-                            </TableCell>
-                          ))}
                         </TableRow>
+                        {([
+                          { key: 'inflow', label: SECTION_SUMMARY_LABELS[section].inflow, data: sectionInflow[section], cls: 'text-income', bold: false },
+                          { key: 'outflow', label: SECTION_SUMMARY_LABELS[section].outflow, data: sectionOutflow[section], cls: 'text-expense', bold: false },
+                          { key: 'net', label: SECTION_SUMMARY_LABELS[section].net, data: sectionNet[section], cls: '', bold: true },
+                        ]).map((row) => {
+                          const avg = row.data.reduce((s, n) => s + n, 0) / 12;
+                          return (
+                            <TableRow key={`${section}-${row.key}`} className={row.bold ? 'bg-primary/10' : ''}>
+                              <TableCell className={`text-xs py-1 px-6 ${row.bold ? 'font-bold' : 'font-medium'}`}>{row.label}</TableCell>
+                              <TableCell className={`text-right text-xs py-1 px-2 ${row.bold ? 'font-bold' : 'font-medium'} ${row.cls || (avg >= 0 ? 'text-income' : 'text-expense')}`}>
+                                {avg >= 0 ? '' : '-'}£{Math.abs(Math.round(avg)).toLocaleString()}
+                              </TableCell>
+                              {row.data.map((v, i) => (
+                                <TableCell key={i} className={`text-right text-xs py-1 px-2 ${row.bold ? 'font-bold' : 'font-medium'} ${row.cls || (v >= 0 ? 'text-income' : 'text-expense')}`}>
+                                  {v === 0 ? '-' : `${v >= 0 ? '' : '-'}£${Math.abs(Math.round(v)).toLocaleString()}`}
+                                </TableCell>
+                              ))}
+                            </TableRow>
+                          );
+                        })}
                         {sectionOpen && cats.length === 0 && (
                           <TableRow>
                             <TableCell colSpan={14} className="text-xs text-muted-foreground italic py-2 px-6">

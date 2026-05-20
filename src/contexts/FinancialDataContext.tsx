@@ -815,6 +815,12 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
       // ── Loans/mortgages: amortization-based projection split into interest + principal ──
       const schedule = termsByAccount[a.id];
       if (!schedule || schedule.length === 0) return;
+      // Avoid duplicating with any manual recurring transaction the user already
+      // entered against this loan account (e.g. a single "Mortgage payment" row).
+      const hasManualPayment = transactions.some(
+        (t) => t.category === a.name && (t.type === 'expense' || t.type === 'income')
+      );
+      if (hasManualPayment) return;
       const start = a.loan_start_date ? new Date(a.loan_start_date) : startMonth;
       if (balance <= 0) return;
 
