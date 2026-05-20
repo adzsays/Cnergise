@@ -297,7 +297,7 @@ export function InlineTransactionsTable() {
           <thead>
             <tr className="text-muted-foreground uppercase text-[10px] tracking-wider border-b">
               <SortHeader k="type" label="Type" className="w-24" />
-              <th className="text-left py-2 px-2 font-medium w-24">Section</th>
+              <SortHeader k="cash_flow_section" label="Class" className="w-28" />
               <SortHeader k="subcategory" label="Description" />
               <SortHeader k="monthly" label="Amount" align="right" />
               <SortHeader k="date" label="Recurring Date" />
