@@ -1,87 +1,71 @@
-## Goals
+# Cash Flow: Investing & Financing Sections + Mortgage / Credit Card Mechanics
 
-1. **Finance** — Replace 6-tab nav with a pinned Dashboard + view dropdown. Dashboard becomes the Snoop-style command centre.
-2. **Health** — Goal-linked weight loss, food/nutrition logging, full marker set (body comp, activity, sleep, vitals, mood).
-3. **Cross-app flow** — Stop siloing. Goals on `/plan` drive Health targets; Health and Finance both surface on `/home`; one transaction = one source of truth (no duplicate UI lists).
+## Goal
+Restructure the 12-Month Projections so cash flow follows the standard accounting statement: three sections (Operating, Investing, Financing) each with their own subtotal, then a Net Change row, then the rolling cash balance. Mortgages auto-split into interest (Operating expense) + principal (Financing outflow). Credit-card payments are Financing outflows that reduce the card balance; if the statement is not paid in full by the due date, interest accrues automatically as an Operating expense.
 
----
+## Section assignment rules
 
-## 1. Finance refactor
+| Section | What goes there |
+|---|---|
+| Operating | All current income/expense items (salary, rent, utilities, groceries, subscriptions, mortgage **interest**, credit-card **accrued interest**) |
+| Investing | Recurring contributions to investment/pension accounts, one-off asset purchases/sales (stocks, crypto, property) |
+| Financing | Mortgage/loan **principal** repayments, credit-card payments (principal portion), new borrowings (inflow) |
 
-### Navigation
-- `src/pages/Finances.tsx`: keep **Dashboard** as the always-visible top section. Below it, a single `Select` ("View: Forecast / Inputs / Transactions / Accounting / Invoices") swaps the secondary view. Persist choice in URL `?view=`.
-- Remove the horizontal tab strip.
+## Database changes
 
-### Snoop-style Dashboard (`FinanceDashboardView.tsx`)
-Add four new modules built from existing `financial_transactions` + `actual_expenses` + `cashflow_lines` (no schema change needed for most):
+Migration adds a single column to `financial_transactions`:
 
-1. **Cash flow graph (hero)** — 90-day rolling line: balance, income, spend. Reuses `SleekChart`.
-2. **Safe-to-spend** — `current balance − upcoming recurring (cashflow_lines until next payday) − scheduled bills`. Big number + breakdown chip row.
-3. **Spending by merchant/category** — donut + top-5 merchants this month vs last (group `actual_expenses` by normalised `merchant`/`category`).
-4. **Recurring subscriptions** — detect any merchant with ≥3 charges in last 90d at similar amount; list with monthly cost + "next charge" date + cancel-reminder action.
-5. **Smart insights strip** — auto-generated nudges (e.g. "Dining +32% vs last month", "Duplicate charge: Amazon £24.99 twice on 12 May"). Pure client-side rules over `actual_expenses`.
+- `cash_flow_section text not null default 'operating'` with a check constraint allowing `'operating' | 'investing' | 'financing'`.
+- Backfill: existing rows stay `'operating'`. Any row whose `category` already references an investment/pension account (matched via `financial_accounts.category ilike '%investment%|%pension%|%crypto%|%broker%'`) is moved to `'investing'`.
 
-### What stays untouched
-Inputs (account opening balances), Transactions tab (the sortable split UI from last iteration), Accounting, Invoices — only reachable via the new dropdown.
+No other schema change — mortgage rate schedule + credit card account already exist.
 
----
+## Synthetic projections (in `FinancialDataContext.tsx`)
 
-## 2. Health upgrade
+Replace the current single synthetic loan line with **two lines per loan** derived from the existing `projectAmortization` output:
 
-### Schema (one migration)
-New tables, RLS = owner-only:
-- `health_goals` (user_id, goal_type enum: weight_loss/weight_gain/maintain/strength/endurance/custom, target_value, target_unit, target_date, baseline_value, linked_goal_id → goals)
-- `nutrition_log` (user_id, logged_at, meal_type, food_name, calories, protein_g, carbs_g, fat_g, water_ml, source)
-- `health_vitals` (user_id, recorded_at, vital_type enum: bp_sys/bp_dia/glucose/cholesterol_ldl/hdl/triglycerides/resting_hr/hrv/spo2/body_temp, value, unit, notes)
-- `mood_log` (user_id, logged_at, mood_score 1-10, stress_score 1-10, energy_score 1-10, notes)
-- Extend `health_metrics` with `weight_kg`, `body_fat_pct`, `muscle_mass_kg` if missing.
+1. `loan-interest-<id>` — type `expense`, `cash_flow_section = 'operating'`, category `Loan Interest`, monthly = sum of `m.interest` over the 12-month window.
+2. `loan-principal-<id>` — type `expense`, `cash_flow_section = 'financing'`, category `Loan Principal`, monthly = sum of `m.principal`. This line is also what reduces the linked liability balance month-over-month in projections.
 
-### UI (`src/pages/Health.tsx` rebuild)
-Pinned **Today** dashboard + view dropdown (Goals / Food / Activity & Sleep / Vitals & Labs / Mood). Today shows:
-- Active goal progress ring (e.g. "−2.4 kg / −5 kg")
-- Calories in vs out, macro split bar
-- Steps, active minutes, sleep last night, resting HR
-- Latest BP/glucose if entered in last 7d
-- Mood/stress quick check-in
+For credit cards (any `financial_accounts` row with category matching `%credit%` and `credit_limit` set):
 
-New components: `GoalsCard`, `FoodLogQuickAdd` (search common foods + manual macros), `VitalsLogger`, `MoodCheckin`. Reuse `SleekChart` for trends.
+- If the user has entered a manual recurring "Card Payment" transaction (linked to the card), it is auto-classified `financing`. Its principal effect already reduces the card balance via existing `applyAccountDelta`.
+- New synthetic line `cc-interest-<id>` (Operating expense): for each future month, if the projected balance on the `payment_day` is > 0 **and** no full-balance payment is scheduled by that day, accrue `balance × APR / 12`. APR comes from `interest_rate` on the account (defaults to 0 → no accrual).
 
-Goal linkage: a `health_goals` row optionally points at a `goals` row on `/plan`, so the same "Lose 5 kg" goal shows progress in both places.
+The amortization util `projectAmortization` already returns `{interest, principal, payment, index}` per month — we just sum each component instead of `payment`.
 
----
+## Context API additions
 
-## 3. Cross-app seamless flow
+- `addTransaction` and `updateTransactionCategory` accept an optional `cash_flow_section`. When omitted, the section is inferred from the linked account: investment/pension → `investing`, liability → `financing`, else `operating`.
+- New helper `getSectionForTransaction(t)` exported for UI use.
 
-### De-duplicate surfaces
-- `/home` (Today): widgets read from the **same hooks** as their source pages — no parallel fetches. Add a `useFinanceSummary()` hook (balance, safe-to-spend, top insight) and `useHealthToday()` hook used by both `/home` and the respective pages.
-- Remove the old hard-coded `FinanceSection.tsx` mock data; point it at real hooks or delete in favour of the new dashboard widget.
+## UI changes (`src/components/finances/TableView.tsx`)
 
-### Contextual links
-- Goal card on `/plan` of type "health" → click jumps to `/health?goal=<id>` highlighting that goal.
-- Finance insight "Dining +32%" → click jumps to `/finances?view=transactions&category=dining`.
-- Health "Calories over budget today" → click jumps to `/finances?view=transactions&category=groceries` (only if a grocery txn ran today). Optional, keep simple.
+- Group transactions by `cash_flow_section` first, then by category within each section.
+- Render three collapsible section blocks in fixed order: **Operating Activities**, **Investing Activities**, **Financing Activities**. Each section header row shows that section's monthly subtotal across all 12 columns.
+- Add a bold **Net Change in Cash** row (Operating + Investing + Financing) before the existing Rolling Cash Flow card.
+- The "Add Item" dialog gets a new **Section** select (Operating / Investing / Financing) defaulting to Operating but auto-switching when an investment or liability account is picked as the linked account.
+- Expand/Collapse All applies to section headers and category headers together.
 
-### Unified metadata
-Log new health/finance significant events to `unified_metadata` so the existing notification center + AI search pick them up automatically (e.g. "Recurring subscription detected", "Weight goal milestone hit").
+## Files to change
 
----
+```text
+supabase/migrations/<new>          -- add cash_flow_section column + backfill
+src/contexts/FinancialDataContext.tsx
+  - extend FinancialTransaction interface with cash_flow_section
+  - update addTransaction / updateTransactionCategory signatures
+  - replace single loan synthetic with interest + principal split
+  - add credit-card interest-accrual synthetic
+src/components/finances/TableView.tsx
+  - restructure grouping & rendering into three sections
+  - add Net Change row
+  - add Section selector in Add dialog
+src/lib/validations.ts
+  - allow cash_flow_section in transactionSchema
+```
 
-## Technical notes
+## Out of scope (call out, do not build)
 
-- All charts via `SleekChart` (mobile-first rule).
-- Currency formatting via `useUserCurrency` (GBP default).
-- Recurring detection is pure client-side over already-fetched `actual_expenses` — no edge function needed v1.
-- Safe-to-spend computed from `cashflow_lines` (already fetched in `FinancialDataContext`).
-- No changes to auth, RLS templates follow existing pattern (`auth.uid() = user_id`).
-- Tab strip removal won't break deep links: keep `?tab=` → `?view=` redirect in `Finances.tsx`.
-
-### Sequence
-1. DB migration for Health tables.
-2. Finance: nav refactor + Dashboard modules.
-3. Health: rebuild page + new components.
-4. Cross-app: shared hooks, dedupe `/home`, contextual links.
-
-### Out of scope (this PR)
-- Bank-feed-powered subscription auto-cancel (just a reminder).
-- Wearable integrations beyond what Health Source Hub already does.
-- Refund automation — flag only.
+- Editing the per-month amortization schedule by hand (it stays auto-derived from rate schedule).
+- Credit-card minimum-payment auto-generation — user still creates the payment transaction; we only accrue interest if no full payment is made.
+- Reordering historical Trial Balance / Balance Sheet views — those remain accounting-side and unaffected.

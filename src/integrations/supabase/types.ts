@@ -1727,6 +1727,7 @@ export type Database = {
       financial_transactions: {
         Row: {
           amount: number
+          cash_flow_section: string
           category: string
           cost_centre: string | null
           created_at: string
@@ -1748,6 +1749,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          cash_flow_section?: string
           category: string
           cost_centre?: string | null
           created_at?: string
@@ -1769,6 +1771,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          cash_flow_section?: string
           category?: string
           cost_centre?: string | null
           created_at?: string
