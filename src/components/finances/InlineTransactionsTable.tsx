@@ -265,12 +265,17 @@ export function InlineTransactionsTable() {
               ))}
             </SelectContent>
           </Select>
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search items…"
+            className="h-8 w-[200px] text-xs"
+          />
           <ManageCostCentresDialog
             open={manageOpen}
             onOpenChange={setManageOpen}
             list={allCostCentres}
             onSave={async (next, renames) => {
-              // Apply renames to the DB first, then persist the new list
               for (const { from, to } of renames) {
                 if (from !== to) await renameCostCentreInDb(from, to);
               }
@@ -281,17 +286,8 @@ export function InlineTransactionsTable() {
               }
             }}
           />
-          <Button size="sm" variant="outline" onClick={() => handleAddRow('income')} className="text-success">
-            <ArrowDownCircle className="h-3.5 w-3.5 mr-1" /> Add Income
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => handleAddRow('expense')} className="text-destructive">
-            <ArrowUpCircle className="h-3.5 w-3.5 mr-1" /> Add Expense
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => handleAddRow('asset')} className="text-primary">
-            <ArrowLeftRight className="h-3.5 w-3.5 mr-1" /> Add Asset
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => handleAddRow('liability')}>
-            <Building2 className="h-3.5 w-3.5 mr-1" /> Add Liability
+          <Button size="sm" variant="outline" onClick={() => handleAddRow('expense')}>
+            <Plus className="h-3.5 w-3.5 mr-1" /> Add Row
           </Button>
         </div>
       </div>
