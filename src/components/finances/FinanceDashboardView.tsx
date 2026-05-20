@@ -10,6 +10,9 @@ import { ArrowDownRight, ArrowUpRight, Sparkles, TrendingUp, Wallet, Target } fr
 import { SleekChart } from '@/components/ui/SleekChart';
 import { SnoopInsights } from './SnoopInsights';
 import { cn } from '@/lib/utils';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Button } from '@/components/ui/button';
+import { ChevronDown } from 'lucide-react';
 
 type Period = 'daily' | 'weekly' | 'monthly';
 const PERIOD_LABEL: Record<Period, string> = { daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly' };
