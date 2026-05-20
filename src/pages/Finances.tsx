@@ -48,7 +48,6 @@ const InvoicingSection = () => {
 };
 
 const VIEWS = [
-  { value: "cashflow", label: "Forecast", icon: TrendingUp },
   { value: "balances", label: "Inputs & Balances", icon: Scale },
   { value: "expenses", label: "Bank Transactions", icon: Wallet },
   { value: "accounting", label: "Accounting", icon: FolderTree },
