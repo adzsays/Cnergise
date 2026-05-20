@@ -38,6 +38,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import cnergiseLogo from "@/assets/cnergise-icon.png";
+import cnergiseFullLogo from "@/assets/cnergise-full-logo.png";
 import { useAppFeatures, useMySubscriptions, hasActiveAccess } from "@/hooks/useFeatures";
 import { AISidebarPanel } from "@/components/ai/AISidebarPanel";
 
@@ -86,7 +87,7 @@ export function AppSidebar() {
         {isCollapsed ? (
           <div className="flex flex-col items-center gap-1">
             <Link to="/home" aria-label="Go to home" className="flex items-center justify-center">
-              <img src={cnergiseLogo} alt="Cnergise" className="object-contain shrink-0" style={{ height: '2.25rem', width: '2.25rem' }} />
+              <img src={cnergiseLogo} alt="Cnergise" className="object-contain shrink-0" style={{ height: '1.7rem', width: '1.7rem' }} />
             </Link>
             <Button
               variant="outline"
@@ -100,9 +101,8 @@ export function AppSidebar() {
           </div>
         ) : (
           <div className="flex items-center justify-between gap-2">
-            <Link to="/home" aria-label="Go to home" className="flex items-center gap-2 min-w-0 hover:opacity-80 transition-opacity">
-              <img src={cnergiseLogo} alt="Cnergise" className="object-contain shrink-0" style={{ height: '3.75rem', width: '3.75rem' }} />
-              <span className="font-semibold text-base truncate">Cnergise</span>
+            <Link to="/home" aria-label="Go to home" className="flex items-center gap-2 min-w-0 flex-1 hover:opacity-80 transition-opacity">
+              <img src={cnergiseFullLogo} alt="Cnergise" className="object-contain w-full h-auto max-h-14" />
             </Link>
             <Button
               variant="outline"
