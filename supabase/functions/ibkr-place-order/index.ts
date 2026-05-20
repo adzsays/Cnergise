@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logServiceUsage } from "../_shared/cost-tracking.ts";
+import { assertSafeExternalUrl } from "../_shared/network-security.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -68,7 +69,7 @@ serve(async (req) => {
     if (live) {
       // Real IBKR submission would go here. Left as best-effort placeholder.
       try {
-        const url = `${conn.gateway_url.replace(/\/$/, "")}/iserver/account/${conn.account_id}/orders`;
+        const url = `${assertSafeExternalUrl(conn.gateway_url)}/iserver/account/${conn.account_id}/orders`;
         const res = await fetch(url, {
           method: "POST",
           headers: { Authorization: `Bearer ${conn.api_token}`, "Content-Type": "application/json" },
@@ -83,7 +84,8 @@ serve(async (req) => {
           status: res.ok ? "submitted" : "rejected",
         }).eq("id", order.id);
       } catch (e) {
-        await supabase.from("broker_orders").update({ status: "rejected", rationale: `${rationale || ""}\nError: ${(e as Error).message}` }).eq("id", order.id);
+        console.error("ibkr-place-order upstream error", e);
+        await supabase.from("broker_orders").update({ status: "rejected", rationale: rationale || null }).eq("id", order.id);
       }
     }
 
@@ -93,6 +95,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
+    console.error("ibkr-place-order error", e);
     return new Response(JSON.stringify({ error: "Internal server error" }), { status: 500, headers: corsHeaders });
   }
 });
