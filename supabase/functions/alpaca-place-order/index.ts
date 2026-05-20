@@ -70,6 +70,6 @@ serve(async (req) => {
 
     return json({ ok: true, source: "alpaca", order: JSON.parse(text) });
   } catch (e) {
-    return json({ error: (e as Error).message }, 500);
+    return json({ error: "Internal server error" }, 500);
   }
 });

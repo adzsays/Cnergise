@@ -85,7 +85,7 @@ serve(async (req) => {
         : "Gateway reachable but you need to log in via the gateway URL in your browser first.",
     });
   } catch (e) {
-    return json({ ok: false, stage: "exception", error: (e as Error).message }, 500);
+    return json({ ok: false, stage: "exception", error: "Internal server error" }, 500);
   }
 });
 

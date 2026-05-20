@@ -61,6 +61,6 @@ serve(async (req) => {
       account: { id: acct.id, number: acct.account_number, status: acct.status, currency: acct.currency, equity: acct.equity, buying_power: acct.buying_power },
     });
   } catch (e) {
-    return json({ ok: false, error: (e as Error).message }, 500);
+    return json({ ok: false, error: "Internal server error" }, 500);
   }
 });

@@ -219,7 +219,7 @@ Pick the BEST cash flow id for each. If none clearly fit, use null. Match income
     );
   } catch (e: any) {
     console.error("classify-transactions error:", e);
-    return new Response(JSON.stringify({ error: e?.message ?? "unknown" }), {
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

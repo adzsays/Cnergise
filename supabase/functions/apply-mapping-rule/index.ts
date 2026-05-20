@@ -118,7 +118,7 @@ Deno.serve(async (req) => {
     );
   } catch (e: any) {
     console.error("apply-mapping-rule error:", e);
-    return new Response(JSON.stringify({ error: e?.message ?? "unknown" }), {
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

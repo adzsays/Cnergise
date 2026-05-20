@@ -170,7 +170,7 @@ Be smart about extracting MULTIPLE entries from a single sentence (e.g. "spent Â
   } catch (e) {
     console.error("echo-classify-entry error:", e);
     return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
+      JSON.stringify({ error: "Internal server error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

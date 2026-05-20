@@ -65,7 +65,7 @@ serve(async (req) => {
         }
       } catch (e) {
         await supabase.from("alpaca_connections").update({
-          status: "error", last_error: (e as Error).message,
+          status: "error", last_error: "Internal server error",
         }).eq("user_id", user.id);
       }
     }
@@ -100,7 +100,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: (e as Error).message }), {
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

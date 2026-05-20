@@ -216,7 +216,7 @@ Deno.serve(async (req) => {
     return json({ error: "unknown action" }, 400);
   } catch (e) {
     console.error("visitor-chat error", e);
-    return json({ error: e instanceof Error ? e.message : "unknown" }, 500);
+    return json({ error: "Internal server error" }, 500);
   }
 });
 
