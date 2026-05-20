@@ -312,7 +312,7 @@ export function InlineTransactionsTable() {
             {sorted.length === 0 ? (
               <tr>
                 <td colSpan={10} className="text-center py-6 text-muted-foreground">
-                  No transactions yet — click "Add Income", "Add Expense", "Add Asset" or "Add Liability" to start.
+                  No transactions yet — click "Add Row" to start.
                 </td>
               </tr>
             ) : (
