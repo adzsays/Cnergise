@@ -51,10 +51,11 @@ serve(async (req) => {
         },
       });
     } catch (e) {
-      const msg = (e as Error).message;
-      await supabase.from("ibkr_connections").update({ status: "error", last_error: msg }).eq("user_id", user.id);
-      return json({ ok: false, stage: "network", error: `Cannot reach gateway: ${msg}. Check the tunnel is running and HTTPS cert is valid.` });
+      console.error("ibkr-test-connection network error", e);
+      await supabase.from("ibkr_connections").update({ status: "error", last_error: "network_unreachable" }).eq("user_id", user.id);
+      return json({ ok: false, stage: "network", error: "Cannot reach gateway. Check the tunnel is running and HTTPS cert is valid." });
     }
+
 
     const text = await res.text();
     let body: any = null; try { body = JSON.parse(text); } catch { /* keep text */ }
