@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { projectAmortization, RateTerm } from '@/utils/loanAmortization';
 
+export type CashFlowSection = 'operating' | 'investing' | 'financing';
+
 interface FinancialTransaction {
   id: string;
   user_id: string;
@@ -21,6 +23,7 @@ interface FinancialTransaction {
   projections: number[];
   cost_centre: string | null;
   frequency: string | null;
+  cash_flow_section: CashFlowSection;
   created_at: string;
   updated_at: string;
 }
@@ -111,6 +114,7 @@ interface FinancialDataContextType {
     subcategory: string;
     group?: string;
     group_name?: string;
+    cash_flow_section?: CashFlowSection;
   }) => Promise<void>;
   updateTransactionName: (transactionId: string, newName: string) => Promise<void>;
   updateTransactionGroup: (transactionId: string, newGroup: string) => Promise<void>;
@@ -212,6 +216,7 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
         ...t,
         group: t.group_name,
         projections,
+        cash_flow_section: (t.cash_flow_section as CashFlowSection) || 'operating',
       };
     }) as FinancialTransaction[];
   };
@@ -448,6 +453,20 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
       const groupName = transactionData.group_name || transactionData.group || 'Personal';
       const monthly = transactionData.monthly;
 
+      // Infer cash flow section from linked account when not explicitly provided
+      const inferSection = (): CashFlowSection => {
+        if (transactionData.cash_flow_section) return transactionData.cash_flow_section;
+        const acct = accounts.find((a) => a.name === transactionData.category);
+        if (acct) {
+          const isLiab = (acct.account_class || '').toLowerCase() === 'liability' ||
+                         (acct.type || '').toLowerCase() === 'liability';
+          if (isLiab) return 'financing';
+          const cat = (acct.category || '').toLowerCase();
+          if (/(invest|pension|crypto|broker)/.test(cat)) return 'investing';
+        }
+        return 'operating';
+      };
+
       const newRow = {
         user_id: user.id,
         date: transactionData.date || Date.now(),
@@ -463,6 +482,7 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
         projections: Array(12).fill(monthly),
         cost_centre: transactionData.cost_centre || 'General',
         frequency: transactionData.frequency || 'monthly',
+        cash_flow_section: inferSection(),
       };
 
       const { error } = await supabase.from('financial_transactions').insert(newRow);
@@ -742,11 +762,57 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
     accounts.forEach((a) => {
       if (a.type !== 'liability') return;
       const balance = Math.abs(Number(a.balance) || 0);
+      const paymentDay = Math.min(31, Math.max(1, Number(a.payment_day) || 1));
+      const groupName = a.group_name || 'Personal';
+      const isCreditCard = /(credit|card)/i.test(a.category || '') || /(credit|card)/i.test(a.name || '');
 
-      // Credit card payments are entered manually as expense lines so they
-      // properly reduce the card balance. Only loans/mortgages are auto-projected.
+      // ── Credit cards: accrue interest when balance carried past due date ──
+      if (isCreditCard) {
+        const apr = Number(a.interest_rate) || 0;
+        if (apr <= 0 || balance <= 0) return;
+        // Detect if user has scheduled a full-payoff line for this card this month.
+        // If any expense linked to this card account exists, we assume partial payment
+        // and accrue interest on the remaining projected balance.
+        const payments = transactions.filter((t) => t.category === a.name && t.type === 'expense');
+        const monthlyInterestProj: number[] = Array(12).fill(0);
+        let projBal = balance;
+        for (let i = 0; i < 12; i++) {
+          const paymentThisMonth = payments.reduce((s, t) => s + Math.abs(t.projections[i] || 0), 0);
+          // Interest accrues on balance remaining after payment if balance > 0 on due day
+          const remaining = Math.max(0, projBal - paymentThisMonth);
+          if (remaining > 0) {
+            monthlyInterestProj[i] = (remaining * apr) / 100 / 12;
+          }
+          projBal = remaining + monthlyInterestProj[i];
+        }
+        const intMonthly = monthlyInterestProj.reduce((s, n) => s + n, 0) / 12;
+        if (intMonthly > 0.01) {
+          synthetic.push({
+            id: `cc-interest-${a.id}`,
+            user_id: a.user_id,
+            date: paymentDay,
+            type: 'expense',
+            category: 'Credit Card Interest',
+            subcategory: a.name,
+            group_name: groupName,
+            group: groupName,
+            space_id: a.space_id ?? null,
+            amount: intMonthly,
+            percentage: 0,
+            daily: intMonthly / 30,
+            monthly: intMonthly,
+            projections: monthlyInterestProj,
+            cost_centre: a.cost_centre?.trim() || a.name || 'Interest',
+            frequency: 'monthly',
+            cash_flow_section: 'operating',
+            created_at: a.created_at,
+            updated_at: a.updated_at,
+          });
+        }
+        return;
+      }
 
-      // ── Loans/mortgages: amortization-based projection ──
+      // ── Loans/mortgages: amortization-based projection split into interest + principal ──
       const schedule = termsByAccount[a.id];
       if (!schedule || schedule.length === 0) return;
       const start = a.loan_start_date ? new Date(a.loan_start_date) : startMonth;
@@ -766,30 +832,59 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
       );
       if (projection.length === 0) return;
 
-      const projections = Array(12).fill(0);
+      const interestProj = Array(12).fill(0);
+      const principalProj = Array(12).fill(0);
       projection.forEach((m) => {
-        if (m.index >= 0 && m.index < 12) projections[m.index] = m.payment;
+        if (m.index >= 0 && m.index < 12) {
+          interestProj[m.index] = m.interest;
+          principalProj[m.index] = m.principal;
+        }
       });
-      const monthly = projections.reduce((s, n) => s + n, 0) / 12;
+      const intMonthly = interestProj.reduce((s, n) => s + n, 0) / 12;
+      const prinMonthly = principalProj.reduce((s, n) => s + n, 0) / 12;
 
-      const paymentDay = Math.min(31, Math.max(1, Number(a.payment_day) || 1));
+      // Interest → Operating expense
       synthetic.push({
-        id: `loan-projection-${a.id}`,
+        id: `loan-interest-${a.id}`,
         user_id: a.user_id,
         date: paymentDay,
         type: 'expense',
-        category: 'Loan Payments',
+        category: 'Loan Interest',
         subcategory: a.name,
-        group_name: a.group_name || 'Personal',
-        group: a.group_name || 'Personal',
+        group_name: groupName,
+        group: groupName,
         space_id: a.space_id ?? null,
-        amount: monthly,
+        amount: intMonthly,
         percentage: 0,
-        daily: monthly / 30,
-        monthly,
-        projections,
+        daily: intMonthly / 30,
+        monthly: intMonthly,
+        projections: interestProj,
+        cost_centre: a.cost_centre?.trim() || a.name || 'Interest',
+        frequency: 'monthly',
+        cash_flow_section: 'operating',
+        created_at: a.created_at,
+        updated_at: a.updated_at,
+      });
+
+      // Principal → Financing outflow
+      synthetic.push({
+        id: `loan-principal-${a.id}`,
+        user_id: a.user_id,
+        date: paymentDay,
+        type: 'expense',
+        category: 'Loan Principal',
+        subcategory: a.name,
+        group_name: groupName,
+        group: groupName,
+        space_id: a.space_id ?? null,
+        amount: prinMonthly,
+        percentage: 0,
+        daily: prinMonthly / 30,
+        monthly: prinMonthly,
+        projections: principalProj,
         cost_centre: a.cost_centre?.trim() || a.name || 'Debt Service',
         frequency: 'monthly',
+        cash_flow_section: 'financing',
         created_at: a.created_at,
         updated_at: a.updated_at,
       });
