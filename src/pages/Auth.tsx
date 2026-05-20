@@ -576,22 +576,6 @@ const Auth = () => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-8 sm:py-12 px-4 sm:px-6 lg:px-8 border-t border-border">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <img src={cnergiseLogo} alt="Cnergise" className="w-10 h-10 sm:w-14 sm:h-14 object-contain" />
-          </div>
-          <div className="flex items-center gap-4 text-xs sm:text-sm text-muted-foreground">
-            <a href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</a>
-            <span aria-hidden>·</span>
-            <a href="/terms" className="hover:text-foreground transition-colors">Terms of Service</a>
-          </div>
-          <p className="text-xs sm:text-sm text-muted-foreground text-center">
-            © 2025 Cnergise. All rights reserved.
-          </p>
-        </div>
-      </footer>
 
       {/* Auth Modal */}
       {showAuthModal && (
