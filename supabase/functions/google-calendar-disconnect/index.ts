@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
 
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-    let connQuery = admin.from("google_calendar_connections").select("*").eq("user_id", user.id);
+    let connQuery = admin.from("google_calendar_connections_decrypted").select("*").eq("user_id", user.id);
     if (accountId) connQuery = connQuery.eq("id", accountId);
     const { data: connections } = await connQuery;
 
