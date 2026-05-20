@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logServiceUsage } from "../_shared/cost-tracking.ts";
+import { assertSafeExternalUrl } from "../_shared/network-security.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -39,8 +40,9 @@ serve(async (req) => {
       const baseUrl = conn.base_url || (conn.environment === "live"
         ? "https://api.alpaca.markets"
         : "https://paper-api.alpaca.markets");
+      const safeBaseUrl = assertSafeExternalUrl(baseUrl);
       try {
-        const res = await fetch(`${baseUrl}/v2/positions`, {
+        const res = await fetch(`${safeBaseUrl}/v2/positions`, {
           headers: {
             "APCA-API-KEY-ID": conn.api_key_id,
             "APCA-API-SECRET-KEY": conn.api_secret,
@@ -59,11 +61,13 @@ serve(async (req) => {
           source = "alpaca";
         } else {
           const body = await res.text();
+          console.error("alpaca-sync-portfolio upstream error", res.status, body);
           await supabase.from("alpaca_connections").update({
-            status: "error", last_error: `Alpaca ${res.status}: ${body.slice(0, 300)}`,
+            status: "error", last_error: `External service error (${res.status})`,
           }).eq("user_id", user.id);
         }
       } catch (e) {
+        console.error("alpaca-sync-portfolio fetch error", e);
         await supabase.from("alpaca_connections").update({
           status: "error", last_error: "Internal server error",
         }).eq("user_id", user.id);
@@ -100,6 +104,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
+    console.error("alpaca-sync-portfolio error", e);
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
