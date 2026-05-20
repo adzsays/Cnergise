@@ -461,7 +461,8 @@ export function InlineTransactionsTable() {
                     </Button>
                   </td>
                 </tr>
-              ))
+                );
+              })
             )}
           </tbody>
         </table>
