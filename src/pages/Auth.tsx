@@ -358,6 +358,10 @@ const Auth = () => {
                   Sign in with invite
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-primary/10 text-primary text-xs sm:text-sm font-medium">
+                  <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  Private beta · By invitation only
+                </div>
                 <Button
                   size="lg"
                   variant="ghost"
