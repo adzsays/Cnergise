@@ -9,7 +9,7 @@ import { HoverCard, HoverCardTrigger, HoverCardContent } from '@/components/ui/h
 import { ArrowDownRight, ArrowUpRight, Sparkles, TrendingUp, Wallet, Target } from 'lucide-react';
 import { SleekChart } from '@/components/ui/SleekChart';
 import { SnoopInsights } from './SnoopInsights';
-import { TableView } from './TableView';
+
 import { cn } from '@/lib/utils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronDown } from 'lucide-react';
@@ -540,8 +540,6 @@ export function FinanceDashboardView() {
         </Card>
       </div>
 
-      {/* Statement of Cash Flows — Operating / Investing / Financing breakdown */}
-      <TableView />
     </div>
   );
 }

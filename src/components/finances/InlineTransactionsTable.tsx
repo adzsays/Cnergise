@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectSeparator } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Trash2, Settings2, ArrowDownCircle, ArrowUpCircle, X, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { Plus, Trash2, Settings2, ArrowDownCircle, ArrowUpCircle, ArrowLeftRight, Building2, X, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { useFinancialData } from '@/contexts/FinancialDataContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -154,10 +154,18 @@ export function InlineTransactionsTable() {
     );
   };
 
+  const sectionForType = (type: string): 'operating' | 'investing' | 'financing' => {
+    if (type === 'asset') return 'investing';
+    if (type === 'liability') return 'financing';
+    return 'operating';
+  };
+  const sectionLabel = (s: string) => s === 'investing' ? 'Investing' : s === 'financing' ? 'Financing' : 'Operating';
+
   const updateField = async (id: string, patch: Partial<{
     subcategory: string; category: string; monthly: number; daily: number; amount: number;
     projections: number[]; date: number; cost_centre: string; frequency: string; end_date: string | null;
-    type: 'income' | 'expense';
+    type: 'income' | 'expense' | 'asset' | 'liability';
+    cash_flow_section: 'operating' | 'investing' | 'financing';
   }>) => {
     setSavingId(id);
     // Synthetic loan-projection rows (id="loan-projection-<accountId>") aren't real
@@ -184,7 +192,12 @@ export function InlineTransactionsTable() {
       }
       return;
     }
-    const { error } = await supabase.from('financial_transactions').update(patch as any).eq('id', id);
+    // Auto-sync cash_flow_section whenever type changes
+    const finalPatch: any = { ...patch };
+    if (patch.type && finalPatch.cash_flow_section === undefined) {
+      finalPatch.cash_flow_section = sectionForType(patch.type);
+    }
+    const { error } = await supabase.from('financial_transactions').update(finalPatch as any).eq('id', id);
     setSavingId(null);
     if (error) {
       toast.error('Save failed');
@@ -209,15 +222,20 @@ export function InlineTransactionsTable() {
     }
   };
 
-  const handleAddRow = async (type: 'income' | 'expense') => {
+  const handleAddRow = async (type: 'income' | 'expense' | 'asset' | 'liability') => {
+    const desc = type === 'income' ? 'New income'
+      : type === 'expense' ? 'New expense'
+      : type === 'asset' ? 'New asset movement'
+      : 'New liability movement';
     await addTransaction({
       type,
       category: 'Other',
-      subcategory: type === 'income' ? 'New income' : 'New expense',
+      subcategory: desc,
       monthly: 0,
       cost_centre: allCostCentres[0] || 'Personal',
       frequency: 'monthly',
       date: Date.now(),
+      cash_flow_section: sectionForType(type),
     });
   };
 
@@ -263,6 +281,12 @@ export function InlineTransactionsTable() {
           <Button size="sm" variant="outline" onClick={() => handleAddRow('expense')} className="text-destructive">
             <ArrowUpCircle className="h-3.5 w-3.5 mr-1" /> Add Expense
           </Button>
+          <Button size="sm" variant="outline" onClick={() => handleAddRow('asset')} className="text-primary">
+            <ArrowLeftRight className="h-3.5 w-3.5 mr-1" /> Add Asset
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => handleAddRow('liability')}>
+            <Building2 className="h-3.5 w-3.5 mr-1" /> Add Liability
+          </Button>
         </div>
       </div>
 
@@ -271,6 +295,7 @@ export function InlineTransactionsTable() {
           <thead>
             <tr className="text-muted-foreground uppercase text-[10px] tracking-wider border-b">
               <SortHeader k="type" label="Type" className="w-24" />
+              <th className="text-left py-2 px-2 font-medium w-24">Section</th>
               <SortHeader k="subcategory" label="Description" />
               <SortHeader k="monthly" label="Amount" align="right" />
               <SortHeader k="date" label="Recurring Date" />
@@ -284,12 +309,23 @@ export function InlineTransactionsTable() {
           <tbody>
             {sorted.length === 0 ? (
               <tr>
-                <td colSpan={9} className="text-center py-6 text-muted-foreground">
-                  No transactions yet — click "Add Income" or "Add Expense" to start.
+                <td colSpan={10} className="text-center py-6 text-muted-foreground">
+                  No transactions yet — click "Add Income", "Add Expense", "Add Asset" or "Add Liability" to start.
                 </td>
               </tr>
             ) : (
-              sorted.map((t) => (
+              sorted.map((t) => {
+                const typeColor =
+                  t.type === 'income' ? 'text-success'
+                  : t.type === 'expense' ? 'text-destructive'
+                  : t.type === 'asset' ? 'text-primary'
+                  : 'text-foreground';
+                const section = (t.cash_flow_section as string) || sectionForType(t.type || 'expense');
+                const sectionColor =
+                  section === 'investing' ? 'bg-primary/10 text-primary'
+                  : section === 'financing' ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400'
+                  : 'bg-muted text-muted-foreground';
+                return (
                 <tr
                   key={t.id}
                   className={cn(
@@ -300,25 +336,34 @@ export function InlineTransactionsTable() {
                   <td className="py-1 px-2">
                     <Select
                       defaultValue={t.type || 'expense'}
-                      onValueChange={(v) => updateField(t.id, { type: v as 'income' | 'expense' })}
+                      onValueChange={(v) => updateField(t.id, { type: v as any })}
                     >
                       <SelectTrigger
                         className={cn(
                           'h-7 border-0 bg-transparent px-1 focus:ring-1 font-medium',
-                          t.type === 'income' ? 'text-success' : 'text-destructive'
+                          typeColor
                         )}
                       >
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="income">
-                          <span className="text-success">Income</span>
-                        </SelectItem>
-                        <SelectItem value="expense">
-                          <span className="text-destructive">Expense</span>
-                        </SelectItem>
+                        <SelectItem value="income"><span className="text-success">Income</span></SelectItem>
+                        <SelectItem value="expense"><span className="text-destructive">Expense</span></SelectItem>
+                        <SelectItem value="asset"><span className="text-primary">Asset</span></SelectItem>
+                        <SelectItem value="liability">Liability</SelectItem>
                       </SelectContent>
                     </Select>
+                  </td>
+                  <td className="py-1 px-2">
+                    <span
+                      className={cn(
+                        'inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider',
+                        sectionColor
+                      )}
+                      title="Auto-derived from Type: Income/Expense → Operating · Asset → Investing · Liability → Financing"
+                    >
+                      {sectionLabel(section)}
+                    </span>
                   </td>
                   <td className="py-1 px-2">
                     <Input
@@ -416,7 +461,8 @@ export function InlineTransactionsTable() {
                     </Button>
                   </td>
                 </tr>
-              ))
+                );
+              })
             )}
           </tbody>
         </table>
