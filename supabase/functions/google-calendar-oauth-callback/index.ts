@@ -138,6 +138,7 @@ Deno.serve(async (req) => {
 
     return Response.redirect(`${cb}&status=success`, 302);
   } catch (e) {
-    return new Response(`Error: ${String(e)}`, { status: 500 });
+    console.error("OAuth callback error", e);
+    return new Response("OAuth error", { status: 500 });
   }
 });
