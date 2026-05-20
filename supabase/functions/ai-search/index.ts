@@ -126,7 +126,7 @@ Always reference specific items from their data when relevant. Be concise and ac
 
   } catch (error) {
     console.error('AI Search error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

@@ -244,7 +244,7 @@ Bucket urgency: "now" (>=85 + action), "today" (>=75), "later" (rest).`;
     });
   } catch (e) {
     console.error("listening-agent-scan error", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown" }), {
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
