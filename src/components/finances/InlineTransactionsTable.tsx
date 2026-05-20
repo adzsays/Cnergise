@@ -81,10 +81,11 @@ export function InlineTransactionsTable() {
 
   const accountNames = useMemo(() => accounts.map((a) => a.name), [accounts]);
 
-  type SortKey = 'type' | 'subcategory' | 'monthly' | 'date' | 'cost_centre' | 'frequency' | 'end_date' | 'category';
+  type SortKey = 'type' | 'cash_flow_section' | 'subcategory' | 'monthly' | 'date' | 'cost_centre' | 'frequency' | 'end_date' | 'category';
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [filterCostCentre, setFilterCostCentre] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
