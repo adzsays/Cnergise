@@ -776,7 +776,7 @@ const Auth = () => {
             <a href="/" aria-label="Go to home" className="shrink-0">
               <img src={cnergiseLogo} alt="Cnergise" className="h-20 sm:h-24 w-auto object-contain -my-8" />
             </a>
-            <span>© {new Date().getFullYear()} Cnergise</span>
+            <span>Copyright © {new Date().getFullYear()}</span>
           </div>
           <nav className="flex items-center gap-4">
             <a href="/privacy" className="hover:underline hover:text-foreground">Privacy Policy</a>
