@@ -86,7 +86,7 @@ export function AppSidebar() {
         {isCollapsed ? (
           <div className="flex flex-col items-center gap-1">
             <Link to="/home" aria-label="Go to home" className="flex items-center justify-center">
-              <img src={cnergiseLogo} alt="Cnergise" className="object-contain shrink-0" style={{ height: '3rem', width: '3rem' }} />
+              <img src={cnergiseLogo} alt="Cnergise" className="object-contain shrink-0" style={{ height: '2.25rem', width: '2.25rem' }} />
             </Link>
             <Button
               variant="outline"
