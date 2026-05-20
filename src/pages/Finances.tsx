@@ -157,7 +157,6 @@ const Finances = () => {
                   </div>
 
                   {secondaryView === "dashboard" && <FinanceDashboardView />}
-                  {secondaryView === "cashflow" && <CashFlowView />}
                   {secondaryView === "balances" && (
                     <InnerTabs defaultValue="accounts" className="space-y-4">
                       <div className="overflow-x-auto -mx-3 px-3 md:mx-0 md:px-0 scrollbar-none">
