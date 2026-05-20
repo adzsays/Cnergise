@@ -91,7 +91,7 @@ Never preach. Be a supportive, curious friend.`;
   } catch (e) {
     console.error("echo-chat-coach error:", e);
     return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
+      JSON.stringify({ error: "Internal server error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

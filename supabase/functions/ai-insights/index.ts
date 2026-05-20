@@ -203,7 +203,7 @@ Deno.serve(async (req) => {
     console.error("ai-insights error", e);
     const msg = String(e?.message || e);
     const status = msg.includes("429") ? 429 : msg.includes("402") ? 402 : 500;
-    return new Response(JSON.stringify({ error: msg }), {
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
       status,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

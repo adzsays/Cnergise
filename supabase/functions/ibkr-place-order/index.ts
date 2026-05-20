@@ -46,7 +46,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Risk check failed", blockers }), { status: 400, headers: corsHeaders });
     }
 
-    const { data: conn } = await supabase.from("ibkr_connections").select("*").eq("user_id", user.id).maybeSingle();
+    const { data: conn } = await supabase.from("ibkr_connections_decrypted").select("*").eq("user_id", user.id).maybeSingle();
     const live = conn && !conn.demo_mode && conn.api_token;
 
     // Insert order record (simulated unless live)
@@ -93,6 +93,6 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: (e as Error).message }), { status: 500, headers: corsHeaders });
+    return new Response(JSON.stringify({ error: "Internal server error" }), { status: 500, headers: corsHeaders });
   }
 });

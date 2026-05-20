@@ -33,7 +33,7 @@ serve(async (req) => {
     if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
 
     const { data: conn } = await supabase
-      .from("ibkr_connections")
+      .from("ibkr_connections_decrypted")
       .select("*")
       .eq("user_id", user.id)
       .maybeSingle();
@@ -72,7 +72,7 @@ serve(async (req) => {
       } catch (e) {
         await supabase.from("ibkr_connections").update({
           status: "error",
-          last_error: (e as Error).message,
+          last_error: "Internal server error",
         }).eq("user_id", user.id);
       }
     }
@@ -109,7 +109,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: (e as Error).message }), {
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

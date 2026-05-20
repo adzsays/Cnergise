@@ -34,8 +34,8 @@ export function IBKRConnection() {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    const { data } = await supabase.from("ibkr_connections").select("*").eq("user_id", user.id).maybeSingle();
-    if (data) setConn({ ...conn, ...data });
+    const { data } = await supabase.from("ibkr_connections_decrypted" as any).select("*").eq("user_id", user.id).maybeSingle();
+    if (data) setConn({ ...conn, ...(data as any) });
     setLoading(false);
   };
   useEffect(() => { load(); }, []);

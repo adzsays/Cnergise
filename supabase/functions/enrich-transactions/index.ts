@@ -343,7 +343,7 @@ Prefer matching an existing budget line's category if it fits; otherwise propose
     );
   } catch (e: any) {
     console.error("enrich-transactions error:", e);
-    return new Response(JSON.stringify({ error: e?.message ?? "unknown" }), {
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

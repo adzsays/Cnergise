@@ -26,7 +26,7 @@ serve(async (req) => {
     if (!user) return json({ error: "Unauthorized" }, 401);
 
     const { data: conn } = await supabase
-      .from("alpaca_connections").select("*").eq("user_id", user.id).maybeSingle();
+      .from("alpaca_connections_decrypted").select("*").eq("user_id", user.id).maybeSingle();
 
     if (!conn || !conn.api_key_id || !conn.api_secret) {
       return json({ ok: false, error: "Missing API key or secret" });
@@ -61,6 +61,6 @@ serve(async (req) => {
       account: { id: acct.id, number: acct.account_number, status: acct.status, currency: acct.currency, equity: acct.equity, buying_power: acct.buying_power },
     });
   } catch (e) {
-    return json({ ok: false, error: (e as Error).message }, 500);
+    return json({ ok: false, error: "Internal server error" }, 500);
   }
 });

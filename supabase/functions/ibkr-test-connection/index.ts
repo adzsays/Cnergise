@@ -22,7 +22,7 @@ serve(async (req) => {
     if (!user) return new Response(JSON.stringify({ ok: false, error: "Unauthorized" }), { status: 401, headers: corsHeaders });
 
     const { data: conn } = await supabase
-      .from("ibkr_connections").select("*").eq("user_id", user.id).maybeSingle();
+      .from("ibkr_connections_decrypted").select("*").eq("user_id", user.id).maybeSingle();
 
     if (!conn?.gateway_url) {
       return json({ ok: false, stage: "config", error: "Gateway URL not set. Save it first." });
@@ -51,10 +51,11 @@ serve(async (req) => {
         },
       });
     } catch (e) {
-      const msg = (e as Error).message;
-      await supabase.from("ibkr_connections").update({ status: "error", last_error: msg }).eq("user_id", user.id);
-      return json({ ok: false, stage: "network", error: `Cannot reach gateway: ${msg}. Check the tunnel is running and HTTPS cert is valid.` });
+      console.error("ibkr-test-connection network error", e);
+      await supabase.from("ibkr_connections").update({ status: "error", last_error: "network_unreachable" }).eq("user_id", user.id);
+      return json({ ok: false, stage: "network", error: "Cannot reach gateway. Check the tunnel is running and HTTPS cert is valid." });
     }
+
 
     const text = await res.text();
     let body: any = null; try { body = JSON.parse(text); } catch { /* keep text */ }
@@ -85,7 +86,7 @@ serve(async (req) => {
         : "Gateway reachable but you need to log in via the gateway URL in your browser first.",
     });
   } catch (e) {
-    return json({ ok: false, stage: "exception", error: (e as Error).message }, 500);
+    return json({ ok: false, stage: "exception", error: "Internal server error" }, 500);
   }
 });
 

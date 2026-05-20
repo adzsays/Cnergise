@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
         totalDeleted += r.deleted;
         if (r.errors.length) errors.push({ user_id: uid, errors: r.errors });
       } catch (e) {
-        errors.push({ user_id: uid, error: String(e) });
+        errors.push({ user_id: uid, error: "Internal server error" });
       }
     }
 
@@ -48,6 +48,6 @@ Deno.serve(async (req) => {
       errors,
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e) }), { status: 500, headers: corsHeaders });
+    return new Response(JSON.stringify({ error: "Internal server error" }), { status: 500, headers: corsHeaders });
   }
 });

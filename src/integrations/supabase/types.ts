@@ -4358,6 +4358,54 @@ export type Database = {
       }
     }
     Views: {
+      alpaca_connections_decrypted: {
+        Row: {
+          api_key_id: string | null
+          api_secret: string | null
+          base_url: string | null
+          created_at: string | null
+          demo_mode: boolean | null
+          environment: string | null
+          id: string | null
+          last_error: string | null
+          last_synced_at: string | null
+          nickname: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          api_key_id?: string | null
+          api_secret?: never
+          base_url?: string | null
+          created_at?: string | null
+          demo_mode?: boolean | null
+          environment?: string | null
+          id?: string | null
+          last_error?: string | null
+          last_synced_at?: string | null
+          nickname?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          api_key_id?: string | null
+          api_secret?: never
+          base_url?: string | null
+          created_at?: string | null
+          demo_mode?: boolean | null
+          environment?: string | null
+          id?: string | null
+          last_error?: string | null
+          last_synced_at?: string | null
+          nickname?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       google_calendar_connections_decrypted: {
         Row: {
           access_token: string | null
@@ -4401,6 +4449,66 @@ export type Database = {
           scope?: string | null
           sync_token?: string | null
           token_expires_at?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      ibkr_connections_decrypted: {
+        Row: {
+          access_token: string | null
+          account_id: string | null
+          api_token: string | null
+          created_at: string | null
+          demo_mode: boolean | null
+          environment: string | null
+          expires_at: string | null
+          gateway_url: string | null
+          id: string | null
+          last_error: string | null
+          last_synced_at: string | null
+          nickname: string | null
+          refresh_token: string | null
+          status: string | null
+          token_type: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          access_token?: never
+          account_id?: string | null
+          api_token?: never
+          created_at?: string | null
+          demo_mode?: boolean | null
+          environment?: string | null
+          expires_at?: string | null
+          gateway_url?: string | null
+          id?: string | null
+          last_error?: string | null
+          last_synced_at?: string | null
+          nickname?: string | null
+          refresh_token?: never
+          status?: string | null
+          token_type?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          access_token?: never
+          account_id?: string | null
+          api_token?: never
+          created_at?: string | null
+          demo_mode?: boolean | null
+          environment?: string | null
+          expires_at?: string | null
+          gateway_url?: string | null
+          id?: string | null
+          last_error?: string | null
+          last_synced_at?: string | null
+          nickname?: string | null
+          refresh_token?: never
+          status?: string | null
+          token_type?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
