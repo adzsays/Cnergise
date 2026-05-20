@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
     if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
 
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const { data: conn } = await admin.from("google_calendar_connections").select("*").eq("user_id", user.id).maybeSingle();
+    const { data: conn } = await admin.from("google_calendar_connections_decrypted").select("*").eq("user_id", user.id).maybeSingle();
     if (!conn) throw new Error("No connection");
 
     const channelId = crypto.randomUUID();
