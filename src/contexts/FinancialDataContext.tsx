@@ -216,6 +216,7 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
         ...t,
         group: t.group_name,
         projections,
+        cash_flow_section: (t.cash_flow_section as CashFlowSection) || 'operating',
       };
     }) as FinancialTransaction[];
   };
