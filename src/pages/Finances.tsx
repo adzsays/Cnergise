@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FinancialDataProvider } from "@/contexts/FinancialDataContext";
 import { FinanceDashboardView } from "@/components/finances/FinanceDashboardView";
-import { CashFlowView } from "@/components/finances/CashFlowView";
+
 import { CreditScoreView } from "@/components/finances/CreditScoreView";
 import { BalancesView } from "@/components/finances/BalancesView";
 import { ActualExpensesView } from "@/components/finances/ActualExpensesView";
