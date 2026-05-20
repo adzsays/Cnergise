@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectSeparator } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Trash2, Settings2, ArrowDownCircle, ArrowUpCircle, X, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { Plus, Trash2, Settings2, ArrowDownCircle, ArrowUpCircle, ArrowLeftRight, Building2, X, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { useFinancialData } from '@/contexts/FinancialDataContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -154,10 +154,18 @@ export function InlineTransactionsTable() {
     );
   };
 
+  const sectionForType = (type: string): 'operating' | 'investing' | 'financing' => {
+    if (type === 'asset') return 'investing';
+    if (type === 'liability') return 'financing';
+    return 'operating';
+  };
+  const sectionLabel = (s: string) => s === 'investing' ? 'Investing' : s === 'financing' ? 'Financing' : 'Operating';
+
   const updateField = async (id: string, patch: Partial<{
     subcategory: string; category: string; monthly: number; daily: number; amount: number;
     projections: number[]; date: number; cost_centre: string; frequency: string; end_date: string | null;
-    type: 'income' | 'expense';
+    type: 'income' | 'expense' | 'asset' | 'liability';
+    cash_flow_section: 'operating' | 'investing' | 'financing';
   }>) => {
     setSavingId(id);
     // Synthetic loan-projection rows (id="loan-projection-<accountId>") aren't real
@@ -184,7 +192,12 @@ export function InlineTransactionsTable() {
       }
       return;
     }
-    const { error } = await supabase.from('financial_transactions').update(patch as any).eq('id', id);
+    // Auto-sync cash_flow_section whenever type changes
+    const finalPatch: any = { ...patch };
+    if (patch.type && finalPatch.cash_flow_section === undefined) {
+      finalPatch.cash_flow_section = sectionForType(patch.type);
+    }
+    const { error } = await supabase.from('financial_transactions').update(finalPatch as any).eq('id', id);
     setSavingId(null);
     if (error) {
       toast.error('Save failed');
@@ -209,15 +222,20 @@ export function InlineTransactionsTable() {
     }
   };
 
-  const handleAddRow = async (type: 'income' | 'expense') => {
+  const handleAddRow = async (type: 'income' | 'expense' | 'asset' | 'liability') => {
+    const desc = type === 'income' ? 'New income'
+      : type === 'expense' ? 'New expense'
+      : type === 'asset' ? 'New asset movement'
+      : 'New liability movement';
     await addTransaction({
       type,
       category: 'Other',
-      subcategory: type === 'income' ? 'New income' : 'New expense',
+      subcategory: desc,
       monthly: 0,
       cost_centre: allCostCentres[0] || 'Personal',
       frequency: 'monthly',
       date: Date.now(),
+      cash_flow_section: sectionForType(type),
     });
   };
 
