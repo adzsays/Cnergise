@@ -174,11 +174,12 @@ export function TableView() {
     setNewGroupName('');
   };
 
-  // Per-section monthly totals and overall net change
-  const sectionTotals: Record<CashFlowSection, number[]> = {
-    operating: Array(12).fill(0),
-    investing: Array(12).fill(0),
-    financing: Array(12).fill(0),
+  // Per-section monthly totals split into inflow / outflow / net, and overall net change
+  const sectionInflow: Record<CashFlowSection, number[]> = {
+    operating: Array(12).fill(0), investing: Array(12).fill(0), financing: Array(12).fill(0),
+  };
+  const sectionOutflow: Record<CashFlowSection, number[]> = {
+    operating: Array(12).fill(0), investing: Array(12).fill(0), financing: Array(12).fill(0),
   };
   SECTION_ORDER.forEach((s) => {
     Object.values(bySection[s]).flat().forEach((t) => {
@@ -187,12 +188,19 @@ export function TableView() {
           const d = getTransactionDateInCurrentMonth(getRecurringDay(t.date));
           if (d < today) continue;
         }
-        sectionTotals[s][i] += t.projections[i] || 0;
+        const v = t.projections[i] || 0;
+        if (v >= 0) sectionInflow[s][i] += v;
+        else sectionOutflow[s][i] += v; // negative
       }
     });
   });
+  const sectionNet: Record<CashFlowSection, number[]> = {
+    operating: sectionInflow.operating.map((v, i) => v + sectionOutflow.operating[i]),
+    investing: sectionInflow.investing.map((v, i) => v + sectionOutflow.investing[i]),
+    financing: sectionInflow.financing.map((v, i) => v + sectionOutflow.financing[i]),
+  };
   const netChange = monthLabels.map((_, i) =>
-    sectionTotals.operating[i] + sectionTotals.investing[i] + sectionTotals.financing[i],
+    sectionNet.operating[i] + sectionNet.investing[i] + sectionNet.financing[i],
   );
 
   const initialCashBalance =
