@@ -784,6 +784,16 @@ const Auth = () => {
 
       <RequestInviteDialog open={showInviteRequest} onOpenChange={setShowInviteRequest} />
       <VisitorChat />
+
+      <footer className="border-t mt-12 py-6 px-6">
+        <div className="mx-auto max-w-6xl flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
+          <span>© {new Date().getFullYear()} Cnergise</span>
+          <nav className="flex items-center gap-4">
+            <a href="/privacy" className="hover:underline hover:text-foreground">Privacy Policy</a>
+            <a href="/terms" className="hover:underline hover:text-foreground">Terms of Service</a>
+          </nav>
+        </div>
+      </footer>
     </div>
   );
 };
