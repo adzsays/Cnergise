@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { projectAmortization, RateTerm } from '@/utils/loanAmortization';
 
+export type CashFlowSection = 'operating' | 'investing' | 'financing';
+
 interface FinancialTransaction {
   id: string;
   user_id: string;
@@ -21,6 +23,7 @@ interface FinancialTransaction {
   projections: number[];
   cost_centre: string | null;
   frequency: string | null;
+  cash_flow_section: CashFlowSection;
   created_at: string;
   updated_at: string;
 }
