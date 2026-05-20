@@ -327,9 +327,8 @@ const Auth = () => {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border pt-[env(safe-area-inset-top)]">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14 gap-2">
-            <div className="flex items-center gap-1.5 min-w-0">
-              <img src={cnergiseLogo} alt="Cnergise" className="h-10 w-10 sm:h-14 sm:w-14 object-contain shrink-0" />
-              <span className="text-base sm:text-lg font-semibold tracking-tight text-foreground truncate">Cnergise</span>
+            <div className="flex items-center min-w-0">
+              <img src={cnergiseLogo} alt="Cnergise" className="h-12 sm:h-16 w-auto object-contain shrink-0" />
             </div>
             <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
               {loginAccess ? (
