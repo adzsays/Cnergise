@@ -300,21 +300,33 @@ export function TableView() {
                     return (
                       <React.Fragment key={section}>
                         <TableRow className="bg-primary/15">
-                          <TableCell className="font-bold text-xs py-1 px-2">
+                          <TableCell colSpan={14} className="font-bold text-xs py-1 px-2">
                             <button onClick={() => toggleSection(section)} className="flex items-center gap-2 uppercase tracking-wide">
                               {sectionOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                               {SECTION_LABEL[section]}
                             </button>
                           </TableCell>
-                          <TableCell className={`text-right text-xs font-bold py-1 px-2 ${sectionTotals[section].reduce((s,n)=>s+n,0)/12 >= 0 ? 'text-income' : 'text-expense'}`}>
-                            £{Math.abs(Math.round(sectionTotals[section].reduce((s,n)=>s+n,0)/12)).toLocaleString()}
-                          </TableCell>
-                          {sectionTotals[section].map((v, i) => (
-                            <TableCell key={i} className={`text-right text-xs font-bold py-1 px-2 ${v >= 0 ? 'text-income' : 'text-expense'}`}>
-                              {v >= 0 ? '' : '-'}£{Math.abs(Math.round(v)).toLocaleString()}
-                            </TableCell>
-                          ))}
                         </TableRow>
+                        {([
+                          { key: 'inflow', label: SECTION_SUMMARY_LABELS[section].inflow, data: sectionInflow[section], cls: 'text-income' },
+                          { key: 'outflow', label: SECTION_SUMMARY_LABELS[section].outflow, data: sectionOutflow[section], cls: 'text-expense' },
+                          { key: 'net', label: SECTION_SUMMARY_LABELS[section].net, data: sectionNet[section], cls: '', bold: true },
+                        ] as const).map((row) => {
+                          const avg = row.data.reduce((s, n) => s + n, 0) / 12;
+                          return (
+                            <TableRow key={`${section}-${row.key}`} className={row.bold ? 'bg-primary/10' : ''}>
+                              <TableCell className={`text-xs py-1 px-6 ${row.bold ? 'font-bold' : 'font-medium'}`}>{row.label}</TableCell>
+                              <TableCell className={`text-right text-xs py-1 px-2 ${row.bold ? 'font-bold' : 'font-medium'} ${row.cls || (avg >= 0 ? 'text-income' : 'text-expense')}`}>
+                                {avg >= 0 ? '' : '-'}£{Math.abs(Math.round(avg)).toLocaleString()}
+                              </TableCell>
+                              {row.data.map((v, i) => (
+                                <TableCell key={i} className={`text-right text-xs py-1 px-2 ${row.bold ? 'font-bold' : 'font-medium'} ${row.cls || (v >= 0 ? 'text-income' : 'text-expense')}`}>
+                                  {v === 0 ? '-' : `${v >= 0 ? '' : '-'}£${Math.abs(Math.round(v)).toLocaleString()}`}
+                                </TableCell>
+                              ))}
+                            </TableRow>
+                          );
+                        })}
                         {sectionOpen && cats.length === 0 && (
                           <TableRow>
                             <TableCell colSpan={14} className="text-xs text-muted-foreground italic py-2 px-6">
