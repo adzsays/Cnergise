@@ -114,6 +114,7 @@ interface FinancialDataContextType {
     subcategory: string;
     group?: string;
     group_name?: string;
+    cash_flow_section?: CashFlowSection;
   }) => Promise<void>;
   updateTransactionName: (transactionId: string, newName: string) => Promise<void>;
   updateTransactionGroup: (transactionId: string, newGroup: string) => Promise<void>;
