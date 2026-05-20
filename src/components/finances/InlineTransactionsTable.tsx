@@ -309,12 +309,23 @@ export function InlineTransactionsTable() {
           <tbody>
             {sorted.length === 0 ? (
               <tr>
-                <td colSpan={9} className="text-center py-6 text-muted-foreground">
-                  No transactions yet — click "Add Income" or "Add Expense" to start.
+                <td colSpan={10} className="text-center py-6 text-muted-foreground">
+                  No transactions yet — click "Add Income", "Add Expense", "Add Asset" or "Add Liability" to start.
                 </td>
               </tr>
             ) : (
-              sorted.map((t) => (
+              sorted.map((t) => {
+                const typeColor =
+                  t.type === 'income' ? 'text-success'
+                  : t.type === 'expense' ? 'text-destructive'
+                  : t.type === 'asset' ? 'text-primary'
+                  : 'text-foreground';
+                const section = (t.cash_flow_section as string) || sectionForType(t.type || 'expense');
+                const sectionColor =
+                  section === 'investing' ? 'bg-primary/10 text-primary'
+                  : section === 'financing' ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400'
+                  : 'bg-muted text-muted-foreground';
+                return (
                 <tr
                   key={t.id}
                   className={cn(
@@ -325,25 +336,34 @@ export function InlineTransactionsTable() {
                   <td className="py-1 px-2">
                     <Select
                       defaultValue={t.type || 'expense'}
-                      onValueChange={(v) => updateField(t.id, { type: v as 'income' | 'expense' })}
+                      onValueChange={(v) => updateField(t.id, { type: v as any })}
                     >
                       <SelectTrigger
                         className={cn(
                           'h-7 border-0 bg-transparent px-1 focus:ring-1 font-medium',
-                          t.type === 'income' ? 'text-success' : 'text-destructive'
+                          typeColor
                         )}
                       >
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="income">
-                          <span className="text-success">Income</span>
-                        </SelectItem>
-                        <SelectItem value="expense">
-                          <span className="text-destructive">Expense</span>
-                        </SelectItem>
+                        <SelectItem value="income"><span className="text-success">Income</span></SelectItem>
+                        <SelectItem value="expense"><span className="text-destructive">Expense</span></SelectItem>
+                        <SelectItem value="asset"><span className="text-primary">Asset</span></SelectItem>
+                        <SelectItem value="liability">Liability</SelectItem>
                       </SelectContent>
                     </Select>
+                  </td>
+                  <td className="py-1 px-2">
+                    <span
+                      className={cn(
+                        'inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider',
+                        sectionColor
+                      )}
+                      title="Auto-derived from Type: Income/Expense → Operating · Asset → Investing · Liability → Financing"
+                    >
+                      {sectionLabel(section)}
+                    </span>
                   </td>
                   <td className="py-1 px-2">
                     <Input
