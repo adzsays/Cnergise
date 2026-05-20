@@ -308,10 +308,10 @@ export function TableView() {
                           </TableCell>
                         </TableRow>
                         {([
-                          { key: 'inflow', label: SECTION_SUMMARY_LABELS[section].inflow, data: sectionInflow[section], cls: 'text-income' },
-                          { key: 'outflow', label: SECTION_SUMMARY_LABELS[section].outflow, data: sectionOutflow[section], cls: 'text-expense' },
+                          { key: 'inflow', label: SECTION_SUMMARY_LABELS[section].inflow, data: sectionInflow[section], cls: 'text-income', bold: false },
+                          { key: 'outflow', label: SECTION_SUMMARY_LABELS[section].outflow, data: sectionOutflow[section], cls: 'text-expense', bold: false },
                           { key: 'net', label: SECTION_SUMMARY_LABELS[section].net, data: sectionNet[section], cls: '', bold: true },
-                        ] as const).map((row) => {
+                        ]).map((row) => {
                           const avg = row.data.reduce((s, n) => s + n, 0) / 12;
                           return (
                             <TableRow key={`${section}-${row.key}`} className={row.bold ? 'bg-primary/10' : ''}>
