@@ -539,6 +539,9 @@ export function FinanceDashboardView() {
           </div>
         </Card>
       </div>
+
+      {/* Statement of Cash Flows — Operating / Investing / Financing breakdown */}
+      <TableView />
     </div>
   );
 }
