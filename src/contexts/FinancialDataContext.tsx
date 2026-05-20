@@ -815,12 +815,15 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
       // ── Loans/mortgages: amortization-based projection split into interest + principal ──
       const schedule = termsByAccount[a.id];
       if (!schedule || schedule.length === 0) return;
-      // Avoid duplicating with any manual recurring transaction the user already
-      // entered against this loan account (e.g. a single "Mortgage payment" row).
-      const hasManualPayment = transactions.some(
-        (t) => t.category === a.name && (t.type === 'expense' || t.type === 'income')
+      // If user already entered a manual recurring payment against this loan,
+      // inherit its cost centre for the split rows and HIDE the manual row from
+      // the cash-flow view (collected below in `manualLoanIdsToHide`) so the
+      // mortgage is shown once — split into interest (Operating) + principal (Financing).
+      const manualPayment = transactions.find(
+        (t) => t.category === a.name && (t.type === 'expense' || t.type === 'liability')
       );
-      if (hasManualPayment) return;
+      if (manualPayment) manualLoanIdsToHide.add(manualPayment.id);
+      const sharedCostCentre = manualPayment?.cost_centre?.trim() || a.cost_centre?.trim() || a.name || 'Debt Service';
       const start = a.loan_start_date ? new Date(a.loan_start_date) : startMonth;
       if (balance <= 0) return;
 
@@ -855,8 +858,8 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
         user_id: a.user_id,
         date: paymentDay,
         type: 'expense',
-        category: 'Loan Interest',
-        subcategory: a.name,
+        category: a.name,
+        subcategory: `${a.name} — Interest`,
         group_name: groupName,
         group: groupName,
         space_id: a.space_id ?? null,
@@ -865,21 +868,21 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
         daily: intMonthly / 30,
         monthly: intMonthly,
         projections: interestProj,
-        cost_centre: a.cost_centre?.trim() || a.name || 'Interest',
+        cost_centre: sharedCostCentre,
         frequency: 'monthly',
         cash_flow_section: 'operating',
         created_at: a.created_at,
         updated_at: a.updated_at,
       });
 
-      // Principal → Financing outflow
+      // Principal → Financing outflow (liability paydown)
       synthetic.push({
         id: `loan-principal-${a.id}`,
         user_id: a.user_id,
         date: paymentDay,
-        type: 'expense',
-        category: 'Loan Principal',
-        subcategory: a.name,
+        type: 'liability',
+        category: a.name,
+        subcategory: `${a.name} — Principal`,
         group_name: groupName,
         group: groupName,
         space_id: a.space_id ?? null,
@@ -888,7 +891,7 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
         daily: prinMonthly / 30,
         monthly: prinMonthly,
         projections: principalProj,
-        cost_centre: a.cost_centre?.trim() || a.name || 'Debt Service',
+        cost_centre: sharedCostCentre,
         frequency: 'monthly',
         cash_flow_section: 'financing',
         created_at: a.created_at,
@@ -896,7 +899,10 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
       });
     });
 
-    return [...transactions, ...synthetic];
+    const visibleTransactions = manualLoanIdsToHide.size
+      ? transactions.filter((t) => !manualLoanIdsToHide.has(t.id))
+      : transactions;
+    return [...visibleTransactions, ...synthetic];
   }, [transactions, accounts, rateTerms]);
 
   return (
