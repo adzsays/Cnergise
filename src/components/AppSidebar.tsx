@@ -38,6 +38,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import cnergiseLogo from "@/assets/cnergise-icon.png";
+import cnergiseFullLogo from "@/assets/cnergise-full-logo.png";
 import { useAppFeatures, useMySubscriptions, hasActiveAccess } from "@/hooks/useFeatures";
 import { AISidebarPanel } from "@/components/ai/AISidebarPanel";
 
