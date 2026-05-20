@@ -26,7 +26,7 @@ serve(async (req) => {
     if (!user) return json({ error: "Unauthorized" }, 401);
 
     const { data: conn } = await supabase
-      .from("alpaca_connections").select("*").eq("user_id", user.id).maybeSingle();
+      .from("alpaca_connections_decrypted").select("*").eq("user_id", user.id).maybeSingle();
 
     if (!conn || !conn.api_key_id || !conn.api_secret) {
       return json({ ok: false, error: "Missing API key or secret" });

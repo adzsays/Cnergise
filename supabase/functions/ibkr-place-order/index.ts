@@ -46,7 +46,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Risk check failed", blockers }), { status: 400, headers: corsHeaders });
     }
 
-    const { data: conn } = await supabase.from("ibkr_connections").select("*").eq("user_id", user.id).maybeSingle();
+    const { data: conn } = await supabase.from("ibkr_connections_decrypted").select("*").eq("user_id", user.id).maybeSingle();
     const live = conn && !conn.demo_mode && conn.api_token;
 
     // Insert order record (simulated unless live)

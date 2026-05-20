@@ -32,7 +32,7 @@ serve(async (req) => {
     if (!["buy", "sell"].includes(side)) return json({ error: "side must be buy or sell" }, 400);
 
     const { data: conn } = await supabase
-      .from("alpaca_connections").select("*").eq("user_id", user.id).maybeSingle();
+      .from("alpaca_connections_decrypted").select("*").eq("user_id", user.id).maybeSingle();
 
     if (!conn || !conn.api_key_id || !conn.api_secret) {
       return json({ error: "Alpaca not configured" }, 400);

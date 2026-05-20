@@ -22,7 +22,7 @@ serve(async (req) => {
     if (!user) return new Response(JSON.stringify({ ok: false, error: "Unauthorized" }), { status: 401, headers: corsHeaders });
 
     const { data: conn } = await supabase
-      .from("ibkr_connections").select("*").eq("user_id", user.id).maybeSingle();
+      .from("ibkr_connections_decrypted").select("*").eq("user_id", user.id).maybeSingle();
 
     if (!conn?.gateway_url) {
       return json({ ok: false, stage: "config", error: "Gateway URL not set. Save it first." });

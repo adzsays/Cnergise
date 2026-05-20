@@ -30,7 +30,7 @@ serve(async (req) => {
     if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
 
     const { data: conn } = await supabase
-      .from("alpaca_connections").select("*").eq("user_id", user.id).maybeSingle();
+      .from("alpaca_connections_decrypted").select("*").eq("user_id", user.id).maybeSingle();
 
     let positions = DEMO_POSITIONS;
     let source = "demo";
