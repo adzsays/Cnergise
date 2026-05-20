@@ -102,7 +102,7 @@ export function AppSidebar() {
         ) : (
           <div className="flex items-center justify-between gap-2">
             <Link to="/home" aria-label="Go to home" className="flex items-center gap-2 min-w-0 flex-1 hover:opacity-80 transition-opacity">
-              <img src={cnergiseFullLogo} alt="Cnergise" className="object-contain w-full h-auto max-h-14" />
+              <img src={cnergiseFullLogo} alt="Cnergise" className="object-contain w-full h-auto max-h-24" />
             </Link>
             <Button
               variant="outline"
