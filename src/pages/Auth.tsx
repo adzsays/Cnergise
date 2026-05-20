@@ -326,9 +326,44 @@ const Auth = () => {
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border pt-[env(safe-area-inset-top)]">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-center h-20 sm:h-28 gap-2">
+          <div className="flex items-center justify-between h-20 sm:h-28 gap-2">
             <div className="flex items-center min-w-0">
               <img src={cnergiseLogo} alt="Cnergise" className="h-20 sm:h-28 w-auto object-contain shrink-0" />
+            </div>
+            <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+              {loginAccess ? (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => { setAuthTab("signin"); setShowAuthModal(true); }}
+                  >
+                    Sign In
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => { setAuthTab("signup"); setShowAuthModal(true); }}
+                    className="bg-primary hover:bg-primary/90"
+                  >
+                    Get Started
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <span className="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium">
+                    <Sparkles className="w-4 h-4" />
+                    Coming Soon
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => { setAuthTab("signin"); setShowAuthModal(true); }}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    Sign in
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -337,6 +372,10 @@ const Auth = () => {
       {/* Hero Section */}
       <section className="pt-16 pb-12 sm:pt-20 sm:pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-primary/10 text-primary text-xs sm:text-sm font-medium mb-5 sm:mb-6">
+            <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            Private beta · By invitation only
+          </div>
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-5 sm:mb-6 leading-tight tracking-tight">
             Simplify Your Life,
             <br />
@@ -358,10 +397,6 @@ const Auth = () => {
                   Sign in with invite
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-primary/10 text-primary text-xs sm:text-sm font-medium">
-                  <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  Private beta · By invitation only
-                </div>
                 <Button
                   size="lg"
                   variant="ghost"
