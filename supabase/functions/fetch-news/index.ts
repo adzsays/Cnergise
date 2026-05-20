@@ -101,7 +101,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("fetch-news error:", error);
     return new Response(JSON.stringify({ 
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: "Internal server error",
       headlines: []
     }), {
       status: 500,
