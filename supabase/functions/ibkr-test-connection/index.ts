@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { assertSafeExternalUrl } from "../_shared/network-security.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -28,16 +29,7 @@ serve(async (req) => {
       return json({ ok: false, stage: "config", error: "Gateway URL not set. Save it first." });
     }
 
-    const base = conn.gateway_url.replace(/\/$/, "");
-
-    // Reject localhost — cloud functions can never reach it
-    if (/(^https?:\/\/)(localhost|127\.0\.0\.1|0\.0\.0\.0|192\.168\.|10\.|172\.(1[6-9]|2\d|3[0-1])\.)/i.test(base)) {
-      return json({
-        ok: false,
-        stage: "url",
-        error: "Gateway URL points to a private/local address. Cloud cannot reach it. Expose the gateway via a public HTTPS tunnel (e.g. Cloudflare Tunnel or ngrok) and paste that URL.",
-      });
-    }
+    const base = assertSafeExternalUrl(conn.gateway_url);
 
     // 1) Auth status — public, light endpoint on Client Portal Gateway
     const authStatusUrl = `${base}/iserver/auth/status`;
@@ -61,11 +53,12 @@ serve(async (req) => {
     let body: any = null; try { body = JSON.parse(text); } catch { /* keep text */ }
 
     if (!res.ok) {
+      console.error("ibkr-test-connection upstream error", res.status, text);
       await supabase.from("ibkr_connections").update({
         status: "error",
-        last_error: `Gateway HTTP ${res.status}: ${text.slice(0, 200)}`,
+        last_error: `External service error (${res.status})`,
       }).eq("user_id", user.id);
-      return json({ ok: false, stage: "http", status: res.status, error: text.slice(0, 400) });
+      return json({ ok: false, stage: "http", status: res.status, error: "External service error" });
     }
 
     const authenticated = !!(body?.authenticated);
@@ -86,6 +79,7 @@ serve(async (req) => {
         : "Gateway reachable but you need to log in via the gateway URL in your browser first.",
     });
   } catch (e) {
+    console.error("ibkr-test-connection error", e);
     return json({ ok: false, stage: "exception", error: "Internal server error" }, 500);
   }
 });
