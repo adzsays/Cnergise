@@ -328,7 +328,9 @@ const Auth = () => {
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 overflow-visible">
           <div className="flex items-center justify-between h-12 sm:h-14 gap-2 overflow-visible">
             <div className="flex items-center min-w-0 overflow-visible">
-              <img src={cnergiseLogo} alt="Cnergise" className="h-20 sm:h-28 w-auto object-contain shrink-0 -my-4" />
+              <a href="/" aria-label="Go to home" className="flex items-center">
+                <img src={cnergiseLogo} alt="Cnergise" className="h-20 sm:h-28 w-auto object-contain shrink-0 -my-4" />
+              </a>
             </div>
             <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
               {loginAccess ? (
@@ -770,7 +772,12 @@ const Auth = () => {
 
       <footer className="border-t mt-12 py-6 px-6">
         <div className="mx-auto max-w-6xl flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
-          <span>© {new Date().getFullYear()} Cnergise</span>
+          <div className="flex items-center gap-3">
+            <a href="/" aria-label="Go to home" className="shrink-0">
+              <img src={cnergiseLogo} alt="Cnergise" className="h-8 w-auto object-contain" />
+            </a>
+            <span>© {new Date().getFullYear()} Cnergise</span>
+          </div>
           <nav className="flex items-center gap-4">
             <a href="/privacy" className="hover:underline hover:text-foreground">Privacy Policy</a>
             <a href="/terms" className="hover:underline hover:text-foreground">Terms of Service</a>
