@@ -25,6 +25,8 @@ import {
 } from "@/hooks/useBookings";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import { HandleSetupCard } from "@/components/chat/HandleSetupCard";
+import { useQueryClient } from "@tanstack/react-query";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const TZ_OPTIONS = ["Europe/London", "Europe/Berlin", "Europe/Paris", "America/New_York", "America/Los_Angeles", "Asia/Dubai", "Asia/Kolkata", "Asia/Singapore", "Asia/Tokyo", "Australia/Sydney", "UTC"];
