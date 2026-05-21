@@ -45,11 +45,16 @@ export default function Bookings() {
   const upsert = useUpsertEventType();
   const del = useDeleteEventType();
   const { toast } = useToast();
+  const qc = useQueryClient();
   const [editing, setEditing] = useState<Partial<BookingEventType> | null>(null);
   const [availOpenId, setAvailOpenId] = useState<string | null>(null);
+  const [editHandleOpen, setEditHandleOpen] = useState(false);
 
-  const baseUrl = window.location.origin;
-  const publicHostLink = handle ? `${baseUrl}/book/${handle}` : null;
+  // Prefer canonical public domain for share links; fall back to current origin for previews.
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const isCanonical = /cnergise\.com$/i.test(new URL(origin || "https://cnergise.com").hostname);
+  const shareBase = isCanonical ? origin : "https://cnergise.com";
+  const publicHostLink = handle ? `${shareBase}/book/${handle}` : null;
 
   const copy = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -72,12 +77,10 @@ export default function Bookings() {
             </div>
 
             {!handle && (
-              <Card>
-                <CardContent className="p-4 text-sm">
-                  You need a public handle before sharing a booking link.{" "}
-                  <Link to="/chat" className="underline">Set up your @handle</Link>.
-                </CardContent>
-              </Card>
+              <HandleSetupCard
+                currentHandle={null}
+                onSaved={() => qc.invalidateQueries({ queryKey: ["my-handle"] })}
+              />
             )}
 
             {publicHostLink && (
