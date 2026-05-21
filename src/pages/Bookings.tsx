@@ -25,6 +25,8 @@ import {
 } from "@/hooks/useBookings";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import { HandleSetupCard } from "@/components/chat/HandleSetupCard";
+import { useQueryClient } from "@tanstack/react-query";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const TZ_OPTIONS = ["Europe/London", "Europe/Berlin", "Europe/Paris", "America/New_York", "America/Los_Angeles", "Asia/Dubai", "Asia/Kolkata", "Asia/Singapore", "Asia/Tokyo", "Australia/Sydney", "UTC"];
@@ -43,11 +45,16 @@ export default function Bookings() {
   const upsert = useUpsertEventType();
   const del = useDeleteEventType();
   const { toast } = useToast();
+  const qc = useQueryClient();
   const [editing, setEditing] = useState<Partial<BookingEventType> | null>(null);
   const [availOpenId, setAvailOpenId] = useState<string | null>(null);
+  const [editHandleOpen, setEditHandleOpen] = useState(false);
 
-  const baseUrl = window.location.origin;
-  const publicHostLink = handle ? `${baseUrl}/book/${handle}` : null;
+  // Prefer canonical public domain for share links; fall back to current origin for previews.
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const isCanonical = /cnergise\.com$/i.test(new URL(origin || "https://cnergise.com").hostname);
+  const shareBase = isCanonical ? origin : "https://cnergise.com";
+  const publicHostLink = handle ? `${shareBase}/book/${handle}` : null;
 
   const copy = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -70,12 +77,10 @@ export default function Bookings() {
             </div>
 
             {!handle && (
-              <Card>
-                <CardContent className="p-4 text-sm">
-                  You need a public handle before sharing a booking link.{" "}
-                  <Link to="/chat" className="underline">Set up your @handle</Link>.
-                </CardContent>
-              </Card>
+              <HandleSetupCard
+                currentHandle={null}
+                onSaved={() => qc.invalidateQueries({ queryKey: ["my-handle"] })}
+              />
             )}
 
             {publicHostLink && (
@@ -84,14 +89,28 @@ export default function Bookings() {
                   <CardTitle className="text-base">Your public booking page</CardTitle>
                   <CardDescription>Share this link with anyone to let them pick an event type and book.</CardDescription>
                 </CardHeader>
-                <CardContent className="flex flex-col sm:flex-row gap-2">
-                  <Input readOnly value={publicHostLink} className="font-mono text-xs" />
-                  <Button variant="outline" onClick={() => copy(publicHostLink)} className="gap-2">
-                    <Copy className="h-4 w-4" /> Copy
-                  </Button>
-                  <Button asChild className="gap-2">
-                    <a href={publicHostLink} target="_blank" rel="noreferrer"><LinkIcon className="h-4 w-4" /> Open</a>
-                  </Button>
+                <CardContent className="space-y-3">
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Input readOnly value={publicHostLink} className="font-mono text-xs" />
+                    <Button variant="outline" onClick={() => copy(publicHostLink)} className="gap-2">
+                      <Copy className="h-4 w-4" /> Copy
+                    </Button>
+                    <Button asChild className="gap-2">
+                      <a href={publicHostLink} target="_blank" rel="noreferrer"><LinkIcon className="h-4 w-4" /> Open</a>
+                    </Button>
+                    <Button variant="ghost" onClick={() => setEditHandleOpen((v) => !v)} className="gap-2">
+                      <Pencil className="h-4 w-4" /> {editHandleOpen ? "Close" : "Rename"}
+                    </Button>
+                  </div>
+                  {editHandleOpen && (
+                    <HandleSetupCard
+                      currentHandle={handle}
+                      onSaved={() => {
+                        qc.invalidateQueries({ queryKey: ["my-handle"] });
+                        setEditHandleOpen(false);
+                      }}
+                    />
+                  )}
                 </CardContent>
               </Card>
             )}
@@ -120,7 +139,7 @@ export default function Bookings() {
             <div className="grid gap-3 sm:grid-cols-2">
               {eventTypes.map((et) => {
                 const Icon = LOCATION_ICON[et.location_type];
-                const link = handle ? `${baseUrl}/book/${handle}/${et.slug}` : null;
+                const link = handle ? `${shareBase}/book/${handle}/${et.slug}` : null;
                 return (
                   <Card key={et.id} className="overflow-hidden">
                     <div className="h-1" style={{ background: et.color || "hsl(var(--primary))" }} />
