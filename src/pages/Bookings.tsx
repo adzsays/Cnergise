@@ -26,6 +26,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { HandleSetupCard } from "@/components/chat/HandleSetupCard";
+import { BookingCalendarPicker } from "@/components/bookings/BookingCalendarPicker";
 import { useQueryClient } from "@tanstack/react-query";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -92,6 +93,7 @@ export default function Bookings() {
                 <CardContent className="space-y-3">
                   <div className="flex flex-col sm:flex-row gap-2">
                     <Input readOnly value={publicHostLink} className="font-mono text-xs" />
+                    <BookingCalendarPicker />
                     <Button variant="outline" onClick={() => copy(publicHostLink)} className="gap-2">
                       <Copy className="h-4 w-4" /> Copy
                     </Button>
