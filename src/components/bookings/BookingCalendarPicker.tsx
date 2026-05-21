@@ -76,7 +76,7 @@ export function BookingCalendarPicker() {
       <SelectContent>
         {subs.map((s) => (
           <SelectItem key={s.google_calendar_id} value={s.google_calendar_id}>
-            {s.summary || s.google_calendar_id}{s.is_primary ? " (primary)" : ""}
+            {s.summary || s.google_calendar_id}
           </SelectItem>
         ))}
       </SelectContent>
