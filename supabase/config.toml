@@ -29,3 +29,15 @@ verify_jwt = false
 
 [functions.visitor-chat]
 verify_jwt = false
+
+[functions.booking-public-data]
+verify_jwt = false
+
+[functions.booking-slots]
+verify_jwt = false
+
+[functions.booking-create]
+verify_jwt = false
+
+[functions.booking-cancel]
+verify_jwt = false
