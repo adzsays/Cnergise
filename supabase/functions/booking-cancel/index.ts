@@ -44,7 +44,8 @@ Deno.serve(async (req) => {
     }).eq("id", booking.id);
     return json({ ok: true });
   } catch (e) {
-    return json({ error: "internal", detail: (e as Error).message }, 500);
+    console.error("booking-cancel error", e);
+    return json({ error: "internal" }, 500);
   }
 });
 
