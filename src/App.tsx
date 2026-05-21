@@ -37,6 +37,8 @@ const Monitoring = lazy(() => import("./pages/Monitoring"));
 const Learning = lazy(() => import("./pages/Learning"));
 
 const Invoices = lazy(() => import("./pages/Invoices"));
+const Bookings = lazy(() => import("./pages/Bookings"));
+const PublicBooking = lazy(() => import("./pages/PublicBooking"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 const AdminInbox = lazy(() => import("./pages/AdminInbox"));
 const Privacy = lazy(() => import("./pages/Privacy"));
@@ -102,6 +104,9 @@ const App = () => (
                 <Route path="/learning" element={<AuthGuard><FeatureGate featureKey="learning"><Learning /></FeatureGate></AuthGuard>} />
                 <Route path="/echo" element={<Navigate to="/plan" replace />} />
                 <Route path="/invoices" element={<Navigate to="/finances" replace />} />
+                <Route path="/bookings" element={<AuthGuard><Bookings /></AuthGuard>} />
+                <Route path="/book/:handle" element={<PublicBooking />} />
+                <Route path="/book/:handle/:slug" element={<PublicBooking />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
