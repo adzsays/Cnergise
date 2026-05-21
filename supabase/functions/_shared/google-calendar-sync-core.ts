@@ -20,13 +20,14 @@ export async function refreshAccessToken(refreshToken: string) {
 
 export async function ensureValidToken(admin: any, conn: any) {
   if (new Date(conn.token_expires_at).getTime() < Date.now() + 60_000) {
-    if (!conn.refresh_token) throw new Error("REAUTH_REQUIRED:no_refresh_token");
+    if (!conn.refresh_token) {
+      await markReauthRequired(admin, conn, "no_refresh_token");
+      throw new Error("REAUTH_REQUIRED:no_refresh_token");
+    }
     const r = await refreshAccessToken(conn.refresh_token);
     if (!r.ok || !r.json?.access_token) {
       const errCode = r.json?.error || "unknown";
-      await admin.from("google_calendar_connections").update({
-        last_sync_error: `Token refresh failed: ${errCode} (${r.status})`,
-      }).eq("id", conn.id);
+      await markReauthRequired(admin, conn, `${errCode} (${r.status})`);
       throw new Error(`REAUTH_REQUIRED:${errCode}`);
     }
     const newExpiry = new Date(Date.now() + (r.json.expires_in ?? 3600) * 1000).toISOString();
@@ -34,10 +35,36 @@ export async function ensureValidToken(admin: any, conn: any) {
       access_token: r.json.access_token,
       token_expires_at: newExpiry,
       last_sync_error: null,
+      reauth_required: false,
     }).eq("id", conn.id);
     return { ...conn, access_token: r.json.access_token };
   }
   return conn;
+}
+
+async function markReauthRequired(admin: any, conn: any, reason: string) {
+  await admin.from("google_calendar_connections").update({
+    last_sync_error: `Token refresh failed: ${reason}`,
+    reauth_required: true,
+  }).eq("id", conn.id);
+  // Drop a notification into unified_metadata so the in-app bell + push pipelines see it.
+  try {
+    await admin.from("unified_metadata").insert({
+      user_id: conn.user_id,
+      source_type: "system",
+      source_id: conn.id,
+      source_table: "google_calendar_connections",
+      title: "Google Calendar sign-in expired",
+      description: `Reconnect ${conn.google_email ?? "your Google account"} to keep your calendar in sync.`,
+      is_notification: true,
+      notification_priority: "high",
+      notification_read: false,
+      date_occurred: new Date().toISOString(),
+      external_url: "/calendar",
+    });
+  } catch (e) {
+    console.error("reauth notification insert failed", e);
+  }
 }
 
 async function syncCalendar(admin: any, userId: string, accessToken: string, calendarId: string, syncToken: string | null) {
@@ -75,6 +102,9 @@ async function syncCalendar(admin: any, userId: string, accessToken: string, cal
       const startTime = ev.start?.dateTime || ev.start?.date;
       const endTime = ev.end?.dateTime || ev.end?.date;
       if (!startTime || !endTime) continue;
+      const recurrence = Array.isArray(ev.recurrence)
+        ? (ev.recurrence.find((r: string) => r.startsWith("RRULE:"))?.slice(6) ?? null)
+        : null;
       const eventPayload = {
         user_id: userId,
         title: ev.summary || "(no title)",
@@ -89,6 +119,7 @@ async function syncCalendar(admin: any, userId: string, accessToken: string, cal
         sync_source: "google",
         last_synced_at: new Date().toISOString(),
         deleted_at: null,
+        recurrence,
       };
 
       const { data: existingEvent } = await admin
