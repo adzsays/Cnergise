@@ -39,7 +39,7 @@ const LOCATION_ICON = {
   custom: Globe,
 } as const;
 
-export default function Bookings() {
+export function BookingsManager({ showHeading = true }: { showHeading?: boolean } = {}) {
   const { data: handle } = useUserHandle();
   const { data: eventTypes = [] } = useEventTypes();
   const { data: bookings = [] } = useBookings();
@@ -63,28 +63,25 @@ export default function Bookings() {
   };
 
   return (
-    <SidebarProvider defaultOpen={false}>
-      <div className="flex min-h-[100dvh] w-full bg-background">
-        <AppSidebar />
-        <main className="flex-1 flex flex-col">
-          <TopBar />
-          <div className="flex-1 p-4 md:p-6 space-y-6 max-w-6xl mx-auto w-full">
-            <div className="flex items-center gap-3">
-              <CalendarCheck className="h-6 w-6 text-primary" />
-              <div>
-                <h1 className="text-2xl font-semibold">Bookings</h1>
-                <p className="text-sm text-muted-foreground">Share a link so people can book time on your calendar.</p>
-              </div>
-            </div>
+    <div className="space-y-6 max-w-6xl mx-auto w-full">
+      {showHeading && (
+        <div className="flex items-center gap-3">
+          <CalendarCheck className="h-6 w-6 text-primary" />
+          <div>
+            <h1 className="text-2xl font-semibold">Bookings</h1>
+            <p className="text-sm text-muted-foreground">Share a link so people can book time on your calendar.</p>
+          </div>
+        </div>
+      )}
 
-            {!handle && (
-              <HandleSetupCard
-                currentHandle={null}
-                onSaved={() => qc.invalidateQueries({ queryKey: ["my-handle"] })}
-              />
-            )}
+      {!handle && (
+        <HandleSetupCard
+          currentHandle={null}
+          onSaved={() => qc.invalidateQueries({ queryKey: ["my-handle"] })}
+        />
+      )}
 
-            {publicHostLink && (
+      {publicHostLink && (
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">Your public booking page</CardTitle>
