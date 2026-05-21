@@ -432,31 +432,48 @@ export function FinanceDashboardView() {
         </div>
       </div>
 
-      {/* Compact hero — period-aware Net Flow */}
+      {/* Compact hero — period-aware Net Cash Flow (operating + investing + financing) */}
       <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-primary via-primary to-primary/70 text-primary-foreground p-3 shadow-md">
         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top_right,white,transparent_60%)]" />
         <div className="relative flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-baseline gap-2">
             <div>
-              <p className="text-[10px] uppercase tracking-wider opacity-80">{PERIOD_LABEL[period]} Net Flow {costCentre !== 'all' && `· ${costCentre}`}</p>
+              <p className="text-[10px] uppercase tracking-wider opacity-80">{PERIOD_LABEL[period]} Net Cash Flow {costCentre !== 'all' && `· ${costCentre}`}</p>
               <div className="flex items-baseline gap-1.5 mt-0.5">
-                <span className="text-2xl font-bold">{formatCurrency(kpis.net)}</span>
+                <span className="text-2xl font-bold">{formatCurrency(sectionFlow.perPeriod.totalNet)}</span>
                 <span className="text-[11px] opacity-80">/{period === 'daily' ? 'day' : period === 'weekly' ? 'wk' : 'mo'}</span>
               </div>
+              <p className="text-[10px] opacity-75 mt-0.5">Includes operating, investing &amp; financing</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <div className="rounded-md bg-white/10 backdrop-blur px-2.5 py-1.5">
-              <div className="flex items-center gap-1 text-[10px] opacity-90"><ArrowUpRight className="h-3 w-3" />Income/{period === 'daily' ? 'day' : period === 'weekly' ? 'wk' : 'mo'}</div>
-              <p className="text-sm font-semibold">{formatCurrency(kpis.avgIncome)}</p>
+              <div className="flex items-center gap-1 text-[10px] opacity-90"><ArrowUpRight className="h-3 w-3" />Cash In/{period === 'daily' ? 'day' : period === 'weekly' ? 'wk' : 'mo'}</div>
+              <p className="text-sm font-semibold">{formatCurrency(sectionFlow.perPeriod.totalIn)}</p>
             </div>
             <div className="rounded-md bg-white/10 backdrop-blur px-2.5 py-1.5">
-              <div className="flex items-center gap-1 text-[10px] opacity-90"><ArrowDownRight className="h-3 w-3" />Spend/{period === 'daily' ? 'day' : period === 'weekly' ? 'wk' : 'mo'}</div>
-              <p className="text-sm font-semibold">{formatCurrency(kpis.avgExpense)}</p>
+              <div className="flex items-center gap-1 text-[10px] opacity-90"><ArrowDownRight className="h-3 w-3" />Cash Out/{period === 'daily' ? 'day' : period === 'weekly' ? 'wk' : 'mo'}</div>
+              <p className="text-sm font-semibold">{formatCurrency(sectionFlow.perPeriod.totalOut)}</p>
             </div>
           </div>
         </div>
+        {/* Per-section breakdown */}
+        <div className="relative mt-2 grid grid-cols-3 gap-1.5">
+          {(['operating', 'investing', 'financing'] as const).map((sec) => {
+            const s = sectionFlow.perPeriod[sec];
+            return (
+              <div key={sec} className="rounded-md bg-white/5 backdrop-blur px-2 py-1.5">
+                <p className="text-[9px] uppercase tracking-wider opacity-80 capitalize">{sec}</p>
+                <div className="flex items-baseline justify-between gap-1">
+                  <span className={cn('text-xs font-semibold tabular-nums', s.net >= 0 ? 'text-income-foreground' : '')}>{formatCompact(s.net)}</span>
+                  <span className="text-[9px] opacity-70 tabular-nums">+{formatCompact(s.in)} / -{formatCompact(s.out)}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </Card>
+
 
       {/* KPI strip */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
