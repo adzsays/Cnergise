@@ -32,6 +32,17 @@ Deno.serve(async (req) => {
 
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
+    // Rate limit: cap bookings per invitee email per hour to prevent calendar invite spam
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { count: recentByEmail } = await admin
+      .from("bookings")
+      .select("id", { count: "exact", head: true })
+      .eq("invitee_email", body.invitee_email)
+      .gte("created_at", oneHourAgo);
+    if ((recentByEmail ?? 0) >= 5) {
+      return json({ error: "rate_limited" }, 429);
+    }
+
     const { data: hostRows } = await admin.rpc("find_user_by_handle", { _handle: handle });
     const host = hostRows?.[0];
     if (!host) return json({ error: "host not found" }, 404);
