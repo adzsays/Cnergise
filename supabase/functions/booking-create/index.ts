@@ -164,11 +164,15 @@ Deno.serve(async (req) => {
       location_snapshot: locationSnapshot,
       answers: body.answers ?? {},
     }).select("id, cancel_token, reschedule_token, start_time, end_time, meet_link, location_snapshot").single();
-    if (error) return json({ error: "could not save booking", detail: error.message }, 500);
+    if (error) {
+      console.error("booking-create db error", error);
+      return json({ error: "could not save booking" }, 500);
+    }
 
     return json({ booking: inserted });
   } catch (e) {
-    return json({ error: "internal", detail: (e as Error).message }, 500);
+    console.error("booking-create error", e);
+    return json({ error: "internal" }, 500);
   }
 });
 
