@@ -588,6 +588,245 @@ export type Database = {
         }
         Relationships: []
       }
+      booking_availability_rules: {
+        Row: {
+          day_of_week: number
+          end_time: string
+          event_type_id: string
+          id: string
+          start_time: string
+        }
+        Insert: {
+          day_of_week: number
+          end_time: string
+          event_type_id: string
+          id?: string
+          start_time: string
+        }
+        Update: {
+          day_of_week?: number
+          end_time?: string
+          event_type_id?: string
+          id?: string
+          start_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_availability_rules_event_type_id_fkey"
+            columns: ["event_type_id"]
+            isOneToOne: false
+            referencedRelation: "booking_event_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      booking_date_overrides: {
+        Row: {
+          date: string
+          end_time: string | null
+          event_type_id: string
+          id: string
+          is_unavailable: boolean
+          start_time: string | null
+        }
+        Insert: {
+          date: string
+          end_time?: string | null
+          event_type_id: string
+          id?: string
+          is_unavailable?: boolean
+          start_time?: string | null
+        }
+        Update: {
+          date?: string
+          end_time?: string | null
+          event_type_id?: string
+          id?: string
+          is_unavailable?: boolean
+          start_time?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_date_overrides_event_type_id_fkey"
+            columns: ["event_type_id"]
+            isOneToOne: false
+            referencedRelation: "booking_event_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      booking_event_types: {
+        Row: {
+          buffer_after_minutes: number
+          buffer_before_minutes: number
+          color: string | null
+          created_at: string
+          description: string | null
+          duration_minutes: number
+          id: string
+          is_active: boolean
+          location_details: string | null
+          location_type: string
+          max_advance_days: number
+          min_notice_minutes: number
+          slug: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          buffer_after_minutes?: number
+          buffer_before_minutes?: number
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          is_active?: boolean
+          location_details?: string | null
+          location_type?: string
+          max_advance_days?: number
+          min_notice_minutes?: number
+          slug: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          buffer_after_minutes?: number
+          buffer_before_minutes?: number
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          is_active?: boolean
+          location_details?: string | null
+          location_type?: string
+          max_advance_days?: number
+          min_notice_minutes?: number
+          slug?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      booking_questions: {
+        Row: {
+          event_type_id: string
+          id: string
+          label: string
+          options: string[] | null
+          question_type: string
+          required: boolean
+          sort_order: number
+        }
+        Insert: {
+          event_type_id: string
+          id?: string
+          label: string
+          options?: string[] | null
+          question_type?: string
+          required?: boolean
+          sort_order?: number
+        }
+        Update: {
+          event_type_id?: string
+          id?: string
+          label?: string
+          options?: string[] | null
+          question_type?: string
+          required?: boolean
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_questions_event_type_id_fkey"
+            columns: ["event_type_id"]
+            isOneToOne: false
+            referencedRelation: "booking_event_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bookings: {
+        Row: {
+          answers: Json
+          cancel_token: string
+          cancellation_reason: string | null
+          created_at: string
+          end_time: string
+          event_type_id: string
+          google_calendar_id: string | null
+          google_event_id: string | null
+          host_user_id: string
+          id: string
+          invitee_email: string
+          invitee_name: string
+          invitee_notes: string | null
+          location_snapshot: string | null
+          meet_link: string | null
+          reschedule_token: string
+          start_time: string
+          status: string
+          timezone: string | null
+          updated_at: string
+        }
+        Insert: {
+          answers?: Json
+          cancel_token?: string
+          cancellation_reason?: string | null
+          created_at?: string
+          end_time: string
+          event_type_id: string
+          google_calendar_id?: string | null
+          google_event_id?: string | null
+          host_user_id: string
+          id?: string
+          invitee_email: string
+          invitee_name: string
+          invitee_notes?: string | null
+          location_snapshot?: string | null
+          meet_link?: string | null
+          reschedule_token?: string
+          start_time: string
+          status?: string
+          timezone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          answers?: Json
+          cancel_token?: string
+          cancellation_reason?: string | null
+          created_at?: string
+          end_time?: string
+          event_type_id?: string
+          google_calendar_id?: string | null
+          google_event_id?: string | null
+          host_user_id?: string
+          id?: string
+          invitee_email?: string
+          invitee_name?: string
+          invitee_notes?: string | null
+          location_snapshot?: string | null
+          meet_link?: string | null
+          reschedule_token?: string
+          start_time?: string
+          status?: string
+          timezone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_event_type_id_fkey"
+            columns: ["event_type_id"]
+            isOneToOne: false
+            referencedRelation: "booking_event_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       broker_orders: {
         Row: {
           account_id: string | null
