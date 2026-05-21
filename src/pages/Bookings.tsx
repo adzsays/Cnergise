@@ -92,6 +92,7 @@ export default function Bookings() {
                 <CardContent className="space-y-3">
                   <div className="flex flex-col sm:flex-row gap-2">
                     <Input readOnly value={publicHostLink} className="font-mono text-xs" />
+                    <BookingCalendarPicker />
                     <Button variant="outline" onClick={() => copy(publicHostLink)} className="gap-2">
                       <Copy className="h-4 w-4" /> Copy
                     </Button>
