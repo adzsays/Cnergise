@@ -35,6 +35,8 @@ function addDays(d: Date, n: number) {
 }
 
 export default function Calendar() {
+  const initialMode = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("mode") === "bookings" ? "bookings" : "calendar";
+  const [mode, setMode] = useState<"calendar" | "bookings">(initialMode);
   const [view, setView] = useState<"schedule" | "day" | "week" | "month">("schedule");
   const [date, setDate] = useState<Date>(new Date());
   const [dialogOpen, setDialogOpen] = useState(false);
