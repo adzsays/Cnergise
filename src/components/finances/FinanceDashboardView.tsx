@@ -342,6 +342,51 @@ export function FinanceDashboardView() {
     return { avgIncome, avgExpense, net: avgIncome - avgExpense, firstNeg: firstNeg?.label || 'Never' };
   }, [runningBalanceRows]);
 
+  // Per-section cash flow (operating / investing / financing), normalised to current period.
+  const sectionFlow = useMemo(() => {
+    const now = new Date();
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const active = (t: any) => {
+      if (t.start_date && new Date(t.start_date) > monthEnd) return false;
+      if (t.end_date && new Date(t.end_date) < monthStart) return false;
+      return true;
+    };
+    const toMonthly = (t: any) => {
+      if (!active(t)) return 0;
+      const raw = Math.abs(Number(t.monthly) || Number(t.amount) || 0);
+      const freq = (t.frequency || 'monthly').toLowerCase();
+      return raw * (FREQ_TO_MONTHLY[freq] ?? 1);
+    };
+    const sections: Record<'operating' | 'investing' | 'financing', { inflow: number; outflow: number }> = {
+      operating: { inflow: 0, outflow: 0 },
+      investing: { inflow: 0, outflow: 0 },
+      financing: { inflow: 0, outflow: 0 },
+    };
+    filteredTx.forEach((t: any) => {
+      const sec = (t.cash_flow_section || 'operating') as keyof typeof sections;
+      const bucket = sections[sec] || sections.operating;
+      const amt = toMonthly(t);
+      if (t.type === 'income') bucket.inflow += amt;
+      else if (t.type === 'expense') bucket.outflow += amt;
+    });
+    const periodDivisor = period === 'daily' ? daysInMonth : period === 'weekly' ? daysInMonth / 7 : 1;
+    const scale = (n: number) => n / periodDivisor;
+    const totalIn = sections.operating.inflow + sections.investing.inflow + sections.financing.inflow;
+    const totalOut = sections.operating.outflow + sections.investing.outflow + sections.financing.outflow;
+    return {
+      perPeriod: {
+        operating: { in: scale(sections.operating.inflow), out: scale(sections.operating.outflow), net: scale(sections.operating.inflow - sections.operating.outflow) },
+        investing: { in: scale(sections.investing.inflow), out: scale(sections.investing.outflow), net: scale(sections.investing.inflow - sections.investing.outflow) },
+        financing: { in: scale(sections.financing.inflow), out: scale(sections.financing.outflow), net: scale(sections.financing.inflow - sections.financing.outflow) },
+        totalIn: scale(totalIn),
+        totalOut: scale(totalOut),
+        totalNet: scale(totalIn - totalOut),
+      },
+    };
+  }, [filteredTx, period]);
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -387,31 +432,48 @@ export function FinanceDashboardView() {
         </div>
       </div>
 
-      {/* Compact hero — period-aware Net Flow */}
+      {/* Compact hero — period-aware Net Cash Flow (operating + investing + financing) */}
       <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-primary via-primary to-primary/70 text-primary-foreground p-3 shadow-md">
         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top_right,white,transparent_60%)]" />
         <div className="relative flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-baseline gap-2">
             <div>
-              <p className="text-[10px] uppercase tracking-wider opacity-80">{PERIOD_LABEL[period]} Net Flow {costCentre !== 'all' && `· ${costCentre}`}</p>
+              <p className="text-[10px] uppercase tracking-wider opacity-80">{PERIOD_LABEL[period]} Net Cash Flow {costCentre !== 'all' && `· ${costCentre}`}</p>
               <div className="flex items-baseline gap-1.5 mt-0.5">
-                <span className="text-2xl font-bold">{formatCurrency(kpis.net)}</span>
+                <span className="text-2xl font-bold">{formatCurrency(sectionFlow.perPeriod.totalNet)}</span>
                 <span className="text-[11px] opacity-80">/{period === 'daily' ? 'day' : period === 'weekly' ? 'wk' : 'mo'}</span>
               </div>
+              <p className="text-[10px] opacity-75 mt-0.5">Includes operating, investing &amp; financing</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <div className="rounded-md bg-white/10 backdrop-blur px-2.5 py-1.5">
-              <div className="flex items-center gap-1 text-[10px] opacity-90"><ArrowUpRight className="h-3 w-3" />Income/{period === 'daily' ? 'day' : period === 'weekly' ? 'wk' : 'mo'}</div>
-              <p className="text-sm font-semibold">{formatCurrency(kpis.avgIncome)}</p>
+              <div className="flex items-center gap-1 text-[10px] opacity-90"><ArrowUpRight className="h-3 w-3" />Cash In/{period === 'daily' ? 'day' : period === 'weekly' ? 'wk' : 'mo'}</div>
+              <p className="text-sm font-semibold">{formatCurrency(sectionFlow.perPeriod.totalIn)}</p>
             </div>
             <div className="rounded-md bg-white/10 backdrop-blur px-2.5 py-1.5">
-              <div className="flex items-center gap-1 text-[10px] opacity-90"><ArrowDownRight className="h-3 w-3" />Spend/{period === 'daily' ? 'day' : period === 'weekly' ? 'wk' : 'mo'}</div>
-              <p className="text-sm font-semibold">{formatCurrency(kpis.avgExpense)}</p>
+              <div className="flex items-center gap-1 text-[10px] opacity-90"><ArrowDownRight className="h-3 w-3" />Cash Out/{period === 'daily' ? 'day' : period === 'weekly' ? 'wk' : 'mo'}</div>
+              <p className="text-sm font-semibold">{formatCurrency(sectionFlow.perPeriod.totalOut)}</p>
             </div>
           </div>
         </div>
+        {/* Per-section breakdown */}
+        <div className="relative mt-2 grid grid-cols-3 gap-1.5">
+          {(['operating', 'investing', 'financing'] as const).map((sec) => {
+            const s = sectionFlow.perPeriod[sec];
+            return (
+              <div key={sec} className="rounded-md bg-white/5 backdrop-blur px-2 py-1.5">
+                <p className="text-[9px] uppercase tracking-wider opacity-80 capitalize">{sec}</p>
+                <div className="flex items-baseline justify-between gap-1">
+                  <span className={cn('text-xs font-semibold tabular-nums', s.net >= 0 ? 'text-income-foreground' : '')}>{formatCompact(s.net)}</span>
+                  <span className="text-[9px] opacity-70 tabular-nums">+{formatCompact(s.in)} / -{formatCompact(s.out)}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </Card>
+
 
       {/* KPI strip */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-2">

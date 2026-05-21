@@ -4,7 +4,9 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Calendar as CalendarIcon, ChevronLeft, ChevronRight, MapPin, Clock, Pencil, Video } from "lucide-react";
+import { PlusCircle, Calendar as CalendarIcon, ChevronLeft, ChevronRight, MapPin, Clock, Pencil, Video, CalendarCheck } from "lucide-react";
+import { BookingsManager } from "@/pages/Bookings";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { GoogleCalendarConnect } from "@/components/calendar/GoogleCalendarConnect";
 import { SyncedCalendarsCard } from "@/components/calendar/SyncedCalendarsCard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -33,6 +35,8 @@ function addDays(d: Date, n: number) {
 }
 
 export default function Calendar() {
+  const initialMode = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("mode") === "bookings" ? "bookings" : "calendar";
+  const [mode, setMode] = useState<"calendar" | "bookings">(initialMode);
   const [view, setView] = useState<"schedule" | "day" | "week" | "month">("schedule");
   const [date, setDate] = useState<Date>(new Date());
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -108,29 +112,45 @@ export default function Calendar() {
               <div className="flex h-14 items-center justify-between gap-2 px-3 md:px-6">
                 <div className="flex items-center gap-2 min-w-0">
                   <SidebarTrigger className="md:hidden h-9 w-9" />
-                  <h1 className="text-lg font-semibold tracking-tight truncate">Calendar</h1>
+                  <h1 className="text-lg font-semibold tracking-tight truncate">{mode === "bookings" ? "Bookings" : "Calendar"}</h1>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <Select value={view} onValueChange={(v) => setView(v as typeof view)}>
-                    <SelectTrigger className="h-8 w-[120px] text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="schedule">Schedule</SelectItem>
-                      <SelectItem value="day">Day</SelectItem>
-                      <SelectItem value="week">Week</SelectItem>
-                      <SelectItem value="month">Month</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <GoogleCalendarConnect compact />
-                  <Button variant="ghost" size="icon" onClick={() => openNew()} className="h-8 w-8" title="New event">
-                    <PlusCircle className="h-4 w-4" />
-                  </Button>
+                  <ToggleGroup type="single" value={mode} onValueChange={(v) => v && setMode(v as any)} className="border rounded-md">
+                    <ToggleGroupItem value="calendar" className="h-8 px-2 text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                      <CalendarIcon className="h-3.5 w-3.5 sm:mr-1" /><span className="hidden sm:inline">Calendar</span>
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="bookings" className="h-8 px-2 text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                      <CalendarCheck className="h-3.5 w-3.5 sm:mr-1" /><span className="hidden sm:inline">Bookings</span>
+                    </ToggleGroupItem>
+                  </ToggleGroup>
+                  {mode === "calendar" && (
+                    <>
+                      <Select value={view} onValueChange={(v) => setView(v as typeof view)}>
+                        <SelectTrigger className="h-8 w-[120px] text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="schedule">Schedule</SelectItem>
+                          <SelectItem value="day">Day</SelectItem>
+                          <SelectItem value="week">Week</SelectItem>
+                          <SelectItem value="month">Month</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <GoogleCalendarConnect compact />
+                      <Button variant="ghost" size="icon" onClick={() => openNew()} className="h-8 w-8" title="New event">
+                        <PlusCircle className="h-4 w-4" />
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             </header>
 
             <div className="flex-1 overflow-auto p-2 sm:p-4 md:p-6">
+              {mode === "bookings" ? (
+                <BookingsManager showHeading={false} />
+              ) : (
+              <>
               <GoogleReauthBanner />
               {view !== "schedule" && (
                 <div className="mb-3 flex items-center justify-between">
@@ -338,6 +358,8 @@ export default function Calendar() {
                 open={manageCalsOpen}
                 onOpenChange={setManageCalsOpen}
               />
+              </>
+              )}
             </div>
           </div>
         </SidebarInset>

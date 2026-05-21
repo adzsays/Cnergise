@@ -56,7 +56,6 @@ const navItems = [
   { icon: Wallet, label: "Finance", href: "/finances", featureKey: "finance" },
   { icon: Briefcase, label: "Trading Strategies", href: "/portfolio", featureKey: "portfolio" },
   { icon: CalendarDays, label: "Calendar", href: "/calendar", featureKey: "calendar" },
-  { icon: CalendarCheck, label: "Bookings", href: "/bookings", featureKey: null },
   { icon: MessageSquare, label: "Chat", href: "/chat", featureKey: "chat" },
   { icon: Settings, label: "Settings", href: "/profile", featureKey: null },
 ];

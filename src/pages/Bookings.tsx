@@ -24,7 +24,6 @@ import {
   type AvailabilityRule,
 } from "@/hooks/useBookings";
 import { useToast } from "@/hooks/use-toast";
-import { Link } from "react-router-dom";
 import { HandleSetupCard } from "@/components/chat/HandleSetupCard";
 import { BookingCalendarPicker } from "@/components/bookings/BookingCalendarPicker";
 import { useQueryClient } from "@tanstack/react-query";
@@ -39,7 +38,8 @@ const LOCATION_ICON = {
   custom: Globe,
 } as const;
 
-export default function Bookings() {
+/** Reusable Bookings UI – embedded in /calendar and /bookings. */
+export function BookingsManager({ showHeading = true }: { showHeading?: boolean } = {}) {
   const { data: handle } = useUserHandle();
   const { data: eventTypes = [] } = useEventTypes();
   const { data: bookings = [] } = useBookings();
@@ -51,7 +51,6 @@ export default function Bookings() {
   const [availOpenId, setAvailOpenId] = useState<string | null>(null);
   const [editHandleOpen, setEditHandleOpen] = useState(false);
 
-  // Prefer canonical public domain for share links; fall back to current origin for previews.
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const isCanonical = /cnergise\.com$/i.test(new URL(origin || "https://cnergise.com").hostname);
   const shareBase = isCanonical ? origin : "https://cnergise.com";
@@ -63,161 +62,155 @@ export default function Bookings() {
   };
 
   return (
-    <SidebarProvider defaultOpen={false}>
-      <div className="flex min-h-[100dvh] w-full bg-background">
-        <AppSidebar />
-        <main className="flex-1 flex flex-col">
-          <TopBar />
-          <div className="flex-1 p-4 md:p-6 space-y-6 max-w-6xl mx-auto w-full">
-            <div className="flex items-center gap-3">
-              <CalendarCheck className="h-6 w-6 text-primary" />
-              <div>
-                <h1 className="text-2xl font-semibold">Bookings</h1>
-                <p className="text-sm text-muted-foreground">Share a link so people can book time on your calendar.</p>
-              </div>
-            </div>
+    <div className="space-y-6 max-w-6xl mx-auto w-full">
+      {showHeading && (
+        <div className="flex items-center gap-3">
+          <CalendarCheck className="h-6 w-6 text-primary" />
+          <div>
+            <h1 className="text-2xl font-semibold">Bookings</h1>
+            <p className="text-sm text-muted-foreground">Share a link so people can book time on your calendar.</p>
+          </div>
+        </div>
+      )}
 
-            {!handle && (
-              <HandleSetupCard
-                currentHandle={null}
-                onSaved={() => qc.invalidateQueries({ queryKey: ["my-handle"] })}
-              />
-            )}
+      {!handle && (
+        <HandleSetupCard
+          currentHandle={null}
+          onSaved={() => qc.invalidateQueries({ queryKey: ["my-handle"] })}
+        />
+      )}
 
-            {publicHostLink && (
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Your public booking page</CardTitle>
-                  <CardDescription>Share this link with anyone to let them pick an event type and book.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <Input readOnly value={publicHostLink} className="font-mono text-xs" />
-                    <BookingCalendarPicker />
-                    <Button variant="outline" onClick={() => copy(publicHostLink)} className="gap-2">
-                      <Copy className="h-4 w-4" /> Copy
-                    </Button>
-                    <Button asChild className="gap-2">
-                      <a href={publicHostLink} target="_blank" rel="noreferrer"><LinkIcon className="h-4 w-4" /> Open</a>
-                    </Button>
-                    <Button variant="ghost" onClick={() => setEditHandleOpen((v) => !v)} className="gap-2">
-                      <Pencil className="h-4 w-4" /> {editHandleOpen ? "Close" : "Rename"}
-                    </Button>
-                  </div>
-                  {editHandleOpen && (
-                    <HandleSetupCard
-                      currentHandle={handle}
-                      onSaved={() => {
-                        qc.invalidateQueries({ queryKey: ["my-handle"] });
-                        setEditHandleOpen(false);
-                      }}
-                    />
-                  )}
-                </CardContent>
-              </Card>
-            )}
-
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Event types</h2>
-              <Button
-                onClick={() => setEditing({
-                  slug: "",
-                  title: "",
-                  duration_minutes: 30,
-                  location_type: "google_meet",
-                  timezone: "Europe/London",
-                  buffer_before_minutes: 0,
-                  buffer_after_minutes: 0,
-                  min_notice_minutes: 60,
-                  max_advance_days: 60,
-                  is_active: true,
-                })}
-                className="gap-2"
-              >
-                <Plus className="h-4 w-4" /> New event type
+      {publicHostLink && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Your public booking page</CardTitle>
+            <CardDescription>Share this link with anyone to let them pick an event type and book.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Input readOnly value={publicHostLink} className="font-mono text-xs" />
+              <BookingCalendarPicker />
+              <Button variant="outline" onClick={() => copy(publicHostLink)} className="gap-2">
+                <Copy className="h-4 w-4" /> Copy
+              </Button>
+              <Button asChild className="gap-2">
+                <a href={publicHostLink} target="_blank" rel="noreferrer"><LinkIcon className="h-4 w-4" /> Open</a>
+              </Button>
+              <Button variant="ghost" onClick={() => setEditHandleOpen((v) => !v)} className="gap-2">
+                <Pencil className="h-4 w-4" /> {editHandleOpen ? "Close" : "Rename"}
               </Button>
             </div>
+            {editHandleOpen && (
+              <HandleSetupCard
+                currentHandle={handle}
+                onSaved={() => {
+                  qc.invalidateQueries({ queryKey: ["my-handle"] });
+                  setEditHandleOpen(false);
+                }}
+              />
+            )}
+          </CardContent>
+        </Card>
+      )}
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              {eventTypes.map((et) => {
-                const Icon = LOCATION_ICON[et.location_type];
-                const link = handle ? `${shareBase}/book/${handle}/${et.slug}` : null;
-                return (
-                  <Card key={et.id} className="overflow-hidden">
-                    <div className="h-1" style={{ background: et.color || "hsl(var(--primary))" }} />
-                    <CardContent className="p-4 space-y-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <div className="font-medium flex items-center gap-2">
-                            <Icon className="h-4 w-4 text-muted-foreground" />
-                            {et.title}
-                          </div>
-                          <div className="text-xs text-muted-foreground mt-1">
-                            {et.duration_minutes} min · {et.location_type.replace("_", " ")} · {et.timezone}
-                          </div>
-                        </div>
-                        {!et.is_active && <Badge variant="secondary">Inactive</Badge>}
-                      </div>
-                      {et.description && <p className="text-sm text-muted-foreground line-clamp-2">{et.description}</p>}
-                      <div className="flex flex-wrap gap-2 pt-1">
-                        <Button size="sm" variant="outline" onClick={() => setEditing(et)} className="gap-1">
-                          <Pencil className="h-3 w-3" /> Edit
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => setAvailOpenId(et.id)}>
-                          Availability
-                        </Button>
-                        {link && (
-                          <Button size="sm" variant="outline" onClick={() => copy(link)} className="gap-1">
-                            <Copy className="h-3 w-3" /> Link
-                          </Button>
-                        )}
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-destructive ml-auto"
-                          onClick={() => { if (confirm("Delete this event type?")) del.mutate(et.id); }}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-              {eventTypes.length === 0 && (
-                <Card><CardContent className="p-6 text-sm text-muted-foreground">No event types yet. Create one to get started.</CardContent></Card>
-              )}
-            </div>
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold">Event types</h2>
+        <Button
+          onClick={() => setEditing({
+            slug: "",
+            title: "",
+            duration_minutes: 30,
+            location_type: "google_meet",
+            timezone: "Europe/London",
+            buffer_before_minutes: 0,
+            buffer_after_minutes: 0,
+            min_notice_minutes: 60,
+            max_advance_days: 60,
+            is_active: true,
+          })}
+          className="gap-2"
+        >
+          <Plus className="h-4 w-4" /> New event type
+        </Button>
+      </div>
 
-            <div>
-              <h2 className="text-lg font-semibold mb-3">Upcoming bookings</h2>
-              <Card>
-                <CardContent className="p-0">
-                  {bookings.filter((b) => b.status === "confirmed" && new Date(b.start_time) > new Date()).length === 0 ? (
-                    <div className="p-6 text-sm text-muted-foreground">No upcoming bookings.</div>
-                  ) : (
-                    <div className="divide-y">
-                      {bookings.filter((b) => b.status === "confirmed" && new Date(b.start_time) > new Date()).map((b) => (
-                        <div key={b.id} className="p-4 flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
-                          <div>
-                            <div className="font-medium">{b.invitee_name} <span className="text-muted-foreground font-normal">· {b.invitee_email}</span></div>
-                            <div className="text-xs text-muted-foreground">{new Date(b.start_time).toLocaleString()} — {new Date(b.end_time).toLocaleTimeString()}</div>
-                            {b.invitee_notes && <div className="text-xs mt-1">{b.invitee_notes}</div>}
-                          </div>
-                          {b.meet_link && (
-                            <Button size="sm" variant="outline" asChild>
-                              <a href={b.meet_link} target="_blank" rel="noreferrer">Join meeting</a>
-                            </Button>
-                          )}
-                        </div>
-                      ))}
+      <div className="grid gap-3 sm:grid-cols-2">
+        {eventTypes.map((et) => {
+          const Icon = LOCATION_ICON[et.location_type];
+          const link = handle ? `${shareBase}/book/${handle}/${et.slug}` : null;
+          return (
+            <Card key={et.id} className="overflow-hidden">
+              <div className="h-1" style={{ background: et.color || "hsl(var(--primary))" }} />
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <div className="font-medium flex items-center gap-2">
+                      <Icon className="h-4 w-4 text-muted-foreground" />
+                      {et.title}
                     </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {et.duration_minutes} min · {et.location_type.replace("_", " ")} · {et.timezone}
+                    </div>
+                  </div>
+                  {!et.is_active && <Badge variant="secondary">Inactive</Badge>}
+                </div>
+                {et.description && <p className="text-sm text-muted-foreground line-clamp-2">{et.description}</p>}
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <Button size="sm" variant="outline" onClick={() => setEditing(et)} className="gap-1">
+                    <Pencil className="h-3 w-3" /> Edit
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => setAvailOpenId(et.id)}>
+                    Availability
+                  </Button>
+                  {link && (
+                    <Button size="sm" variant="outline" onClick={() => copy(link)} className="gap-1">
+                      <Copy className="h-3 w-3" /> Link
+                    </Button>
                   )}
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </main>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-destructive ml-auto"
+                    onClick={() => { if (confirm("Delete this event type?")) del.mutate(et.id); }}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+        {eventTypes.length === 0 && (
+          <Card><CardContent className="p-6 text-sm text-muted-foreground">No event types yet. Create one to get started.</CardContent></Card>
+        )}
+      </div>
+
+      <div>
+        <h2 className="text-lg font-semibold mb-3">Upcoming bookings</h2>
+        <Card>
+          <CardContent className="p-0">
+            {bookings.filter((b) => b.status === "confirmed" && new Date(b.start_time) > new Date()).length === 0 ? (
+              <div className="p-6 text-sm text-muted-foreground">No upcoming bookings.</div>
+            ) : (
+              <div className="divide-y">
+                {bookings.filter((b) => b.status === "confirmed" && new Date(b.start_time) > new Date()).map((b) => (
+                  <div key={b.id} className="p-4 flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
+                    <div>
+                      <div className="font-medium">{b.invitee_name} <span className="text-muted-foreground font-normal">· {b.invitee_email}</span></div>
+                      <div className="text-xs text-muted-foreground">{new Date(b.start_time).toLocaleString()} — {new Date(b.end_time).toLocaleTimeString()}</div>
+                      {b.invitee_notes && <div className="text-xs mt-1">{b.invitee_notes}</div>}
+                    </div>
+                    {b.meet_link && (
+                      <Button size="sm" variant="outline" asChild>
+                        <a href={b.meet_link} target="_blank" rel="noreferrer">Join meeting</a>
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {editing && (
@@ -232,6 +225,22 @@ export default function Bookings() {
       {availOpenId && (
         <AvailabilityDialog eventTypeId={availOpenId} onClose={() => setAvailOpenId(null)} />
       )}
+    </div>
+  );
+}
+
+export default function Bookings() {
+  return (
+    <SidebarProvider defaultOpen={false}>
+      <div className="flex min-h-[100dvh] w-full bg-background">
+        <AppSidebar />
+        <main className="flex-1 flex flex-col">
+          <TopBar />
+          <div className="flex-1 p-4 md:p-6">
+            <BookingsManager />
+          </div>
+        </main>
+      </div>
     </SidebarProvider>
   );
 }
@@ -335,7 +344,6 @@ function EventTypeDialog({
 function AvailabilityDialog({ eventTypeId, onClose }: { eventTypeId: string; onClose: () => void }) {
   const { data: rules = [] } = useAvailability(eventTypeId);
   const replace = useReplaceAvailability();
-  // Convert rules to per-day map
   const initial: Record<number, { enabled: boolean; start: string; end: string }> = {};
   for (let d = 0; d < 7; d++) {
     const r = rules.find((r) => r.day_of_week === d);
