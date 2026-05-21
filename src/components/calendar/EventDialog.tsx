@@ -268,6 +268,22 @@ export function EventDialog({ open, onOpenChange, event, defaultDate, subscripti
             <Label htmlFor="allday" className="cursor-pointer">All day</Label>
           </div>
 
+          <div>
+            <Label>Repeat</Label>
+            <Select value={recurrence} onValueChange={setRecurrence}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Does not repeat</SelectItem>
+                <SelectItem value="daily">Daily</SelectItem>
+                <SelectItem value="weekly">Weekly</SelectItem>
+                <SelectItem value="monthly">Monthly</SelectItem>
+                <SelectItem value="yearly">Yearly</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           {allDay ? (
             <div className="grid grid-cols-2 gap-2">
               <div>
