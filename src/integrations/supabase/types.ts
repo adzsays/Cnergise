@@ -985,6 +985,7 @@ export type Database = {
           last_synced_at: string | null
           location: string | null
           meeting_url: string | null
+          recurrence: string | null
           space_id: string | null
           start_time: string
           sync_source: string | null
@@ -1005,6 +1006,7 @@ export type Database = {
           last_synced_at?: string | null
           location?: string | null
           meeting_url?: string | null
+          recurrence?: string | null
           space_id?: string | null
           start_time: string
           sync_source?: string | null
@@ -1025,6 +1027,7 @@ export type Database = {
           last_synced_at?: string | null
           location?: string | null
           meeting_url?: string | null
+          recurrence?: string | null
           space_id?: string | null
           start_time?: string
           sync_source?: string | null
@@ -2138,6 +2141,7 @@ export type Database = {
           last_sync_at: string | null
           last_sync_error: string | null
           primary_calendar_id: string | null
+          reauth_required: boolean
           refresh_token: string
           scope: string | null
           sync_token: string | null
@@ -2153,6 +2157,7 @@ export type Database = {
           last_sync_at?: string | null
           last_sync_error?: string | null
           primary_calendar_id?: string | null
+          reauth_required?: boolean
           refresh_token: string
           scope?: string | null
           sync_token?: string | null
@@ -2168,6 +2173,7 @@ export type Database = {
           last_sync_at?: string | null
           last_sync_error?: string | null
           primary_calendar_id?: string | null
+          reauth_required?: boolean
           refresh_token?: string
           scope?: string | null
           sync_token?: string | null
