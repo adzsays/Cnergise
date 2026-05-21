@@ -29,8 +29,15 @@ export function BookingCalendarPicker() {
           .order("summary", { ascending: true }),
         supabase.from("profiles").select("booking_calendar_id").eq("id", user.id).maybeSingle(),
       ]);
-      setSubs((s as Sub[]) || []);
-      const primary = (s as Sub[] | null)?.find((x) => x.is_primary)?.google_calendar_id;
+      // Dedupe by google_calendar_id (multiple accounts can subscribe to the same calendar / "primary")
+      const seen = new Set<string>();
+      const unique = ((s as Sub[]) || []).filter((row) => {
+        if (seen.has(row.google_calendar_id)) return false;
+        seen.add(row.google_calendar_id);
+        return true;
+      });
+      setSubs(unique);
+      const primary = unique.find((x) => x.is_primary)?.google_calendar_id;
       setValue((p?.booking_calendar_id as string) || primary || "primary");
       setLoading(false);
     })();
