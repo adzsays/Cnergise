@@ -48,7 +48,8 @@ export function EventDialog({ open, onOpenChange, event, defaultDate, subscripti
   const [endStr, setEndStr] = useState("");
   const [addMeet, setAddMeet] = useState(false);
   const [meetingUrl, setMeetingUrl] = useState<string | null>(null);
-  const [target, setTarget] = useState<string>(LOCAL_TARGET); // value: subscription.id or LOCAL_TARGET
+  const [target, setTarget] = useState<string>(LOCAL_TARGET);
+  const [recurrence, setRecurrence] = useState<string>("none");
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -71,7 +72,9 @@ export function EventDialog({ open, onOpenChange, event, defaultDate, subscripti
       setEndStr(ad ? toDateInput(event.end_time) : toLocalInput(event.end_time));
       setMeetingUrl(event.meeting_url ?? null);
       setAddMeet(false);
-      // resolve current target subscription from event.google_calendar_id
+      const r = (event as any).recurrence as string | null | undefined;
+      const freqMatch = r?.match(/FREQ=(DAILY|WEEKLY|MONTHLY|YEARLY)/i);
+      setRecurrence(freqMatch ? freqMatch[1].toLowerCase() : "none");
       if (event.google_calendar_id) {
         const sub = enabledSubs.find((s) => s.google_calendar_id === event.google_calendar_id);
         setTarget(sub?.id ?? LOCAL_TARGET);
@@ -93,7 +96,7 @@ export function EventDialog({ open, onOpenChange, event, defaultDate, subscripti
       setEndStr(toLocalInput(end.toISOString()));
       setMeetingUrl(null);
       setAddMeet(false);
-      // Default new events to the user's primary calendar if any
+      setRecurrence("none");
       const primarySub = enabledSubs.find((s) => s.is_primary) ?? enabledSubs[0];
       setTarget(primarySub?.id ?? LOCAL_TARGET);
     }
@@ -117,6 +120,7 @@ export function EventDialog({ open, onOpenChange, event, defaultDate, subscripti
       const startISO = allDay ? new Date(`${startStr}T00:00:00`).toISOString() : new Date(startStr).toISOString();
       const endISO = allDay ? new Date(`${endStr}T00:00:00`).toISOString() : new Date(endStr).toISOString();
 
+      const rrule = recurrence === "none" ? null : `FREQ=${recurrence.toUpperCase()}`;
       const payload: any = {
         title: title.trim(),
         description: description.trim() || null,
@@ -124,6 +128,7 @@ export function EventDialog({ open, onOpenChange, event, defaultDate, subscripti
         all_day: allDay,
         start_time: startISO,
         end_time: endISO,
+        recurrence: rrule,
       };
 
       let saved: any;
