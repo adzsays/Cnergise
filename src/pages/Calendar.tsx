@@ -358,6 +358,8 @@ export default function Calendar() {
                 open={manageCalsOpen}
                 onOpenChange={setManageCalsOpen}
               />
+              </>
+              )}
             </div>
           </div>
         </SidebarInset>
