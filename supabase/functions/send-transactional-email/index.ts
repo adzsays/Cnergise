@@ -168,6 +168,20 @@ Deno.serve(async (req) => {
     )
   }
 
+  // Anti-abuse: non-service-role callers may only send to their own email address.
+  // Templates with a fixed `to` (e.g., owner notifications) are allowed regardless.
+  if (!isServiceRole && !template.to) {
+    if (!callerEmail || effectiveRecipient.toLowerCase() !== callerEmail) {
+      return new Response(
+        JSON.stringify({ error: 'Recipient must match the authenticated user\'s email' }),
+        {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      )
+    }
+  }
+
   // Create Supabase client with service role (bypasses RLS)
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
