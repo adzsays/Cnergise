@@ -141,5 +141,13 @@ export async function getValidAccessToken(admin: any, userId: string): Promise<{
       .update({ access_token: accessToken, token_expires_at: newExpiry })
       .eq("id", conn.id);
   }
-  return { accessToken, calendarId: conn.primary_calendar_id || "primary", connId: conn.id };
+  // Prefer the user's chosen booking calendar (set in profiles), then connection's primary, else "primary"
+  let chosen: string | null = null;
+  const { data: prof } = await admin
+    .from("profiles")
+    .select("booking_calendar_id")
+    .eq("id", userId)
+    .maybeSingle();
+  if (prof?.booking_calendar_id) chosen = prof.booking_calendar_id as string;
+  return { accessToken, calendarId: chosen || conn.primary_calendar_id || "primary", connId: conn.id };
 }
