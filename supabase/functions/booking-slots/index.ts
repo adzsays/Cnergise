@@ -58,7 +58,8 @@ Deno.serve(async (req) => {
     });
     return json({ slots, duration_minutes: et.duration_minutes, timezone: et.timezone });
   } catch (e) {
-    return json({ error: "internal", detail: (e as Error).message }, 500);
+    console.error("booking-slots error", e);
+    return json({ error: "internal" }, 500);
   }
 });
 
