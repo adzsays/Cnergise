@@ -29,10 +29,25 @@ export function BookingCalendarPicker() {
           .order("summary", { ascending: true }),
         supabase.from("profiles").select("booking_calendar_id").eq("id", user.id).maybeSingle(),
       ]);
+      // Filter out Google's read-only system calendars (holidays, birthdays, weather, etc.)
+      const isSystemCalendar = (row: Sub) => {
+        const id = (row.google_calendar_id || "").toLowerCase();
+        const sum = (row.summary || "").toLowerCase();
+        return (
+          id.endsWith("@holiday.calendar.google.com") ||
+          id.endsWith("@group.v.calendar.google.com") ||
+          id.includes("#contacts@") ||
+          id.includes("#weather@") ||
+          /^holidays in /.test(sum) ||
+          sum === "birthdays" ||
+          sum === "weather"
+        );
+      };
       // Dedupe by google_calendar_id AND by visible label (handles "primary" appearing per-account)
       const seenId = new Set<string>();
       const seenLabel = new Set<string>();
       const unique = ((s as Sub[]) || []).filter((row) => {
+        if (isSystemCalendar(row)) return false;
         const label = (row.summary || row.google_calendar_id).trim().toLowerCase();
         if (seenId.has(row.google_calendar_id) || seenLabel.has(label)) return false;
         seenId.add(row.google_calendar_id);
