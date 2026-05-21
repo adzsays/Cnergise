@@ -39,7 +39,8 @@ Deno.serve(async (req) => {
       return json({ host: { handle: host.handle, name: host.name, avatar_url: host.avatar_url }, eventTypes: types ?? [] });
     }
   } catch (e) {
-    return json({ error: "internal", detail: (e as Error).message }, 500);
+    console.error("booking-public-data error", e);
+    return json({ error: "internal" }, 500);
   }
 });
 

@@ -69,6 +69,7 @@ Deno.serve(async (req) => {
     })
   }
   const isServiceRole = bearerToken === supabaseServiceKey
+  let callerEmail: string | null = null
   if (!isServiceRole) {
     try {
       const authClient = createClient(supabaseUrl, supabaseAnonKey, {
@@ -77,11 +78,19 @@ Deno.serve(async (req) => {
       const { data, error } = await authClient.auth.getClaims(bearerToken)
       const role = data?.claims?.role
       const sub = data?.claims?.sub
+      const emailClaim = (data?.claims as any)?.email
       if (error || !sub || role === 'anon') {
         return new Response(JSON.stringify({ error: 'Unauthorized' }), {
           status: 401,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })
+      }
+      callerEmail = typeof emailClaim === 'string' ? emailClaim.toLowerCase() : null
+      if (!callerEmail) {
+        // Fall back to server-side user lookup if email isn't in claims
+        const adminClient = createClient(supabaseUrl, supabaseServiceKey)
+        const { data: u } = await adminClient.auth.admin.getUserById(sub)
+        callerEmail = u?.user?.email?.toLowerCase() ?? null
       }
     } catch (_e) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -157,6 +166,20 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     )
+  }
+
+  // Anti-abuse: non-service-role callers may only send to their own email address.
+  // Templates with a fixed `to` (e.g., owner notifications) are allowed regardless.
+  if (!isServiceRole && !template.to) {
+    if (!callerEmail || effectiveRecipient.toLowerCase() !== callerEmail) {
+      return new Response(
+        JSON.stringify({ error: 'Recipient must match the authenticated user\'s email' }),
+        {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      )
+    }
   }
 
   // Create Supabase client with service role (bypasses RLS)
