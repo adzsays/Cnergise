@@ -89,14 +89,28 @@ export default function Bookings() {
                   <CardTitle className="text-base">Your public booking page</CardTitle>
                   <CardDescription>Share this link with anyone to let them pick an event type and book.</CardDescription>
                 </CardHeader>
-                <CardContent className="flex flex-col sm:flex-row gap-2">
-                  <Input readOnly value={publicHostLink} className="font-mono text-xs" />
-                  <Button variant="outline" onClick={() => copy(publicHostLink)} className="gap-2">
-                    <Copy className="h-4 w-4" /> Copy
-                  </Button>
-                  <Button asChild className="gap-2">
-                    <a href={publicHostLink} target="_blank" rel="noreferrer"><LinkIcon className="h-4 w-4" /> Open</a>
-                  </Button>
+                <CardContent className="space-y-3">
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Input readOnly value={publicHostLink} className="font-mono text-xs" />
+                    <Button variant="outline" onClick={() => copy(publicHostLink)} className="gap-2">
+                      <Copy className="h-4 w-4" /> Copy
+                    </Button>
+                    <Button asChild className="gap-2">
+                      <a href={publicHostLink} target="_blank" rel="noreferrer"><LinkIcon className="h-4 w-4" /> Open</a>
+                    </Button>
+                    <Button variant="ghost" onClick={() => setEditHandleOpen((v) => !v)} className="gap-2">
+                      <Pencil className="h-4 w-4" /> {editHandleOpen ? "Close" : "Rename"}
+                    </Button>
+                  </div>
+                  {editHandleOpen && (
+                    <HandleSetupCard
+                      currentHandle={handle}
+                      onSaved={() => {
+                        qc.invalidateQueries({ queryKey: ["my-handle"] });
+                        setEditHandleOpen(false);
+                      }}
+                    />
+                  )}
                 </CardContent>
               </Card>
             )}
