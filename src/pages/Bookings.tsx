@@ -125,7 +125,7 @@ export default function Bookings() {
             <div className="grid gap-3 sm:grid-cols-2">
               {eventTypes.map((et) => {
                 const Icon = LOCATION_ICON[et.location_type];
-                const link = handle ? `${baseUrl}/book/${handle}/${et.slug}` : null;
+                const link = handle ? `${shareBase}/book/${handle}/${et.slug}` : null;
                 return (
                   <Card key={et.id} className="overflow-hidden">
                     <div className="h-1" style={{ background: et.color || "hsl(var(--primary))" }} />
