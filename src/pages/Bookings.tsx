@@ -26,6 +26,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { HandleSetupCard } from "@/components/chat/HandleSetupCard";
+import { BookingCalendarPicker } from "@/components/bookings/BookingCalendarPicker";
 import { useQueryClient } from "@tanstack/react-query";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
