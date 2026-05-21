@@ -19,6 +19,7 @@ import {
 } from "@/components/calendar/CalendarViews";
 import { EventDialog } from "@/components/calendar/EventDialog";
 import { GoogleCalendarPicker } from "@/components/calendar/GoogleCalendarPicker";
+import { GoogleReauthBanner } from "@/components/calendar/GoogleReauthBanner";
 
 function startOfDay(d: Date) {
   const x = new Date(d);
@@ -130,6 +131,7 @@ export default function Calendar() {
             </header>
 
             <div className="flex-1 overflow-auto p-2 sm:p-4 md:p-6">
+              <GoogleReauthBanner />
               {view !== "schedule" && (
                 <div className="mb-3 flex items-center justify-between">
                   <div className="flex items-center gap-2">

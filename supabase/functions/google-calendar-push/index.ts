@@ -46,7 +46,6 @@ function buildBody(event: any, opts: { addMeet?: boolean } = {}) {
   if (event.all_day) {
     const startDate = event.start_time.slice(0, 10);
     let endDate = event.end_time.slice(0, 10);
-    // Google requires end.date to be strictly after start.date for all-day events
     if (endDate <= startDate) {
       const d = new Date(`${startDate}T00:00:00Z`);
       d.setUTCDate(d.getUTCDate() + 1);
@@ -56,12 +55,19 @@ function buildBody(event: any, opts: { addMeet?: boolean } = {}) {
     body.end = { date: endDate };
   } else {
     let endTime = event.end_time;
-    // Google requires end > start for timed events
     if (new Date(endTime).getTime() <= new Date(event.start_time).getTime()) {
       endTime = new Date(new Date(event.start_time).getTime() + 30 * 60 * 1000).toISOString();
     }
     body.start = { dateTime: event.start_time };
     body.end = { dateTime: endTime };
+  }
+  if (event.recurrence) {
+    const rule = String(event.recurrence).startsWith("RRULE:")
+      ? String(event.recurrence)
+      : `RRULE:${event.recurrence}`;
+    body.recurrence = [rule];
+  } else {
+    body.recurrence = null;
   }
   if (opts.addMeet) {
     body.conferenceData = {
