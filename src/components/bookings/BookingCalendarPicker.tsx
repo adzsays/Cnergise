@@ -29,11 +29,14 @@ export function BookingCalendarPicker() {
           .order("summary", { ascending: true }),
         supabase.from("profiles").select("booking_calendar_id").eq("id", user.id).maybeSingle(),
       ]);
-      // Dedupe by google_calendar_id (multiple accounts can subscribe to the same calendar / "primary")
-      const seen = new Set<string>();
+      // Dedupe by google_calendar_id AND by visible label (handles "primary" appearing per-account)
+      const seenId = new Set<string>();
+      const seenLabel = new Set<string>();
       const unique = ((s as Sub[]) || []).filter((row) => {
-        if (seen.has(row.google_calendar_id)) return false;
-        seen.add(row.google_calendar_id);
+        const label = (row.summary || row.google_calendar_id).trim().toLowerCase();
+        if (seenId.has(row.google_calendar_id) || seenLabel.has(label)) return false;
+        seenId.add(row.google_calendar_id);
+        seenLabel.add(label);
         return true;
       });
       setSubs(unique);
@@ -73,7 +76,7 @@ export function BookingCalendarPicker() {
       <SelectContent>
         {subs.map((s) => (
           <SelectItem key={s.google_calendar_id} value={s.google_calendar_id}>
-            {s.summary || s.google_calendar_id}{s.is_primary ? " (primary)" : ""}
+            {s.summary || s.google_calendar_id}
           </SelectItem>
         ))}
       </SelectContent>
