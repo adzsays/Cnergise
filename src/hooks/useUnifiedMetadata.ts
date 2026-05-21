@@ -57,10 +57,29 @@ export function useUnifiedMetadata(sourceType?: string) {
         .eq('is_notification', true)
         .eq('notification_read', false)
         .order('created_at', { ascending: false })
-        .limit(20);
+        .limit(100);
 
       if (error) throw error;
-      return data as UnifiedMetadata[];
+      const rows = (data ?? []) as UnifiedMetadata[];
+      // Drop stale event reminders whose target time has already passed (1h grace).
+      const now = Date.now();
+      const fresh = rows.filter((r) => {
+        if (r.source_type === 'event' || r.source_type === 'calendar') {
+          const ref = r.date_occurred ? new Date(r.date_occurred).getTime() : new Date(r.created_at).getTime();
+          if (ref + 60 * 60 * 1000 < now) return false;
+        }
+        return true;
+      });
+      // Dedupe by (source_table, source_id); keep most recent (already ordered desc by created_at).
+      const seen = new Set<string>();
+      const deduped: UnifiedMetadata[] = [];
+      for (const r of fresh) {
+        const key = `${r.source_table ?? ''}::${r.source_id ?? r.id}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        deduped.push(r);
+      }
+      return deduped.slice(0, 20);
     },
   });
 
