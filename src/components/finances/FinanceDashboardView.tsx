@@ -342,6 +342,51 @@ export function FinanceDashboardView() {
     return { avgIncome, avgExpense, net: avgIncome - avgExpense, firstNeg: firstNeg?.label || 'Never' };
   }, [runningBalanceRows]);
 
+  // Per-section cash flow (operating / investing / financing), normalised to current period.
+  const sectionFlow = useMemo(() => {
+    const now = new Date();
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const active = (t: any) => {
+      if (t.start_date && new Date(t.start_date) > monthEnd) return false;
+      if (t.end_date && new Date(t.end_date) < monthStart) return false;
+      return true;
+    };
+    const toMonthly = (t: any) => {
+      if (!active(t)) return 0;
+      const raw = Math.abs(Number(t.monthly) || Number(t.amount) || 0);
+      const freq = (t.frequency || 'monthly').toLowerCase();
+      return raw * (FREQ_TO_MONTHLY[freq] ?? 1);
+    };
+    const sections: Record<'operating' | 'investing' | 'financing', { inflow: number; outflow: number }> = {
+      operating: { inflow: 0, outflow: 0 },
+      investing: { inflow: 0, outflow: 0 },
+      financing: { inflow: 0, outflow: 0 },
+    };
+    filteredTx.forEach((t: any) => {
+      const sec = (t.cash_flow_section || 'operating') as keyof typeof sections;
+      const bucket = sections[sec] || sections.operating;
+      const amt = toMonthly(t);
+      if (t.type === 'income') bucket.inflow += amt;
+      else if (t.type === 'expense') bucket.outflow += amt;
+    });
+    const periodDivisor = period === 'daily' ? daysInMonth : period === 'weekly' ? daysInMonth / 7 : 1;
+    const scale = (n: number) => n / periodDivisor;
+    const totalIn = sections.operating.inflow + sections.investing.inflow + sections.financing.inflow;
+    const totalOut = sections.operating.outflow + sections.investing.outflow + sections.financing.outflow;
+    return {
+      perPeriod: {
+        operating: { in: scale(sections.operating.inflow), out: scale(sections.operating.outflow), net: scale(sections.operating.inflow - sections.operating.outflow) },
+        investing: { in: scale(sections.investing.inflow), out: scale(sections.investing.outflow), net: scale(sections.investing.inflow - sections.investing.outflow) },
+        financing: { in: scale(sections.financing.inflow), out: scale(sections.financing.outflow), net: scale(sections.financing.inflow - sections.financing.outflow) },
+        totalIn: scale(totalIn),
+        totalOut: scale(totalOut),
+        totalNet: scale(totalIn - totalOut),
+      },
+    };
+  }, [filteredTx, period]);
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
