@@ -156,10 +156,25 @@ function SlotPicker({ handle, slug }: { handle: string; slug: string }) {
     (async () => {
       setSlotsLoading(true);
       setPicked(null);
-      const iso = date.toISOString().slice(0, 10);
-      const r = await api(`/booking-slots?handle=${encodeURIComponent(handle)}&slug=${encodeURIComponent(slug)}&from=${iso}&to=${iso}`);
+      // Use the invitee's local calendar date as the target.
+      const pad = (n: number) => String(n).padStart(2, "0");
+      const target = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+      // Query ±1 day so cross-timezone day boundaries don't drop or leak slots.
+      const dayMs = 86_400_000;
+      const fromD = new Date(date.getTime() - dayMs);
+      const toD = new Date(date.getTime() + dayMs);
+      const from = `${fromD.getFullYear()}-${pad(fromD.getMonth() + 1)}-${pad(fromD.getDate())}`;
+      const to = `${toD.getFullYear()}-${pad(toD.getMonth() + 1)}-${pad(toD.getDate())}`;
+      const r = await api(`/booking-slots?handle=${encodeURIComponent(handle)}&slug=${encodeURIComponent(slug)}&from=${from}&to=${to}`);
       const j = await r.json();
-      setSlots(r.ok ? (j.slots ?? []) : []);
+      const raw: string[] = r.ok ? (j.slots ?? []) : [];
+      // Keep only slots that fall on the invitee's selected local date.
+      const filtered = raw.filter((iso) => {
+        const d = new Date(iso);
+        const localISO = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+        return localISO === target;
+      });
+      setSlots(filtered);
       setSlotsLoading(false);
     })();
   }, [et, date, handle, slug]);
