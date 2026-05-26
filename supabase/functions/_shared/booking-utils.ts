@@ -122,14 +122,35 @@ export async function refreshGoogleAccessToken(refreshToken: string) {
 }
 
 export async function getValidAccessToken(admin: any, userId: string): Promise<{ accessToken: string; calendarId: string; connId: string } | null> {
-  // Prefer primary calendar connection; fall back to first connection
+  // Determine the user's chosen booking calendar; route to the account that owns it
+  // so the calendar invite is sent from the right mailbox.
+  const { data: prof } = await admin
+    .from("profiles")
+    .select("booking_calendar_id")
+    .eq("id", userId)
+    .maybeSingle();
+  const chosenCalId: string | null = prof?.booking_calendar_id ?? null;
+
+  let preferredAccountId: string | null = null;
+  if (chosenCalId) {
+    const { data: sub } = await admin
+      .from("google_calendar_subscriptions")
+      .select("account_id")
+      .eq("user_id", userId)
+      .eq("google_calendar_id", chosenCalId)
+      .eq("enabled", true)
+      .maybeSingle();
+    if (sub?.account_id) preferredAccountId = sub.account_id;
+  }
+
   const { data: conns } = await admin
     .from("google_calendar_connections_decrypted")
     .select("id, access_token, refresh_token, token_expires_at, primary_calendar_id")
     .eq("user_id", userId)
     .order("created_at", { ascending: true });
   if (!conns || conns.length === 0) return null;
-  const conn = conns[0];
+
+  const conn = (preferredAccountId && conns.find((c: any) => c.id === preferredAccountId)) || conns[0];
   let accessToken = conn.access_token as string;
   if (!conn.token_expires_at || new Date(conn.token_expires_at).getTime() < Date.now() + 60_000) {
     if (!conn.refresh_token) return null;
@@ -141,13 +162,5 @@ export async function getValidAccessToken(admin: any, userId: string): Promise<{
       .update({ access_token: accessToken, token_expires_at: newExpiry })
       .eq("id", conn.id);
   }
-  // Prefer the user's chosen booking calendar (set in profiles), then connection's primary, else "primary"
-  let chosen: string | null = null;
-  const { data: prof } = await admin
-    .from("profiles")
-    .select("booking_calendar_id")
-    .eq("id", userId)
-    .maybeSingle();
-  if (prof?.booking_calendar_id) chosen = prof.booking_calendar_id as string;
-  return { accessToken, calendarId: chosen || conn.primary_calendar_id || "primary", connId: conn.id };
+  return { accessToken, calendarId: chosenCalId || conn.primary_calendar_id || "primary", connId: conn.id };
 }
