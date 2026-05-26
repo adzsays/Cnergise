@@ -53,7 +53,29 @@ export function EventDialog({ open, onOpenChange, event, defaultDate, subscripti
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const enabledSubs = useMemo(() => subscriptions.filter((s) => s.enabled), [subscriptions]);
+  const enabledSubs = useMemo(() => {
+    const list = subscriptions.filter((s) => s.enabled);
+    // Drop the "primary" alias when an explicit calendar-id row exists for the same account
+    const hasExplicitPrimaryByAccount = new Set<string>();
+    for (const s of list) {
+      if (s.is_primary && s.account_id && s.google_calendar_id !== "primary") {
+        hasExplicitPrimaryByAccount.add(s.account_id);
+      }
+    }
+    // Dedup by (account_id + google_calendar_id) and by visible label per account
+    const seen = new Set<string>();
+    const seenLabel = new Set<string>();
+    return list.filter((s) => {
+      if (s.google_calendar_id === "primary" && s.account_id && hasExplicitPrimaryByAccount.has(s.account_id)) return false;
+      const k = `${s.account_id ?? ""}::${s.google_calendar_id}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      const label = `${s.account_id ?? ""}::${(s.summary || s.google_calendar_id).trim().toLowerCase()}`;
+      if (seenLabel.has(label)) return false;
+      seenLabel.add(label);
+      return true;
+    });
+  }, [subscriptions]);
   const accountById = useMemo(() => {
     const m = new Map<string, CalendarAccount>();
     accounts.forEach((a) => m.set(a.id, a));
