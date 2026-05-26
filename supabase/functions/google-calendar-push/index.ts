@@ -166,6 +166,8 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify({ error: "Unknown action" }), { status: 400, headers: corsHeaders });
   } catch (e) {
-    return new Response(JSON.stringify({ error: "Internal server error" }), { status: 500, headers: corsHeaders });
+    const msg = (e as Error)?.message || "unknown";
+    console.error("google-calendar-push error", msg);
+    return new Response(JSON.stringify({ error: msg }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });
