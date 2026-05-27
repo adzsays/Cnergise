@@ -82,6 +82,9 @@ export function EventDialog({ open, onOpenChange, event, defaultDate, subscripti
     return m;
   }, [accounts]);
 
+  // Only reset form when the dialog opens or the event identity changes.
+  // Do NOT depend on `enabledSubs` here — subscriptions can refetch in the background
+  // and would otherwise clobber the user's selected target calendar mid-edit.
   useEffect(() => {
     if (!open) return;
     if (event) {
@@ -122,12 +125,27 @@ export function EventDialog({ open, onOpenChange, event, defaultDate, subscripti
       const primarySub = enabledSubs.find((s) => s.is_primary) ?? enabledSubs[0];
       setTarget(primarySub?.id ?? LOCAL_TARGET);
     }
-  }, [open, event, defaultDate, enabledSubs]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, event?.id]);
+
+  // When subscriptions arrive AFTER the dialog opened for a new event and the
+  // user hasn't actively changed the selection yet, auto-pick the primary calendar.
+  useEffect(() => {
+    if (!open || event) return;
+    if (target !== LOCAL_TARGET) return;
+    const primarySub = enabledSubs.find((s) => s.is_primary) ?? enabledSubs[0];
+    if (primarySub) setTarget(primarySub.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabledSubs.length, open]);
 
   const isGoogle = !!event?.google_calendar_id;
   const targetSub = enabledSubs.find((s) => s.id === target);
   const movedToDifferentCalendar =
     !isNew && isGoogle && targetSub && targetSub.google_calendar_id !== event?.google_calendar_id;
+
+  // Expanded recurring occurrences have synthetic IDs like "<uuid>::<timestamp>".
+  // Always operate on the original master row.
+  const baseEventId = event?.id ? event.id.split("::")[0] : null;
 
   const handleSave = async () => {
     if (!title.trim()) {
@@ -153,11 +171,19 @@ export function EventDialog({ open, onOpenChange, event, defaultDate, subscripti
         recurrence: rrule,
       };
 
+      // Stamp the chosen google_calendar_id on the row *before* the push so subsequent
+      // edits know which calendar this belongs to, even if the push transiently fails.
+      if (targetSub) {
+        payload.google_calendar_id = targetSub.google_calendar_id;
+      } else if (isNew) {
+        payload.google_calendar_id = null;
+      }
+
       let saved: any;
       if (isNew) {
         const { data, error } = await supabase
           .from("calendar_events")
-          .insert({ ...payload, user_id: user.id, sync_source: "local" })
+          .insert({ ...payload, user_id: user.id, sync_source: targetSub ? "synced" : "local" })
           .select()
           .single();
         if (error) throw error;
@@ -166,38 +192,44 @@ export function EventDialog({ open, onOpenChange, event, defaultDate, subscripti
         const { data, error } = await supabase
           .from("calendar_events")
           .update(payload)
-          .eq("id", event!.id)
+          .eq("id", baseEventId!)
           .select()
           .single();
         if (error) throw error;
         saved = data;
       }
 
-      // Push to Google when user picked a Google calendar as target.
-      // For existing Google events that are being moved to a different calendar,
-      // we recreate on the new calendar; the previous remote event becomes orphaned
-      // (we leave it in place to avoid unintended deletion).
       if (targetSub) {
         const accountId = targetSub.account_id ?? undefined;
         const targetCalId = targetSub.google_calendar_id;
 
-        const isCreate = isNew || !event?.google_event_id || movedToDifferentCalendar;
+        // Use the master row's existing google_event_id (not the synthetic occurrence id).
+        const masterGoogleEventId = (event as any)?.google_event_id ?? saved.google_event_id ?? null;
+        const isCreate = isNew || !masterGoogleEventId || movedToDifferentCalendar;
         const action = isCreate ? "create" : "update";
 
-        const { error: pushErr } = await supabase.functions.invoke("google-calendar-push", {
+        const { data: pushRes, error: pushErr } = await supabase.functions.invoke("google-calendar-push", {
           body: {
             action,
-            event: { ...saved, add_meet: addMeet, meeting_url: meetingUrl },
+            event: { ...saved, google_event_id: masterGoogleEventId, add_meet: addMeet, meeting_url: meetingUrl },
             account_id: accountId,
             target_calendar_id: targetCalId,
           },
         });
-        if (pushErr) {
-          toast({ title: "Saved locally", description: "Could not sync to Google: " + pushErr.message });
+        if (pushErr || (pushRes && pushRes.error)) {
+          const msg = pushErr?.message || pushRes?.error || "unknown error";
+          toast({
+            title: "Google sync failed",
+            description: "Event saved locally. " + msg,
+            variant: "destructive",
+          });
+        } else {
+          toast({ title: isNew ? "Event created" : "Event updated" });
         }
+      } else {
+        toast({ title: isNew ? "Event created" : "Event updated" });
       }
 
-      toast({ title: isNew ? "Event created" : "Event updated" });
       qc.invalidateQueries({ queryKey: ["calendar-events"] });
       onOpenChange(false);
     } catch (e: any) {
@@ -208,19 +240,22 @@ export function EventDialog({ open, onOpenChange, event, defaultDate, subscripti
   };
 
   const handleDelete = async () => {
-    if (!event) return;
+    if (!event || !baseEventId) return;
     if (!confirm("Delete this event?")) return;
     setDeleting(true);
     try {
-      if (isGoogle && event.google_calendar_id) {
+      if (isGoogle && event.google_calendar_id && (event as any).google_event_id) {
         await supabase.functions.invoke("google-calendar-push", {
-          body: { action: "delete", event },
+          body: {
+            action: "delete",
+            event: { ...event, id: baseEventId, google_event_id: (event as any).google_event_id },
+          },
         });
       }
       const { error } = await supabase
         .from("calendar_events")
         .update({ deleted_at: new Date().toISOString() })
-        .eq("id", event.id);
+        .eq("id", baseEventId);
       if (error) throw error;
       toast({ title: "Event deleted" });
       qc.invalidateQueries({ queryKey: ["calendar-events"] });
