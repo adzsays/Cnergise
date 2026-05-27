@@ -58,8 +58,9 @@ function buildBody(event: any, opts: { addMeet?: boolean } = {}) {
     if (new Date(endTime).getTime() <= new Date(event.start_time).getTime()) {
       endTime = new Date(new Date(event.start_time).getTime() + 30 * 60 * 1000).toISOString();
     }
-    body.start = { dateTime: event.start_time };
-    body.end = { dateTime: endTime };
+    const tz = event.time_zone || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+    body.start = { dateTime: event.start_time, timeZone: tz };
+    body.end = { dateTime: endTime, timeZone: tz };
   }
   if (event.recurrence) {
     const rule = String(event.recurrence).startsWith("RRULE:")
