@@ -82,6 +82,9 @@ export function EventDialog({ open, onOpenChange, event, defaultDate, subscripti
     return m;
   }, [accounts]);
 
+  // Only reset form when the dialog opens or the event identity changes.
+  // Do NOT depend on `enabledSubs` here — subscriptions can refetch in the background
+  // and would otherwise clobber the user's selected target calendar mid-edit.
   useEffect(() => {
     if (!open) return;
     if (event) {
@@ -122,7 +125,18 @@ export function EventDialog({ open, onOpenChange, event, defaultDate, subscripti
       const primarySub = enabledSubs.find((s) => s.is_primary) ?? enabledSubs[0];
       setTarget(primarySub?.id ?? LOCAL_TARGET);
     }
-  }, [open, event, defaultDate, enabledSubs]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, event?.id]);
+
+  // When subscriptions arrive AFTER the dialog opened for a new event and the
+  // user hasn't actively changed the selection yet, auto-pick the primary calendar.
+  useEffect(() => {
+    if (!open || event) return;
+    if (target !== LOCAL_TARGET) return;
+    const primarySub = enabledSubs.find((s) => s.is_primary) ?? enabledSubs[0];
+    if (primarySub) setTarget(primarySub.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabledSubs.length, open]);
 
   const isGoogle = !!event?.google_calendar_id;
   const targetSub = enabledSubs.find((s) => s.id === target);
