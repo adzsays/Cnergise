@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AppSidebar } from "@/components/AppSidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { TopBar } from "@/components/layout/TopBar";
@@ -26,10 +26,12 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { HandleSetupCard } from "@/components/chat/HandleSetupCard";
 import { BookingCalendarPicker } from "@/components/bookings/BookingCalendarPicker";
+import { useCalendarSubscriptions } from "@/hooks/useCalendarSubscriptions";
 import { useQueryClient } from "@tanstack/react-query";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const TZ_OPTIONS = ["Europe/London", "Europe/Berlin", "Europe/Paris", "America/New_York", "America/Los_Angeles", "Asia/Dubai", "Asia/Kolkata", "Asia/Singapore", "Asia/Tokyo", "Australia/Sydney", "UTC"];
+const DEFAULT_BOOKING_CALENDAR = "__default__";
 
 const LOCATION_ICON = {
   google_meet: Video,
@@ -249,6 +251,9 @@ function EventTypeDialog({
   value, onClose, onSave,
 }: { value: Partial<BookingEventType>; onClose: () => void; onSave: (v: any) => void }) {
   const [form, setForm] = useState<Partial<BookingEventType>>(value);
+  const { data: calendarData } = useCalendarSubscriptions();
+  const accountsById = useMemo(() => new Map((calendarData?.accounts ?? []).map((a) => [a.id, a])), [calendarData?.accounts]);
+  const calendars = useMemo(() => (calendarData?.subscriptions ?? []).filter((s) => s.enabled), [calendarData?.subscriptions]);
   const update = <K extends keyof BookingEventType>(k: K, v: BookingEventType[K]) => setForm((f) => ({ ...f, [k]: v }));
 
   return (
@@ -280,6 +285,27 @@ function EventTypeDialog({
               <Select value={form.timezone ?? "Europe/London"} onValueChange={(v) => update("timezone", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{TZ_OPTIONS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="col-span-2">
+              <Label>Google calendar for this event</Label>
+              <Select
+                value={form.booking_calendar_id ?? DEFAULT_BOOKING_CALENDAR}
+                onValueChange={(v) => update("booking_calendar_id", (v === DEFAULT_BOOKING_CALENDAR ? null : v) as any)}
+              >
+                <SelectTrigger><SelectValue placeholder="Booking calendar" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={DEFAULT_BOOKING_CALENDAR}>Use public page default calendar</SelectItem>
+                  {calendars.map((c) => {
+                    const account = c.account_id ? accountsById.get(c.account_id) : null;
+                    const label = c.is_primary ? "Primary" : (c.summary || c.google_calendar_id);
+                    return (
+                      <SelectItem key={c.id} value={c.google_calendar_id}>
+                        {label}{account?.google_email ? ` · ${account.google_email}` : ""}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
               </Select>
             </div>
           </div>
