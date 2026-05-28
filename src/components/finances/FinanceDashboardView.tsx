@@ -9,6 +9,7 @@ import { HoverCard, HoverCardTrigger, HoverCardContent } from '@/components/ui/h
 import { ArrowDownRight, ArrowUpRight, Sparkles, TrendingUp, Wallet, Target } from 'lucide-react';
 import { SleekChart } from '@/components/ui/SleekChart';
 import { SnoopInsights } from './SnoopInsights';
+import { isBusinessDay } from '@/utils/businessDays';
 
 import { cn } from '@/lib/utils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -40,6 +41,14 @@ const FREQ_TO_MONTHLY: Record<string, number> = {
 const formatCurrency = (n: number) =>
   new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 }).format(n);
 const formatCompact = (n: number) => (Math.abs(n) >= 1000 ? `£${(n / 1000).toFixed(1)}k` : `£${Math.round(n)}`);
+const businessDaysInMonth = (date: Date) => {
+  const days = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  let count = 0;
+  for (let day = 1; day <= days; day++) {
+    if (isBusinessDay(new Date(date.getFullYear(), date.getMonth(), day))) count++;
+  }
+  return Math.max(count, 1);
+};
 
 export function FinanceDashboardView() {
   const { transactions, balanceSheet } = useFinancialData();
@@ -81,6 +90,7 @@ export function FinanceDashboardView() {
     useMemo(() => {
       const now = new Date();
       const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+      const workingDays = businessDaysInMonth(now);
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
       const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
       const isActiveThisMonth = (t: any) => {
@@ -106,7 +116,7 @@ export function FinanceDashboardView() {
       const monthlyIncome = incomes.reduce((s, t) => s + toMonthly(t), 0);
       const monthlyExpense = expenses.reduce((s, t) => s + toMonthly(t), 0);
       const dailyAvgIncome = monthlyIncome / daysInMonth;
-      const dailyAvgExpense = monthlyExpense / daysInMonth;
+      const dailyAvgExpense = monthlyExpense / workingDays;
 
       const dailySeries: { income: number; expense: number }[] = Array.from({ length: daysInMonth }, () => ({ income: 0, expense: 0 }));
       const placeOrSpread = (t: any, bucket: 'income' | 'expense') => {
@@ -131,7 +141,7 @@ export function FinanceDashboardView() {
       }));
 
       const topExpenses = [...expenses]
-        .map((t) => ({ name: t.subcategory || t.category, value: toMonthly(t), daily: toMonthly(t) / daysInMonth }))
+        .map((t) => ({ name: t.subcategory || t.category, value: toMonthly(t), daily: toMonthly(t) / workingDays }))
         .sort((a, b) => b.value - a.value)
         .slice(0, 5);
       const topIncomes = [...incomes]

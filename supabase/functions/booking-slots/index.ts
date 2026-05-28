@@ -1,6 +1,6 @@
 // Public: compute available slots for an event type within a date range.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { computeSlots, type AvailabilityRule, type DateOverride, type BusyInterval } from "../_shared/booking-utils.ts";
+import { calendarEventsToBusy, computeSlots, type AvailabilityRule, type DateOverride, type BusyInterval } from "../_shared/booking-utils.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
     const [{ data: rules }, { data: overrides }, { data: calEvents }, { data: existing }] = await Promise.all([
       admin.from("booking_availability_rules").select("day_of_week, start_time, end_time").eq("event_type_id", et.id),
       admin.from("booking_date_overrides").select("date, is_unavailable, start_time, end_time").eq("event_type_id", et.id).gte("date", from).lte("date", to),
-      admin.from("calendar_events").select("start_time, end_time").eq("user_id", host.id).is("deleted_at", null)
+      admin.from("calendar_events").select("start_time, end_time, all_day, recurrence, google_event_id").eq("user_id", host.id).is("deleted_at", null)
         .gte("start_time", new Date(from).toISOString())
         .lte("start_time", new Date(new Date(to).getTime() + 86_400_000).toISOString()),
       admin.from("bookings").select("start_time, end_time").eq("host_user_id", host.id).eq("status", "confirmed")
@@ -43,8 +43,10 @@ Deno.serve(async (req) => {
         .lte("start_time", new Date(new Date(to).getTime() + 86_400_000).toISOString()),
     ]);
 
+    const busyStart = new Date(from).toISOString();
+    const busyEnd = new Date(new Date(to).getTime() + 86_400_000).toISOString();
     const busy: BusyInterval[] = [
-      ...((calEvents ?? []).map((e: any) => ({ start: new Date(e.start_time).getTime(), end: new Date(e.end_time).getTime() }))),
+      ...calendarEventsToBusy((calEvents ?? []) as any[], busyStart, busyEnd),
       ...((existing ?? []).map((b: any) => ({ start: new Date(b.start_time).getTime(), end: new Date(b.end_time).getTime() }))),
     ];
 

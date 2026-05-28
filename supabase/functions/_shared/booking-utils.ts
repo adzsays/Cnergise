@@ -14,6 +14,13 @@ export type EventType = {
 export type AvailabilityRule = { day_of_week: number; start_time: string; end_time: string };
 export type DateOverride = { date: string; is_unavailable: boolean; start_time: string | null; end_time: string | null };
 export type BusyInterval = { start: number; end: number }; // ms epoch
+export type CalendarBusySource = {
+  start_time: string;
+  end_time: string;
+  all_day?: boolean | null;
+  recurrence?: string | null;
+  google_event_id?: string | null;
+};
 
 // Convert "YYYY-MM-DD" + "HH:MM[:SS]" interpreted in `tz` to UTC ms epoch.
 // Uses Intl.DateTimeFormat to derive the offset for that wall-clock instant.
@@ -106,6 +113,66 @@ export function computeSlots(args: {
   return slots;
 }
 
+function normalizeBusyInterval(e: CalendarBusySource, startMs = new Date(e.start_time).getTime()): BusyInterval | null {
+  const rawEndMs = new Date(e.end_time).getTime();
+  if (!Number.isFinite(startMs) || !Number.isFinite(rawEndMs) || rawEndMs <= startMs) return null;
+
+  // Recurring timed events should block the event duration, not every day until the recurrence end.
+  // Older rows could contain an end date months later; cap those to the same-day end time.
+  const likelyExpandedGoogleOccurrence = !!e.google_event_id && String(e.google_event_id).includes("_");
+  const isRecurringTimed = !e.all_day && (!!e.recurrence || likelyExpandedGoogleOccurrence);
+  if (isRecurringTimed && rawEndMs - startMs > 18 * 60 * 60 * 1000) {
+    const start = new Date(startMs);
+    const rawEnd = new Date(rawEndMs);
+    const end = new Date(startMs);
+    end.setUTCHours(rawEnd.getUTCHours(), rawEnd.getUTCMinutes(), rawEnd.getUTCSeconds(), rawEnd.getUTCMilliseconds());
+    if (end.getTime() <= start.getTime()) end.setUTCDate(end.getUTCDate() + 1);
+    if (end.getTime() > start.getTime()) return { start: startMs, end: end.getTime() };
+  }
+
+  return { start: startMs, end: rawEndMs };
+}
+
+export function calendarEventsToBusy(events: CalendarBusySource[], rangeStartISO: string, rangeEndISO: string): BusyInterval[] {
+  const rangeStart = new Date(rangeStartISO).getTime();
+  const rangeEnd = new Date(rangeEndISO).getTime();
+  const busy: BusyInterval[] = [];
+
+  for (const e of events) {
+    const freq = e.recurrence?.match(/FREQ=(DAILY|WEEKLY|MONTHLY|YEARLY)/i)?.[1]?.toUpperCase();
+    const base = normalizeBusyInterval(e);
+    if (!base) continue;
+    const duration = base.end - base.start;
+
+    if (!freq || e.google_event_id) {
+      if (base.start < rangeEnd && base.end > rangeStart) busy.push(base);
+      continue;
+    }
+
+    const cursor = new Date(base.start);
+    const step = (d: Date) => {
+      if (freq === "DAILY") d.setUTCDate(d.getUTCDate() + 1);
+      else if (freq === "WEEKLY") d.setUTCDate(d.getUTCDate() + 7);
+      else if (freq === "MONTHLY") d.setUTCMonth(d.getUTCMonth() + 1);
+      else if (freq === "YEARLY") d.setUTCFullYear(d.getUTCFullYear() + 1);
+    };
+    let safety = 0;
+    while (cursor.getTime() + duration < rangeStart && safety < 1200) {
+      step(cursor);
+      safety++;
+    }
+    while (cursor.getTime() < rangeEnd && safety < 1600) {
+      const start = cursor.getTime();
+      const end = start + duration;
+      if (start < rangeEnd && end > rangeStart) busy.push({ start, end });
+      step(cursor);
+      safety++;
+    }
+  }
+
+  return busy;
+}
+
 export async function refreshGoogleAccessToken(refreshToken: string) {
   const res = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
@@ -121,7 +188,7 @@ export async function refreshGoogleAccessToken(refreshToken: string) {
   return { ok: res.ok, status: res.status, json };
 }
 
-export async function getValidAccessToken(admin: any, userId: string): Promise<{ accessToken: string; calendarId: string; connId: string } | null> {
+export async function getValidAccessToken(admin: any, userId: string, preferredCalendarId?: string | null): Promise<{ accessToken: string; calendarId: string; connId: string } | null> {
   // Determine the user's chosen booking calendar; route to the account that owns it
   // so the calendar invite is sent from the right mailbox.
   const { data: prof } = await admin
@@ -129,7 +196,7 @@ export async function getValidAccessToken(admin: any, userId: string): Promise<{
     .select("booking_calendar_id")
     .eq("id", userId)
     .maybeSingle();
-  const chosenCalId: string | null = prof?.booking_calendar_id ?? null;
+  const chosenCalId: string | null = preferredCalendarId || prof?.booking_calendar_id || null;
 
   let preferredAccountId: string | null = null;
   if (chosenCalId) {

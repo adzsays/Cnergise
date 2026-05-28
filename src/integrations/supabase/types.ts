@@ -657,6 +657,7 @@ export type Database = {
       }
       booking_event_types: {
         Row: {
+          booking_calendar_id: string | null
           buffer_after_minutes: number
           buffer_before_minutes: number
           color: string | null
@@ -676,6 +677,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          booking_calendar_id?: string | null
           buffer_after_minutes?: number
           buffer_before_minutes?: number
           color?: string | null
@@ -695,6 +697,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          booking_calendar_id?: string | null
           buffer_after_minutes?: number
           buffer_before_minutes?: number
           color?: string | null
