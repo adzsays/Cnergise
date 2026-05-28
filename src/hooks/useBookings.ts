@@ -13,6 +13,7 @@ export type BookingEventType = {
   location_details: string | null;
   color: string | null;
   timezone: string;
+  booking_calendar_id: string | null;
   buffer_before_minutes: number;
   buffer_after_minutes: number;
   min_notice_minutes: number;
