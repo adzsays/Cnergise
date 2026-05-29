@@ -105,11 +105,14 @@ export function FinanceDashboardView() {
           const varies = t.projections.some((p: any) => Math.abs((Number(p) || 0) - first) > 0.01);
           if (varies) return Math.abs(first);
         }
-        const raw = Math.abs(Number(t.monthly) || Number(t.amount) || 0);
+        // Always derive from the current `amount` input so edits (incl. setting to 0)
+        // immediately propagate to the dashboard, instead of using the cached `monthly`.
+        const raw = Math.abs(Number(t.amount) || 0);
         const freq = (t.frequency || 'monthly').toLowerCase();
         const factor = FREQ_TO_MONTHLY[freq] ?? 1;
         return raw * factor;
       };
+
 
       const incomes = filteredTx.filter((t) => t.type === 'income');
       const expenses = filteredTx.filter((t) => t.type === 'expense');
@@ -365,10 +368,11 @@ export function FinanceDashboardView() {
     };
     const toMonthly = (t: any) => {
       if (!active(t)) return 0;
-      const raw = Math.abs(Number(t.monthly) || Number(t.amount) || 0);
+      const raw = Math.abs(Number(t.amount) || 0);
       const freq = (t.frequency || 'monthly').toLowerCase();
       return raw * (FREQ_TO_MONTHLY[freq] ?? 1);
     };
+
     const sections: Record<'operating' | 'investing' | 'financing', { inflow: number; outflow: number }> = {
       operating: { inflow: 0, outflow: 0 },
       investing: { inflow: 0, outflow: 0 },
@@ -482,7 +486,22 @@ export function FinanceDashboardView() {
             );
           })}
         </div>
+        {/* Per-working-day target — what needs to be earned (post-tax) each business day to cover monthly outflows */}
+        <div className="relative mt-2 grid grid-cols-2 gap-1.5">
+          <div className="rounded-md bg-white/10 backdrop-blur px-2.5 py-1.5">
+            <div className="flex items-center gap-1 text-[10px] opacity-90"><ArrowDownRight className="h-3 w-3" />Expenses / working day</div>
+            <p className="text-sm font-semibold tabular-nums">{formatCurrency(dailyAvgExpense)}</p>
+            <p className="text-[9px] opacity-70">{formatCompact(monthlyExpense)}/mo ÷ {businessDaysInMonth(new Date())} business days</p>
+          </div>
+          <div className="rounded-md bg-white/10 backdrop-blur px-2.5 py-1.5">
+            <div className="flex items-center gap-1 text-[10px] opacity-90"><Target className="h-3 w-3" />Post-tax target / working day</div>
+            <p className="text-sm font-semibold tabular-nums">{formatCurrency((sectionFlow.perPeriod.totalOut * (period === 'daily' ? new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate() : period === 'weekly' ? new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate() / 7 : 1)) / businessDaysInMonth(new Date()))}</p>
+            <p className="text-[9px] opacity-70">All cash outflows (operating + investing + financing) ÷ business days</p>
+          </div>
+
+        </div>
       </Card>
+
 
 
       {/* KPI strip */}

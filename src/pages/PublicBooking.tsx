@@ -183,20 +183,59 @@ function SlotPicker({ handle, slug }: { handle: string; slug: string }) {
   if (!host || !et) return <NotFound />;
 
   if (done) {
+    const handleCancel = async () => {
+      if (!done.cancel_token) return;
+      if (!confirm("Cancel this booking? The host will be notified.")) return;
+      const r = await api(`/booking-cancel`, {
+        method: "POST",
+        body: JSON.stringify({ token: done.cancel_token }),
+      });
+      if (r.ok) {
+        toast({ title: "Booking cancelled" });
+        setDone({ ...done, _cancelled: true });
+      } else {
+        const j = await r.json().catch(() => ({}));
+        toast({ title: "Couldn't cancel", description: j.error?.toString?.() || "Try again", variant: "destructive" });
+      }
+    };
+    const handleReschedule = async () => {
+      if (done.cancel_token && !done._cancelled) {
+        await api(`/booking-cancel`, {
+          method: "POST",
+          body: JSON.stringify({ token: done.cancel_token, reason: "Rescheduled by invitee" }),
+        });
+      }
+      setDone(null);
+      setPicked(null);
+      setConfirming(false);
+    };
     return (
       <PageShell>
         <Card>
           <CardContent className="p-8 text-center space-y-3">
-            <CheckCircle2 className="h-12 w-12 text-primary mx-auto" />
-            <h2 className="text-xl font-semibold">You're booked!</h2>
+            <CheckCircle2 className={`h-12 w-12 mx-auto ${done._cancelled ? "text-muted-foreground" : "text-primary"}`} />
+            <h2 className="text-xl font-semibold">{done._cancelled ? "Booking cancelled" : "You're booked!"}</h2>
             <p className="text-muted-foreground">{new Date(done.start_time).toLocaleString(undefined, { dateStyle: "full", timeStyle: "short" })}</p>
-            {done.meet_link && (
+            {done.meet_link && !done._cancelled && (
               <Button asChild><a href={done.meet_link} target="_blank" rel="noreferrer">Join Google Meet</a></Button>
             )}
-            {done.location_snapshot && !done.meet_link && (
+            {done.location_snapshot && !done.meet_link && !done._cancelled && (
               <p className="text-sm">{done.location_snapshot}</p>
             )}
-            <p className="text-xs text-muted-foreground">A confirmation has been added to {host.name ?? `@${host.handle}`}'s calendar and the host has invited you.</p>
+            {!done._cancelled && (
+              <p className="text-xs text-muted-foreground">A Google Calendar invite has been sent to you and {host.name ?? `@${host.handle}`}.</p>
+            )}
+            <div className="flex gap-2 justify-center pt-2">
+              {!done._cancelled && (
+                <>
+                  <Button variant="outline" size="sm" onClick={handleReschedule}>Reschedule</Button>
+                  <Button variant="ghost" size="sm" onClick={handleCancel}>Cancel booking</Button>
+                </>
+              )}
+              {done._cancelled && (
+                <Button variant="outline" size="sm" onClick={handleReschedule}>Book another time</Button>
+              )}
+            </div>
           </CardContent>
         </Card>
       </PageShell>

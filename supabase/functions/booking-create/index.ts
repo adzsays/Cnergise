@@ -100,6 +100,20 @@ Deno.serve(async (req) => {
       const tok = await getValidAccessToken(admin, host.id, et.booking_calendar_id ?? null);
       if (tok) {
         googleCalendarId = tok.calendarId;
+        // Look up the host's email on the chosen Google account so the calendar
+        // invite shows up in both the host's and invitee's inbox (like Calendly).
+        const { data: hostConn } = await admin
+          .from("google_calendar_connections")
+          .select("google_email")
+          .eq("id", tok.connId)
+          .maybeSingle();
+        const hostEmail: string | null = hostConn?.google_email || null;
+        const attendees: Array<{ email: string; displayName?: string; organizer?: boolean; responseStatus?: string }> = [
+          { email: body.invitee_email, displayName: body.invitee_name, responseStatus: "needsAction" },
+        ];
+        if (hostEmail && hostEmail.toLowerCase() !== body.invitee_email.toLowerCase()) {
+          attendees.push({ email: hostEmail, displayName: host.name || hostEmail, organizer: true, responseStatus: "accepted" });
+        }
         const eventPayload: any = {
           summary: `${et.title} with ${body.invitee_name}`,
           description: [
@@ -110,8 +124,12 @@ Deno.serve(async (req) => {
           ].filter(Boolean).join("\n\n") || et.description || "",
           start: { dateTime: new Date(startMs).toISOString(), timeZone: et.timezone },
           end: { dateTime: new Date(endMs).toISOString(), timeZone: et.timezone },
-          attendees: [{ email: body.invitee_email, displayName: body.invitee_name }],
+          attendees,
+          guestsCanSeeOtherGuests: true,
+          guestsCanInviteOthers: false,
+          reminders: { useDefault: true },
         };
+
         if (et.location_type === "in_person" && et.location_details) {
           eventPayload.location = et.location_details;
         } else if (et.location_type === "phone" && et.location_details) {
