@@ -486,7 +486,21 @@ export function FinanceDashboardView() {
             );
           })}
         </div>
+        {/* Per-working-day target — what needs to be earned (post-tax) each business day to cover monthly outflows */}
+        <div className="relative mt-2 grid grid-cols-2 gap-1.5">
+          <div className="rounded-md bg-white/10 backdrop-blur px-2.5 py-1.5">
+            <div className="flex items-center gap-1 text-[10px] opacity-90"><ArrowDownRight className="h-3 w-3" />Expenses / working day</div>
+            <p className="text-sm font-semibold tabular-nums">{formatCurrency(dailyAvgExpense)}</p>
+            <p className="text-[9px] opacity-70">{formatCompact(monthlyExpense)}/mo ÷ {businessDaysInMonth(new Date())} business days</p>
+          </div>
+          <div className="rounded-md bg-white/10 backdrop-blur px-2.5 py-1.5">
+            <div className="flex items-center gap-1 text-[10px] opacity-90"><Target className="h-3 w-3" />Post-tax target / working day</div>
+            <p className="text-sm font-semibold tabular-nums">{formatCurrency((monthlyExpense + Math.max(0, -sectionFlow.perPeriod.totalNet * 0)) / businessDaysInMonth(new Date()))}</p>
+            <p className="text-[9px] opacity-70">Amount you need to earn each business day to cover monthly outflows</p>
+          </div>
+        </div>
       </Card>
+
 
 
       {/* KPI strip */}
