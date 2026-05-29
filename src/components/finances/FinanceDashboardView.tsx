@@ -368,10 +368,11 @@ export function FinanceDashboardView() {
     };
     const toMonthly = (t: any) => {
       if (!active(t)) return 0;
-      const raw = Math.abs(Number(t.monthly) || Number(t.amount) || 0);
+      const raw = Math.abs(Number(t.amount) || 0);
       const freq = (t.frequency || 'monthly').toLowerCase();
       return raw * (FREQ_TO_MONTHLY[freq] ?? 1);
     };
+
     const sections: Record<'operating' | 'investing' | 'financing', { inflow: number; outflow: number }> = {
       operating: { inflow: 0, outflow: 0 },
       investing: { inflow: 0, outflow: 0 },
