@@ -105,11 +105,14 @@ export function FinanceDashboardView() {
           const varies = t.projections.some((p: any) => Math.abs((Number(p) || 0) - first) > 0.01);
           if (varies) return Math.abs(first);
         }
-        const raw = Math.abs(Number(t.monthly) || Number(t.amount) || 0);
+        // Always derive from the current `amount` input so edits (incl. setting to 0)
+        // immediately propagate to the dashboard, instead of using the cached `monthly`.
+        const raw = Math.abs(Number(t.amount) || 0);
         const freq = (t.frequency || 'monthly').toLowerCase();
         const factor = FREQ_TO_MONTHLY[freq] ?? 1;
         return raw * factor;
       };
+
 
       const incomes = filteredTx.filter((t) => t.type === 'income');
       const expenses = filteredTx.filter((t) => t.type === 'expense');
