@@ -495,9 +495,10 @@ export function FinanceDashboardView() {
           </div>
           <div className="rounded-md bg-white/10 backdrop-blur px-2.5 py-1.5">
             <div className="flex items-center gap-1 text-[10px] opacity-90"><Target className="h-3 w-3" />Post-tax target / working day</div>
-            <p className="text-sm font-semibold tabular-nums">{formatCurrency((monthlyExpense + Math.max(0, -sectionFlow.perPeriod.totalNet * 0)) / businessDaysInMonth(new Date()))}</p>
-            <p className="text-[9px] opacity-70">Amount you need to earn each business day to cover monthly outflows</p>
+            <p className="text-sm font-semibold tabular-nums">{formatCurrency((sectionFlow.perPeriod.totalOut * (period === 'daily' ? new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate() : period === 'weekly' ? new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate() / 7 : 1)) / businessDaysInMonth(new Date()))}</p>
+            <p className="text-[9px] opacity-70">All cash outflows (operating + investing + financing) ÷ business days</p>
           </div>
+
         </div>
       </Card>
 
