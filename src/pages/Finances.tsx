@@ -2,83 +2,194 @@ import React, { useState, useEffect } from "react";
 import { SidebarProvider, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { TopBar } from "@/components/layout/TopBar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FinancialDataProvider } from "@/contexts/FinancialDataContext";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+
 import { FinanceDashboardView } from "@/components/finances/FinanceDashboardView";
-
-import { CreditScoreView } from "@/components/finances/CreditScoreView";
-import { BalancesView } from "@/components/finances/BalancesView";
 import { ActualExpensesView } from "@/components/finances/ActualExpensesView";
-
+import { CashFlowView } from "@/components/finances/CashFlowView";
 import { AccountingGroupsView } from "@/components/finances/AccountingGroupsView";
+import { TrialBalanceView } from "@/components/finances/TrialBalanceView";
+import { BalanceSheetView } from "@/components/finances/BalanceSheetView";
+import { BudgetView } from "@/components/finances/BudgetView";
+import { BalancesView } from "@/components/finances/BalancesView";
+import { CreditScoreView } from "@/components/finances/CreditScoreView";
 import { InvoiceList } from "@/components/invoices/InvoiceList";
 import { InvoiceEditor } from "@/components/invoices/InvoiceEditor";
 import { CustomerManager } from "@/components/invoices/CustomerManager";
 import { BillingEntityManager } from "@/components/invoices/BillingEntityManager";
 import { ServiceManager } from "@/components/invoices/ServiceManager";
 
-import { LayoutDashboard, CreditCard, Scale, Wallet, FolderTree, FileText, Users, Building2, Briefcase, ListChecks, ChevronsLeft, ChevronsRight } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 import { Tabs as InnerTabs, TabsContent as InnerTabsContent, TabsList as InnerTabsList, TabsTrigger as InnerTabsTrigger } from "@/components/ui/tabs";
 
-const InvoicingSection = () => {
-  const [tab, setTab] = useState("list");
+import {
+  Home, Receipt, TrendingUp, BookOpenCheck, FileText,
+  Users, Building2, Briefcase, Settings2,
+} from "lucide-react";
+
+type WorkspaceKey = "home" | "transactions" | "cashflow" | "accounting" | "billing";
+
+interface Workspace {
+  key: WorkspaceKey;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  badge?: number;
+}
+
+const WORKSPACES: Workspace[] = [
+  { key: "home", label: "Home", icon: Home },
+  { key: "transactions", label: "Transactions", icon: Receipt },
+  { key: "cashflow", label: "Cash Flow", icon: TrendingUp },
+  { key: "accounting", label: "Accounting", icon: BookOpenCheck },
+  { key: "billing", label: "Billing", icon: FileText },
+];
+
+/** Billing workspace: invoice list as primary; secondary entities live in drawers. */
+const BillingWorkspace = () => {
+  const [tab, setTab] = useState<"list" | "editor">("list");
   const [editingId, setEditingId] = useState<string | null>(null);
   const openEditor = (id: string | null) => { setEditingId(id); setTab("editor"); };
+
   return (
-    <InnerTabs value={tab} onValueChange={setTab} className="space-y-4">
-      <div className="overflow-x-auto -mx-3 px-3 md:mx-0 md:px-0 scrollbar-none">
-        <InnerTabsList className="inline-flex w-max">
-          <InnerTabsTrigger value="list" className="text-xs sm:text-sm"><ListChecks className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Invoices</span></InnerTabsTrigger>
-          <InnerTabsTrigger value="editor" className="text-xs sm:text-sm"><FileText className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Editor</span></InnerTabsTrigger>
-          <InnerTabsTrigger value="customers" className="text-xs sm:text-sm"><Users className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Customers</span></InnerTabsTrigger>
-          <InnerTabsTrigger value="services" className="text-xs sm:text-sm"><Briefcase className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Services</span></InnerTabsTrigger>
-          <InnerTabsTrigger value="entities" className="text-xs sm:text-sm"><Building2 className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Billing</span></InnerTabsTrigger>
-        </InnerTabsList>
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant={tab === "list" ? "default" : "outline"}
+            onClick={() => setTab("list")}
+          >
+            <FileText className="h-4 w-4 mr-1.5" />Invoices
+          </Button>
+          <Button
+            size="sm"
+            variant={tab === "editor" ? "default" : "outline"}
+            onClick={() => openEditor(null)}
+          >
+            New invoice
+          </Button>
+        </div>
+        <div className="flex gap-1.5">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button size="sm" variant="ghost"><Users className="h-4 w-4 mr-1.5" />Customers</Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
+              <SheetHeader><SheetTitle>Customers</SheetTitle></SheetHeader>
+              <div className="mt-4"><CustomerManager /></div>
+            </SheetContent>
+          </Sheet>
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button size="sm" variant="ghost"><Briefcase className="h-4 w-4 mr-1.5" />Services</Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
+              <SheetHeader><SheetTitle>Service catalog</SheetTitle></SheetHeader>
+              <div className="mt-4"><ServiceManager /></div>
+            </SheetContent>
+          </Sheet>
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button size="sm" variant="ghost"><Building2 className="h-4 w-4 mr-1.5" />Billing entities</Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
+              <SheetHeader><SheetTitle>Billing entities</SheetTitle></SheetHeader>
+              <div className="mt-4"><BillingEntityManager /></div>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
-      <InnerTabsContent value="list"><InvoiceList onEdit={(id) => openEditor(id)} onNew={() => openEditor(null)} /></InnerTabsContent>
-      <InnerTabsContent value="editor"><InvoiceEditor invoiceId={editingId} onSaved={(id) => setEditingId(id)} /></InnerTabsContent>
-      <InnerTabsContent value="customers"><CustomerManager /></InnerTabsContent>
-      <InnerTabsContent value="services"><ServiceManager /></InnerTabsContent>
-      <InnerTabsContent value="entities"><BillingEntityManager /></InnerTabsContent>
-    </InnerTabs>
+
+      {tab === "list" && <InvoiceList onEdit={(id) => openEditor(id)} onNew={() => openEditor(null)} />}
+      {tab === "editor" && <InvoiceEditor invoiceId={editingId} onSaved={(id) => setEditingId(id)} />}
+    </div>
   );
 };
 
-const VIEWS = [
-  { value: "balances", label: "Inputs & Balances", icon: Scale },
-  { value: "expenses", label: "Bank Transactions", icon: Wallet },
-  { value: "accounting", label: "Accounting", icon: FolderTree },
-  { value: "invoices", label: "Invoices", icon: FileText },
-] as const;
+/** Accounting workspace: trial balance / journals / balance sheet / budget. */
+const AccountingWorkspace = () => (
+  <InnerTabs defaultValue="trial" className="space-y-4">
+    <div className="overflow-x-auto -mx-3 px-3 md:mx-0 md:px-0 scrollbar-none">
+      <InnerTabsList className="inline-flex w-max">
+        <InnerTabsTrigger value="trial" className="text-xs sm:text-sm">Trial balance</InnerTabsTrigger>
+        <InnerTabsTrigger value="bs" className="text-xs sm:text-sm">Balance sheet</InnerTabsTrigger>
+        <InnerTabsTrigger value="groups" className="text-xs sm:text-sm">Chart of accounts</InnerTabsTrigger>
+        <InnerTabsTrigger value="budget" className="text-xs sm:text-sm">Budget</InnerTabsTrigger>
+      </InnerTabsList>
+    </div>
+    <InnerTabsContent value="trial"><TrialBalanceView /></InnerTabsContent>
+    <InnerTabsContent value="bs"><BalanceSheetView /></InnerTabsContent>
+    <InnerTabsContent value="groups"><AccountingGroupsView /></InnerTabsContent>
+    <InnerTabsContent value="budget"><BudgetView /></InnerTabsContent>
+  </InnerTabs>
+);
+
+/** Home workspace placeholder — full FinanceHomeView ships in Phase 2.
+ *  For now, surfaces the existing dashboard so the tab is never empty. */
+const HomeWorkspace = () => (
+  <div className="space-y-4">
+    <div className="rounded-lg border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
+      <span className="font-medium text-foreground">Finance Home</span> — a focused landing
+      with balances, this-week cash flow, due items, and AI insights is coming next. Today's
+      summary is below.
+    </div>
+    <FinanceDashboardView />
+  </div>
+);
+
+/** Transactions workspace: bank feed + balances/inputs + credit score in drawers. */
+const TransactionsWorkspace = () => (
+  <div className="space-y-4">
+    <div className="flex flex-wrap items-center justify-end gap-1.5">
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button size="sm" variant="ghost"><Settings2 className="h-4 w-4 mr-1.5" />Inputs & balances</Button>
+        </SheetTrigger>
+        <SheetContent side="right" className="w-full sm:max-w-3xl overflow-y-auto">
+          <SheetHeader><SheetTitle>Inputs & balances</SheetTitle></SheetHeader>
+          <div className="mt-4"><BalancesView /></div>
+        </SheetContent>
+      </Sheet>
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button size="sm" variant="ghost">Credit score</Button>
+        </SheetTrigger>
+        <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
+          <SheetHeader><SheetTitle>Credit score</SheetTitle></SheetHeader>
+          <div className="mt-4"><CreditScoreView /></div>
+        </SheetContent>
+      </Sheet>
+    </div>
+    <ActualExpensesView />
+  </div>
+);
 
 const Finances = () => {
   const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
-  // Legacy ?tab= support — map to ?view=. Forecast tab removed; redirect to dashboard.
-  const legacy = params.get("tab");
-  const requested = params.get("view") || legacy || "dashboard";
-  const initialView = requested === "cashflow" ? "dashboard" : requested;
-  const [secondaryView, setSecondaryView] = useState<string>(initialView);
-  const [navCollapsed, setNavCollapsed] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    return localStorage.getItem("finance:nav-collapsed") === "1";
-  });
+  const legacy = params.get("view") || params.get("tab");
+  const map: Record<string, WorkspaceKey> = {
+    dashboard: "home",
+    home: "home",
+    expenses: "transactions",
+    transactions: "transactions",
+    cashflow: "cashflow",
+    accounting: "accounting",
+    balances: "transactions",
+    invoices: "billing",
+    billing: "billing",
+  };
+  const initial: WorkspaceKey = (legacy && map[legacy]) || "home";
+  const [active, setActive] = useState<WorkspaceKey>(initial);
 
-  useEffect(() => {
-    localStorage.setItem("finance:nav-collapsed", navCollapsed ? "1" : "0");
-  }, [navCollapsed]);
-
-  // Reflect choice in URL without reload
   useEffect(() => {
     const url = new URL(window.location.href);
-    url.searchParams.set("view", secondaryView);
+    url.searchParams.set("view", active);
     url.searchParams.delete("tab");
     window.history.replaceState({}, "", url.toString());
-  }, [secondaryView]);
-
-  const allItems = [{ value: "dashboard", label: "Dashboard", icon: LayoutDashboard }, ...VIEWS];
+  }, [active]);
 
   return (
     <FinancialDataProvider>
@@ -86,94 +197,81 @@ const Finances = () => {
         <div className="flex h-[100dvh] w-full overflow-hidden bg-background pt-[env(safe-area-inset-top)]">
           <AppSidebar />
           <SidebarRail />
-          
+
           <SidebarInset className="!min-h-0 h-full overflow-hidden">
             <div className="flex h-full flex-col min-h-0">
-              
               <TopBar title="Finance" />
 
-              <div className="flex-1 overflow-hidden flex min-h-0">
-                {/* Finance sub-nav rail */}
-                <TooltipProvider delayDuration={100}>
-                  <aside className={`hidden md:flex flex-col shrink-0 border-r bg-muted/30 overflow-y-auto p-2 gap-1 transition-[width] duration-200 ${navCollapsed ? "w-14" : "w-48 lg:w-56"}`}>
-                    <div className={`flex items-center ${navCollapsed ? "justify-center" : "justify-between"} px-1 pb-1`}>
-                      {!navCollapsed && <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium px-1">Finance</span>}
+              {/* Desktop: horizontal tab strip under the top bar */}
+              <div className="hidden md:block border-b bg-background">
+                <nav className="flex items-center gap-1 px-4 overflow-x-auto scrollbar-none">
+                  {WORKSPACES.map((w) => {
+                    const Icon = w.icon;
+                    const isActive = active === w.key;
+                    return (
                       <button
-                        onClick={() => setNavCollapsed(c => !c)}
-                        className="p-1 rounded-md hover:bg-muted text-muted-foreground"
-                        aria-label={navCollapsed ? "Expand navigation" : "Collapse navigation"}
+                        key={w.key}
+                        onClick={() => setActive(w.key)}
+                        className={cn(
+                          "inline-flex items-center gap-2 h-11 px-3 border-b-2 text-sm font-medium whitespace-nowrap transition-colors",
+                          isActive
+                            ? "border-primary text-foreground"
+                            : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted"
+                        )}
                       >
-                        {navCollapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
+                        <Icon className="h-4 w-4" />
+                        {w.label}
+                        {w.badge ? (
+                          <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">{w.badge}</Badge>
+                        ) : null}
                       </button>
-                    </div>
-                    {allItems.map(v => {
-                      const Icon = v.icon;
-                      const active = secondaryView === v.value;
-                      const btn = (
-                        <button
-                          key={v.value}
-                          onClick={() => setSecondaryView(v.value)}
-                          className={`flex items-center gap-2 rounded-md ${navCollapsed ? "justify-center px-0 py-2" : "px-2.5 py-2"} text-sm text-left transition-colors ${active ? "bg-primary/10 text-primary font-medium" : "hover:bg-muted text-foreground"}`}
-                          aria-label={v.label}
-                        >
-                          <Icon className="h-4 w-4 shrink-0" />
-                          {!navCollapsed && <span className="truncate">{v.label}</span>}
-                        </button>
-                      );
-                      return navCollapsed ? (
-                        <Tooltip key={v.value}>
-                          <TooltipTrigger asChild>{btn}</TooltipTrigger>
-                          <TooltipContent side="right">{v.label}</TooltipContent>
-                        </Tooltip>
-                      ) : btn;
-                    })}
-                  </aside>
-                </TooltipProvider>
-
-                <div className="flex-1 overflow-auto p-3 md:p-6 space-y-4 md:space-y-6 min-w-0">
-                  {/* Mobile sub-nav: horizontal scroll chips */}
-                  <div className="md:hidden -mx-3 px-3 overflow-x-auto scrollbar-none">
-                    <div className="inline-flex gap-1.5 pb-1">
-                      <button
-                        onClick={() => setSecondaryView("dashboard")}
-                        className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs whitespace-nowrap border ${secondaryView === "dashboard" ? "bg-primary text-primary-foreground border-primary" : "bg-background"}`}
-                      >
-                        <LayoutDashboard className="h-3.5 w-3.5" />Dashboard
-                      </button>
-                      {VIEWS.map(v => {
-                        const Icon = v.icon;
-                        const active = secondaryView === v.value;
-                        return (
-                          <button
-                            key={v.value}
-                            onClick={() => setSecondaryView(v.value)}
-                            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs whitespace-nowrap border ${active ? "bg-primary text-primary-foreground border-primary" : "bg-background"}`}
-                          >
-                            <Icon className="h-3.5 w-3.5" />{v.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {secondaryView === "dashboard" && <FinanceDashboardView />}
-                  {secondaryView === "balances" && (
-                    <InnerTabs defaultValue="accounts" className="space-y-4">
-                      <div className="overflow-x-auto -mx-3 px-3 md:mx-0 md:px-0 scrollbar-none">
-                        <InnerTabsList className="inline-flex w-max">
-                          <InnerTabsTrigger value="accounts" className="text-xs sm:text-sm"><Scale className="h-4 w-4 mr-1" />Balances</InnerTabsTrigger>
-                          <InnerTabsTrigger value="credit" className="text-xs sm:text-sm"><CreditCard className="h-4 w-4 mr-1" />Credit Score</InnerTabsTrigger>
-                        </InnerTabsList>
-                      </div>
-                      <InnerTabsContent value="accounts"><BalancesView /></InnerTabsContent>
-                      <InnerTabsContent value="credit"><CreditScoreView /></InnerTabsContent>
-                    </InnerTabs>
-                  )}
-                  {secondaryView === "expenses" && <ActualExpensesView />}
-                  {secondaryView === "accounting" && <AccountingGroupsView />}
-                  {secondaryView === "invoices" && <InvoicingSection />}
-                </div>
+                    );
+                  })}
+                </nav>
               </div>
+
+              {/* Content */}
+              <div className="flex-1 overflow-auto p-3 md:p-6 space-y-4 md:space-y-6 min-w-0 pb-20 md:pb-6">
+                {active === "home" && <HomeWorkspace />}
+                {active === "transactions" && <TransactionsWorkspace />}
+                {active === "cashflow" && <CashFlowView />}
+                {active === "accounting" && <AccountingWorkspace />}
+                {active === "billing" && <BillingWorkspace />}
+              </div>
+
+              {/* Mobile: bottom tab bar */}
+              <nav
+                className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 pb-[env(safe-area-inset-bottom)]"
+                aria-label="Finance workspaces"
+              >
+                <div className="grid grid-cols-5">
+                  {WORKSPACES.map((w) => {
+                    const Icon = w.icon;
+                    const isActive = active === w.key;
+                    return (
+                      <button
+                        key={w.key}
+                        onClick={() => setActive(w.key)}
+                        className={cn(
+                          "flex flex-col items-center justify-center py-2 gap-0.5 text-[10px] transition-colors",
+                          isActive ? "text-primary" : "text-muted-foreground"
+                        )}
+                        aria-label={w.label}
+                      >
+                        <div className="relative">
+                          <Icon className="h-5 w-5" />
+                          {w.badge ? (
+                            <span className="absolute -top-1 -right-2 bg-primary text-primary-foreground rounded-full text-[9px] px-1 leading-none py-0.5">
+                              {w.badge}
+                            </span>
+                          ) : null}
+                        </div>
+                        <span className="leading-none">{w.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </nav>
             </div>
           </SidebarInset>
         </div>
