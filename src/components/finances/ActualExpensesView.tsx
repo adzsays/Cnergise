@@ -129,18 +129,22 @@ export function ActualExpensesView() {
     }));
   }, [cashflowLines, transactions]);
 
-  // Fetch ALL expenses (paged through Supabase 1000-row limit)
+  // Fetch ALL expenses (paged through Supabase 1000-row limit).
+  // IMPORTANT: explicitly list columns and EXCLUDE the heavy `raw` jsonb (which can carry
+  // the entire imported Excel row per record). Including it made initial loads slow.
+  const EXPENSE_COLS =
+    "id, posted_on, merchant, description, amount, currency, category, sub_type, notes, account_provider, account_name, status, source, external_id, mapped_cashflow_id, mapping_source, mapping_confidence, cost_centre";
   const { data: expenses = [], isLoading } = useQuery({
     queryKey: ["actual_expenses", "all"],
+    staleTime: 60_000,
     queryFn: async () => {
       const all: ActualExpense[] = [];
       let from = 0;
-      // Hard upper bound to avoid pathological loops
       for (let i = 0; i < 50; i++) {
         const to = from + FETCH_CHUNK - 1;
         const { data, error } = await supabase
           .from("actual_expenses" as any)
-          .select("*")
+          .select(EXPENSE_COLS)
           .order("posted_on", { ascending: false })
           .range(from, to);
         if (error) throw error;
