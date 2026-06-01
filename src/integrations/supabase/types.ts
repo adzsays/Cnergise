@@ -14,50 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      accounting_periods: {
-        Row: {
-          created_at: string
-          end_date: string
-          id: string
-          is_closed: boolean
-          name: string
-          space_id: string | null
-          start_date: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          end_date: string
-          id?: string
-          is_closed?: boolean
-          name: string
-          space_id?: string | null
-          start_date: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          end_date?: string
-          id?: string
-          is_closed?: boolean
-          name?: string
-          space_id?: string | null
-          start_date?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "accounting_periods_space_id_fkey"
-            columns: ["space_id"]
-            isOneToOne: false
-            referencedRelation: "spaces"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       actual_expenses: {
         Row: {
           account_name: string | null
@@ -1759,53 +1715,6 @@ export type Database = {
         }
         Relationships: []
       }
-      external_messages: {
-        Row: {
-          contact_id: string | null
-          content: string
-          created_at: string
-          direction: string
-          external_message_id: string | null
-          id: string
-          platform: string
-          status: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          contact_id?: string | null
-          content: string
-          created_at?: string
-          direction: string
-          external_message_id?: string | null
-          id?: string
-          platform: string
-          status?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          contact_id?: string | null
-          content?: string
-          created_at?: string
-          direction?: string
-          external_message_id?: string | null
-          id?: string
-          platform?: string
-          status?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "external_messages_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "contacts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       feature_approval_queue: {
         Row: {
           created_at: string
@@ -2825,102 +2734,6 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      journal_entries: {
-        Row: {
-          created_at: string
-          description: string | null
-          entry_date: string
-          id: string
-          is_opening_balance: boolean
-          reference_number: string | null
-          space_id: string | null
-          transaction_id: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          entry_date: string
-          id?: string
-          is_opening_balance?: boolean
-          reference_number?: string | null
-          space_id?: string | null
-          transaction_id?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          entry_date?: string
-          id?: string
-          is_opening_balance?: boolean
-          reference_number?: string | null
-          space_id?: string | null
-          transaction_id?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "journal_entries_space_id_fkey"
-            columns: ["space_id"]
-            isOneToOne: false
-            referencedRelation: "spaces"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "journal_entries_transaction_id_fkey"
-            columns: ["transaction_id"]
-            isOneToOne: false
-            referencedRelation: "financial_transactions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      journal_entry_lines: {
-        Row: {
-          account_id: string
-          created_at: string
-          credit_amount: number
-          debit_amount: number
-          id: string
-          journal_entry_id: string
-        }
-        Insert: {
-          account_id: string
-          created_at?: string
-          credit_amount?: number
-          debit_amount?: number
-          id?: string
-          journal_entry_id: string
-        }
-        Update: {
-          account_id?: string
-          created_at?: string
-          credit_amount?: number
-          debit_amount?: number
-          id?: string
-          journal_entry_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "journal_entry_lines_account_id_fkey"
-            columns: ["account_id"]
-            isOneToOne: false
-            referencedRelation: "financial_accounts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "journal_entry_lines_journal_entry_id_fkey"
-            columns: ["journal_entry_id"]
-            isOneToOne: false
-            referencedRelation: "journal_entries"
             referencedColumns: ["id"]
           },
         ]
