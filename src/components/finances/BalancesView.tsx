@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
-import { Plus, Trash2, TrendingUp, TrendingDown, Wallet, ChevronDown, ChevronRight, Calculator } from 'lucide-react';
+import { Plus, Trash2, TrendingUp, TrendingDown, Wallet, ChevronDown, ChevronRight, Calculator, Download } from 'lucide-react';
 import { useFinancialData } from '@/contexts/FinancialDataContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -15,6 +15,7 @@ import { ImportDialog } from './ImportDialog';
 import { Upload } from 'lucide-react';
 import { useUserCurrency } from '@/hooks/useUserCurrency';
 import { CurrencyInput } from './CurrencyInput';
+import { exportBalances, exportCashFlowInputs } from '@/lib/finance/exportFinance';
 
 const ASSET_CATEGORIES = ['Bank', 'Savings', 'Investment', 'Pension', 'Crypto', 'Cash', 'Other'];
 const LIABILITY_CATEGORIES = ['Credit Card', 'Loan', 'Mortgage', 'Overdraft', 'Other'];
