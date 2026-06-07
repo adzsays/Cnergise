@@ -13,7 +13,13 @@ const normalize = (s: string | null | undefined) =>
 type ProposalIn = {
   txn_id: string;
   cashflow_id: string | null;
-  new_cashflow?: { type: "income" | "expense"; category: string; subcategory: string; cost_centre: string | null };
+  new_cashflow?: {
+    type: "income" | "expense";
+    category: string;
+    subcategory: string;
+    cost_centre: string | null;
+    cash_flow_section?: "operating" | "investing" | "financing";
+  };
   rule?: { match_type: string; match_value: string };
   source: string;
   confidence: number;
