@@ -1008,6 +1008,7 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
         balanceSheet,
         monthLabels,
         updateTransaction,
+        updateTransactionFrequency,
         addTransaction,
         updateTransactionName,
         updateTransactionGroup,
