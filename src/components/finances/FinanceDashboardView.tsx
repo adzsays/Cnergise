@@ -195,7 +195,7 @@ export function FinanceDashboardView() {
         const idx = dayIndex(d);
         if (idx < 0 || idx >= days.length) return;
         if (t.type === 'income') days[idx].income += amount;
-        else if (t.type === 'expense') days[idx].expense += amount;
+        else if (t.type === 'expense' || t.type === 'liability' || t.type === 'asset') days[idx].expense += amount;
       };
       if (freq === 'one-time' || freq === 'once') { place(baseDate); return; }
       const step: { months?: number; days?: number } = (() => {
