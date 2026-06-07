@@ -421,23 +421,25 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
     }
   };
 
-  const updateTransaction = async (transactionId: string, newMonthly: number) => {
+  const updateTransaction = async (transactionId: string, newAmount: number) => {
     try {
       const existing = transactions.find((t) => t.id === transactionId);
-      const projections = Array(12).fill(newMonthly);
+      const frequency = existing?.frequency || 'monthly';
+      const newMonthly = amountToMonthly(newAmount, frequency);
+      const projections = buildProjections(newMonthly);
       const { error } = await supabase
         .from('financial_transactions')
-        .update({ monthly: newMonthly, amount: newMonthly, daily: newMonthly / 30, projections })
+        .update({ amount: newAmount, monthly: newMonthly, daily: newMonthly / 30, projections })
         .eq('id', transactionId);
       if (error) throw error;
 
       setTransactions((prev) =>
         prev.map((t) =>
-          t.id === transactionId ? { ...t, monthly: newMonthly, amount: newMonthly, daily: newMonthly / 30, projections } : t
+          t.id === transactionId ? { ...t, amount: newAmount, monthly: newMonthly, daily: newMonthly / 30, projections } : t
         )
       );
 
-      // Adjust linked account by the *difference* in amount
+      // Adjust linked account by the *difference* in monthly cash impact
       if (existing) {
         const diff = newMonthly - Number(existing.monthly || 0);
         if (diff !== 0) {
@@ -447,6 +449,35 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
     } catch (error) {
       console.error('Error updating transaction:', error);
       toast.error('Failed to update transaction');
+    }
+  };
+
+  const updateTransactionFrequency = async (transactionId: string, newFrequency: string) => {
+    try {
+      const existing = transactions.find((t) => t.id === transactionId);
+      const amount = Number(existing?.amount) || Number(existing?.monthly) || 0;
+      const newMonthly = amountToMonthly(amount, newFrequency);
+      const projections = buildProjections(newMonthly);
+      const { error } = await supabase
+        .from('financial_transactions')
+        .update({ frequency: newFrequency, monthly: newMonthly, daily: newMonthly / 30, projections })
+        .eq('id', transactionId);
+      if (error) throw error;
+
+      setTransactions((prev) =>
+        prev.map((t) =>
+          t.id === transactionId ? { ...t, frequency: newFrequency, monthly: newMonthly, daily: newMonthly / 30, projections } : t
+        )
+      );
+
+      // Re-sync the linked account by the change in monthly cash impact.
+      if (existing) {
+        const diff = newMonthly - Number(existing.monthly || 0);
+        if (diff !== 0) await applyAccountDelta(existing.category, existing.type as any, diff);
+      }
+    } catch (error) {
+      console.error('Error updating transaction frequency:', error);
+      toast.error('Failed to update frequency');
     }
   };
 
