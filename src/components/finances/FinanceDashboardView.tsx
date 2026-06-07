@@ -385,11 +385,13 @@ export function FinanceDashboardView() {
       financing: { inflow: 0, outflow: 0 },
     };
     filteredTx.forEach((t: any) => {
-      const sec = (t.cash_flow_section || 'operating') as keyof typeof sections;
+      // Default section: income/expense → operating, liability paydown → financing, asset purchase → investing.
+      const fallbackSection = t.type === 'liability' ? 'financing' : t.type === 'asset' ? 'investing' : 'operating';
+      const sec = ((t.cash_flow_section || fallbackSection) as keyof typeof sections);
       const bucket = sections[sec] || sections.operating;
       const amt = toMonthly(t);
       if (t.type === 'income') bucket.inflow += amt;
-      else if (t.type === 'expense') bucket.outflow += amt;
+      else if (t.type === 'expense' || t.type === 'liability' || t.type === 'asset') bucket.outflow += amt;
     });
     const periodDivisor = period === 'daily' ? daysInMonth : period === 'weekly' ? daysInMonth / 7 : 1;
     const scale = (n: number) => n / periodDivisor;
