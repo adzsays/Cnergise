@@ -32,7 +32,7 @@ const isLoanLike = (cat?: string | null) => {
 };
 
 export function BalancesView() {
-  const { accounts, refreshData } = useFinancialData();
+  const { accounts, transactions, balanceSheet, balanceSheetSummary, monthLabels, refreshData } = useFinancialData();
   const { currency: userCurrency, formatWhole: fmtGBP } = useUserCurrency();
   const currencySymbol = (() => {
     try {
