@@ -15,11 +15,7 @@ interface NavigationTabsProps {
 }
 
 export function NavigationTabs({
-  tabs = [
-    { label: "Overview", value: "overview", href: "/dashboard" },
-    { label: "List", value: "list", href: "/dashboard/list" },
-    { label: "Board", value: "board", href: "/dashboard/board" },
-  ],
+  tabs = [],
   activeTab,
   onTabChange,
   actions,

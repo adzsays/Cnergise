@@ -18,7 +18,7 @@ const Stealth = lazy(() => import("./pages/Stealth"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 const Home = lazy(() => import("./pages/Home"));
 const TaskManagement = lazy(() => import("./pages/TaskManagement"));
-const Dashboard = lazy(() => import("./pages/Dashboard"));
+
 const Calendar = lazy(() => import("./pages/Calendar"));
 
 const Health = lazy(() => import("./pages/Health"));
@@ -86,7 +86,7 @@ const App = () => (
                 <Route path="/projects" element={<Navigate to="/plan" replace />} />
                 <Route path="/goals" element={<Navigate to="/plan" replace />} />
                 <Route path="/projects-analytics" element={<AuthGuard><FeatureGate featureKey="projects"><ProjectsAnalytics /></FeatureGate></AuthGuard>} />
-                <Route path="/dashboard" element={<AuthGuard><Dashboard /></AuthGuard>} />
+                <Route path="/dashboard" element={<Navigate to="/home" replace />} />
                 <Route path="/calendar" element={<AuthGuard><FeatureGate featureKey="calendar"><Calendar /></FeatureGate></AuthGuard>} />
                 <Route path="/mail" element={<Navigate to="/social" replace />} />
                 <Route path="/finances" element={<AuthGuard><FeatureGate featureKey="finance"><Finances /></FeatureGate></AuthGuard>} />
