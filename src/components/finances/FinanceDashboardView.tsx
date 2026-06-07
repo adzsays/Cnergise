@@ -114,10 +114,16 @@ export function FinanceDashboardView() {
       };
 
 
-      const incomes = filteredTx.filter((t) => t.type === 'income');
-      const expenses = filteredTx.filter((t) => t.type === 'expense');
+      // Cash impact: positive amounts of these types reduce/increase the cash bank balance.
+      // - income/asset-sale (rare) → inflow
+      // - expense / liability paydown (principal) / asset purchase → outflow
+      const isCashInflow = (t: any) => t.type === 'income';
+      const isCashOutflow = (t: any) => t.type === 'expense' || t.type === 'liability' || t.type === 'asset';
+
+      const incomes = filteredTx.filter(isCashInflow);
+      const outflows = filteredTx.filter(isCashOutflow);
       const monthlyIncome = incomes.reduce((s, t) => s + toMonthly(t), 0);
-      const monthlyExpense = expenses.reduce((s, t) => s + toMonthly(t), 0);
+      const monthlyExpense = outflows.reduce((s, t) => s + toMonthly(t), 0);
       const dailyAvgIncome = monthlyIncome / daysInMonth;
       const dailyAvgExpense = monthlyExpense / workingDays;
 
@@ -134,7 +140,7 @@ export function FinanceDashboardView() {
         }
       };
       incomes.forEach((t) => placeOrSpread(t, 'income'));
-      expenses.forEach((t) => placeOrSpread(t, 'expense'));
+      outflows.forEach((t) => placeOrSpread(t, 'expense'));
 
       const series = dailySeries.map((d, i) => ({
         day: i + 1,
@@ -143,7 +149,7 @@ export function FinanceDashboardView() {
         expense: Math.round(d.expense),
       }));
 
-      const topExpenses = [...expenses]
+      const topExpenses = [...outflows]
         .map((t) => ({ name: t.subcategory || t.category, value: toMonthly(t), daily: toMonthly(t) / workingDays }))
         .sort((a, b) => b.value - a.value)
         .slice(0, 5);
