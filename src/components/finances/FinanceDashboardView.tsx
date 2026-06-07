@@ -100,11 +100,6 @@ export function FinanceDashboardView() {
       };
       const toMonthly = (t: any) => {
         if (!isActiveThisMonth(t)) return 0;
-        if (Array.isArray(t.projections) && t.projections.length > 0) {
-          const first = Number(t.projections[0]) || 0;
-          const varies = t.projections.some((p: any) => Math.abs((Number(p) || 0) - first) > 0.01);
-          if (varies) return Math.abs(first);
-        }
         // Always derive from the current `amount` input so edits (incl. setting to 0)
         // immediately propagate to the dashboard, instead of using the cached `monthly`.
         const raw = Math.abs(Number(t.amount) || 0);
@@ -151,10 +146,12 @@ export function FinanceDashboardView() {
 
       const topExpenses = [...outflows]
         .map((t) => ({ name: t.subcategory || t.category, value: toMonthly(t), daily: toMonthly(t) / workingDays }))
+        .filter((t) => t.value > 0.01)
         .sort((a, b) => b.value - a.value)
         .slice(0, 5);
       const topIncomes = [...incomes]
         .map((t) => ({ name: t.subcategory || t.category, value: toMonthly(t), daily: toMonthly(t) / daysInMonth }))
+        .filter((t) => t.value > 0.01)
         .sort((a, b) => b.value - a.value)
         .slice(0, 5);
 
@@ -183,7 +180,7 @@ export function FinanceDashboardView() {
 
     const addOccurrences = (t: any) => {
       const freq = (t.frequency || 'monthly').toLowerCase();
-      const amount = Math.abs(Number(t.amount) || Number(t.monthly) || 0);
+      const amount = Math.abs(Number(t.amount) || 0);
       if (!amount) return;
       const baseDate = t.date ? new Date(Number(t.date)) : new Date();
       const startBound = t.start_date ? new Date(t.start_date) : null;
@@ -285,7 +282,7 @@ export function FinanceDashboardView() {
       Math.floor((new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() - horizonStart.getTime()) / 86400000);
     filteredTx.forEach((t: any) => {
       const freq = (t.frequency || 'monthly').toLowerCase();
-      const amount = Math.abs(Number(t.amount) || Number(t.monthly) || 0);
+      const amount = Math.abs(Number(t.amount) || 0);
       if (!amount) return;
       const baseDate = t.date ? new Date(Number(t.date)) : new Date();
       const startBound = t.start_date ? new Date(t.start_date) : null;
@@ -421,7 +418,7 @@ export function FinanceDashboardView() {
 
     filteredTx.forEach((t: any) => {
       const freq = (t.frequency || 'monthly').toLowerCase();
-      const amount = Math.abs(Number(t.amount) || Number(t.monthly) || 0);
+      const amount = Math.abs(Number(t.amount) || 0);
       if (!amount) return;
       const baseDate = t.date ? new Date(Number(t.date)) : new Date();
       const startBound = t.start_date ? new Date(t.start_date) : null;

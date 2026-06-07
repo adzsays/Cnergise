@@ -202,7 +202,9 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
     const now = new Date();
     const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     return (data || []).map((t: any) => {
-      const monthly = Number(t.monthly) || 0;
+      const amount = Number(t.amount) || 0;
+      const frequency = t.frequency || 'monthly';
+      const monthly = amountToMonthly(amount, frequency);
       const startDate = t.start_date ? new Date(t.start_date) : null;
       const endDate = t.end_date ? new Date(t.end_date) : null;
       // Build 12-month projections respecting start/end date bounds
@@ -214,14 +216,15 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
         const afterEnd = endDate && monthStart > endDate;
         if (beforeStart || afterEnd) {
           projections.push(0);
-        } else if (Array.isArray(t.projections) && t.projections[i] != null) {
-          projections.push(Number(t.projections[i]) || 0);
         } else {
           projections.push(monthly);
         }
       }
       return {
         ...t,
+        amount,
+        monthly,
+        daily: monthly / 30,
         group: t.group_name,
         projections,
         cash_flow_section: (t.cash_flow_section as CashFlowSection) || 'operating',
@@ -490,7 +493,9 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
       }
 
       const groupName = transactionData.group_name || transactionData.group || 'Personal';
-      const monthly = transactionData.monthly;
+      const frequency = transactionData.frequency || 'monthly';
+      const amount = Number(transactionData.amount ?? transactionData.monthly) || 0;
+      const monthly = amountToMonthly(amount, frequency);
 
       // Infer cash flow section from linked account when not explicitly provided
       const inferSection = (): CashFlowSection => {
@@ -514,13 +519,13 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
         subcategory: transactionData.subcategory,
         group_name: groupName,
         space_id: transactionData.space_id ?? null,
-        amount: transactionData.amount ?? monthly,
+        amount,
         percentage: 0,
         daily: monthly / 30,
         monthly,
         projections: Array(12).fill(monthly),
         cost_centre: transactionData.cost_centre || 'General',
-        frequency: transactionData.frequency || 'monthly',
+        frequency,
         cash_flow_section: inferSection(),
       };
 
