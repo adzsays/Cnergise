@@ -1,3 +1,6 @@
+// Fetches news headlines via Lovable AI Gateway (Google Gemini).
+// Note: Gemini does not browse the web; the model summarises notable themes
+// from its training horizon. For real-time feeds connect a dedicated news API.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logServiceUsage } from "../_shared/cost-tracking.ts";
@@ -8,9 +11,7 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const authHeader = req.headers.get("Authorization");
@@ -23,87 +24,54 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const PERPLEXITY_API_KEY = Deno.env.get("PERPLEXITY_API_KEY");
-    if (!PERPLEXITY_API_KEY) {
-      throw new Error("PERPLEXITY_API_KEY is not configured");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      return new Response(JSON.stringify({ error: "LOVABLE_API_KEY missing" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-
     const { category = "general" } = await req.json().catch(() => ({}));
+    const topic = category === "finance"
+      ? "Five major ongoing themes in global financial markets and macroeconomics this quarter."
+      : "Five high-level themes shaping technology, business and world affairs this quarter.";
 
-    const prompt = category === "finance" 
-      ? "Give me 5 of today's most important financial and market news headlines. Be concise - just the headline and a one sentence summary for each."
-      : "Give me 5 of today's most important news headlines across technology, business, and world events. Be concise - just the headline and a one sentence summary for each.";
-
-    const response = await fetch("https://api.perplexity.ai/chat/completions", {
+    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
-      headers: {
-        "Authorization": `Bearer ${PERPLEXITY_API_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "sonar",
+        model: "google/gemini-3-flash-preview",
         messages: [
-          { 
-            role: "system", 
-            content: "You are a news aggregator. Return news in JSON format only. Format: {\"headlines\": [{\"title\": \"...\", \"summary\": \"...\", \"category\": \"tech|business|world|finance\"}]}. No markdown, no explanation, just valid JSON." 
-          },
-          { role: "user", content: prompt }
+          { role: "system", content: "You output structured news briefs. Return ONLY valid JSON: {\"headlines\":[{\"title\":\"...\",\"summary\":\"one sentence\",\"category\":\"tech|business|world|finance\"}]} — no prose, no markdown." },
+          { role: "user", content: topic },
         ],
-        temperature: 0.1,
       }),
     });
 
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const errorText = await response.text();
-      console.error("Perplexity API error:", response.status, errorText);
-      throw new Error(`Perplexity API error: ${response.status}`);
+    if (!resp.ok) {
+      const errText = await resp.text();
+      console.error("Lovable AI error", resp.status, errText);
+      if (resp.status === 429) return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (resp.status === 402) return new Response(JSON.stringify({ error: "AI credits exhausted. Please top up Lovable AI." }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      throw new Error(`AI gateway ${resp.status}`);
     }
 
-    const data = await response.json();
-    logServiceUsage({ service: "perplexity", operation: "sonar", units: 1, function_name: "fetch-news", metadata: { usage: data?.usage } });
-    const content = data.choices?.[0]?.message?.content || "";
-    
-    // Try to parse JSON from the response
-    let headlines = [];
+    const data = await resp.json();
+    logServiceUsage({ service: "lovable_ai", operation: "gemini-3-flash", units: 1, function_name: "fetch-news", metadata: { usage: data?.usage } });
+    const content: string = data.choices?.[0]?.message?.content ?? "";
+
+    let headlines: any[] = [];
     try {
-      // Try to extract JSON from the response
       const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        headlines = parsed.headlines || [];
-      }
-    } catch (parseError) {
-      console.error("Failed to parse JSON, extracting manually:", parseError);
-      // Fallback: create headlines from raw text
-      const lines = content.split("\n").filter((l: string) => l.trim());
-      headlines = lines.slice(0, 5).map((line: string, i: number) => ({
-        title: line.replace(/^\d+\.\s*/, "").substring(0, 100),
-        summary: "",
-        category: "general"
-      }));
+      if (jsonMatch) headlines = JSON.parse(jsonMatch[0]).headlines || [];
+    } catch (e) {
+      console.error("Parse failed", e);
     }
 
-    return new Response(JSON.stringify({ 
-      headlines,
-      citations: data.citations || [],
-      timestamp: new Date().toISOString()
-    }), {
+    return new Response(JSON.stringify({ headlines, timestamp: new Date().toISOString() }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-
   } catch (error) {
     console.error("fetch-news error:", error);
-    return new Response(JSON.stringify({ 
-      error: "Internal server error",
-      headlines: []
-    }), {
+    return new Response(JSON.stringify({ error: "Internal server error", headlines: [] }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
