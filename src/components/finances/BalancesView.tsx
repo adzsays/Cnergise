@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
-import { Plus, Trash2, TrendingUp, TrendingDown, Wallet, ChevronDown, ChevronRight, Calculator } from 'lucide-react';
+import { Plus, Trash2, TrendingUp, TrendingDown, Wallet, ChevronDown, ChevronRight, Calculator, Download } from 'lucide-react';
 import { useFinancialData } from '@/contexts/FinancialDataContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -15,6 +15,7 @@ import { ImportDialog } from './ImportDialog';
 import { Upload } from 'lucide-react';
 import { useUserCurrency } from '@/hooks/useUserCurrency';
 import { CurrencyInput } from './CurrencyInput';
+import { exportBalances, exportCashFlowInputs } from '@/lib/finance/exportFinance';
 
 const ASSET_CATEGORIES = ['Bank', 'Savings', 'Investment', 'Pension', 'Crypto', 'Cash', 'Other'];
 const LIABILITY_CATEGORIES = ['Credit Card', 'Loan', 'Mortgage', 'Overdraft', 'Other'];
@@ -31,7 +32,7 @@ const isLoanLike = (cat?: string | null) => {
 };
 
 export function BalancesView() {
-  const { accounts, refreshData } = useFinancialData();
+  const { accounts, transactions, balanceSheet, balanceSheetSummary, monthLabels, refreshData } = useFinancialData();
   const { currency: userCurrency, formatWhole: fmtGBP } = useUserCurrency();
   const currencySymbol = (() => {
     try {
@@ -404,9 +405,26 @@ export function BalancesView() {
       <Card className="p-3">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold uppercase tracking-wide">Assets</h3>
-          <Button size="sm" variant="outline" onClick={() => addRow('asset', 'Bank')}>
-            <Plus className="h-3.5 w-3.5 mr-1" /> Add Asset
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                try {
+                  exportBalances(accounts, balanceSheet, balanceSheetSummary);
+                  toast.success('Balances exported');
+                } catch (e: any) {
+                  console.error(e);
+                  toast.error('Export failed');
+                }
+              }}
+            >
+              <Download className="h-3.5 w-3.5 mr-1" /> Export Balances
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => addRow('asset', 'Bank')}>
+              <Plus className="h-3.5 w-3.5 mr-1" /> Add Asset
+            </Button>
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
@@ -495,9 +513,26 @@ export function BalancesView() {
               Add and edit income & expense entries — these feed the Cash Flow projections
             </p>
           </div>
-          <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
-            <Upload className="h-3.5 w-3.5 mr-1" /> Import CSV/Excel
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                try {
+                  exportCashFlowInputs(transactions as any[], monthLabels);
+                  toast.success('Inputs exported');
+                } catch (e: any) {
+                  console.error(e);
+                  toast.error('Export failed');
+                }
+              }}
+            >
+              <Download className="h-3.5 w-3.5 mr-1" /> Export Inputs
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
+              <Upload className="h-3.5 w-3.5 mr-1" /> Import CSV/Excel
+            </Button>
+          </div>
         </div>
         <InlineTransactionsTable />
       </Card>
