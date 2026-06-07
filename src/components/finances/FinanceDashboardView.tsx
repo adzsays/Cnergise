@@ -409,6 +409,78 @@ export function FinanceDashboardView() {
     };
   }, [filteredTx, period]);
 
+  // ===== Upcoming Payments (next 60 days from today, by actual occurrence date) =====
+  const upcomingPayments = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const horizon = new Date(today);
+    horizon.setDate(horizon.getDate() + 60);
+
+    type Item = { date: Date; name: string; amount: number; type: 'income' | 'expense'; section: string; costCentre: string };
+    const items: Item[] = [];
+
+    filteredTx.forEach((t: any) => {
+      const freq = (t.frequency || 'monthly').toLowerCase();
+      const amount = Math.abs(Number(t.amount) || Number(t.monthly) || 0);
+      if (!amount) return;
+      const baseDate = t.date ? new Date(Number(t.date)) : new Date();
+      const startBound = t.start_date ? new Date(t.start_date) : null;
+      const endBound = t.end_date ? new Date(t.end_date) : null;
+      const isOut = t.type === 'expense' || t.type === 'liability' || t.type === 'asset';
+      const isIn = t.type === 'income';
+      if (!isIn && !isOut) return;
+      const fallbackSection = t.type === 'liability' ? 'financing' : t.type === 'asset' ? 'investing' : 'operating';
+      const section = (t.cash_flow_section || fallbackSection) as string;
+      const name = t.subcategory || t.category || 'Payment';
+      const costCentre = t.cost_centre || '—';
+
+      const push = (d: Date) => {
+        if (d < today || d > horizon) return;
+        if (startBound && d < startBound) return;
+        if (endBound && d > endBound) return;
+        items.push({ date: new Date(d), name, amount, type: isIn ? 'income' : 'expense', section, costCentre });
+      };
+
+      if (freq === 'one-time' || freq === 'once') {
+        push(baseDate);
+        return;
+      }
+      const step: { months?: number; days?: number } = (() => {
+        switch (freq) {
+          case 'daily': return { days: 1 };
+          case 'weekly': return { days: 7 };
+          case 'fortnightly': case 'bi-weekly': case 'biweekly': return { days: 14 };
+          case 'monthly': return { months: 1 };
+          case 'quarterly': return { months: 3 };
+          case 'half-yearly': case 'semi-annually': return { months: 6 };
+          case 'yearly': case 'annually': return { months: 12 };
+          default: return { months: 1 };
+        }
+      })();
+      // Walk cursor forward from baseDate to today, then enumerate within the window.
+      let cursor = new Date(baseDate);
+      while (cursor < today) {
+        if (step.months) cursor.setMonth(cursor.getMonth() + step.months);
+        else if (step.days) cursor.setDate(cursor.getDate() + step.days);
+        else break;
+      }
+      let safety = 0;
+      while (cursor <= horizon && safety < 400) {
+        push(cursor);
+        const next = new Date(cursor);
+        if (step.months) next.setMonth(next.getMonth() + step.months);
+        else if (step.days) next.setDate(next.getDate() + step.days);
+        else break;
+        cursor = next;
+        safety++;
+      }
+    });
+
+    items.sort((a, b) => a.date.getTime() - b.date.getTime());
+    return items.slice(0, 30);
+  }, [filteredTx]);
+
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
