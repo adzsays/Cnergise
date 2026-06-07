@@ -767,26 +767,49 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
       const groupName = a.group_name || 'Personal';
       const isCreditCard = /(credit|card)/i.test(a.category || '') || /(credit|card)/i.test(a.name || '');
 
-      // ── Credit cards: accrue interest when balance carried past due date ──
+      // ── Credit cards: split monthly payment into Interest (Operating) + Principal (Financing) ──
       if (isCreditCard) {
         const apr = Number(a.interest_rate) || 0;
-        if (apr <= 0 || balance <= 0) return;
-        // Detect if user has scheduled a full-payoff line for this card this month.
-        // If any expense linked to this card account exists, we assume partial payment
-        // and accrue interest on the remaining projected balance.
-        const payments = transactions.filter((t) => t.category === a.name && t.type === 'expense');
+        if (balance <= 0) return;
+
+        // Manual payment rows linked to this card (by account name).
+        // Used to derive scheduled monthly payment AND to inherit cost centre.
+        const manualPayments = transactions.filter(
+          (t) => t.category === a.name && (t.type === 'expense' || t.type === 'liability')
+        );
+        // Hide manual payment rows from the cash-flow view to avoid double-counting —
+        // we re-emit the split (interest + principal) below.
+        manualPayments.forEach((p) => manualLoanIdsToHide.add(p.id));
+
+        const inheritedCostCentre =
+          manualPayments.find((p) => p.cost_centre?.trim())?.cost_centre?.trim() ||
+          a.cost_centre?.trim() ||
+          a.name ||
+          'Credit Card';
+
         const monthlyInterestProj: number[] = Array(12).fill(0);
+        const monthlyPrincipalProj: number[] = Array(12).fill(0);
+        const fallbackPayment = Number(a.monthly_payment) || 0;
         let projBal = balance;
         for (let i = 0; i < 12; i++) {
-          const paymentThisMonth = payments.reduce((s, t) => s + Math.abs(t.projections[i] || 0), 0);
-          // Interest accrues on balance remaining after payment if balance > 0 on due day
-          const remaining = Math.max(0, projBal - paymentThisMonth);
-          if (remaining > 0) {
-            monthlyInterestProj[i] = (remaining * apr) / 100 / 12;
-          }
-          projBal = remaining + monthlyInterestProj[i];
+          const scheduledFromManual = manualPayments.reduce(
+            (s, t) => s + Math.abs(t.projections[i] || 0),
+            0
+          );
+          const scheduledPayment = scheduledFromManual > 0 ? scheduledFromManual : fallbackPayment;
+
+          const interestThisMonth = apr > 0 ? (projBal * apr) / 100 / 12 : 0;
+          // Payment first covers interest, the rest reduces principal.
+          const principalThisMonth = Math.max(0, Math.min(projBal, scheduledPayment - interestThisMonth));
+          monthlyInterestProj[i] = interestThisMonth;
+          monthlyPrincipalProj[i] = principalThisMonth;
+          projBal = Math.max(0, projBal + interestThisMonth - scheduledPayment);
         }
+
         const intMonthly = monthlyInterestProj.reduce((s, n) => s + n, 0) / 12;
+        const prinMonthly = monthlyPrincipalProj.reduce((s, n) => s + n, 0) / 12;
+
+        // Interest → Operating expense
         if (intMonthly > 0.01) {
           synthetic.push({
             id: `cc-interest-${a.id}`,
@@ -803,9 +826,34 @@ export const FinancialDataProvider = ({ children }: { children: ReactNode }) => 
             daily: intMonthly / 30,
             monthly: intMonthly,
             projections: monthlyInterestProj,
-            cost_centre: a.cost_centre?.trim() || a.name || 'Interest',
+            cost_centre: inheritedCostCentre,
             frequency: 'monthly',
             cash_flow_section: 'operating',
+            created_at: a.created_at,
+            updated_at: a.updated_at,
+          });
+        }
+
+        // Principal → Financing outflow (liability paydown)
+        if (prinMonthly > 0.01) {
+          synthetic.push({
+            id: `cc-principal-${a.id}`,
+            user_id: a.user_id,
+            date: paymentDay,
+            type: 'liability',
+            category: a.name,
+            subcategory: `${a.name} — Principal`,
+            group_name: groupName,
+            group: groupName,
+            space_id: a.space_id ?? null,
+            amount: prinMonthly,
+            percentage: 0,
+            daily: prinMonthly / 30,
+            monthly: prinMonthly,
+            projections: monthlyPrincipalProj,
+            cost_centre: inheritedCostCentre,
+            frequency: 'monthly',
+            cash_flow_section: 'financing',
             created_at: a.created_at,
             updated_at: a.updated_at,
           });
