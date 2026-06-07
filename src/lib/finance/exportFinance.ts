@@ -24,11 +24,12 @@ const numberCell = (n: number | null | undefined, fmt = GBP_FMT) =>
 const applyFormat = (ws: XLSX.WorkSheet, rows: any[][], numericCols: { col: number; fmt?: string }[]) => {
   for (let r = 1; r < rows.length; r++) {
     numericCols.forEach(({ col, fmt }) => {
-      const addr = XLSX.utils.encode_cell({ r, c: col });
       const v = rows[r][col];
-      if (v == null || v === '') continue;
+      if (v == null || v === '') return;
       const n = Number(v);
-      if (!isNaN(n)) ws[addr] = { v: n, t: 'n', z: fmt || GBP_FMT };
+      if (isNaN(n)) return;
+      const addr = XLSX.utils.encode_cell({ r, c: col });
+      ws[addr] = { v: n, t: 'n', z: fmt || GBP_FMT };
     });
   }
 };
