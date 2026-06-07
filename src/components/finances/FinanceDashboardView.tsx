@@ -668,6 +668,47 @@ export function FinanceDashboardView() {
 
       <SnoopInsights />
 
+      {/* Upcoming Payments — actual occurrences from today across next 60 days */}
+      <Card className="p-4">
+        <div className="flex items-baseline justify-between gap-2 mb-3">
+          <div>
+            <h2 className="font-semibold">Upcoming Payments</h2>
+            <p className="text-xs text-muted-foreground">Next 60 days · based on each input's frequency and recurring date{costCentre !== 'all' && ` · ${costCentre}`}</p>
+          </div>
+          <span className="text-[10px] text-muted-foreground">{upcomingPayments.length} item{upcomingPayments.length === 1 ? '' : 's'}</span>
+        </div>
+        {upcomingPayments.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">No upcoming payments in the next 60 days.</p>
+        ) : (
+          <div className="overflow-x-auto max-h-[360px] overflow-y-auto">
+            <table className="w-full text-xs">
+              <thead className="sticky top-0 bg-card z-10">
+                <tr className="text-muted-foreground uppercase text-[10px] tracking-wider border-b">
+                  <th className="text-left py-2 px-2 font-medium">Date</th>
+                  <th className="text-left py-2 px-2 font-medium">Description</th>
+                  <th className="text-left py-2 px-2 font-medium hidden sm:table-cell">Class</th>
+                  <th className="text-left py-2 px-2 font-medium hidden md:table-cell">Cost Centre</th>
+                  <th className="text-right py-2 px-2 font-medium">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {upcomingPayments.map((p, i) => (
+                  <tr key={i} className="border-b border-border/40 hover:bg-muted/30">
+                    <td className="py-1.5 px-2 whitespace-nowrap tabular-nums">{p.date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</td>
+                    <td className="py-1.5 px-2 truncate max-w-[200px]">{p.name}</td>
+                    <td className="py-1.5 px-2 hidden sm:table-cell capitalize text-muted-foreground">{p.section}</td>
+                    <td className="py-1.5 px-2 hidden md:table-cell text-muted-foreground">{p.costCentre}</td>
+                    <td className={cn('py-1.5 px-2 text-right tabular-nums font-medium', p.type === 'income' ? 'text-income' : 'text-expense')}>
+                      {p.type === 'income' ? '+' : '-'}{formatCurrency(p.amount)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="p-4">
           <h2 className="font-semibold mb-1">Where Your Money Goes</h2>
