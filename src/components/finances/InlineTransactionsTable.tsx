@@ -299,7 +299,7 @@ export function InlineTransactionsTable() {
               <SortHeader k="type" label="Type" className="w-24" />
               <SortHeader k="cash_flow_section" label="Class" className="w-28" />
               <SortHeader k="subcategory" label="Description" />
-              <SortHeader k="monthly" label="Amount" align="right" />
+              <SortHeader k="monthly" label="Amount / occurrence" align="right" />
               <SortHeader k="date" label="Recurring Date" />
               <SortHeader k="cost_centre" label="Cost Centre" />
               <SortHeader k="frequency" label="Frequency" />
