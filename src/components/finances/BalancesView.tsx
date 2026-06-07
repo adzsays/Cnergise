@@ -513,9 +513,26 @@ export function BalancesView() {
               Add and edit income & expense entries — these feed the Cash Flow projections
             </p>
           </div>
-          <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
-            <Upload className="h-3.5 w-3.5 mr-1" /> Import CSV/Excel
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                try {
+                  exportCashFlowInputs(transactions as any[], monthLabels);
+                  toast.success('Inputs exported');
+                } catch (e: any) {
+                  console.error(e);
+                  toast.error('Export failed');
+                }
+              }}
+            >
+              <Download className="h-3.5 w-3.5 mr-1" /> Export Inputs
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
+              <Upload className="h-3.5 w-3.5 mr-1" /> Import CSV/Excel
+            </Button>
+          </div>
         </div>
         <InlineTransactionsTable />
       </Card>
