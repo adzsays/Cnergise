@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useMe
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { projectAmortization, RateTerm } from '@/utils/loanAmortization';
+import { amountToMonthly, buildProjections } from '@/lib/finance/frequency';
 
 export type CashFlowSection = 'operating' | 'investing' | 'financing';
 
