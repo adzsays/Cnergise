@@ -79,6 +79,7 @@ Deno.serve(async (req) => {
           type: u.body.type,
           cost_centre: u.body.cost_centre,
           frequency: "monthly",
+          cash_flow_section: u.body.cash_flow_section ?? "operating",
         })
         .select("id")
         .single();
