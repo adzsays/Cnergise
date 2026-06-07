@@ -219,11 +219,10 @@ Deno.serve(async (req) => {
       handled.add(t.id);
     }
 
-    // 4. Web-enriched merchant classification via Perplexity (only for residual)
+    // 4. AI merchant classification via Lovable AI (Gemini) — for residual txns
     const residual = txns.filter((t) => !handled.has(t.id));
-    const perplexityKey = Deno.env.get("PERPLEXITY_API_KEY");
+    const lovableKey = Deno.env.get("LOVABLE_API_KEY");
 
-    // Group by normalized merchant to avoid duplicate web calls
     const buckets = new Map<string, Txn[]>();
     for (const t of residual) {
       const key = normalize(t.merchant || t.description || "").slice(0, 60);
@@ -234,7 +233,6 @@ Deno.serve(async (req) => {
 
     const cashflowCatalog = cashflows.map((c) => `- ${c.type}: ${c.category} / ${c.subcategory}`).join("\n");
 
-    // Cap web calls so we don't hammer the API
     const merchantKeys = Array.from(buckets.keys()).slice(0, 25);
     for (const key of merchantKeys) {
       const group = buckets.get(key)!;
@@ -242,57 +240,74 @@ Deno.serve(async (req) => {
       const isExpense = Number(sample.amount) < 0;
       let cat = "Uncategorized";
       let sub = "Uncategorized";
+      let section: CashSection = "operating";
       let reason = "Heuristic";
       let conf = 0.4;
       let usedAi = false;
 
-      if (perplexityKey) {
+      if (lovableKey) {
         try {
-          const prompt = `You are classifying a bank transaction into a personal/business budget line.
+          const prompt = `Classify this bank transaction.
 
 Merchant/description: "${sample.merchant ?? sample.description ?? key}"
-Amount sign: ${isExpense ? "expense (debit)" : "income (credit)"}
+Direction: ${isExpense ? "debit (money out)" : "credit (money in)"}
 
 Existing budget lines available:
 ${cashflowCatalog || "(none yet)"}
 
-Identify what kind of business the merchant is (e.g. "Ippudo" is a ramen restaurant) and pick the BEST budget category and a concise subcategory.
-Reply STRICTLY as JSON: {"category":"...","subcategory":"...","reason":"short why"}.
-Prefer matching an existing budget line's category if it fits; otherwise propose a sensible new one (e.g. Restaurants, Groceries, Utilities, Subscriptions, Transport, Travel, Healthcare).`;
+Pick the BEST category, a concise subcategory, and the cash-flow section.
+- operating = day-to-day income/expenses (food, utilities, salary, subscriptions, interest)
+- investing = buying or selling assets that create/dispose of an investment (stocks, ETFs, crypto, property, equipment >£500)
+- financing = movements that change debt or equity (loan principal, credit-card paydown, mortgage principal, dividends paid out)`;
 
-          const resp = await fetch("https://api.perplexity.ai/chat/completions", {
+          const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
             method: "POST",
-            headers: {
-              Authorization: `Bearer ${perplexityKey}`,
-              "Content-Type": "application/json",
-            },
+            headers: { Authorization: `Bearer ${lovableKey}`, "Content-Type": "application/json" },
             body: JSON.stringify({
-              model: "sonar",
+              model: "google/gemini-3-flash-preview",
               messages: [
-                { role: "system", content: "Return ONLY a single JSON object, no prose." },
+                { role: "system", content: "You are a precise financial classifier. Always call the provided tool." },
                 { role: "user", content: prompt },
               ],
-              max_tokens: 200,
-              temperature: 0.1,
+              tools: [{
+                type: "function",
+                function: {
+                  name: "classify_merchant",
+                  description: "Return classification for the merchant",
+                  parameters: {
+                    type: "object",
+                    properties: {
+                      category: { type: "string" },
+                      subcategory: { type: "string" },
+                      cash_flow_section: { type: "string", enum: ["operating", "investing", "financing"] },
+                      reason: { type: "string" },
+                    },
+                    required: ["category", "subcategory", "cash_flow_section", "reason"],
+                    additionalProperties: false,
+                  },
+                },
+              }],
+              tool_choice: { type: "function", function: { name: "classify_merchant" } },
             }),
           });
+
           if (resp.ok) {
             const data = await resp.json();
-            const content = data?.choices?.[0]?.message?.content || "";
-            const m = content.match(/\{[\s\S]*\}/);
-            if (m) {
-              const parsed = JSON.parse(m[0]);
+            const args = data?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
+            if (args) {
+              const parsed = JSON.parse(args);
               cat = parsed.category || cat;
               sub = parsed.subcategory || sub;
-              reason = parsed.reason || "Web-enriched classification";
+              section = (parsed.cash_flow_section as CashSection) || "operating";
+              reason = parsed.reason || "AI classification";
               conf = 0.75;
               usedAi = true;
             }
           } else {
-            console.warn("Perplexity error", resp.status);
+            console.warn("Lovable AI error", resp.status, await resp.text());
           }
         } catch (e) {
-          console.warn("Perplexity call failed", e);
+          console.warn("Lovable AI call failed", e);
         }
       }
 
@@ -308,7 +323,7 @@ Prefer matching an existing budget line's category if it fits; otherwise propose
           amount: Number(t.amount),
           posted_on: t.posted_on,
           cashflow_id: existing?.id ?? null,
-          new_cashflow: existing ? undefined : { type, category: cat, subcategory: sub, cost_centre: null },
+          new_cashflow: existing ? undefined : { type, category: cat, subcategory: sub, cost_centre: null, cash_flow_section: section },
           classification: `${cat} — ${sub}`,
           reason,
           source: usedAi ? "ai-web" : "ai",
