@@ -30,41 +30,47 @@ type Cashflow = {
   group_name: string;
 };
 
+type CashSection = "operating" | "investing" | "financing";
+
 type Proposal = {
   txn_id: string;
   merchant: string | null;
   description: string | null;
   amount: number;
   posted_on: string;
-  // Mapping target
-  cashflow_id: string | null;          // existing line, if matched
-  new_cashflow?: {                      // OR a proposed new line
+  cashflow_id: string | null;
+  new_cashflow?: {
     type: "income" | "expense";
     category: string;
     subcategory: string;
     cost_centre: string | null;
+    cash_flow_section?: CashSection;
   };
-  classification: string;               // human label e.g. "Restaurant — Ippudo"
-  reason: string;                       // why
+  classification: string;
+  reason: string;
   source: "transfer" | "keyword" | "ai-web" | "ai";
   confidence: number;
-  // Rule recommendation
   rule?: {
     match_type: "description_contains" | "merchant" | "description_exact";
     match_value: string;
   };
-  // Pair info for transfers
   paired_txn_id?: string;
 };
 
-const KEYWORD_RULES: { test: RegExp; cat: string; sub: string; type: "income" | "expense"; reason: string }[] = [
-  { test: /\binterest\b/i, cat: "Interest", sub: "Interest", type: "expense", reason: "Contains 'interest'" },
+const KEYWORD_RULES: { test: RegExp; cat: string; sub: string; type: "income" | "expense"; section?: CashSection; reason: string }[] = [
   { test: /\b(late fee|overdraft|penalty|nsf)\b/i, cat: "Bank Charges", sub: "Late Fee / Penalty", type: "expense", reason: "Late fee / penalty keyword" },
   { test: /\b(bank charge|service charge|monthly fee|account fee)\b/i, cat: "Bank Charges", sub: "Service Charge", type: "expense", reason: "Bank service charge" },
   { test: /\b(salary|payroll|wages)\b/i, cat: "Income", sub: "Salary", type: "income", reason: "Salary / payroll" },
   { test: /\b(dividend)\b/i, cat: "Income", sub: "Dividend", type: "income", reason: "Dividend payment" },
   { test: /\b(refund|reversal|chargeback)\b/i, cat: "Refunds", sub: "Refund", type: "income", reason: "Refund / reversal" },
   { test: /\b(atm|cash withdrawal)\b/i, cat: "Cash", sub: "ATM Withdrawal", type: "expense", reason: "ATM withdrawal" },
+  // Investing — securities & crypto contributions
+  { test: /\b(vanguard|fidelity|schwab|robinhood|hargreaves|trading\s*212|etoro|interactive\s*brokers|ibkr|coinbase|kraken|binance|nutmeg|moneybox|freetrade)\b/i, cat: "Investments", sub: "Brokerage Contribution", type: "expense", section: "investing", reason: "Transfer to brokerage / crypto exchange" },
+  { test: /\b(isa|sipp|pension contribution|share purchase|stock purchase|etf|ishares|index fund|mutual fund)\b/i, cat: "Investments", sub: "Securities Purchase", type: "expense", section: "investing", reason: "Securities / pension contribution" },
+  // Financing — debt service
+  { test: /\b(mortgage|home loan)\b/i, cat: "Debt Service", sub: "Mortgage Payment", type: "expense", section: "financing", reason: "Mortgage payment" },
+  { test: /\b(loan payment|car finance|hp finance|hire purchase|personal loan)\b/i, cat: "Debt Service", sub: "Loan Repayment", type: "expense", section: "financing", reason: "Loan repayment" },
+  { test: /\b(credit card payment|cc payment|amex payment|visa payment|mastercard payment)\b/i, cat: "Debt Service", sub: "Credit Card Payment", type: "expense", section: "financing", reason: "Credit card paydown" },
 ];
 
 Deno.serve(async (req) => {
@@ -172,19 +178,18 @@ Deno.serve(async (req) => {
     for (const t of txns) {
       if (handled.has(t.id)) continue;
       const text = `${t.merchant ?? ""} ${t.description ?? ""}`;
-      let matched: { cat: string; sub: string; type: "income" | "expense"; reason: string } | null = null;
+      let matched: { cat: string; sub: string; type: "income" | "expense"; section?: CashSection; reason: string } | null = null;
 
-      // Interest: sign-aware
       if (/\binterest\b/i.test(text)) {
         if (Number(t.amount) > 0) {
-          matched = { cat: "Income", sub: "Interest Income", type: "income", reason: "Positive amount + 'interest' → interest income" };
+          matched = { cat: "Income", sub: "Interest Income", type: "income", section: "operating", reason: "Positive amount + 'interest' → interest income" };
         } else {
-          matched = { cat: "Interest", sub: "Interest Expense", type: "expense", reason: "Negative amount + 'interest' → interest expense" };
+          matched = { cat: "Interest", sub: "Interest Expense", type: "expense", section: "operating", reason: "Negative amount + 'interest' → interest expense" };
         }
       } else {
         for (const r of KEYWORD_RULES) {
           if (r.test.test(text)) {
-            matched = { cat: r.cat, sub: r.sub, type: r.type, reason: r.reason };
+            matched = { cat: r.cat, sub: r.sub, type: r.type, section: r.section, reason: r.reason };
             break;
           }
         }
@@ -199,7 +204,9 @@ Deno.serve(async (req) => {
         amount: Number(t.amount),
         posted_on: t.posted_on,
         cashflow_id: existing?.id ?? null,
-        new_cashflow: existing ? undefined : { type: matched.type, category: matched.cat, subcategory: matched.sub, cost_centre: null },
+        new_cashflow: existing
+          ? undefined
+          : { type: matched.type, category: matched.cat, subcategory: matched.sub, cost_centre: null, cash_flow_section: matched.section ?? "operating" },
         classification: `${matched.cat} — ${matched.sub}`,
         reason: matched.reason,
         source: "keyword",
@@ -212,11 +219,10 @@ Deno.serve(async (req) => {
       handled.add(t.id);
     }
 
-    // 4. Web-enriched merchant classification via Perplexity (only for residual)
+    // 4. AI merchant classification via Lovable AI (Gemini) — for residual txns
     const residual = txns.filter((t) => !handled.has(t.id));
-    const perplexityKey = Deno.env.get("PERPLEXITY_API_KEY");
+    const lovableKey = Deno.env.get("LOVABLE_API_KEY");
 
-    // Group by normalized merchant to avoid duplicate web calls
     const buckets = new Map<string, Txn[]>();
     for (const t of residual) {
       const key = normalize(t.merchant || t.description || "").slice(0, 60);
@@ -227,7 +233,6 @@ Deno.serve(async (req) => {
 
     const cashflowCatalog = cashflows.map((c) => `- ${c.type}: ${c.category} / ${c.subcategory}`).join("\n");
 
-    // Cap web calls so we don't hammer the API
     const merchantKeys = Array.from(buckets.keys()).slice(0, 25);
     for (const key of merchantKeys) {
       const group = buckets.get(key)!;
@@ -235,57 +240,74 @@ Deno.serve(async (req) => {
       const isExpense = Number(sample.amount) < 0;
       let cat = "Uncategorized";
       let sub = "Uncategorized";
+      let section: CashSection = "operating";
       let reason = "Heuristic";
       let conf = 0.4;
       let usedAi = false;
 
-      if (perplexityKey) {
+      if (lovableKey) {
         try {
-          const prompt = `You are classifying a bank transaction into a personal/business budget line.
+          const prompt = `Classify this bank transaction.
 
 Merchant/description: "${sample.merchant ?? sample.description ?? key}"
-Amount sign: ${isExpense ? "expense (debit)" : "income (credit)"}
+Direction: ${isExpense ? "debit (money out)" : "credit (money in)"}
 
 Existing budget lines available:
 ${cashflowCatalog || "(none yet)"}
 
-Identify what kind of business the merchant is (e.g. "Ippudo" is a ramen restaurant) and pick the BEST budget category and a concise subcategory.
-Reply STRICTLY as JSON: {"category":"...","subcategory":"...","reason":"short why"}.
-Prefer matching an existing budget line's category if it fits; otherwise propose a sensible new one (e.g. Restaurants, Groceries, Utilities, Subscriptions, Transport, Travel, Healthcare).`;
+Pick the BEST category, a concise subcategory, and the cash-flow section.
+- operating = day-to-day income/expenses (food, utilities, salary, subscriptions, interest)
+- investing = buying or selling assets that create/dispose of an investment (stocks, ETFs, crypto, property, equipment >£500)
+- financing = movements that change debt or equity (loan principal, credit-card paydown, mortgage principal, dividends paid out)`;
 
-          const resp = await fetch("https://api.perplexity.ai/chat/completions", {
+          const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
             method: "POST",
-            headers: {
-              Authorization: `Bearer ${perplexityKey}`,
-              "Content-Type": "application/json",
-            },
+            headers: { Authorization: `Bearer ${lovableKey}`, "Content-Type": "application/json" },
             body: JSON.stringify({
-              model: "sonar",
+              model: "google/gemini-3-flash-preview",
               messages: [
-                { role: "system", content: "Return ONLY a single JSON object, no prose." },
+                { role: "system", content: "You are a precise financial classifier. Always call the provided tool." },
                 { role: "user", content: prompt },
               ],
-              max_tokens: 200,
-              temperature: 0.1,
+              tools: [{
+                type: "function",
+                function: {
+                  name: "classify_merchant",
+                  description: "Return classification for the merchant",
+                  parameters: {
+                    type: "object",
+                    properties: {
+                      category: { type: "string" },
+                      subcategory: { type: "string" },
+                      cash_flow_section: { type: "string", enum: ["operating", "investing", "financing"] },
+                      reason: { type: "string" },
+                    },
+                    required: ["category", "subcategory", "cash_flow_section", "reason"],
+                    additionalProperties: false,
+                  },
+                },
+              }],
+              tool_choice: { type: "function", function: { name: "classify_merchant" } },
             }),
           });
+
           if (resp.ok) {
             const data = await resp.json();
-            const content = data?.choices?.[0]?.message?.content || "";
-            const m = content.match(/\{[\s\S]*\}/);
-            if (m) {
-              const parsed = JSON.parse(m[0]);
+            const args = data?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
+            if (args) {
+              const parsed = JSON.parse(args);
               cat = parsed.category || cat;
               sub = parsed.subcategory || sub;
-              reason = parsed.reason || "Web-enriched classification";
+              section = (parsed.cash_flow_section as CashSection) || "operating";
+              reason = parsed.reason || "AI classification";
               conf = 0.75;
               usedAi = true;
             }
           } else {
-            console.warn("Perplexity error", resp.status);
+            console.warn("Lovable AI error", resp.status, await resp.text());
           }
         } catch (e) {
-          console.warn("Perplexity call failed", e);
+          console.warn("Lovable AI call failed", e);
         }
       }
 
@@ -301,7 +323,7 @@ Prefer matching an existing budget line's category if it fits; otherwise propose
           amount: Number(t.amount),
           posted_on: t.posted_on,
           cashflow_id: existing?.id ?? null,
-          new_cashflow: existing ? undefined : { type, category: cat, subcategory: sub, cost_centre: null },
+          new_cashflow: existing ? undefined : { type, category: cat, subcategory: sub, cost_centre: null, cash_flow_section: section },
           classification: `${cat} — ${sub}`,
           reason,
           source: usedAi ? "ai-web" : "ai",

@@ -13,7 +13,13 @@ const normalize = (s: string | null | undefined) =>
 type ProposalIn = {
   txn_id: string;
   cashflow_id: string | null;
-  new_cashflow?: { type: "income" | "expense"; category: string; subcategory: string; cost_centre: string | null };
+  new_cashflow?: {
+    type: "income" | "expense";
+    category: string;
+    subcategory: string;
+    cost_centre: string | null;
+    cash_flow_section?: "operating" | "investing" | "financing";
+  };
   rule?: { match_type: string; match_value: string };
   source: string;
   confidence: number;
@@ -73,6 +79,7 @@ Deno.serve(async (req) => {
           type: u.body.type,
           cost_centre: u.body.cost_centre,
           frequency: "monthly",
+          cash_flow_section: u.body.cash_flow_section ?? "operating",
         })
         .select("id")
         .single();
