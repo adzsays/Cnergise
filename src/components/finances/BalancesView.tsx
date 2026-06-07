@@ -405,9 +405,26 @@ export function BalancesView() {
       <Card className="p-3">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold uppercase tracking-wide">Assets</h3>
-          <Button size="sm" variant="outline" onClick={() => addRow('asset', 'Bank')}>
-            <Plus className="h-3.5 w-3.5 mr-1" /> Add Asset
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                try {
+                  exportBalances(accounts, balanceSheet, balanceSheetSummary);
+                  toast.success('Balances exported');
+                } catch (e: any) {
+                  console.error(e);
+                  toast.error('Export failed');
+                }
+              }}
+            >
+              <Download className="h-3.5 w-3.5 mr-1" /> Export Balances
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => addRow('asset', 'Bank')}>
+              <Plus className="h-3.5 w-3.5 mr-1" /> Add Asset
+            </Button>
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
