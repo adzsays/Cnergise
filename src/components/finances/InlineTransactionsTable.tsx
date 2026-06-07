@@ -419,8 +419,8 @@ export function InlineTransactionsTable() {
                   </td>
                   <td className="py-1 px-2">
                     <Select
-                      defaultValue={t.frequency || 'monthly'}
-                      onValueChange={(v) => updateField(t.id, { frequency: v })}
+                      value={t.frequency || 'monthly'}
+                      onValueChange={(v) => updateTransactionFrequency(t.id, v)}
                     >
                       <SelectTrigger className="h-7 border-0 bg-transparent px-1 focus:ring-1">
                         <SelectValue />
