@@ -388,10 +388,11 @@ export function InlineTransactionsTable() {
                   </td>
                   <td className="py-1 px-2">
                     <CurrencyInput
-                      value={t.monthly}
+                      value={(t.amount ?? t.monthly) as number}
                       onCommit={(val) => {
                         const v = val ?? 0;
-                        if (v !== t.monthly) updateTransaction(t.id, v);
+                        const current = Number(t.amount ?? t.monthly) || 0;
+                        if (v !== current) updateTransaction(t.id, v);
                       }}
                       className="h-7 border-0 bg-transparent px-1 focus-visible:ring-1"
                     />
