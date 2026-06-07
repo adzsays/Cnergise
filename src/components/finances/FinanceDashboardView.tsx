@@ -409,6 +409,78 @@ export function FinanceDashboardView() {
     };
   }, [filteredTx, period]);
 
+  // ===== Upcoming Payments (next 60 days from today, by actual occurrence date) =====
+  const upcomingPayments = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const horizon = new Date(today);
+    horizon.setDate(horizon.getDate() + 60);
+
+    type Item = { date: Date; name: string; amount: number; type: 'income' | 'expense'; section: string; costCentre: string };
+    const items: Item[] = [];
+
+    filteredTx.forEach((t: any) => {
+      const freq = (t.frequency || 'monthly').toLowerCase();
+      const amount = Math.abs(Number(t.amount) || Number(t.monthly) || 0);
+      if (!amount) return;
+      const baseDate = t.date ? new Date(Number(t.date)) : new Date();
+      const startBound = t.start_date ? new Date(t.start_date) : null;
+      const endBound = t.end_date ? new Date(t.end_date) : null;
+      const isOut = t.type === 'expense' || t.type === 'liability' || t.type === 'asset';
+      const isIn = t.type === 'income';
+      if (!isIn && !isOut) return;
+      const fallbackSection = t.type === 'liability' ? 'financing' : t.type === 'asset' ? 'investing' : 'operating';
+      const section = (t.cash_flow_section || fallbackSection) as string;
+      const name = t.subcategory || t.category || 'Payment';
+      const costCentre = t.cost_centre || '—';
+
+      const push = (d: Date) => {
+        if (d < today || d > horizon) return;
+        if (startBound && d < startBound) return;
+        if (endBound && d > endBound) return;
+        items.push({ date: new Date(d), name, amount, type: isIn ? 'income' : 'expense', section, costCentre });
+      };
+
+      if (freq === 'one-time' || freq === 'once') {
+        push(baseDate);
+        return;
+      }
+      const step: { months?: number; days?: number } = (() => {
+        switch (freq) {
+          case 'daily': return { days: 1 };
+          case 'weekly': return { days: 7 };
+          case 'fortnightly': case 'bi-weekly': case 'biweekly': return { days: 14 };
+          case 'monthly': return { months: 1 };
+          case 'quarterly': return { months: 3 };
+          case 'half-yearly': case 'semi-annually': return { months: 6 };
+          case 'yearly': case 'annually': return { months: 12 };
+          default: return { months: 1 };
+        }
+      })();
+      // Walk cursor forward from baseDate to today, then enumerate within the window.
+      let cursor = new Date(baseDate);
+      while (cursor < today) {
+        if (step.months) cursor.setMonth(cursor.getMonth() + step.months);
+        else if (step.days) cursor.setDate(cursor.getDate() + step.days);
+        else break;
+      }
+      let safety = 0;
+      while (cursor <= horizon && safety < 400) {
+        push(cursor);
+        const next = new Date(cursor);
+        if (step.months) next.setMonth(next.getMonth() + step.months);
+        else if (step.days) next.setDate(next.getDate() + step.days);
+        else break;
+        cursor = next;
+        safety++;
+      }
+    });
+
+    items.sort((a, b) => a.date.getTime() - b.date.getTime());
+    return items.slice(0, 30);
+  }, [filteredTx]);
+
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -595,6 +667,47 @@ export function FinanceDashboardView() {
       </Collapsible>
 
       <SnoopInsights />
+
+      {/* Upcoming Payments — actual occurrences from today across next 60 days */}
+      <Card className="p-4">
+        <div className="flex items-baseline justify-between gap-2 mb-3">
+          <div>
+            <h2 className="font-semibold">Upcoming Payments</h2>
+            <p className="text-xs text-muted-foreground">Next 60 days · based on each input's frequency and recurring date{costCentre !== 'all' && ` · ${costCentre}`}</p>
+          </div>
+          <span className="text-[10px] text-muted-foreground">{upcomingPayments.length} item{upcomingPayments.length === 1 ? '' : 's'}</span>
+        </div>
+        {upcomingPayments.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">No upcoming payments in the next 60 days.</p>
+        ) : (
+          <div className="overflow-x-auto max-h-[360px] overflow-y-auto">
+            <table className="w-full text-xs">
+              <thead className="sticky top-0 bg-card z-10">
+                <tr className="text-muted-foreground uppercase text-[10px] tracking-wider border-b">
+                  <th className="text-left py-2 px-2 font-medium">Date</th>
+                  <th className="text-left py-2 px-2 font-medium">Description</th>
+                  <th className="text-left py-2 px-2 font-medium hidden sm:table-cell">Class</th>
+                  <th className="text-left py-2 px-2 font-medium hidden md:table-cell">Cost Centre</th>
+                  <th className="text-right py-2 px-2 font-medium">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {upcomingPayments.map((p, i) => (
+                  <tr key={i} className="border-b border-border/40 hover:bg-muted/30">
+                    <td className="py-1.5 px-2 whitespace-nowrap tabular-nums">{p.date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</td>
+                    <td className="py-1.5 px-2 truncate max-w-[200px]">{p.name}</td>
+                    <td className="py-1.5 px-2 hidden sm:table-cell capitalize text-muted-foreground">{p.section}</td>
+                    <td className="py-1.5 px-2 hidden md:table-cell text-muted-foreground">{p.costCentre}</td>
+                    <td className={cn('py-1.5 px-2 text-right tabular-nums font-medium', p.type === 'income' ? 'text-income' : 'text-expense')}>
+                      {p.type === 'income' ? '+' : '-'}{formatCurrency(p.amount)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="p-4">

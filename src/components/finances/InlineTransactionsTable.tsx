@@ -40,7 +40,7 @@ const toDateInput = (ms: number | null | undefined) => {
 const fromDateInput = (s: string) => (s ? new Date(s).getTime() : null);
 
 export function InlineTransactionsTable() {
-  const { transactions, accounts, addTransaction, deleteTransaction, refreshData, updateTransaction, updateTransactionCategory } = useFinancialData() as any;
+  const { transactions, accounts, addTransaction, deleteTransaction, refreshData, updateTransaction, updateTransactionCategory, updateTransactionFrequency } = useFinancialData() as any;
   const { currency } = useUserCurrency();
   const currencySymbol = (() => {
     try {
@@ -299,7 +299,7 @@ export function InlineTransactionsTable() {
               <SortHeader k="type" label="Type" className="w-24" />
               <SortHeader k="cash_flow_section" label="Class" className="w-28" />
               <SortHeader k="subcategory" label="Description" />
-              <SortHeader k="monthly" label="Amount" align="right" />
+              <SortHeader k="monthly" label="Amount / occurrence" align="right" />
               <SortHeader k="date" label="Recurring Date" />
               <SortHeader k="cost_centre" label="Cost Centre" />
               <SortHeader k="frequency" label="Frequency" />
@@ -388,10 +388,11 @@ export function InlineTransactionsTable() {
                   </td>
                   <td className="py-1 px-2">
                     <CurrencyInput
-                      value={t.monthly}
+                      value={(t.amount ?? t.monthly) as number}
                       onCommit={(val) => {
                         const v = val ?? 0;
-                        if (v !== t.monthly) updateTransaction(t.id, v);
+                        const current = Number(t.amount ?? t.monthly) || 0;
+                        if (v !== current) updateTransaction(t.id, v);
                       }}
                       className="h-7 border-0 bg-transparent px-1 focus-visible:ring-1"
                     />
@@ -418,8 +419,8 @@ export function InlineTransactionsTable() {
                   </td>
                   <td className="py-1 px-2">
                     <Select
-                      defaultValue={t.frequency || 'monthly'}
-                      onValueChange={(v) => updateField(t.id, { frequency: v })}
+                      value={t.frequency || 'monthly'}
+                      onValueChange={(v) => updateTransactionFrequency(t.id, v)}
                     >
                       <SelectTrigger className="h-7 border-0 bg-transparent px-1 focus:ring-1">
                         <SelectValue />
