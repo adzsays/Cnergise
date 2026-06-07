@@ -107,7 +107,14 @@ interface FinancialDataContextType {
   balanceSheet: SourceBalanceSheet;
   monthLabels: string[];
   // Transaction operations
-  updateTransaction: (transactionId: string, newMonthly: number) => Promise<void>;
+  /**
+   * Update the per-occurrence amount on a transaction. The cached `monthly` is
+   * recomputed from the row's frequency (daily/weekly/monthly/quarterly/yearly)
+   * so the dashboard, projections, balances and exports all stay in sync.
+   */
+  updateTransaction: (transactionId: string, newAmount: number) => Promise<void>;
+  /** Update the frequency and recompute monthly + projections from the current amount. */
+  updateTransactionFrequency: (transactionId: string, newFrequency: string) => Promise<void>;
   addTransaction: (transaction: Partial<FinancialTransaction> & {
     monthly: number;
     type: string;
