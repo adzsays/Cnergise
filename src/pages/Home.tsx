@@ -340,7 +340,7 @@ const Index = () => {
                     icon={<CalendarDays className="h-4 w-4 sm:h-5 sm:w-5" />}
                   />
                 </button>
-                <button onClick={() => navigate("/tasks?tab=tasks")} className="text-left">
+                <button onClick={() => navigate("/plan")} className="text-left">
                   <MetricCard
                     label="Open tasks"
                     value={String(tasks.length)}
@@ -406,7 +406,7 @@ const Index = () => {
                 <DashboardWidget
                   title="Open tasks"
                   action={
-                    <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => navigate("/tasks?tab=tasks")}>
+                    <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => navigate("/plan")}>
                       View all
                     </Button>
                   }
@@ -418,7 +418,7 @@ const Index = () => {
                       {tasks.map((task: any) => (
                         <button
                           key={task.id}
-                          onClick={() => navigate("/tasks?tab=tasks")}
+                          onClick={() => navigate("/plan")}
                           className="w-full flex items-center justify-between py-2 border-b border-border last:border-0 hover:bg-muted/50 -mx-2 px-2 rounded transition-colors text-left"
                         >
                           <div className="flex items-center gap-3 min-w-0">
