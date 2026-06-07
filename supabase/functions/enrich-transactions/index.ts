@@ -178,19 +178,18 @@ Deno.serve(async (req) => {
     for (const t of txns) {
       if (handled.has(t.id)) continue;
       const text = `${t.merchant ?? ""} ${t.description ?? ""}`;
-      let matched: { cat: string; sub: string; type: "income" | "expense"; reason: string } | null = null;
+      let matched: { cat: string; sub: string; type: "income" | "expense"; section?: CashSection; reason: string } | null = null;
 
-      // Interest: sign-aware
       if (/\binterest\b/i.test(text)) {
         if (Number(t.amount) > 0) {
-          matched = { cat: "Income", sub: "Interest Income", type: "income", reason: "Positive amount + 'interest' → interest income" };
+          matched = { cat: "Income", sub: "Interest Income", type: "income", section: "operating", reason: "Positive amount + 'interest' → interest income" };
         } else {
-          matched = { cat: "Interest", sub: "Interest Expense", type: "expense", reason: "Negative amount + 'interest' → interest expense" };
+          matched = { cat: "Interest", sub: "Interest Expense", type: "expense", section: "operating", reason: "Negative amount + 'interest' → interest expense" };
         }
       } else {
         for (const r of KEYWORD_RULES) {
           if (r.test.test(text)) {
-            matched = { cat: r.cat, sub: r.sub, type: r.type, reason: r.reason };
+            matched = { cat: r.cat, sub: r.sub, type: r.type, section: r.section, reason: r.reason };
             break;
           }
         }
@@ -205,7 +204,9 @@ Deno.serve(async (req) => {
         amount: Number(t.amount),
         posted_on: t.posted_on,
         cashflow_id: existing?.id ?? null,
-        new_cashflow: existing ? undefined : { type: matched.type, category: matched.cat, subcategory: matched.sub, cost_centre: null },
+        new_cashflow: existing
+          ? undefined
+          : { type: matched.type, category: matched.cat, subcategory: matched.sub, cost_centre: null, cash_flow_section: matched.section ?? "operating" },
         classification: `${matched.cat} — ${matched.sub}`,
         reason: matched.reason,
         source: "keyword",
