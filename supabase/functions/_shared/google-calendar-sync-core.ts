@@ -67,7 +67,7 @@ async function markReauthRequired(admin: any, conn: any, reason: string) {
   }
 }
 
-async function syncCalendar(admin: any, userId: string, accessToken: string, calendarId: string, syncToken: string | null) {
+async function syncCalendar(admin: any, userId: string, accountId: string, accessToken: string, calendarId: string, syncToken: string | null) {
   const params = new URLSearchParams({ singleEvents: "true", maxResults: "250" });
   if (syncToken) params.set("syncToken", syncToken);
   else {
@@ -94,6 +94,7 @@ async function syncCalendar(admin: any, userId: string, accessToken: string, cal
         await admin.from("calendar_events")
           .update({ deleted_at: new Date().toISOString() })
           .eq("user_id", userId)
+          .eq("account_id", accountId)
           .eq("google_calendar_id", calendarId)
           .eq("google_event_id", ev.id);
         deleted++;
@@ -107,6 +108,7 @@ async function syncCalendar(admin: any, userId: string, accessToken: string, cal
         : null;
       const eventPayload = {
         user_id: userId,
+        account_id: accountId,
         title: ev.summary || "(no title)",
         description: ev.description || null,
         location: ev.location || null,
@@ -126,6 +128,7 @@ async function syncCalendar(admin: any, userId: string, accessToken: string, cal
         .from("calendar_events")
         .select("id")
         .eq("user_id", userId)
+        .eq("account_id", accountId)
         .eq("google_calendar_id", calendarId)
         .eq("google_event_id", ev.id)
         .maybeSingle();
@@ -186,16 +189,17 @@ export async function syncAllForUser(admin: any, userId: string) {
             .from("calendar_events")
             .select("id", { count: "exact", head: true })
             .eq("user_id", userId)
+            .eq("account_id", conn.id)
             .eq("google_calendar_id", sub.google_calendar_id)
             .is("deleted_at", null);
 
           const effectiveSyncToken = count && count > 0 ? sub.sync_token : null;
-          const result = await syncCalendar(admin, userId, conn.access_token, sub.google_calendar_id, effectiveSyncToken);
+          const result = await syncCalendar(admin, userId, conn.id, conn.access_token, sub.google_calendar_id, effectiveSyncToken);
           totalSynced += result.synced;
           totalDeleted += result.deleted;
 
           if (result.resetSync) {
-            const retry = await syncCalendar(admin, userId, conn.access_token, sub.google_calendar_id, null);
+            const retry = await syncCalendar(admin, userId, conn.id, conn.access_token, sub.google_calendar_id, null);
             totalSynced += retry.synced;
             totalDeleted += retry.deleted;
             if (retry.nextSyncToken) {
