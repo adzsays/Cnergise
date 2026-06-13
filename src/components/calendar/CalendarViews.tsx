@@ -338,6 +338,7 @@ export function DayView({
 export function ScheduleView({ events, onSelectEvent, colorMap, selectedEventId }: { events: CalendarEvent[]; onSelectEvent?: (e: CalendarEvent) => void; colorMap?: Record<string, string>; selectedEventId?: string | null }) {
   const grouped = useMemo(() => {
     const now = Date.now();
+    const todayKey = startOfDay(new Date()).toISOString();
     const map = new Map<string, CalendarEvent[]>();
     for (const e of events) {
       const endMs = new Date(e.end_time).getTime();
@@ -347,6 +348,7 @@ export function ScheduleView({ events, onSelectEvent, colorMap, selectedEventId 
       arr.push(e);
       map.set(k, arr);
     }
+    if (!map.has(todayKey)) map.set(todayKey, []);
     const out = Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
     for (const [, items] of out) {
       items.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
@@ -374,6 +376,9 @@ export function ScheduleView({ events, onSelectEvent, colorMap, selectedEventId 
             })}
           </div>
           <ul className="divide-y">
+            {items.length === 0 && (
+              <li className="px-3 py-3 text-xs text-muted-foreground">No events today</li>
+            )}
             {items.map((ev) => {
               const c = eventColor(ev, colorMap);
               const isSelected = selectedEventId === ev.id;

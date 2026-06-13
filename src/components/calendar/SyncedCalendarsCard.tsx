@@ -14,9 +14,10 @@ export function SyncedCalendarsCard({ onManage }: { onManage?: () => void }) {
   const issues = connections
     .map((c) => {
       const err = c.last_sync_error;
-      if (!err) return null;
-      const needsReauth = /refresh|invalid_grant|REAUTH/i.test(err);
-      return { conn: c, err, needsReauth };
+      const missingCalendarScope = !c.scope?.includes("/auth/calendar");
+      if (!err && !c.reauth_required && !missingCalendarScope) return null;
+      const needsReauth = Boolean(c.reauth_required) || missingCalendarScope || /refresh|invalid_grant|REAUTH|insufficient|permission|scope/i.test(err ?? "");
+      return { conn: c, err: err ?? "Calendar permission is missing.", needsReauth };
     })
     .filter((x): x is { conn: typeof connections[number]; err: string; needsReauth: boolean } => !!x);
 
@@ -31,7 +32,7 @@ export function SyncedCalendarsCard({ onManage }: { onManage?: () => void }) {
             <div className="flex-1 min-w-0 space-y-1">
               <p className="text-xs font-medium truncate">{conn.google_email}</p>
               <p className="text-[11px] text-destructive">
-                {needsReauth ? "Sign-in expired — events won't update." : err}
+                {needsReauth ? "Reconnect to grant calendar access and resume syncing." : err}
               </p>
               <div className="flex gap-2 pt-0.5">
                 {needsReauth ? (

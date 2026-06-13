@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type CalendarEvent = {
   id: string;
+  account_id?: string | null;
   title: string;
   description: string | null;
   location: string | null;
@@ -58,6 +59,22 @@ function expandRecurrences(events: CalendarEvent[], rangeStart?: Date, rangeEnd?
   return out;
 }
 
+function removeStaleAndDuplicateGoogleEvents(events: CalendarEvent[]): CalendarEvent[] {
+  const seen = new Set<string>();
+  return events.filter((event) => {
+    if (event.sync_source === "google" && event.google_event_id && !event.account_id) {
+      return false;
+    }
+
+    const key = event.google_event_id
+      ? `google:${event.google_calendar_id ?? "primary"}:${event.google_event_id}`
+      : `local:${event.id}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 export function useCalendarEvents(rangeStart?: Date, rangeEnd?: Date) {
   const qc = useQueryClient();
 
@@ -89,7 +106,7 @@ export function useCalendarEvents(rangeStart?: Date, rangeEnd?: Date) {
 
       // For recurring local events, fetch all (regardless of range) so we can expand
       // occurrences into the viewed range; non-recurring rows are filtered by range.
-      const baseSelect = "id, title, description, location, start_time, end_time, all_day, google_calendar_id, google_event_id, sync_source, meeting_url, recurrence";
+      const baseSelect = "id, account_id, title, description, location, start_time, end_time, all_day, google_calendar_id, google_event_id, sync_source, meeting_url, recurrence";
 
       const inRangePromise = (async () => {
         let q = supabase.from("calendar_events").select(baseSelect)
@@ -109,7 +126,7 @@ export function useCalendarEvents(rangeStart?: Date, rangeEnd?: Date) {
       if (inRange.error) throw inRange.error;
       if (recurring.error) throw recurring.error;
       const combined = [...(inRange.data ?? []), ...(recurring.data ?? [])] as CalendarEvent[];
-      return expandRecurrences(combined, rangeStart, rangeEnd);
+      return removeStaleAndDuplicateGoogleEvents(expandRecurrences(combined, rangeStart, rangeEnd));
     },
   });
 }

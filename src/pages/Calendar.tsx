@@ -49,10 +49,15 @@ export default function Calendar() {
   const openNew = (d?: Date) => { setSelectedEvent(null); setDialogDefaultDate(d ?? date); setDialogOpen(true); };
 
   const { rangeStart, rangeEnd } = useMemo(() => {
-    const start = new Date(date.getFullYear(), date.getMonth() - 1, 1);
-    const end = new Date(date.getFullYear(), date.getMonth() + 2, 0, 23, 59, 59);
+    const today = startOfDay(new Date());
+    const start = view === "schedule"
+      ? today
+      : new Date(date.getFullYear(), date.getMonth() - 1, 1);
+    const end = view === "schedule"
+      ? addDays(today, 90)
+      : new Date(date.getFullYear(), date.getMonth() + 2, 0, 23, 59, 59);
     return { rangeStart: start, rangeEnd: end };
-  }, [date]);
+  }, [date, view]);
 
   const { data: events = [], isLoading } = useCalendarEvents(rangeStart, rangeEnd);
   const { data: subData } = useCalendarSubscriptions();
@@ -84,7 +89,7 @@ export default function Calendar() {
   const navigate = (dir: -1 | 1) => {
     if (view === "day") setDate((d) => addDays(d, dir));
     else if (view === "week") setDate((d) => addDays(d, dir * 7));
-    else setDate((d) => new Date(d.getFullYear(), d.getMonth() + dir, 1));
+    else if (view === "month") setDate((d) => new Date(d.getFullYear(), d.getMonth() + dir, 1));
   };
 
   const headerLabel = useMemo(() => {

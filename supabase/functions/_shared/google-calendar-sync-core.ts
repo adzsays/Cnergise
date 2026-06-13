@@ -183,6 +183,7 @@ export async function syncAllForUser(admin: any, userId: string) {
         subs = [{ google_calendar_id: "primary", sync_token: null, account_id: conn.id }];
       }
 
+      let hadCalendarError = false;
       for (const sub of subs) {
         try {
           const { count } = await admin
@@ -215,13 +216,25 @@ export async function syncAllForUser(admin: any, userId: string) {
               .eq("google_calendar_id", sub.google_calendar_id);
           }
         } catch (err) {
+          hadCalendarError = true;
+          const msg = String((err as Error)?.message || err);
+          const needsReauth = /insufficient|permission|scope|PERMISSION_DENIED|ACCESS_TOKEN_SCOPE_INSUFFICIENT/i.test(msg);
           console.error("Calendar sync error", conn.google_email, sub.google_calendar_id, err);
+          await admin.from("google_calendar_connections")
+            .update({
+              last_sync_error: needsReauth ? "Calendar permission is missing. Reconnect this Google account." : msg.slice(0, 500),
+              reauth_required: needsReauth,
+            })
+            .eq("id", conn.id);
+          accountErrors.push({ email: conn.google_email, reauth: needsReauth, message: msg });
         }
       }
 
-      await admin.from("google_calendar_connections")
-        .update({ last_sync_at: new Date().toISOString(), last_sync_error: null })
-        .eq("id", conn.id);
+      if (!hadCalendarError) {
+        await admin.from("google_calendar_connections")
+          .update({ last_sync_at: new Date().toISOString(), last_sync_error: null, reauth_required: false })
+          .eq("id", conn.id);
+      }
     } catch (err) {
       const msg = String((err as Error)?.message || err);
       const reauth = msg.startsWith("REAUTH_REQUIRED");
