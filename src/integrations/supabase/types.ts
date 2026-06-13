@@ -932,6 +932,7 @@ export type Database = {
       }
       calendar_events: {
         Row: {
+          account_id: string | null
           all_day: boolean
           created_at: string | null
           deleted_at: string | null
@@ -953,6 +954,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          account_id?: string | null
           all_day?: boolean
           created_at?: string | null
           deleted_at?: string | null
@@ -974,6 +976,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          account_id?: string | null
           all_day?: boolean
           created_at?: string | null
           deleted_at?: string | null
@@ -995,6 +998,20 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "calendar_events_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "google_calendar_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_events_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "google_calendar_connections_decrypted"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "calendar_events_space_id_fkey"
             columns: ["space_id"]
