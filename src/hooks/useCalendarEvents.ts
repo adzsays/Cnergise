@@ -59,6 +59,28 @@ function expandRecurrences(events: CalendarEvent[], rangeStart?: Date, rangeEnd?
 }
 
 export function useCalendarEvents(rangeStart?: Date, rangeEnd?: Date) {
+  const qc = useQueryClient();
+
+  // Realtime: any insert/update/delete on calendar_events refetches the visible window.
+  useEffect(() => {
+    let userId: string | null = null;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      userId = user.id;
+      channel = supabase
+        .channel(`calendar-events-${userId}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "calendar_events", filter: `user_id=eq.${userId}` },
+          () => qc.invalidateQueries({ queryKey: ["calendar-events"] }),
+        )
+        .subscribe();
+    })();
+    return () => { if (channel) supabase.removeChannel(channel); };
+  }, [qc]);
+
   return useQuery({
     queryKey: ["calendar-events", rangeStart?.toISOString(), rangeEnd?.toISOString()],
     queryFn: async () => {
