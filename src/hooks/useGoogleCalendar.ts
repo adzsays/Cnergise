@@ -12,6 +12,7 @@ export type GCalConnection = {
   primary_calendar_id: string | null;
   last_sync_error: string | null;
   reauth_required?: boolean | null;
+  scope?: string | null;
 };
 
 export function useGoogleCalendar() {
@@ -26,7 +27,7 @@ export function useGoogleCalendar() {
       if (!user) return [];
       const { data } = await supabase
         .from("google_calendar_connections")
-        .select("id, google_email, last_sync_at, primary_calendar_id, last_sync_error, reauth_required")
+        .select("id, google_email, last_sync_at, primary_calendar_id, last_sync_error, reauth_required, scope")
         .eq("user_id", user.id)
         .order("created_at", { ascending: true });
       return (data ?? []) as GCalConnection[];
@@ -66,10 +67,17 @@ export function useGoogleCalendar() {
     },
     onSuccess: (d: any) => {
       const reauth: string[] = d?.reauthRequired ?? [];
+      const failed = Array.isArray(d?.errors) ? d.errors : [];
       if (reauth.length > 0) {
         toast({
           title: "Reconnect required",
           description: `Google sign-in expired for: ${reauth.join(", ")}. Click Connect to re-authorize.`,
+          variant: "destructive",
+        });
+      } else if (failed.length > 0) {
+        toast({
+          title: "Calendar sync needs attention",
+          description: failed.map((e: any) => e.email).filter(Boolean).join(", ") || "One or more calendars did not sync.",
           variant: "destructive",
         });
       } else {
