@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
     const errors: any[] = [];
     for (const uid of uniqueUsers) {
       try {
-        const r = await syncAllForUser(admin, uid);
+        const r = await syncAllForUser(admin, uid, { skipReauth: true });
         totalSynced += r.synced;
         totalDeleted += r.deleted;
         if (r.errors.length) errors.push({ user_id: uid, errors: r.errors });

@@ -147,11 +147,16 @@ async function syncCalendar(admin: any, userId: string, accountId: string, acces
   return { synced, deleted, nextSyncToken, resetSync };
 }
 
-export async function syncAllForUser(admin: any, userId: string) {
-  const { data: connections } = await admin
+export async function syncAllForUser(admin: any, userId: string, opts: { skipReauth?: boolean } = {}) {
+  const { data: allConnections } = await admin
     .from("google_calendar_connections_decrypted")
     .select("*")
     .eq("user_id", userId);
+  // Background jobs skip accounts already known to need reconnecting, so they
+  // don't hammer Google + the database every minute with doomed retries.
+  const connections = opts.skipReauth
+    ? (allConnections ?? []).filter((c: any) => !c.reauth_required)
+    : allConnections;
 
   if (!connections || connections.length === 0) {
     return { synced: 0, deleted: 0, accounts: 0, errors: [] as any[], reauthRequired: [] as string[] };
