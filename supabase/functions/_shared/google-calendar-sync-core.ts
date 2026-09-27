@@ -154,9 +154,16 @@ export async function syncAllForUser(admin: any, userId: string, opts: { skipRea
     .eq("user_id", userId);
   // Background jobs skip accounts already known to need reconnecting, so they
   // don't hammer Google + the database every minute with doomed retries.
-  const connections = opts.skipReauth
-    ? (allConnections ?? []).filter((c: any) => !c.reauth_required)
-    : allConnections;
+  let connections = allConnections;
+  if (opts.skipReauth && allConnections?.length) {
+    const { data: flagged } = await admin
+      .from("google_calendar_connections")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("reauth_required", true);
+    const skip = new Set((flagged ?? []).map((f: any) => f.id));
+    connections = allConnections.filter((c: any) => !skip.has(c.id));
+  }
 
   if (!connections || connections.length === 0) {
     return { synced: 0, deleted: 0, accounts: 0, errors: [] as any[], reauthRequired: [] as string[] };
