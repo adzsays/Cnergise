@@ -26,7 +26,7 @@ import {
   Fingerprint,
   Loader2
 } from "lucide-react";
-import cnergiseLogo from "@/assets/cnergise-logo.png";
+import { BrandLogo } from "@/components/BrandLogo";
 import { RequestInviteDialog } from "@/components/auth/RequestInviteDialog";
 import { VisitorChat } from "@/components/VisitorChat";
 
@@ -330,7 +330,7 @@ const Auth = () => {
           <div className="flex items-center justify-between h-12 sm:h-14 gap-2 overflow-visible">
             <div className="flex items-center min-w-0 overflow-visible">
               <a href="/" aria-label="Go to home" className="flex items-center">
-                <img src={cnergiseLogo} alt="Cnergise" className="h-6 sm:h-7 w-auto object-contain shrink-0" />
+                <BrandLogo className="h-6 sm:h-7 w-auto" />
               </a>
             </div>
             <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
@@ -775,7 +775,7 @@ const Auth = () => {
         <div className="mx-auto max-w-6xl flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
           <div className="flex items-center gap-3">
             <a href="/" aria-label="Go to home" className="shrink-0">
-              <img src={cnergiseLogo} alt="Cnergise" className="h-6 sm:h-7 w-auto object-contain shrink-0" />
+              <BrandLogo className="h-6 sm:h-7 w-auto" />
             </a>
             <span>Copyright © {new Date().getFullYear()}</span>
           </div>
