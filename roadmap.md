@@ -1,3 +1,3 @@
-- [ ] Apply the selected brand-pack logo variants throughout the app.
-- [ ] Replace browser and mobile web icons with the original platform assets.
-- [ ] Verify logo rendering and icon references.
+- [x] Apply the selected brand-pack logo variants throughout the app.
+- [x] Replace browser and mobile web icons with the original platform assets.
+- [x] Verify logo rendering and icon references.
