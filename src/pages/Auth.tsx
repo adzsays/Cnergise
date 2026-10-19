@@ -330,7 +330,7 @@ const Auth = () => {
           <div className="flex items-center justify-between h-12 sm:h-14 gap-2 overflow-visible">
             <div className="flex items-center min-w-0 overflow-visible">
               <a href="/" aria-label="Go to home" className="flex items-center">
-                <img src={cnergiseLogo} alt="Cnergise" className="h-20 sm:h-28 w-auto object-contain shrink-0 -my-4" />
+                <img src={cnergiseLogo} alt="Cnergise" className="h-6 sm:h-7 w-auto object-contain shrink-0" />
               </a>
             </div>
             <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
@@ -775,7 +775,7 @@ const Auth = () => {
         <div className="mx-auto max-w-6xl flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
           <div className="flex items-center gap-3">
             <a href="/" aria-label="Go to home" className="shrink-0">
-              <img src={cnergiseLogo} alt="Cnergise" className="h-20 sm:h-24 w-auto object-contain -my-8" />
+              <img src={cnergiseLogo} alt="Cnergise" className="h-6 sm:h-7 w-auto object-contain shrink-0" />
             </a>
             <span>Copyright © {new Date().getFullYear()}</span>
           </div>
