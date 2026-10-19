@@ -22,38 +22,38 @@ export default defineConfig(({ mode }) => ({
       injectManifest: {
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
       },
-      includeAssets: ['favicon.ico', 'favicon.png', 'apple-touch-icon.png'],
+      includeAssets: ['favicon.ico', 'favicon.svg', 'favicon.png', 'apple-touch-icon.png'],
       manifest: {
         name: 'Cnergise - Your Personal Dashboard',
         short_name: 'Cnergise',
         description: 'A unified life management dashboard combining health, finance, calendar, mail, and social features.',
-        theme_color: '#0f172a',
-        background_color: '#0f172a',
+        theme_color: '#0D1017',
+        background_color: '#0D1017',
         display: 'standalone',
         orientation: 'portrait',
         scope: '/',
         start_url: '/',
         icons: [
           {
-            src: 'pwa-192x192-v5.png',
+            src: 'pwa-192x192-v6.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: 'pwa-512x512-v5.png',
+            src: 'pwa-512x512-v6.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: 'pwa-maskable-192x192-v5.png',
+            src: 'pwa-maskable-192x192-v6.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'maskable'
           },
           {
-            src: 'pwa-maskable-512x512-v5.png',
+            src: 'pwa-maskable-512x512-v6.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable'
