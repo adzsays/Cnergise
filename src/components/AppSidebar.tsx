@@ -40,8 +40,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import cnergiseLogo from "@/assets/cnergise-icon.png";
-import cnergiseFullLogo from "@/assets/cnergise-full-logo.png";
+import { BrandLogo } from "@/components/BrandLogo";
 import { useAppFeatures, useMySubscriptions, hasActiveAccess } from "@/hooks/useFeatures";
 import { AISidebarPanel } from "@/components/ai/AISidebarPanel";
 
@@ -90,7 +89,7 @@ export function AppSidebar() {
         {isCollapsed ? (
           <div className="flex flex-col items-center gap-1">
             <Link to="/home" aria-label="Go to home" className="flex items-center justify-center">
-              <img src={cnergiseLogo} alt="Cnergise" className="object-contain shrink-0" style={{ height: '1.7rem', width: '1.7rem' }} />
+              <BrandLogo mark className="h-7 w-7" />
             </Link>
             <Button
               variant="outline"
@@ -105,7 +104,7 @@ export function AppSidebar() {
         ) : (
           <div className="flex items-center justify-between gap-2">
             <Link to="/home" aria-label="Go to home" className="flex items-center gap-2 min-w-0 flex-1 hover:opacity-80 transition-opacity overflow-hidden">
-              <img src={cnergiseFullLogo} alt="Cnergise" className="object-contain shrink-0" style={{ height: '1.7rem', width: 'auto' }} />
+              <BrandLogo className="h-7 w-auto" />
             </Link>
             <Button
               variant="outline"

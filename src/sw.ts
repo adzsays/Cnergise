@@ -21,8 +21,8 @@ self.addEventListener('push', (event: PushEvent) => {
   const title = data.title || 'Cnergise';
   const options: NotificationOptions = {
     body: data.body || '',
-    icon: '/pwa-192x192.png',
-    badge: '/pwa-192x192.png',
+    icon: '/cnergise-app-192.png',
+    badge: '/cnergise-app-192.png',
     data: { url: data.url || '/' },
     tag: data.tag,
     requireInteraction: false,

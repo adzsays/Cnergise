@@ -22,7 +22,7 @@ export default defineConfig(({ mode }) => ({
       injectManifest: {
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
       },
-      includeAssets: ['favicon.ico', 'favicon.svg', 'favicon.png', 'apple-touch-icon.png'],
+      includeAssets: ['favicon.svg', 'favicon.png', 'apple-touch-icon-brand.png', 'cnergise-app-192.png', 'cnergise-app-512.png'],
       manifest: {
         name: 'Cnergise - Your Personal Dashboard',
         short_name: 'Cnergise',
@@ -35,25 +35,25 @@ export default defineConfig(({ mode }) => ({
         start_url: '/',
         icons: [
           {
-            src: 'pwa-192x192-v6.png',
+            src: 'cnergise-app-192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: 'pwa-512x512-v6.png',
+            src: 'cnergise-app-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: 'pwa-maskable-192x192-v6.png',
+            src: 'cnergise-app-192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'maskable'
           },
           {
-            src: 'pwa-maskable-512x512-v6.png',
+            src: 'cnergise-app-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable'

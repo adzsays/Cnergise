@@ -13,7 +13,7 @@ import {
   ArrowLeft
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import cnergiseLogo from "@/assets/cnergise-logo.png";
+import { BrandLogo } from "@/components/BrandLogo";
 
 const Install = () => {
   const { 
@@ -80,7 +80,7 @@ const Install = () => {
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div className="flex items-center gap-3">
-            <img src={cnergiseLogo} alt="Cnergise" className="w-8 h-8" />
+            <BrandLogo mark className="w-8 h-8" />
             <span className="font-semibold text-foreground">Install Cnergise</span>
           </div>
         </div>
@@ -90,7 +90,7 @@ const Install = () => {
         {/* Hero Section */}
         <div className="text-center space-y-4">
           <div className="w-20 h-20 mx-auto bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl flex items-center justify-center shadow-lg">
-            <img src={cnergiseLogo} alt="Cnergise" className="w-12 h-12" />
+            <img src="/cnergise-app-192.png" alt="Cnergise" className="w-16 h-16 object-contain" />
           </div>
           <h1 className="text-3xl font-bold text-foreground">
             Install Cnergise
