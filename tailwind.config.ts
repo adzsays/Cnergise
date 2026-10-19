@@ -53,6 +53,10 @@ export default {
           DEFAULT: 'hsl(var(--brand))',
           foreground: 'hsl(var(--brand-foreground))'
         },
+        volt: {
+          DEFAULT: 'hsl(var(--volt))',
+          foreground: 'hsl(var(--volt-foreground))'
+        },
         popover: {
           DEFAULT: 'hsl(var(--popover))',
           foreground: 'hsl(var(--popover-foreground))'
