@@ -1,5 +1,5 @@
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -8,30 +8,30 @@
 @layer base {
   :root {
     /* Linear/Vercel-inspired: cool near-monochrome neutrals, deliberate accent */
-    --background: 0 0% 100%;
-    --foreground: 240 10% 4%;
+    --background: 45 22% 94%;
+    --foreground: 222 28% 7%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 4%;
+    --card: 45 30% 98%;
+    --card-foreground: 222 28% 7%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 4%;
+    --popover: 45 30% 98%;
+    --popover-foreground: 222 28% 7%;
 
     /* Primary: near-black for that quiet, precise feel */
-    --primary: 240 10% 9%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 222 28% 7%;
+    --primary-foreground: 45 22% 94%;
 
-    --secondary: 240 5% 96%;
-    --secondary-foreground: 240 10% 9%;
+    --secondary: 45 15% 89%;
+    --secondary-foreground: 222 28% 7%;
 
-    --muted: 240 5% 96%;
-    --muted-foreground: 240 4% 46%;
+    --muted: 45 15% 89%;
+    --muted-foreground: 222 10% 40%;
 
     /* Accent - subtle indigo, used sparingly for state/focus */
-    --accent: 240 5% 96%;
-    --accent-foreground: 240 10% 9%;
+    --accent: 237 83% 95%;
+    --accent-foreground: 237 83% 45%;
 
-    --brand: 234 89% 60%;
+    --brand: 237 83% 65%;
     --brand-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
@@ -64,15 +64,15 @@
     --corential: 250 84% 60%;
     --corential-foreground: 0 0% 100%;
 
-    --chart-1: 234 89% 60%;
+    --chart-1: 237 83% 65%;
     --chart-2: 142 71% 38%;
-    --chart-3: 250 84% 60%;
+    --chart-3: 73 100% 42%;
     --chart-4: 32 95% 44%;
     --chart-5: 0 72% 51%;
 
-    --border: 240 6% 90%;
-    --input: 240 6% 90%;
-    --ring: 240 10% 9%;
+    --border: 45 12% 84%;
+    --input: 45 12% 84%;
+    --ring: 237 83% 65%;
 
     /* Tighter radius for that precise, modern feel */
     --radius: 0.625rem;
@@ -84,39 +84,42 @@
     --shadow-lg: 0 4px 8px -2px hsl(240 5% 10% / 0.06), 0 12px 24px -4px hsl(240 5% 10% / 0.08);
 
     /* Sidebar - slightly off-white for visual hierarchy */
-    --sidebar-background: 240 5% 98%;
-    --sidebar-foreground: 240 10% 4%;
-    --sidebar-primary: 240 10% 9%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 5% 94%;
-    --sidebar-accent-foreground: 240 10% 9%;
-    --sidebar-border: 240 6% 90%;
-    --sidebar-ring: 240 10% 9%;
+    --sidebar-background: 45 20% 91%;
+    --sidebar-foreground: 222 28% 7%;
+    --sidebar-primary: 222 28% 7%;
+    --sidebar-primary-foreground: 45 22% 94%;
+    --sidebar-accent: 45 15% 86%;
+    --sidebar-accent-foreground: 222 28% 7%;
+    --sidebar-border: 45 12% 84%;
+    --sidebar-ring: 237 83% 65%;
+
+    --volt: 73 100% 62%;
+    --volt-foreground: 222 28% 7%;
   }
 
   .dark {
-    --background: 240 10% 4%;
-    --foreground: 0 0% 98%;
+    --background: 222 28% 7%;
+    --foreground: 45 22% 94%;
 
-    --card: 240 8% 6%;
-    --card-foreground: 0 0% 98%;
+    --card: 219 25% 12%;
+    --card-foreground: 45 22% 94%;
 
-    --popover: 240 8% 6%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 219 25% 12%;
+    --popover-foreground: 45 22% 94%;
 
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 10% 4%;
+    --primary: 45 22% 94%;
+    --primary-foreground: 222 28% 7%;
 
-    --secondary: 240 5% 12%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 219 22% 16%;
+    --secondary-foreground: 45 22% 94%;
 
-    --muted: 240 5% 12%;
-    --muted-foreground: 240 4% 60%;
+    --muted: 219 22% 16%;
+    --muted-foreground: 45 6% 62%;
 
-    --accent: 240 5% 14%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 219 22% 18%;
+    --accent-foreground: 45 22% 94%;
 
-    --brand: 234 89% 65%;
+    --brand: 237 100% 75%;
     --brand-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
@@ -134,24 +137,24 @@
     --corential: 250 84% 65%;
     --corential-foreground: 0 0% 100%;
 
-    --chart-1: 234 89% 65%;
+    --chart-1: 237 100% 75%;
     --chart-2: 142 71% 45%;
-    --chart-3: 250 84% 65%;
+    --chart-3: 73 100% 62%;
     --chart-4: 32 95% 50%;
     --chart-5: 0 72% 55%;
 
-    --border: 240 5% 14%;
-    --input: 240 5% 14%;
-    --ring: 0 0% 80%;
+    --border: 219 18% 20%;
+    --input: 219 18% 20%;
+    --ring: 73 100% 62%;
 
-    --sidebar-background: 240 8% 5%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 0 0% 98%;
-    --sidebar-primary-foreground: 240 10% 4%;
-    --sidebar-accent: 240 5% 12%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 240 5% 14%;
-    --sidebar-ring: 0 0% 80%;
+    --sidebar-background: 222 28% 6%;
+    --sidebar-foreground: 45 22% 94%;
+    --sidebar-primary: 73 100% 62%;
+    --sidebar-primary-foreground: 222 28% 7%;
+    --sidebar-accent: 219 22% 14%;
+    --sidebar-accent-foreground: 45 22% 94%;
+    --sidebar-border: 219 18% 18%;
+    --sidebar-ring: 73 100% 62%;
   }
 }
 
@@ -195,7 +198,7 @@
   }
 
   code, pre, kbd {
-    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   }
 
   /* Refined focus rings — visible but quiet */
@@ -306,7 +309,7 @@
   /* Quiet pill / kbd hint */
   .kbd {
     @apply inline-flex items-center px-1.5 h-5 text-[10px] font-medium text-muted-foreground bg-muted border border-border rounded;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'IBM Plex Mono', monospace;
   }
 }
 
